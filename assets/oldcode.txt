@@ -1,0 +1,13 @@
+		for(var i = 0; i < 100; i++){
+			var iDiv = document.createElement('div');
+			iDiv.className = "catalogItem";
+			var index = (i % 7)+1;
+			index = index.toString();
+			iDiv.style.backgroundImage = "url('./texture//beam_" + index + ".jpg')";
+			catalogItems.appendChild(iDiv);
+		}
+
+
+
+
+<div class="catalogItem" style="background-image: url('/thumbnail/1726');"></div>

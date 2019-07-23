@@ -1,0 +1,125 @@
+html, body{
+  margin: 0; height: 100%;
+  overflow: hidden;
+}
+
+#ui{
+  margin: 0; height: 100%;
+  overflow: hidden;
+}
+
+#menubar{
+  margin: 0; height: 5%;
+  overflow: hidden;
+}
+
+#uibody{
+  margin: 0; height: 95%;
+  overflow: hidden;
+}
+
+#retrieve{
+  margin: 0; width: 25%; height:100%;
+  overflow: hidden;
+  float:left;
+  background-color: #F0F0F0;
+}
+
+#scene{
+  margin: 0; width: 75%; height:100%;
+  overflow: hidden;
+}
+
+#scenecanvas{
+  width: 100%; height:100%;
+}
+
+#orthcanvas{
+  position:absolute;
+  width: 200px; height:200px;
+  left:25%;
+  bottom: 0px;
+}
+
+#menu2 {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  font-size: 19px;
+}
+
+#menu2 .radial__item, #menu2 .radial__button {
+  background: #2a7ae5;
+  color: white;
+  padding: 10px;
+  border-radius: 50%;
+}
+
+#menu2 .radial__button {
+  cursor: pointer;
+}
+
+#menu2 .radial__item {
+  z-index: -1;
+  -webkit-transform: scale(0);
+  -moz-transform: scale(0);
+  -ms-transform: scale(0);
+  transform: scale(0);
+  -webkit-transition: all 0.5s;
+  -moz-transition: all 0.5s;
+  -ms-transition: all 0.5s;
+  transition:  all 0.5s;
+}
+
+#menu2 .radial__item.show {
+  -webkit-transform: scale(1);
+  -moz-transform: scale(1);
+  -ms-transform: scale(1);
+  transform: scale(1);
+  -webkit-transition: all 0.5s;
+  -moz-transition: all 0.5s;
+  -ms-transition: all 0.5s;
+  transition:  all 0.5s;
+}
+
+.catalogSectionContent {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow-y: scroll;
+}
+
+.catalogItem {
+  display: inline-block;
+  width: 120px;
+  height: 120px;
+  border-bottom: 1px solid #96a2ad;
+  border-right: 1px solid #96a2ad;
+  background: #fafafa center center no-repeat;
+  background-size: 110px 110px;
+  cursor: move;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#drawing-canvas {
+  display: block;
+  position: relative;
+  background-color: #000000;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3000;
+  margin: auto;
+  cursor: crosshair;
+}
+
+.nav_sk_button{
+  float:right;
+  width:6%;
+  margin-left: 1%;
+  background-color:#43CD80;
+}
