@@ -10,6 +10,7 @@ import base64
 import re
 from io import BytesIO
 from PIL import Image
+from rec_release import recommendation_ls_euclidean
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app)
@@ -165,5 +166,19 @@ def sketch():
 		with open(filename, 'wb') as f:
 			f.write(imgdata)
 	return "Post image! "
+
+@app.route("/palette_recommendation", methods=['POST', 'GET'])
+def palette_recommendation():
+	if request.method == 'POST':
+		rec_results = recommendation_ls_euclidean(request.json)
+		result = []
+		for item in rec_results:
+			m = orm.query_model_by_name(item)
+			ret = {"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)}
+			result.append(ret)
+		print(result)
+		return json.dumps(result)
+	if request.method == 'GET':
+		return "Do not support using GET to using recommendation. "
 
 app.run(host="0.0.0.0",port=11425,debug=True)

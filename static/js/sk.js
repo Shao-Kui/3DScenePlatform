@@ -231,6 +231,9 @@ var onClickObj = function(event){
       isToggle = !isToggle;
     }
   }
+  if(Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined){
+    palette_recommendation();
+  }
 };
 
 function onDocumentMouseMove(event){
@@ -263,6 +266,18 @@ var setting_up = function(){
 		render_initialization();
     orth_initialization();
     $("#searchbtn").click(clickSearchButtion);
+    $("#rec_button").click(function(){
+      Auto_Rec_Mode = true;
+      document.getElementById("rec_container").style.display = "block";
+      document.getElementById("collaborative_container").style.display = "none";
+      document.getElementById("rec_button").style.backgroundColor = '#9400D3';
+    });
+    $("#colla_button").click(function(){
+      Auto_Rec_Mode = false;
+      document.getElementById("rec_container").style.display = "none";
+      document.getElementById("collaborative_container").style.display = "block";
+      document.getElementById("rec_button").style.backgroundColor = '#007bff';
+    });
 		function onWindowResize() { //改用画布的height width
 			camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
 			camera.updateProjectionMatrix();

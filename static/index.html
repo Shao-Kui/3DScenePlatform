@@ -36,6 +36,7 @@
 	var On_Magic_ADD = false;
 	var isToggle = false;
 	var Auto_Insert_Mode = false;
+	var Auto_Rec_Mode = false;
 	var INTERSECT_OBJ;
 	var INSERT_OBJ;
 
@@ -99,17 +100,21 @@
 			<div class="card-body">
 				<button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
 				<button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
-				<button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Audio</button>
-				<button type="button" class="btn btn-lg btn-primary"
+				<button id="rec_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Rec</button>
+				<button id="colla_button" type="button" class="btn btn-lg btn-primary"
 				style="margin-top: 10px; width:100%;">
 				Collaborative Search
-			</button>
+				</button>
 			</div>
-			<canvas id="drawing-canvas" height="128" width="256"></canvas>
-			<div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
-				<input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
-				style="width:75%;margin-left:5%;" id="searchinput">
-				<button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
+			<div id="collaborative_container">
+				<canvas id="drawing-canvas" height="128" width="256"></canvas>
+				<div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
+					<input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
+					style="width:75%;margin-left:5%;" id="searchinput">
+					<button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
+				</div>
+			</div>
+			<div id="rec_container" style="display: none;">
 			</div>
 			<div id="catalogItems" class="catalogSectionContent" align="center"></div>
 		</div>
