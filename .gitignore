@@ -1,5 +1,9 @@
+/rooms
 /suncg
-*/__pycache__
+/__pycache__
+/level/test
+./*.json
+./*.png
 /sketch_retrival/features
 /sketch_retrival/MVCNN_stage_1
 /sketch_retrival/MVCNN_stage_2
