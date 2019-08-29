@@ -90,8 +90,20 @@ var clickSearchButtion = function(){
     }
     }).done(function(o) {
       //console.log('saved');
+      searchResults = JSON.parse(o);
+    searchResults.forEach(function(item){
+      var iDiv = document.createElement('div');
+      iDiv.className = "catalogItem";
+      iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+      iDiv.setAttribute('objectID', item.id);
+      iDiv.setAttribute('objectName', item.name);
+      iDiv.setAttribute('semantic', item.semantic);
+      iDiv.addEventListener('click', clickCatalogItem)
+      catalogItems.appendChild(iDiv);
+    })
   });
-
+    
+  /*
 	var search_url = "/query?kw=" + document.getElementById("searchinput").value;
 	$.getJSON(search_url, function(data){
 		searchResults = data;
@@ -106,6 +118,8 @@ var clickSearchButtion = function(){
 			catalogItems.appendChild(iDiv);
 		})
 	});
+
+  */
 };
 
 var clickCatalogItem = function(e){
