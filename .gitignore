@@ -4,3 +4,5 @@
 /sketch_retrival/MVCNN_stage_2
 /sketch_retrival/objedge20
 /sketch_retrival/runs
+/__pycache__
+/sketch_retrival/__pycache__
