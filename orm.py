@@ -87,3 +87,8 @@ def query_model_by_id(id):
 def query_model_by_name(name):
 	session=Session()
 	return session.query(Model3D).filter(Model3D.name==name).first()
+
+
+def query_model_by_names(names):
+	session = Session()
+	return [session.query(Model3D).filter(Model3D.name==na).first() for na in names]

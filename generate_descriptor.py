@@ -64,7 +64,9 @@ def model_statistics():
         objs=[line.split('\t')[1:3] for line in inf]
 
     objs_data=glob.glob(objedge_dir+'*')
-    objs_data = [d.split('/')[-1] for d in objs_data]
+    #print(objs_data)
+    # Warning: in Linux use '/' and in Windows use '\\'
+    objs_data = [d.split('\\')[-1] for d in objs_data]
     objs = [d for d in objs if d[0] in objs_data and not d[1] in ['door','wall','window','floor','ceil']]
     classnames = list(set([d[1] for d in objs]))
     return classnames,objs
@@ -73,6 +75,7 @@ def model_statistics():
 def load_cnet():
     classnames,objs = model_statistics()
 
+    #print(classnames,objs)
     # model=2493,classnames=180
     cnet = SVCNN("MVCNN", nclasses=len(classnames))
     cnet.load(model_dir)
