@@ -3,7 +3,7 @@ var setUpCanvasDrawing = function(){
 	var drawingContext = drawingCanvas.getContext('2d');
 	
 	drawingContext.fillStyle = '#FFFFFF';
-	drawingContext.fillRect(0, 0, 256, 128);
+	drawingContext.fillRect(0, 0, 224, 224);
 	
 	drawingCanvas.addEventListener('mousedown', function(e){paint = true; drawStartPos.set(e.offsetX, e.offsetY)});
 	drawingCanvas.addEventListener('mouseup', function(e){paint=false});
