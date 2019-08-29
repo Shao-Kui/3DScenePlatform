@@ -1,6 +1,6 @@
 /rooms
 /suncg
-/__pycache__
+*/__pycache__
 /level/test
 ./*.json
 ./*.png
