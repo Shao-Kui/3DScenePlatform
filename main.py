@@ -168,10 +168,19 @@ def sketch():
         with open(filename, 'wb') as f:
             f.write(imgdata)
         
-        results = sketch_search('./qs.png',20)
+        results = sketch_search('./qs.png',400)
+        tmp = []
+        for i in results:
+            if i not in tmp:
+                tmp.append(i)
+                if len(tmp)>=20:
+                    break
+        results = tmp
+        #print(tmp)
         print(results)
 
         results = orm.query_model_by_names(results)
+        #print(results)
         ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
         return json.dumps(ret)
     return "Post image! "
