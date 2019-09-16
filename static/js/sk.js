@@ -56,6 +56,7 @@ var synchronize_json_object = function(object){
   inst.rotate[0] = object.rotation.x;
   inst.rotate[1] = object.rotation.y;
   inst.rotate[2] = object.rotation.z;
+  inst.orient = object.rotation.y;
 };
 
 var synchronize_roomId = function(object){
@@ -102,7 +103,7 @@ var clickSearchButtion = function(){
       catalogItems.appendChild(iDiv);
     })
   });
-    
+
   /*
 	var search_url = "/query?kw=" + document.getElementById("searchinput").value;
 	$.getJSON(search_url, function(data){
@@ -274,7 +275,7 @@ function onDocumentMouseMove(event){
   }
   updateMousePosition();
 };
-
+var temp;
 var setting_up = function(){
     setUpCanvasDrawing();
 		render_initialization();
@@ -291,6 +292,24 @@ var setting_up = function(){
       document.getElementById("rec_container").style.display = "none";
       document.getElementById("collaborative_container").style.display = "block";
       document.getElementById("rec_button").style.backgroundColor = '#007bff';
+    });
+    $("#sklayout").click(function(){
+      if(currentRoomId === undefined){
+        console.log("No room is specified. ");
+        return
+      }
+      $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/sklayout",
+        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+        success: function (data) {
+          data = JSON.parse(data);
+          temp = data;
+          manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
+          manager.renderManager.refresh_instances();
+        }
+      });
     });
 		function onWindowResize() { //改用画布的height width
 			camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
