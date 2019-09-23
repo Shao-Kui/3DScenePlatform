@@ -6,6 +6,7 @@ from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
 import matplotlib.pyplot as plt
+ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"
@@ -23,13 +24,6 @@ correlation_matrix_hack = torch.zeros((len(obj_semantic), len(obj_semantic)), dt
 correlation_matrix_hack[name_to_ls['403'], name_to_ls['318']] = 1.0
 correlation_matrix_hack[name_to_ls['318'], name_to_ls['403']] = 1.0
 MAX_ITERATION = 50
-# ls_to_name = {}
-# name_to_ls = {}
-# index = 0
-# for n in obj_semantic:
-#     ls_to_name[index] = n
-#     name_to_ls[n] = index
-#     index += 1
 REC_MAX = 20
 
 def recommendation_ls_euclidean(objList):
@@ -88,15 +82,9 @@ def loss_1(x):
                 continue
             for l in range(4):
                 loss += pointInRectangleLoss_1(x[j], x[i][l])
-                # loss += toLeftLoss(px=x[j][k][0], py=x[j][k][1],
-                #                    qx=x[j][(k+1)%4][0], qy=x[j][(k+1)%4][1],
-                #                    sx=x[i][l][0], sy=x[i][l][1])
     return loss
 
-"""
-Loss function of calculating crowdness of objects.
-"""
-def loss_2(x):
+def loss_2(x, yrelation=None):
     loss = torch.zeros((len(x), len(x), 4, 4, 3, 3), dtype=torch.float)
     for i in range(len(x)):
         for l in range(4):
@@ -107,6 +95,8 @@ def loss_2(x):
     for i in range(len(x)):
         loss[i, i, :, :, :, :] = 0
     loss[:, :, :, :, :, 2] = 1.0
+    if yrelation is not None:
+        loss = loss * yrelation.reshape((len(x), len(x), 1, 1, 1, 1))
     toleft = torch.max(torch.zeros((len(x), len(x), 4, 4), dtype=torch.float), torch.det(loss))
     return torch.sum(torch.prod(toleft, dim=3))
 
@@ -170,6 +160,12 @@ def rotate_bb_local(point, angle):
     result[1] = torch.sin(angle) * point[0] + torch.cos(angle) * point[1]
     return result
 
+def rotate_bb_local_para(points, angle):
+    result = points.clone()
+    result[:, 0] = torch.cos(angle) * points[:, 0] - torch.sin(angle) * points[:, 1]
+    result[:, 1] = torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 1]
+    return result
+
 def sample_translateRela(child, obj):
     priorid = "{}-{}".format(obj['modelId'], child['modelId'])
     if priorid not in priors['pos']:
@@ -177,6 +173,24 @@ def sample_translateRela(child, obj):
             priors['pos'][priorid] = json.load(f)[child['modelId']]
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
+def collision_loss(translate, room_shape, yrelation=None):
+    loss = loss_2(translate, yrelation=yrelation)
+    loss += loss_4(translate, room_shape)
+    return loss
+
+def children_translate(pend_obj_list, translate, total_obj_num):
+    translate_full = torch.zeros((total_obj_num, 2)).float()
+    index = 0
+    for i in range(len(pend_obj_list)):
+        o = pend_obj_list[i]
+        translate_full[index] += translate[i]
+        index += 1
+        for child in o['children']:
+            translate_full[index] = translate[i]
+            offset = torch.tensor([child['translateRela'][0], child['translateRela'][2]], dtype=torch.float)
+            translate_full[index] += offset
+            index += 1
+    return translate_full
 
 def fa_layout_nxt(rj):
     pend_obj_list = []
@@ -207,8 +221,8 @@ def fa_layout_nxt(rj):
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
     translate = torch.zeros((len(pend_obj_list), 2)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
-    for o in pend_obj_list:
-        disturbance(o, 0.5, room_polygon)
+    # for o in pend_obj_list:
+    #     disturbance(o, 0.5, room_polygon)
     for i in range(len(pend_obj_list)):
         translate[i][0] = pend_obj_list[i]['translate'][0]
         translate[i][1] = pend_obj_list[i]['translate'][2]
@@ -221,17 +235,27 @@ def fa_layout_nxt(rj):
         for child in o['children']:
             bbindex.append(name_to_ls[child['modelId']])
     bb = four_points_xz[bbindex].float()
-    translate_full = torch.zeros((total_obj_num, 2)).float()
-    index = 0
-    for i in range(len(pend_obj_list)):
-        o = pend_obj_list[i]
-        translate_full[index] += translate[i]
-        index += 1
+    yrelation = ymatrix[bbindex][:, bbindex]
+    bi = 0
+    for o in pend_obj_list:
+        bb[bi] = rotate_bb_local_para(bb[bi], torch.tensor(o['orient'], dtype=torch.float))
+        bi += 1
         for child in o['children']:
-            translate_full[index] += translate[i]
-            offset = torch.tensor([child['translateRela'][0], child['translateRela'][2]], dtype=torch.float)
-            translate_full[index] += offset
-            index += 1
+            bb[bi] = rotate_bb_local_para(bb[bi], torch.tensor(child['orient'], dtype=torch.float))
+            bi += 1
+    translate_full = children_translate(pend_obj_list, translate, total_obj_num)
+
+    # time for collision detection
+    iteration = 0
+    loss = collision_loss(translate_full.reshape(total_obj_num, 1, 2) + bb, room_shape, yrelation)
+    while loss.item() > 0.0 and iteration < MAX_ITERATION:
+        loss.backward()
+        translate.data = translate.data - translate.grad * 0.05
+        translate.grad = None
+        translate_full = children_translate(pend_obj_list, translate, total_obj_num)
+        loss = collision_loss(translate_full.reshape(total_obj_num, 1, 2) + bb, room_shape, yrelation)
+        iteration += 1
+
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
         o['translate'][0] = translate[i][0].item()
@@ -267,9 +291,11 @@ def fa_layout(rj):
         bbindex.append(name_to_ls[o['modelId']])
     bb = four_points_xz[bbindex].float()
     # Rotate bb with respect to Y-orient of objects, may requires parallel later
+    # for i in range(len(pend_obj_list)):
+    #     for k in range(4):
+    #         bb[i, k] = rotate_bb_local(bb[i, k], orient[i])
     for i in range(len(pend_obj_list)):
-        for k in range(4):
-            bb[i, k] = rotate_bb_local(bb[i, k], orient[i])
+        bb[i] = rotate_bb_local_para(bb[i], orient[i])
     translate.requires_grad_()
     orient.requires_grad_()
     loss = loss_2(translate.reshape(len(pend_obj_list), 1, 2) + bb)
@@ -300,6 +326,9 @@ def fa_layout(rj):
 
 
 if __name__ == "__main__":
-    with open('./examples/00e1559bdd1539323f3efba225af0531-l0.json') as f:
+    # with open('./examples/00e1559bdd1539323f3efba225af0531-l0.json') as f:
+    #     ex = json.load(f)
+    # print(fa_layout_nxt(ex['rooms'][3]))
+    with open('./examples/00d0a6f041e710f2a198557cbad92e19-l0 - toleft - y.json') as f:
         ex = json.load(f)
-    print(fa_layout_nxt(ex['rooms'][0]))
+    print(fa_layout_nxt(ex['rooms'][6]))
