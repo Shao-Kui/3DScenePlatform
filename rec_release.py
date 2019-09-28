@@ -6,10 +6,11 @@ from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
 import matplotlib.pyplot as plt
-ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
+
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
-PRIORS = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"
+PRIORS = "./latentspace/pos-denoised/{}.json"
+PRIORS_POS_ALT = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"
 priors = {}
 priors['pos'] = {}
 with open(PRIORS.format('403')) as f:
@@ -20,10 +21,11 @@ with open('./latentspace/name_to_ls.json') as f:
     name_to_ls = json.load(f)
 with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
-correlation_matrix_hack = torch.zeros((len(obj_semantic), len(obj_semantic)), dtype=torch.float)
-correlation_matrix_hack[name_to_ls['403'], name_to_ls['318']] = 1.0
-correlation_matrix_hack[name_to_ls['318'], name_to_ls['403']] = 1.0
-MAX_ITERATION = 50
+csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
+ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
+ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
+ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
+MAX_ITERATION = 100
 REC_MAX = 20
 
 def recommendation_ls_euclidean(objList):
@@ -171,6 +173,10 @@ def sample_translateRela(child, obj):
     if priorid not in priors['pos']:
         with open(PRIORS.format(obj['modelId'])) as f:
             priors['pos'][priorid] = json.load(f)[child['modelId']]
+            priors['pos'][priorid] = np.squeeze(priors['pos'][priorid]).tolist()
+        if len(priors['pos'][priorid]) == 0:
+            with open(PRIORS_POS_ALT.format(obj['modelId'])) as f:
+                priors['pos'][priorid] = json.load(f)[child['modelId']]
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
 def collision_loss(translate, room_shape, yrelation=None):
@@ -192,6 +198,99 @@ def children_translate(pend_obj_list, translate, total_obj_num):
             index += 1
     return translate_full
 
+def distribution_loss(x, pos_priors, csrrelation=None):
+    if csrrelation is None:
+        csrrelation = torch.ones((len(x), len(x)))
+    # x should be pure translations of pending objects.
+    diff = x - x[:, None]  # each row i means centering obj i and other objects move to its relative position
+    diff = pos_priors - diff.reshape(len(x), len(x), 1, 2)
+    diff = torch.norm(diff, dim=3)
+    hausdorff = torch.min(diff, dim=2)[0]
+    return torch.sum(hausdorff * csrrelation)
+
+def fa_layout_pro(rj):
+    pend_obj_list = []
+    final_obj_list = []
+    bbindex = []
+    ol = rj['objList']
+    for o in ol:
+        if o is None:
+            continue
+        if o['modelId'] not in obj_semantic:
+            final_obj_list.append(o)
+        else:
+            bbindex.append(name_to_ls[o['modelId']])
+            pend_obj_list.append(o)
+    diag_indices_ = (torch.arange(len(pend_obj_list)), torch.arange(len(pend_obj_list)))
+    csrrelation = csrmatrix[bbindex][:, bbindex]
+    yrelation = ymatrix[bbindex][:, bbindex]
+    csrrelation[diag_indices_] = 0.0
+
+    SSIZE = 200
+    rng = np.random.default_rng()
+    for centerid in range(len(pend_obj_list)):
+        center = pend_obj_list[centerid]
+        for objid in range(len(pend_obj_list)):
+            obj = pend_obj_list[objid]
+            priorid = "{}-{}".format(center['modelId'], obj['modelId'])
+            if priorid not in priors['pos']:
+                if csrrelation[centerid, objid] == 0:
+                    priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
+                    continue
+                with open(PRIORS.format(center['modelId'])) as f:
+                    priors['pos'][priorid] = np.array(json.load(f)[obj['modelId']], dtype=np.float)
+                    if len(priors['pos'][priorid]) <= 10:
+                        csrrelation[centerid, objid] = 0
+                        priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
+                        continue
+                # priors['pos'][priorid] = np.squeeze(priors['pos'][priorid])
+                rng.shuffle(priors['pos'][priorid])
+                SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
+                priors['pos'][priorid] = torch.from_numpy(priors['pos'][priorid]).float()
+            else:
+                SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
+    pos_priors = torch.zeros(len(pend_obj_list), len(pend_obj_list), SSIZE, 3)
+    for centerid in range(len(pend_obj_list)):
+        center = pend_obj_list[centerid]
+        for objid in range(len(pend_obj_list)):
+            obj = pend_obj_list[objid]
+            priorid = "{}-{}".format(center['modelId'], obj['modelId'])
+            pos_priors[centerid, objid] = priors['pos'][priorid][0: SSIZE]
+    room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
+    room_polygon = Polygon(room_meta[:, 0:2])
+    room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
+    translate = torch.zeros((len(pend_obj_list), 2)).float()
+    orient = torch.zeros((len(pend_obj_list))).float()
+    # for o in pend_obj_list:
+    #     disturbance(o, 0.5, room_polygon)
+    for i in range(len(pend_obj_list)):
+        translate[i][0] = pend_obj_list[i]['translate'][0]
+        translate[i][1] = pend_obj_list[i]['translate'][2]
+        orient[i] = pend_obj_list[i]['orient']
+
+    bb = four_points_xz[bbindex].float()
+    for i in range(len(pend_obj_list)):
+        bb[i] = rotate_bb_local_para(bb[i], orient[i])
+
+    translate.requires_grad_()
+    orient.requires_grad_()
+    # time for collision detection
+    iteration = 0
+    loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
+    while loss.item() > 0.0 and iteration < MAX_ITERATION:
+        print("Start iteration {}...".format(iteration))
+        loss.backward()
+        translate.data = translate.data - translate.grad * 0.05
+        translate.grad = None
+        loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
+        iteration += 1
+
+    for i in range(len(pend_obj_list)):
+        o = pend_obj_list[i]
+        o['translate'][0] = translate[i][0].item()
+        o['translate'][2] = translate[i][1].item()
+    return rj
+
 def fa_layout_nxt(rj):
     pend_obj_list = []
     final_obj_list = []
@@ -206,9 +305,8 @@ def fa_layout_nxt(rj):
             total_obj_num += 1
             isRoot = True
             for existobj in pend_obj_list:
-                if correlation_matrix_hack[name_to_ls[existobj['modelId']], name_to_ls[o['modelId']]] == 1.0:
+                if csrmatrix[name_to_ls[existobj['modelId']], name_to_ls[o['modelId']]] == 1.0:
                     sample_translateRela(o, existobj)
-                    print(o['translateRela'])
                     existobj['children'].append(o)
                     isRoot = False
                     break
@@ -232,10 +330,14 @@ def fa_layout_nxt(rj):
     bbindex = []
     for o in pend_obj_list:
         bbindex.append(name_to_ls[o['modelId']])
+        print(o['modelId'])
         for child in o['children']:
+            print(" --- ", child['modelId'])
             bbindex.append(name_to_ls[child['modelId']])
     bb = four_points_xz[bbindex].float()
+    csrrelation = csrmatrix[bbindex][:, bbindex]
     yrelation = ymatrix[bbindex][:, bbindex]
+    print(yrelation)
     bi = 0
     for o in pend_obj_list:
         bb[bi] = rotate_bb_local_para(bb[bi], torch.tensor(o['orient'], dtype=torch.float))
@@ -332,3 +434,6 @@ if __name__ == "__main__":
     with open('./examples/00d0a6f041e710f2a198557cbad92e19-l0 - toleft - y.json') as f:
         ex = json.load(f)
     print(fa_layout_nxt(ex['rooms'][6]))
+    # with open('./examples/00d0a6f041e710f2a198557cbad92e19-l0.json') as f:
+    #     ex = json.load(f)
+    # fa_layout_pro(ex['rooms'][6])
