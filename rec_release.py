@@ -9,12 +9,11 @@ import matplotlib.pyplot as plt
 
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
-PRIORS = "./latentspace/pos-denoised/{}.json"
+PRIORS = "./latentspace/pos-orient-denoised/{}.json"
 PRIORS_POS_ALT = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"
 priors = {}
 priors['pos'] = {}
-with open(PRIORS.format('403')) as f:
-    atest = json.load(f)
+priors['ori'] = {}
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
 with open('./latentspace/name_to_ls.json') as f:
@@ -74,7 +73,6 @@ def disturbance(obj, scale, room_shape=None):
             tz = obj['translate'][2] + np.random.randn() * scale
         obj['translate'][0] = tx
         obj['translate'][2] = tz
-
 
 def loss_1(x):
     loss = torch.tensor(0.0)
@@ -226,7 +224,7 @@ def fa_layout_pro(rj):
     yrelation = ymatrix[bbindex][:, bbindex]
     csrrelation[diag_indices_] = 0.0
 
-    SSIZE = 200
+    SSIZE = 1000
     rng = np.random.default_rng()
     for centerid in range(len(pend_obj_list)):
         center = pend_obj_list[centerid]
@@ -238,18 +236,25 @@ def fa_layout_pro(rj):
                     priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
                     continue
                 with open(PRIORS.format(center['modelId'])) as f:
-                    priors['pos'][priorid] = np.array(json.load(f)[obj['modelId']], dtype=np.float)
+                    theprior = np.array(json.load(f)[obj['modelId']], dtype=np.float)
+                    while len(theprior)  < SSIZE:
+                        theprior = np.vstack((theprior, theprior))
+                    rng.shuffle(theprior)
+                    priors['pos'][priorid] = theprior[:, 0:3]
+                    priors['ori'][priorid] = theprior[:, 3].flatten()
                     if len(priors['pos'][priorid]) <= 10:
                         csrrelation[centerid, objid] = 0
                         priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
                         continue
-                # priors['pos'][priorid] = np.squeeze(priors['pos'][priorid])
-                rng.shuffle(priors['pos'][priorid])
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
                 priors['pos'][priorid] = torch.from_numpy(priors['pos'][priorid]).float()
+                priors['pos'][priorid] = rotate_bb_local_para(priors['pos'][priorid], torch.tensor(center['orient'], dtype=torch.float))
+                priors['ori'][priorid] = torch.from_numpy(priors['ori'][priorid]).float()
+                priors['ori'][priorid] = priors['ori'][priorid] + torch.tensor(center['orient'], dtype=torch.float)
             else:
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
     pos_priors = torch.zeros(len(pend_obj_list), len(pend_obj_list), SSIZE, 3)
+    print(SSIZE)
     for centerid in range(len(pend_obj_list)):
         center = pend_obj_list[centerid]
         for objid in range(len(pend_obj_list)):
@@ -277,12 +282,16 @@ def fa_layout_pro(rj):
     # time for collision detection
     iteration = 0
     loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
+    c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
+        loss += c_loss
         loss.backward()
-        translate.data = translate.data - translate.grad * 0.05
+        translate.data = translate.data - translate.grad * 0.01
+        print(translate.grad)
         translate.grad = None
         loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
+        c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
         iteration += 1
 
     for i in range(len(pend_obj_list)):
@@ -425,7 +434,6 @@ def fa_layout(rj):
         # disturbance(o, 0.5, room_shape)
         final_obj_list.append(o)
     return rj
-
 
 if __name__ == "__main__":
     # with open('./examples/00e1559bdd1539323f3efba225af0531-l0.json') as f:
