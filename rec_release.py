@@ -22,8 +22,8 @@ with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
 csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
 ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
-ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
 ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
+ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
 MAX_ITERATION = 100
 REC_MAX = 20
 
@@ -254,7 +254,6 @@ def fa_layout_pro(rj):
             else:
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
     pos_priors = torch.zeros(len(pend_obj_list), len(pend_obj_list), SSIZE, 3)
-    print(SSIZE)
     for centerid in range(len(pend_obj_list)):
         center = pend_obj_list[centerid]
         for objid in range(len(pend_obj_list)):
@@ -283,15 +282,15 @@ def fa_layout_pro(rj):
     iteration = 0
     loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
     c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
+    loss += c_loss
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
-        loss += c_loss
         loss.backward()
-        translate.data = translate.data - translate.grad * 0.01
-        print(translate.grad)
+        translate.data = translate.data - translate.grad * np.random.randint(1, 6) * 0.01
         translate.grad = None
         loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
+        loss += c_loss
         iteration += 1
 
     for i in range(len(pend_obj_list)):
