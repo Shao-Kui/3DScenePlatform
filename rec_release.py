@@ -24,7 +24,7 @@ csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
 ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
 ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
 ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
-MAX_ITERATION = 100
+MAX_ITERATION = 10
 REC_MAX = 20
 
 def recommendation_ls_euclidean(objList):
@@ -178,6 +178,7 @@ def distribution_loss(x, pos_priors, csrrelation=None):
     diff = pos_priors - diff.reshape(len(x), len(x), 1, 2)
     diff = torch.norm(diff, dim=3)
     hausdorff = torch.min(diff, dim=2)[0]
+    print(hausdorff)
     return torch.sum(hausdorff * csrrelation)
 
 def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
@@ -217,7 +218,7 @@ def fa_layout_pro(rj):
     csrrelation = csrmatrix[bbindex][:, bbindex]
     yrelation = ymatrix[bbindex][:, bbindex]
     csrrelation[diag_indices_] = 0.0
-
+    print(csrrelation)
     SSIZE = 1000
     rng = np.random.default_rng()
     for centerid in range(len(pend_obj_list)):
@@ -226,21 +227,18 @@ def fa_layout_pro(rj):
             obj = pend_obj_list[objid]
             priorid = "{}-{}".format(center['modelId'], obj['modelId'])
             if priorid not in priors['pos']:
-                if csrrelation[centerid, objid] == 0:
-                    priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
-                    priors['ori'][priorid] = torch.zeros((SSIZE), dtype=torch.float)
-                    continue
                 with open(PRIORS.format(center['modelId'])) as f:
                     theprior = np.array(json.load(f)[obj['modelId']], dtype=np.float)
-                    while len(theprior)  < SSIZE:
+                    if len(theprior) == 0:
+                        csrrelation[centerid, objid] = 0
+                        theprior = np.zeros((SSIZE, 4), dtype=np.float)
+                    if len(theprior) <= 10:
+                        csrrelation[centerid, objid] = 0
+                    while len(theprior) < SSIZE:
                         theprior = np.vstack((theprior, theprior))
                     rng.shuffle(theprior)
                     priors['pos'][priorid] = theprior[:, 0:3]
                     priors['ori'][priorid] = theprior[:, 3].flatten()
-                    if len(priors['pos'][priorid]) <= 10:
-                        csrrelation[centerid, objid] = 0
-                        priors['pos'][priorid] = torch.zeros((SSIZE, 3), dtype=torch.float)
-                        continue
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
                 priors['pos'][priorid] = torch.from_numpy(priors['pos'][priorid]).float()
                 priors['pos'][priorid] = rotate_bb_local_para(priors['pos'][priorid], torch.tensor(center['orient'], dtype=torch.float))
@@ -253,6 +251,8 @@ def fa_layout_pro(rj):
     for centerid in range(len(pend_obj_list)):
         center = pend_obj_list[centerid]
         for objid in range(len(pend_obj_list)):
+            if objid == centerid:
+                continue
             obj = pend_obj_list[objid]
             priorid = "{}-{}".format(center['modelId'], obj['modelId'])
             pos_priors[centerid, objid] = priors['pos'][priorid][0: SSIZE]
@@ -262,7 +262,6 @@ def fa_layout_pro(rj):
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
     translate = torch.zeros((len(pend_obj_list), 2)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
-    print(ori_priors)
     # for o in pend_obj_list:
     #     disturbance(o, 0.5, room_polygon)
     for i in range(len(pend_obj_list)):

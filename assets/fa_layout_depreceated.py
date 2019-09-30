@@ -158,3 +158,7 @@ def fa_layout(rj):
         # disturbance(o, 0.5, room_shape)
         final_obj_list.append(o)
     return rj
+
+plt.scatter(pos_priors[0, 0, :, 0] + translate.data[0, 0], pos_priors[0, 0, :, 2] + translate.data[0, 1], s=0.5)
+plt.scatter(pos_priors[0, 0, :, 0] + translate.data[1, 0], pos_priors[0, 0, :, 2] + translate.data[1, 1], s=0.5)
+plt.savefig("./test/{}.png".format(iteration))
