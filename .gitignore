@@ -1,5 +1,6 @@
 /rooms
 /suncg
+/test
 /__pycache__
 */__pycache__
 /level/test
@@ -12,3 +13,6 @@
 /sketch_retrival/objedge20
 /sketch_retrival/runs
 /latentspace
+./*.mp4
+./*.mp3
+./*.wav
