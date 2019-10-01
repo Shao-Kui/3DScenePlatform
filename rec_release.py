@@ -140,8 +140,14 @@ def loss_4(x, room_shape):
 
 def rotate_bb_local_para(points, angle):
     result = points.clone()
-    result[:, 0] = torch.cos(angle) * points[:, 0] - torch.sin(angle) * points[:, 1]
-    result[:, 1] = torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 1]
+    result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 1]
+    result[:, 1] = -torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 1]
+    return result
+
+def rotate_pos_prior(points, angle):
+    result = points.clone()
+    result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 2]
+    result[:, 2] = -torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 2]
     return result
 
 def sample_translateRela(child, obj):
@@ -193,9 +199,13 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     diff = torch.norm(diff, dim=3)
 
     oridiff = torch.abs(ori - ori[:, None])
+    oridiff[oridiff >  np.pi] -= 2 * np.pi
+    oridiff[oridiff < -np.pi] += 2 * np.pi
+    oridiff = torch.abs(oridiff)
     oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     # oridiff = torch.abs(ori_priors - oridiff.reshape(len(x), len(x), 1))
     oridiff = torch.abs(ori_priors) - oridiff.reshape(len(x), len(x), 1)
+    print(oridiff)
     oridiff = torch.abs(oridiff)
     # oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     oridiff = torch.exp(oridiff)
@@ -265,9 +275,11 @@ def fa_layout_pro(rj):
                 continue
             obj = pend_obj_list[objid]
             priorid = "{}-{}".format(center['modelId'], obj['modelId'])
-            pos_priors[centerid, objid] = rotate_bb_local_para(priors['pos'][priorid][0: SSIZE], torch.tensor(center['orient'], dtype=torch.float))
+            pos_priors[centerid, objid] = rotate_pos_prior(priors['pos'][priorid][0: SSIZE], torch.tensor(center['orient'], dtype=torch.float))
             ori_priors[centerid, objid] = priors['ori'][priorid][0: SSIZE]
-    print(ori_priors)
+    # making sure that angles are between (-pi, pi)
+    ori_priors[ori_priors >  np.pi] -= 2 * np.pi
+    ori_priors[ori_priors < -np.pi] += 2 * np.pi
     room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
     room_polygon = Polygon(room_meta[:, 0:2])
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
