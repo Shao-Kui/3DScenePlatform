@@ -56,7 +56,7 @@ var synchronize_json_object = function(object){
   inst.rotate[0] = object.rotation.x;
   inst.rotate[1] = object.rotation.y;
   inst.rotate[2] = object.rotation.z;
-  inst.orient = object.rotation.y;
+  inst.orient = Math.atan2(Math.sin(object.rotation.y), Math.cos(object.rotation.x)*Math.cos(object.rotation.y));
 };
 
 var synchronize_roomId = function(object){
@@ -232,6 +232,7 @@ var onClickObj = function(event){
   if (instanceKeyCache.length > 0 && intersects.length > 0 ) {
     INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
     console.log(INTERSECT_OBJ.userData);
+    console.log(INTERSECT_OBJ.position, INTERSECT_OBJ.rotation)
     menu.style.left = (event.clientX - 63)+ "px";
     menu.style.top = (event.clientY - 63) + "px";
     if(!isToggle){
