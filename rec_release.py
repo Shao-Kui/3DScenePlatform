@@ -21,6 +21,10 @@ with open('./latentspace/name_to_ls.json') as f:
 with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
 csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
+csrmatrix[name_to_ls['679']] = 0.0
+csrmatrix[name_to_ls['681']] = 0.0
+csrmatrix[:, name_to_ls['679']] = 0.0
+csrmatrix[:, name_to_ls['681']] = 0.0
 ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
 ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
 ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
@@ -178,7 +182,6 @@ def distribution_loss(x, pos_priors, csrrelation=None):
     diff = pos_priors - diff.reshape(len(x), len(x), 1, 2)
     diff = torch.norm(diff, dim=3)
     hausdorff = torch.min(diff, dim=2)[0]
-    print(hausdorff)
     return torch.sum(hausdorff * csrrelation)
 
 def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
@@ -189,12 +192,22 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     diff = pos_priors - diff.reshape(len(x), len(x), 1, 2)
     diff = torch.norm(diff, dim=3)
 
-    oridiff = ori - ori[:, None]
-    oridiff = torch.abs(ori_priors - oridiff.reshape(len(x), len(x), 1))
+    oridiff = torch.abs(ori - ori[:, None])
     oridiff = torch.min(2 * np.pi - oridiff, oridiff)
+    # oridiff = torch.abs(ori_priors - oridiff.reshape(len(x), len(x), 1))
+    oridiff = torch.abs(ori_priors) - oridiff.reshape(len(x), len(x), 1)
+    oridiff = torch.abs(oridiff)
+    # oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     oridiff = torch.exp(oridiff)
 
-    hausdorff = torch.min(diff + oridiff, dim=2)[0]
+    hausdorff = torch.min(diff + oridiff, dim=2)
+    indexes = hausdorff[1].flatten() + (torch.arange(len(x) * len(x)) * len(ori_priors[0, 0]))
+    indexes = indexes.flatten()
+    print("Dis Part: \r\n", diff.data.flatten()[indexes].reshape(len(x), len(x)))
+    print("Ori Part: \r\n", oridiff.flatten()[indexes].reshape(len(x), len(x)))
+    hausdorff = hausdorff[0]
+    print("Hau Part: \r\n", hausdorff)
+
     return torch.sum(hausdorff * csrrelation)
 
 def fa_layout_pro(rj):
@@ -218,7 +231,6 @@ def fa_layout_pro(rj):
     csrrelation = csrmatrix[bbindex][:, bbindex]
     yrelation = ymatrix[bbindex][:, bbindex]
     csrrelation[diag_indices_] = 0.0
-    print(csrrelation)
     SSIZE = 1000
     rng = np.random.default_rng()
     for centerid in range(len(pend_obj_list)):
@@ -241,9 +253,7 @@ def fa_layout_pro(rj):
                     priors['ori'][priorid] = theprior[:, 3].flatten()
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
                 priors['pos'][priorid] = torch.from_numpy(priors['pos'][priorid]).float()
-                priors['pos'][priorid] = rotate_bb_local_para(priors['pos'][priorid], torch.tensor(center['orient'], dtype=torch.float))
                 priors['ori'][priorid] = torch.from_numpy(priors['ori'][priorid]).float()
-                priors['ori'][priorid] = priors['ori'][priorid] + torch.tensor(center['orient'], dtype=torch.float)
             else:
                 SSIZE = np.min((len(priors['pos'][priorid]), SSIZE))
     pos_priors = torch.zeros(len(pend_obj_list), len(pend_obj_list), SSIZE, 3)
@@ -255,8 +265,9 @@ def fa_layout_pro(rj):
                 continue
             obj = pend_obj_list[objid]
             priorid = "{}-{}".format(center['modelId'], obj['modelId'])
-            pos_priors[centerid, objid] = priors['pos'][priorid][0: SSIZE]
+            pos_priors[centerid, objid] = rotate_bb_local_para(priors['pos'][priorid][0: SSIZE], torch.tensor(center['orient'], dtype=torch.float))
             ori_priors[centerid, objid] = priors['ori'][priorid][0: SSIZE]
+    print(ori_priors)
     room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
     room_polygon = Polygon(room_meta[:, 0:2])
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
@@ -285,6 +296,7 @@ def fa_layout_pro(rj):
         print("Start iteration {}...".format(iteration))
         loss.backward()
         translate.data = translate.data - translate.grad * np.random.randint(1, 6) * 0.01
+        print("Gra Part: \r\n", translate.grad)
         translate.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
