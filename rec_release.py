@@ -25,10 +25,18 @@ csrmatrix[name_to_ls['679']] = 0.0
 csrmatrix[name_to_ls['681']] = 0.0
 csrmatrix[:, name_to_ls['679']] = 0.0
 csrmatrix[:, name_to_ls['681']] = 0.0
+csrmatrix[name_to_ls['236']] = 0.0
+csrmatrix[:, name_to_ls['236']] = 0.0
+csrmatrix[name_to_ls['680']] = 0.0
+csrmatrix[:, name_to_ls['680']] = 0.0
+csrmatrix[name_to_ls['458']] = 0.0
+csrmatrix[:, name_to_ls['458']] = 0.0
 ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
 ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
 ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
-MAX_ITERATION = 10
+ymatrix[name_to_ls['83'], name_to_ls['79']] = 1.0
+ymatrix[name_to_ls['79'], name_to_ls['83']] = 1.0
+MAX_ITERATION = 20
 REC_MAX = 20
 
 def recommendation_ls_euclidean(objList):
@@ -138,10 +146,12 @@ def loss_4(x, room_shape):
     min_result = torch.min(torch.zeros((len(x), 4, len(room_shape)), dtype=torch.float), torch.det(wall))
     return torch.sum(torch.abs(min_result))
 
-def rotate_bb_local_para(points, angle):
+def rotate_bb_local_para(points, angle, scale):
     result = points.clone()
-    result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 1]
-    result[:, 1] = -torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 1]
+    scaled = points.clone()
+    scaled = scaled * scale
+    result[:, 0] = torch.cos(angle) * scaled[:, 0] + torch.sin(angle) * scaled[:, 1]
+    result[:, 1] = -torch.sin(angle) * scaled[:, 0] + torch.cos(angle) * scaled[:, 1]
     return result
 
 def rotate_pos_prior(points, angle):
@@ -205,7 +215,6 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     # oridiff = torch.abs(ori_priors - oridiff.reshape(len(x), len(x), 1))
     oridiff = torch.abs(ori_priors) - oridiff.reshape(len(x), len(x), 1)
-    print(oridiff)
     oridiff = torch.abs(oridiff)
     # oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     oridiff = torch.exp(oridiff)
@@ -285,16 +294,20 @@ def fa_layout_pro(rj):
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
     translate = torch.zeros((len(pend_obj_list), 2)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
+    scale = torch.zeros((len(pend_obj_list), 3)).float()
     # for o in pend_obj_list:
     #     disturbance(o, 0.5, room_polygon)
     for i in range(len(pend_obj_list)):
         translate[i][0] = pend_obj_list[i]['translate'][0]
         translate[i][1] = pend_obj_list[i]['translate'][2]
         orient[i] = pend_obj_list[i]['orient']
+        scale[i][0] = pend_obj_list[i]['scale'][0]
+        scale[i][1] = pend_obj_list[i]['scale'][1]
+        scale[i][2] = pend_obj_list[i]['scale'][2]
 
     bb = four_points_xz[bbindex].float()
     for i in range(len(pend_obj_list)):
-        bb[i] = rotate_bb_local_para(bb[i], orient[i])
+        bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
 
     translate.requires_grad_()
     # orient.requires_grad_()
@@ -307,7 +320,7 @@ def fa_layout_pro(rj):
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
         loss.backward()
-        translate.data = translate.data - translate.grad * np.random.randint(1, 6) * 0.01
+        translate.data = translate.data - translate.grad * 0.01 * np.random.randint(1, 6)
         print("Gra Part: \r\n", translate.grad)
         translate.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
@@ -315,7 +328,9 @@ def fa_layout_pro(rj):
         c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
         loss += c_loss
         iteration += 1
-
+    for o in pend_obj_list:
+        print(o['modelId'])
+    print(csrrelation)
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
         o['translate'][0] = translate[i][0].item()

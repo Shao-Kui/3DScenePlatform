@@ -162,3 +162,5 @@ def fa_layout(rj):
 plt.scatter(pos_priors[0, 0, :, 0] + translate.data[0, 0], pos_priors[0, 0, :, 2] + translate.data[0, 1], s=0.5)
 plt.scatter(pos_priors[0, 0, :, 0] + translate.data[1, 0], pos_priors[0, 0, :, 2] + translate.data[1, 1], s=0.5)
 plt.savefig("./test/{}.png".format(iteration))
+
+priors['ori'][priorid] = priors['ori'][priorid] + torch.tensor(center['orient'], dtype=torch.float)
