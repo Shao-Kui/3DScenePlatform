@@ -79,7 +79,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "door",
           "roomId": 0
         },
         {
@@ -115,7 +114,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -3.141592653589793,
-          "coarseSemantic": "window",
           "roomId": 0
         },
         {
@@ -151,7 +149,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "window",
           "roomId": 0
         },
         {
@@ -187,7 +184,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "window",
           "roomId": 0
         },
         {
@@ -223,7 +219,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948968,
-          "coarseSemantic": "window",
           "roomId": 0
         },
         {
@@ -259,7 +254,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "window",
           "roomId": 0
         }
       ]
@@ -318,7 +312,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chandelier",
           "roomId": 1
         },
         {
@@ -354,7 +347,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "kitchen_cabinet",
           "roomId": 1
         },
         {
@@ -390,7 +382,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "kitchen_cabinet",
           "roomId": 1
         },
         {
@@ -426,7 +417,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "range_oven",
           "roomId": 1
         },
         {
@@ -462,7 +452,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "refrigerator",
           "roomId": 1
         },
         {
@@ -498,7 +487,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.0179550447632202,
-          "coarseSemantic": "kettle",
           "roomId": 1
         },
         {
@@ -534,7 +522,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -0.474094636087039,
-          "coarseSemantic": "knife_rack",
           "roomId": 1
         },
         {
@@ -570,7 +557,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "plates",
           "roomId": 1
         },
         {
@@ -606,7 +592,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.79588778164647,
-          "coarseSemantic": "pan",
           "roomId": 1
         },
         {
@@ -642,7 +627,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "dining_table",
           "roomId": 1
         },
         {
@@ -678,7 +662,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "chair",
           "roomId": 1
         },
         {
@@ -714,7 +697,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chair",
           "roomId": 1
         },
         {
@@ -750,7 +732,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chair",
           "roomId": 1
         },
         {
@@ -786,7 +767,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "chair",
           "roomId": 1
         },
         {
@@ -822,7 +802,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "kitchen_cabinet",
           "roomId": 1
         },
         {
@@ -858,7 +837,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "fruit_bowl",
           "roomId": 1
         },
         {
@@ -894,7 +872,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "window",
           "roomId": 1
         },
         {
@@ -930,7 +907,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "hanger",
           "roomId": 1
         },
         {
@@ -966,7 +942,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "switch",
           "roomId": 1
         },
         {
@@ -1002,7 +977,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "clock",
           "roomId": 1
         }
       ]
@@ -1061,7 +1035,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -0.7064100704241338,
-          "coarseSemantic": "door",
           "roomId": 2
         },
         {
@@ -1097,7 +1070,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "toilet",
           "roomId": 2
         },
         {
@@ -1133,7 +1105,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "bathtub",
           "roomId": 2
         },
         {
@@ -1169,7 +1140,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "sink",
           "roomId": 2
         },
         {
@@ -1205,7 +1175,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "wardrobe_cabinet",
           "roomId": 2
         },
         {
@@ -1241,7 +1210,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "towel_rack",
           "roomId": 2
         },
         {
@@ -1277,7 +1245,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.10858783534279,
-          "coarseSemantic": "rug",
           "roomId": 2
         },
         {
@@ -1313,7 +1280,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chandelier",
           "roomId": 2
         }
       ]
@@ -1372,7 +1338,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "door",
           "roomId": 3
         },
         {
@@ -1409,7 +1374,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.2246468525851679E-16,
-          "coarseSemantic": "door",
           "roomId": 3
         },
         {
@@ -1445,7 +1409,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "shoes_cabinet",
           "roomId": 3
         },
         {
@@ -1481,7 +1444,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "wardrobe_cabinet",
           "roomId": 3
         },
         {
@@ -1517,7 +1479,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "washer",
           "roomId": 3
         },
         {
@@ -1553,7 +1514,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chandelier",
           "roomId": 3
         },
         {
@@ -1589,7 +1549,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "switch",
           "roomId": 3
         },
         {
@@ -1625,7 +1584,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.532353741641643,
-          "coarseSemantic": "switch",
           "roomId": 3
         },
         {
@@ -1661,7 +1619,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "switch",
           "roomId": 3
         },
         {
@@ -1697,7 +1654,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -3.141592653589793,
-          "coarseSemantic": "door",
           "roomId": 3
         }
       ]
@@ -1754,7 +1710,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "sofa",
           "roomId": 4
         },
         {
@@ -1790,7 +1745,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "tv_stand",
           "roomId": 4
         },
         {
@@ -1826,7 +1780,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "tv_stand",
           "roomId": 4
         },
         {
@@ -1862,7 +1815,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.4929410815227075,
-          "coarseSemantic": "television",
           "roomId": 4
         },
         {
@@ -1898,7 +1850,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "stand",
           "roomId": 4
         },
         {
@@ -1934,7 +1885,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "plant",
           "roomId": 4
         },
         {
@@ -1970,7 +1920,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "vase",
           "roomId": 4
         },
         {
@@ -2006,7 +1955,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "dressing_table",
           "roomId": 4
         },
         {
@@ -2042,7 +1990,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "wardrobe_cabinet",
           "roomId": 4
         },
         {
@@ -2078,7 +2025,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "chandelier",
           "roomId": 4
         },
         {
@@ -2114,7 +2060,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "switch",
           "roomId": 4
         },
         {
@@ -2150,7 +2095,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5872713881279303,
-          "coarseSemantic": "switch",
           "roomId": 4
         },
         {
@@ -2186,7 +2130,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "curtain",
           "roomId": 4
         },
         {
@@ -2222,7 +2165,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5964591398144106,
-          "coarseSemantic": "switch",
           "roomId": 4
         },
         {
@@ -2258,7 +2200,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "switch",
           "roomId": 4
         },
         {
@@ -2294,7 +2235,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "person",
           "roomId": 4
         },
         {
@@ -2330,7 +2270,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "person",
           "roomId": 4
         }
       ]
@@ -2389,7 +2328,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "door",
           "roomId": 5
         },
         {
@@ -2425,7 +2363,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.5707963267948963,
-          "coarseSemantic": "shelving",
           "roomId": 5
         },
         {
@@ -2461,7 +2398,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "ironing_board",
           "roomId": 5
         },
         {
@@ -2497,7 +2433,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "iron",
           "roomId": 5
         },
         {
@@ -2533,7 +2468,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 1.5707963267948963,
-          "coarseSemantic": "vacuum_cleaner",
           "roomId": 5
         },
         {
@@ -2569,7 +2503,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 3.141592653589793,
-          "coarseSemantic": "wall_lamp",
           "roomId": 5
         }
       ]
@@ -2596,222 +2529,6 @@
       "roomId": 6,
       "objList": [
         {
-          "id": "0_7",
-          "type": "Object",
-          "modelId": "210",
-          "bbox": {
-            "min": [
-              38.50499669793999,
-              0.8499999777226696,
-              39.378799119815234
-            ],
-            "max": [
-              38.67999669402843,
-              2.249999949708581,
-              41.478799072876576
-            ]
-          },
-          "translate": [
-            38.57999801635742,
-            0.8499999642372131,
-            40.43000030517578
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 1.5707963267948968,
-          "coarseSemantic": "window",
-          "roomId": 6
-        },
-        {
-          "id": "0_8",
-          "type": "Object",
-          "modelId": "78",
-          "bbox": {
-            "min": [
-              38.64999913610518,
-              0.04999995333611393,
-              39.17500380920012
-            ],
-            "max": [
-              39.749999111518264,
-              0.8216589816344901,
-              41.545004152192064
-            ]
-          },
-          "translate": [
-            39.20000076293945,
-            0.04999999701976776,
-            40.36000442504883
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.1339714527130127
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "single_bed",
-          "roomId": 6
-        },
-        {
-          "id": "0_9",
-          "type": "Object",
-          "modelId": "78",
-          "bbox": {
-            "min": [
-              40.93999908491969,
-              0.04999995333611393,
-              39.1850038089766
-            ],
-            "max": [
-              42.039999060332775,
-              0.8216589816344901,
-              41.55500415196855
-            ]
-          },
-          "translate": [
-            41.48999786376953,
-            0.04999999701976776,
-            40.37000274658203
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.1339714527130127
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "single_bed",
-          "roomId": 6
-        },
-        {
-          "id": "0_10",
-          "type": "Object",
-          "modelId": "267",
-          "bbox": {
-            "min": [
-              39.94500153712178,
-              0.05000016578540918,
-              37.544999160803854
-            ],
-            "max": [
-              40.595001545481324,
-              2.149999951943755,
-              38.09571514849439
-            ]
-          },
-          "translate": [
-            40.27000045776367,
-            0.04999999701976776,
-            37.81999969482422
-          ],
-          "scale": [
-            1.5116279125213623,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "wardrobe_cabinet",
-          "roomId": 6
-        },
-        {
-          "id": "0_11",
-          "type": "Object",
-          "modelId": "266",
-          "bbox": {
-            "min": [
-              38.60499913711101,
-              0.05000016578540918,
-              41.63499906938523
-            ],
-            "max": [
-              39.155715124801546,
-              2.149999951943755,
-              43.38499903026968
-            ]
-          },
-          "translate": [
-            38.87999725341797,
-            0.04999999701976776,
-            42.5099983215332
-          ],
-          "scale": [
-            2.1875,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 1.5707963267948963,
-          "coarseSemantic": "wardrobe_cabinet",
-          "roomId": 6
-        },
-        {
-          "id": "0_12",
-          "type": "Object",
-          "modelId": "271",
-          "bbox": {
-            "min": [
-              38.6399991363287,
-              0.04999998758861316,
-              37.5499967192859
-            ],
-            "max": [
-              39.93999910727143,
-              1.8499999586492777,
-              38.06959570767196
-            ]
-          },
-          "translate": [
-            39.290000915527344,
-            0.04999999701976776,
-            37.80999755859375
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "wardrobe_cabinet",
-          "roomId": 6
-        },
-        {
           "id": "0_13",
           "type": "Object",
           "modelId": "108",
@@ -2828,9 +2545,7 @@
             ]
           },
           "translate": [
-            41.31999969482422,
-            0.04999999701976776,
-            37.87999725341797
+            40.12217330932617, 0.0504260063171387, 39.632957458496094
           ],
           "scale": [
             1.0,
@@ -2844,223 +2559,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": 0.0,
-          "coarseSemantic": "desk",
-          "roomId": 6
-        },
-        {
-          "id": "0_14",
-          "type": "Object",
-          "modelId": "335",
-          "bbox": {
-            "min": [
-              40.74999908916652,
-              0.050259590023583246,
-              38.289707144158335
-            ],
-            "max": [
-              41.36999907530844,
-              1.0907600137665858,
-              38.88962113074921
-            ]
-          },
-          "translate": [
-            41.05999755859375,
-            0.050000037997961044,
-            38.59000015258789
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -3.141592653589793,
-            1.2246468525851679E-16,
-            -3.141592653589793
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 3.141592653589793,
-          "coarseSemantic": "office_chair",
-          "roomId": 6
-        },
-        {
-          "id": "0_15",
-          "type": "Object",
-          "modelId": "275",
-          "bbox": {
-            "min": [
-              38.5761250377564,
-              0.4654646595960539,
-              39.215131564879734
-            ],
-            "max": [
-              38.70500463487571,
-              2.5623899427261208,
-              41.66487151012378
-            ]
-          },
-          "translate": [
-            38.63999938964844,
-            0.4599999785423279,
-            40.44000244140625
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 1.5707963267948963,
-          "coarseSemantic": "curtain",
-          "roomId": 6
-        },
-        {
-          "id": "0_16",
-          "type": "Object",
-          "modelId": "120",
-          "bbox": {
-            "min": [
-              40.90999908559024,
-              0.7999999773977766,
-              37.804028596420345
-            ],
-            "max": [
-              41.229999078437686,
-              1.0400599767528473,
-              38.030001591369455
-            ]
-          },
-          "translate": [
-            41.06999969482422,
-            0.7999999523162842,
-            37.92000198364258
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "laptop",
-          "roomId": 6
-        },
-        {
-          "id": "0_17",
-          "type": "Object",
-          "modelId": "629",
-          "bbox": {
-            "min": [
-              40.18558122178224,
-              2.1899999465722257,
-              40.29055965943579
-            ],
-            "max": [
-              40.4544169757733,
-              2.7099999394267797,
-              40.5494385336494
-            ]
-          },
-          "translate": [
-            40.31999969482422,
-            2.190000057220459,
-            40.41999816894531
-          ],
-          "scale": [
-            1.350000023841858,
-            1.0399999618530273,
-            1.2999999523162842
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "chandelier",
-          "roomId": 6
-        },
-        {
-          "id": "0_18",
-          "type": "Object",
-          "modelId": "679",
-          "bbox": {
-            "min": [
-              42.02488856067052,
-              1.550140944351649,
-              39.91030904934131
-            ],
-            "max": [
-              42.054888559999966,
-              1.7498589608876036,
-              40.40969403817918
-            ]
-          },
-          "translate": [
-            42.040000915527344,
-            1.5499999523162842,
-            40.15999984741211
-          ],
-          "scale": [
-            2.5,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 1.5707963267948963,
-          "coarseSemantic": "picture_frame",
-          "roomId": 6
-        },
-        {
-          "id": "0_19",
-          "type": "Object",
-          "modelId": "681",
-          "bbox": {
-            "min": [
-              38.615171136883646,
-              1.5501252693519996,
-              38.300083143926415
-            ],
-            "max": [
-              38.645171136213094,
-              2.0498749541817234,
-              38.79991513275429
-            ]
-          },
-          "translate": [
-            38.62999725341797,
-            1.5499999523162842,
-            38.54999923706055
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            -1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": -1.5707963267948963,
-          "coarseSemantic": "picture_frame",
           "roomId": 6
         },
         {
@@ -3080,9 +2578,7 @@
             ]
           },
           "translate": [
-            41.73999786376953,
-            0.8004260063171387,
-            37.84000015258789
+            40.224952697753906, 0.8004260063171387, 39.694801330566406
           ],
           "scale": [
             0.9999998814720398,
@@ -3096,223 +2592,6 @@
           ],
           "rotateOrder": "XYZ",
           "orient": -1.0479187962106182,
-          "coarseSemantic": "book",
-          "roomId": 6
-        },
-        {
-          "id": "0_30",
-          "type": "Object",
-          "modelId": "122",
-          "bbox": {
-            "min": [
-              42.03000394336868,
-              0.019999920199221626,
-              42.13499905820936
-            ],
-            "max": [
-              42.68000492884003,
-              2.139999875873329,
-              43.18499903474003
-            ]
-          },
-          "translate": [
-            42.10000228881836,
-            0.019999923184514046,
-            42.65999984741211
-          ],
-          "scale": [
-            1.3125,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            -1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": -1.5707963267948963,
-          "coarseSemantic": "door",
-          "roomId": 6
-        },
-        {
-          "id": "0_41",
-          "type": "Object",
-          "modelId": "279",
-          "bbox": {
-            "min": [
-              39.544996674694175,
-              0.8806074863168885,
-              43.49499902781099
-            ],
-            "max": [
-              39.61499667312955,
-              0.9506074787522666,
-              43.544999026693404
-            ]
-          },
-          "translate": [
-            39.57999801635742,
-            0.8799999952316284,
-            43.52000045776367
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -3.141592653589793,
-            1.2246468525851679E-16,
-            -3.141592653589793
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 3.141592653589793,
-          "coarseSemantic": "switch",
-          "roomId": 6
-        },
-        {
-          "id": "0_42",
-          "type": "Object",
-          "modelId": "279",
-          "bbox": {
-            "min": [
-              42.004999061115086,
-              0.8806074863168885,
-              41.93499906267971
-            ],
-            "max": [
-              42.0549990599975,
-              0.9506074787522666,
-              42.004999061115086
-            ]
-          },
-          "translate": [
-            42.029998779296875,
-            0.8799999952316284,
-            41.96999740600586
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            -1.5707963267948966,
-            0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": -1.5707963267948963,
-          "coarseSemantic": "switch",
-          "roomId": 6
-        },
-        {
-          "id": "0_45",
-          "type": "Object",
-          "modelId": "280",
-          "bbox": {
-            "min": [
-              41.99368987630569,
-              0.7506074892226149,
-              37.984095708021165
-            ],
-            "max": [
-              42.04637025531594,
-              0.820607481657993,
-              38.05596747261357
-            ]
-          },
-          "translate": [
-            42.02000045776367,
-            0.75,
-            38.02000045776367
-          ],
-          "scale": [
-            0.9999999381432982,
-            1.0,
-            0.9999999381432982
-          ],
-          "rotate": [
-            -3.141592653589793,
-            -1.5310445520758378,
-            -3.141592653589793
-          ],
-          "rotateOrder": "XYZ",
-          "orient": -1.6105481015139542,
-          "coarseSemantic": "switch",
-          "roomId": 6
-        },
-        {
-          "id": "0_90",
-          "type": "Object",
-          "modelId": "319",
-          "bbox": {
-            "min": [
-              41.31750254306746,
-              0.7999999783530164,
-              37.63232709042606
-            ],
-            "max": [
-              41.604576860296234,
-              1.1005089983287237,
-              37.90932606111053
-            ]
-          },
-          "translate": [
-            41.459999084472656,
-            0.7999999523162842,
-            37.77000045776367
-          ],
-          "scale": [
-            0.9999999135596818,
-            1.0,
-            0.9999999135596818
-          ],
-          "rotate": [
-            -0.0,
-            1.016298865971911,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 1.016298865971911,
-          "coarseSemantic": "books",
-          "roomId": 6
-        },
-        {
-          "id": "0_91",
-          "type": "Object",
-          "modelId": "323",
-          "bbox": {
-            "min": [
-              40.78291520561829,
-              0.04944999889470637,
-              38.08425314875059
-            ],
-            "max": [
-              41.35796119276501,
-              1.5091629662675783,
-              38.79218313292712
-            ]
-          },
-          "translate": [
-            41.059993743896484,
-            0.04999999701976776,
-            38.43000030517578
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "rotate": [
-            -0.0,
-            0.0,
-            -0.0
-          ],
-          "rotateOrder": "XYZ",
-          "orient": 0.0,
-          "coarseSemantic": "person",
           "roomId": 6
         }
       ]
