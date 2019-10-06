@@ -1,7 +1,6 @@
 import numpy as np
 from math import asin, atan2, pi
 
-
 def correlation_atan(theta):
     while theta > pi/2:
         theta = theta - pi
@@ -9,9 +8,9 @@ def correlation_atan(theta):
         theta = theta + pi
     return theta
 
-
 def decompose16(matrix):
-    matrix = np.array(matrix).reshape(4, 4)
+    matrix = np.array(matrix, dtype=np.float).reshape(4, 4)
+    # print(matrix[0:3, 0:3])
     if np.linalg.det(matrix[0:3, 0:3]) < 0:
         matrix[0:3, 0] *= -1
     T = matrix[3, 0:3].copy()
@@ -34,6 +33,16 @@ def decompose16(matrix):
         thetaZ = 0
     return T, S, np.array([thetaX, thetaY, thetaZ], dtype=np.float)
 
+def orient(matrix):
+    matrix = np.array(matrix, dtype=np.float).reshape(4, 4)
+    if np.linalg.det(matrix[0:3, 0:3]) < 0:
+        matrix[0:3, 0] *= -1
+    T = matrix[3, 0:3].copy()
+    matrix[3, 0:3] = 0
+    matrix = matrix.T
+    S = np.linalg.norm(matrix, axis=0)[0:3]
+    matrix[0:3] = matrix[0:3] / np.linalg.norm(matrix, axis=0)
+    return atan2(matrix[0, 2], matrix[2, 2])
 
 def decompose16_debug(matrix):
     matrix = np.array(matrix).reshape(4, 4)

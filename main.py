@@ -5,13 +5,13 @@ import orm
 import json
 import pdb
 import os
-import smart_op
+# import smart_op
 import base64
 import re
 from io import BytesIO
 from PIL import Image
-from rec_release import recommendation_ls_euclidean, fa_layout, fa_layout_nxt
-from generate_descriptor import sketch_search
+from rec_release import recommendation_ls_euclidean, fa_layout_pro
+# from generate_descriptor import sketch_search
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -201,7 +201,7 @@ def palette_recommendation():
 @app.route("/sklayout", methods=['POST', 'GET'])
 def sklayout():
     if request.method == 'POST':
-        return json.dumps(fa_layout_nxt(request.json))
+        return json.dumps(fa_layout_pro(request.json))
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
