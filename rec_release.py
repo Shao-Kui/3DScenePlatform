@@ -220,12 +220,12 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     oridiff = torch.exp(oridiff)
 
     hausdorff = torch.min(diff + oridiff, dim=2)
-    indexes = hausdorff[1].flatten() + (torch.arange(len(x) * len(x)) * len(ori_priors[0, 0]))
-    indexes = indexes.flatten()
-    print("Dis Part: \r\n", diff.data.flatten()[indexes].reshape(len(x), len(x)))
-    print("Ori Part: \r\n", oridiff.flatten()[indexes].reshape(len(x), len(x)))
+    # indexes = hausdorff[1].flatten() + (torch.arange(len(x) * len(x)) * len(ori_priors[0, 0]))
+    # indexes = indexes.flatten()
+    # print("Dis Part: \r\n", diff.data.flatten()[indexes].reshape(len(x), len(x)))
+    # print("Ori Part: \r\n", oridiff.flatten()[indexes].reshape(len(x), len(x)))
     hausdorff = hausdorff[0]
-    print("Hau Part: \r\n", hausdorff)
+    # print("Hau Part: \r\n", hausdorff)
 
     return torch.sum(hausdorff * csrrelation)
 
@@ -321,7 +321,6 @@ def fa_layout_pro(rj):
         print("Start iteration {}...".format(iteration))
         loss.backward()
         translate.data = translate.data - translate.grad * 0.01 * np.random.randint(1, 6)
-        print("Gra Part: \r\n", translate.grad)
         translate.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
