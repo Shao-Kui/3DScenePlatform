@@ -7,13 +7,16 @@
 ./*.json
 ./*.png
 ./*.pyc
+.pyc
 /sketch_retrival/features
 /sketch_retrival/MVCNN_stage_1
 /sketch_retrival/MVCNN_stage_2
 /sketch_retrival/objedge20
 /sketch_retrival/runs
+/sketch_retrival/tools/__pycache__/
 /latentspace
 ./*.mp4
 ./*.mp3
 ./*.wav
 /.idea/
+/venv/
