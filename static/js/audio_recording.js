@@ -1,5 +1,3 @@
-var serv = "http://127.0.0.1:11425";
-
 var reco = null;
 
 navigator.getUserMedia = (navigator.getUserMedia ||
@@ -48,7 +46,7 @@ function get_audio() {
         // formdata.append("sender", toy_id);
         // formdata.append("to_user", document.getElementById("from_user").innerText);
         $.ajax({
-            url: serv + "/toy_uploader",  // ⚠️
+            url: "/toy_uploader",  // ⚠️
             type: 'post',
             processData: false,
             contentType: false,
