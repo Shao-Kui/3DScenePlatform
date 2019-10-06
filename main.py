@@ -230,9 +230,12 @@ def toy_uploader():
     client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
     # 读取文件
     y,sr = librosa.load(filename,sr=16000)
-    librosa.output.write_wav(filename,y,sr=16000)
+    y = librosa.to_mono(y)
+    import soundfile
+    soundfile.write(filename, y, sr, subtype='PCM_16')
+
     print(filename)
-    # os.remove(filename)
+
 
     def get_file_content(filePath):
         with open(filePath, 'rb') as fp:
@@ -244,6 +247,7 @@ def toy_uploader():
     })
 
     print(result)
+    os.remove(filename)
     return result
 
 app.run(host="127.0.0.1",port=11425,debug=True)

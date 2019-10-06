@@ -21,6 +21,8 @@ function create_stream(user_media) {
 function start_reco() {
     console.log('start recording')
     $("#audio_error").hide()
+    $("#audio_ok").hide()
+    $("#audio_processing").hide()
     $("#start_record_button").hide();
     $("#stop_record_button").show();
     reco.record();
@@ -29,12 +31,14 @@ function start_reco() {
 function stop_reco() {
     reco.stop();
     $("#start_record_button").show();
+
     $("#stop_record_button").hide();
     console.log('stop recording')
 }
 
 function get_audio() {
     console.log('submitting audio')
+    $("#audio_processing").show()
     reco.exportWAV(function (wav_file) {
         // wav_file = Blob对象 file对象
         // ws.send(wav_file);
@@ -52,13 +56,16 @@ function get_audio() {
             dataType: 'json',
             success: function (data) {
                 console.log(data);
+                $("#audio_processing").hide()
                 if (data.err_msg!="success."){
                     $("#audio_error").text(data.err_msg)
                     $("#audio_error").show()
+                    $("#audio_ok").hide()
 
                 }else {
                     $("#searchinput").val(data.result[0])
                     $("#audio_error").hide()
+                    $("#audio_ok").show()
                 }
             }
         })
