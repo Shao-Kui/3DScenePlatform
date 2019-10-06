@@ -11,7 +11,12 @@ import re
 from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean, fa_layout_pro
-# from generate_descriptor import sketch_search
+from flask import Flask,render_template,send_file,request
+import uuid
+from aip import AipSpeech
+import librosa
+from generate_descriptor import sketch_search
+
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -205,4 +210,44 @@ def sklayout():
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
-app.run(host="0.0.0.0",port=11425,debug=True)
+@app.route('/toy_uploader', methods=['GET', 'POST'])
+def toy_uploader():
+    uuid4 = uuid.uuid4()
+    # 确保文件唯一，录音文件为 .wav 格式
+    filename = f"{uuid4}.wav"
+    # 保存语音文件
+    print(request)
+    print(request.files)
+    request.files['record'].save(filename)
+    # 开始语音转文字
+
+
+    """ 你的 APPID AK SK """
+    APP_ID = '17228695'
+    API_KEY = 'pga4PIogoyENxqGvTlBljRau'
+    SECRET_KEY = '2mmRMs2BwCPQi5BKprDGUgGAxD10VOAt'
+
+    client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
+    # 读取文件
+    y,sr = librosa.load(filename,sr=16000)
+    y = librosa.to_mono(y)
+    import soundfile
+    soundfile.write(filename, y, sr, subtype='PCM_16')
+
+    print(filename)
+
+
+    def get_file_content(filePath):
+        with open(filePath, 'rb') as fp:
+            return fp.read()
+    # 识别本地文件
+
+    result = client.asr(get_file_content(filename), 'wav', 16000, {
+        'dev_pid': 1536,
+    })
+
+    print(result)
+    os.remove(filename)
+    return result
+
+app.run(host="127.0.0.1",port=11425,debug=True)

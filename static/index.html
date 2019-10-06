@@ -1,140 +1,164 @@
 <html>
 <head>
-<meta charset="utf-8">
-<!-- 3rd party libraries -->
-<script src="/static/3rdparty/jquery-3.3.1.min.js"> </script>
-<script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"> </script>
-<script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"> </script>
-<script src="/static/3rdparty/three.js-r103/three.min.js"> </script>
-<script src="/static/3rdparty/three.js-r103/LoaderSupport.js"> </script>
-<script src="/static/3rdparty/three.js-r103/MTLLoader.js"> </script>
-<script src="/static/3rdparty/three.js-r103/OBJLoader2.js"> </script>
-<script src="/static/3rdparty/three.js-r103/OrbitControls.js"> </script>
-<script src="/static/3rdparty/threex.windowresize.js"> </script>
-<script src="/static/3rdparty/radial.js"> </script>
-<link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css" />
-<link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css" />
-<link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
-<!-- our code -->
-<link rel="stylesheet" href="/static/css/index.css"/>
-<script src="/static/js/SceneUIManager.js"> </script>
-<script src="/static/js/SceneManager.js"> </script>
-<script src="/static/js/drawcanvas.js"> </script>
-<script src="/static/js/render.js"> </script>
-<script src="/static/js/radial.js"> </script>
-<script src="/static/js/orth.js"> </script>
-<script src="/static/js/QE.js"> </script>
-<script src="/static/js/ai.js"> </script>
-<script src="/static/js/sk.js"> </script>
-<script>
-	//Global state & variables! Careful!
-	var ALL_SCENE_READY = false;
-	var On_MOVE = false;
-	var On_ROTATE = false;
-	var On_ADD = false;
-	var On_Orth_MOVE = false;
-	var On_Magic_ADD = false;
-	var isToggle = false;
-	var Auto_Insert_Mode = false;
-	var Auto_Rec_Mode = false;
-	var INTERSECT_OBJ;
-	var INSERT_OBJ;
+    <meta charset="utf-8">
+    <!-- 3rd party libraries -->
+    <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
+    <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+    <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
+    <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
+    <script src="/static/3rdparty/three.js-r103/LoaderSupport.js"></script>
+    <script src="/static/3rdparty/three.js-r103/MTLLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r103/OBJLoader2.js"></script>
+    <script src="/static/3rdparty/three.js-r103/OrbitControls.js"></script>
+    <script src="/static/3rdparty/threex.windowresize.js"></script>
+    <script src="/static/3rdparty/radial.js"></script>
+    <script src="/static/3rdparty/recorder.js"></script>
+    <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
+    <!-- our code -->
+    <link rel="stylesheet" href="/static/css/index.css"/>
+    <script src="/static/js/SceneUIManager.js"></script>
+    <script src="/static/js/SceneManager.js"></script>
+    <script src="/static/js/drawcanvas.js"></script>
+    <script src="/static/js/render.js"></script>
+    <script src="/static/js/radial.js"></script>
+    <script src="/static/js/orth.js"></script>
+    <script src="/static/js/QE.js"></script>
+    <script src="/static/js/ai.js"></script>
+    <script src="/static/js/sk.js"></script>
+    <script src="/static/js/audio_recording.js"></script>
+    <script>
+        //Global state & variables! Careful!
+        var ALL_SCENE_READY = false;
+        var On_MOVE = false;
+        var On_ROTATE = false;
+        var On_ADD = false;
+        var On_Orth_MOVE = false;
+        var On_Magic_ADD = false;
+        var isToggle = false;
+        var Auto_Insert_Mode = false;
+        var Auto_Rec_Mode = false;
+        var INTERSECT_OBJ;
+        var INSERT_OBJ;
 
-	//Global variables, will be initialize only once.
-	var manager;
-	var menu;
-	var radial;
-	var renderer;
-	var camera;
-	var scene;
-	var mouse = new THREE.Vector2();
-	var orthmouse = new THREE.Vector2();
-	var raycaster = new THREE.Raycaster();
-	var scenecanvas;
-	var orthcanvas;
-	var drawingCanvas;
-	var catalogItems;
-	var paint = false;
-	var drawStartPos = new THREE.Vector2();
-	var searchResults;
-	var currentRoomId;
-	var orthline;
-	$(document).ready(function(){
-		manager = new SceneController($("#ui")[0]);
-		renderer = manager.renderManager.renderer;
-		camera = manager.renderManager.camera;
-		scene = manager.renderManager.scene;
-		scenecanvas = document.getElementById('scenecanvas');
-		orthcanvas = document.getElementById('orthcanvas');
-		radial = new Radial(rad_items, rad_options);
-		menu = document.getElementById('menu2');
-		menu.appendChild(radial.render());
-		catalogItems = document.getElementById("catalogItems");
-		drawingCanvas = document.getElementById('drawing-canvas');
-		setting_up();
-	})
-</script>
+        //Global variables, will be initialize only once.
+        var manager;
+        var menu;
+        var radial;
+        var renderer;
+        var camera;
+        var scene;
+        var mouse = new THREE.Vector2();
+        var orthmouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
+        var scenecanvas;
+        var orthcanvas;
+        var drawingCanvas;
+        var catalogItems;
+        var paint = false;
+        var drawStartPos = new THREE.Vector2();
+        var searchResults;
+        var currentRoomId;
+        var orthline;
+        $(document).ready(function () {
+            manager = new SceneController($("#ui")[0]);
+            renderer = manager.renderManager.renderer;
+            camera = manager.renderManager.camera;
+            scene = manager.renderManager.scene;
+            scenecanvas = document.getElementById('scenecanvas');
+            orthcanvas = document.getElementById('orthcanvas');
+            radial = new Radial(rad_items, rad_options);
+            menu = document.getElementById('menu2');
+            menu.appendChild(radial.render());
+            catalogItems = document.getElementById("catalogItems");
+            drawingCanvas = document.getElementById('drawing-canvas');
+            setting_up();
+        })
+
+
+
+
+    </script>
 </head>
 <body>
 <div id="ui">
 
-	<nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand">3D场景构建</a>
-			</div>
-			<div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
-				<button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-				<button id="mage_button" type="button" class="btn btn-lg btn-primary nav_sk_button">MageAdd</button>
-				<button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout</button>
-				<button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert</button>
-				<button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">S.K.</button>
-			</div>
-		</div>
-	</nav>
+    <nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand">3D场景构建</a>
+            </div>
+            <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
+                <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
+                <button id="mage_button" type="button" class="btn btn-lg btn-primary nav_sk_button">MageAdd</button>
+                <button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout</button>
+                <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert
+                </button>
+                <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">S.K.</button>
+            </div>
+        </div>
+    </nav>
 
-	<div id="uibody">
-		<div id="retrieve" align="center">
-			<div class="card-header">
-				<h4 class="my-0 font-weight-normal">3D Indoor Scene Synthesis System</h4>
-			</div>
-			<div class="card-body">
-				<button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
-				<button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
-				<button id="rec_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Rec</button>
-				<button id="colla_button" type="button" class="btn btn-lg btn-primary"
-				style="margin-top: 10px; width:100%;">
-				Collaborative Search
-				</button>
-			</div>
-			<div id="collaborative_container">
-				<canvas id="drawing-canvas" height="224" width="224"></canvas>
-				<div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
-					<input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
-					style="width:75%;margin-left:5%;" id="searchinput">
-					<button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
-				</div>
-			</div>
-			<div id="rec_container" style="display: none;">
-			</div>
-			<div id="catalogItems" class="catalogSectionContent" align="center"></div>
-		</div>
+    <div id="uibody">
+        <div id="retrieve" align="center">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">3D Indoor Scene Synthesis System</h4>
+            </div>
+            <div class="card-body">
+                <button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
+                <button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
+                <button id="rec_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Rec</button>
+                <div style="margin-top: 10px">
+                    <button id="start_record_button" type="button" onclick="start_reco()" class="btn btn-lg btn-primary"
+                            style="width:49%;">Start
+                        Recording
+                    </button>
+                    <button id="stop_record_button" type="button" onclick="stop_reco()" class="btn btn-lg btn-primary"
+                            style="width:49%; background-color: red; display: none">Stop
+                        Recording
+                    </button>
+                    <button id="submit_record_button" type="button" onclick="get_audio()" class="btn btn-lg btn-primary"
+                            style="width:49%;">Submit
+                        Recording
+                    </button>
+                    <div id="audio_error" class="alert alert-danger" style="display: none; margin-top: 10px">Error!</div>
+                    <div id="audio_processing" class="alert alert-info" style="display: none; margin-top: 10px">Audio Processing ...</div>
+                    <div id="audio_ok" class="alert alert-success" style="display: none; margin-top: 10px">Success!</div>
+                </div>
+                <button id="colla_button" type="button" class="btn btn-lg btn-primary"
+                        style="margin-top: 10px; width:100%;">
+                    Collaborative Search
+                </button>
+            </div>
+            <div id="collaborative_container">
+                <canvas id="drawing-canvas" height="224" width="224"></canvas>
+                <div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
+                           style="width:75%;margin-left:5%;" id="searchinput">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
+                </div>
+            </div>
+            <div id="rec_container" style="display: none;">
+            </div>
+            <div id="catalogItems" class="catalogSectionContent" align="center"></div>
+        </div>
 
-		<div id="scene">
-			<canvas id="scenecanvas"> </canvas>
-			<canvas id="orthcanvas"> </canvas>
-		</div>
-	</div>
+        <div id="scene">
+            <canvas id="scenecanvas"></canvas>
+            <canvas id="orthcanvas"></canvas>
+        </div>
+    </div>
 
-		<div id="load_dialog" class="dialog" title="Load Scene File">
-			<div class="form-group">
-				<label for="load_dialog_input">载入文件</label>
-				<input type="file" class="form-control-file" id="load_dialog_input">
-			</div>
-			<button type="button" class="btn btn-primary" id="load_dialog_button">载入</button>
-		</div>
+    <div id="load_dialog" class="dialog" title="Load Scene File">
+        <div class="form-group">
+            <label for="load_dialog_input">载入文件</label>
+            <input type="file" class="form-control-file" id="load_dialog_input">
+        </div>
+        <button type="button" class="btn btn-primary" id="load_dialog_button">载入</button>
+    </div>
 
-		<div id="menu2"></div>
+    <div id="menu2"></div>
 </div>
 </body>
 </html>
