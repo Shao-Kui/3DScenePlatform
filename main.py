@@ -15,7 +15,7 @@ from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
 import librosa
-from generate_descriptor import sketch_search
+# from generate_descriptor import sketch_search
 
 
 app = Flask(__name__)
@@ -250,4 +250,4 @@ def toy_uploader():
     os.remove(filename)
     return result
 
-app.run(host="127.0.0.1",port=11425,debug=True)
+app.run(host="0.0.0.0",port=11425,debug=True)
