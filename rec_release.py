@@ -1,4 +1,5 @@
 import json
+import time
 import torch
 import math
 import numpy as np
@@ -6,7 +7,7 @@ from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
 import matplotlib.pyplot as plt
-BANNED = ['switch']
+BANNED = ['switch', 'column']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "./latentspace/pos-orient-denoised/{}.json"
@@ -172,8 +173,10 @@ def sample_translateRela(child, obj):
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
 def collision_loss(translate, room_shape, yrelation=None):
-    loss = loss_2(translate, yrelation=yrelation)
-    loss += loss_4(translate, room_shape)
+    loss = loss_2(translate, yrelation=yrelation)  # pairwise collision loss
+    loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
+    loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
+    loss += loss_wall(translate, room_shape)  # nearest wall loss (Inside)
     return loss
 
 def children_translate(pend_obj_list, translate, total_obj_num):
@@ -209,8 +212,8 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     diff = torch.norm(diff, dim=3)
 
     oridiff = torch.abs(ori - ori[:, None])
-    oridiff[oridiff >  np.pi] -= 2 * np.pi
-    oridiff[oridiff < -np.pi] += 2 * np.pi
+    oridiff.data[oridiff.data >  np.pi] -= 2 * np.pi
+    oridiff.data[oridiff.data < -np.pi] += 2 * np.pi
     oridiff = torch.abs(oridiff)
     oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     # oridiff = torch.abs(ori_priors - oridiff.reshape(len(x), len(x), 1))
@@ -229,11 +232,28 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
 
     return torch.sum(hausdorff * csrrelation)
 
+def loss_wall(x, room_shape):
+    wall = torch.zeros((len(x), 4, len(room_shape), 3, 3), dtype=torch.float)
+    sign = torch.zeros(len(x), 4, len(room_shape), dtype=torch.float)
+    W = torch.zeros(len(room_shape), 2, 2)
+    i = torch.arange(1, len(room_shape)+1)
+    i[len(room_shape)-1] = 0
+    room_length = torch.norm(room_shape - room_shape[i], dim=1)
+    wall[:, :, :, 0, 0:2] = room_shape
+    wall[:, :, :, 1, 0:2] = room_shape[i]
+    wall[:, :, :, 2, 0:2] = x.reshape(len(x), 4, 1, 2)
+    wall[:, :, :, :, 2] = 1.0
+    determinant = torch.det(wall)
+    min_value = torch.min(torch.abs(determinant) / room_length, dim=2)[0]
+    min_value = torch.min(min_value, dim=1)[0]
+    return torch.sum(min_value)
+
 def fa_layout_pro(rj):
     pend_obj_list = []
     final_obj_list = []
     bbindex = []
     ol = rj['objList']
+    print("Total Number of objects: ", len(ol))
     for o in ol:
         if o is None:
             continue
@@ -292,6 +312,7 @@ def fa_layout_pro(rj):
     room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
     room_polygon = Polygon(room_meta[:, 0:2])
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
+    room_shape_norm = torch.from_numpy(room_meta).float()
     translate = torch.zeros((len(pend_obj_list), 2)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
     scale = torch.zeros((len(pend_obj_list), 3)).float()
@@ -310,30 +331,41 @@ def fa_layout_pro(rj):
         bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
 
     translate.requires_grad_()
-    # orient.requires_grad_()
+    orient.requires_grad_()
     # time for collision detection
     iteration = 0
     # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
+    start_time = time.time()
     loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
     c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
     loss += c_loss
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
         loss.backward()
-        translate.data = translate.data - translate.grad * 0.01 * np.random.randint(1, 6)
+        translate.data = translate.data - translate.grad * 0.05
         translate.grad = None
+        orient.data = orient.data - orient.grad * 0.01
+        orient.data[orient.data >  np.pi] -= 2 * np.pi
+        orient.data[orient.data < -np.pi] += 2 * np.pi
+        orient.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
         c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
         loss += c_loss
         iteration += 1
-    for o in pend_obj_list:
-        print(o['modelId'])
+    print("--- %s seconds ---" % (time.time() - start_time))
+    for i in range(len(pend_obj_list)):
+        o = pend_obj_list[i]
+        print(o['modelId'], csrrelation[i])
     print(csrrelation)
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
         o['translate'][0] = translate[i][0].item()
         o['translate'][2] = translate[i][1].item()
+        o['rotate'][0] = 0.0
+        o['rotate'][1] = orient[i].item()
+        o['rotate'][2] = 0.0
+        o['orient'] = orient[i].item()
     return rj
 
 if __name__ == "__main__":
