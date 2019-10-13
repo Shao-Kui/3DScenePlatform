@@ -6,6 +6,7 @@ import numpy as np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
+from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
 import matplotlib.pyplot as plt
 BANNED = ['switch', 'column']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
@@ -15,28 +16,7 @@ PRIORS_POS_ALT = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"
 priors = {}
 priors['pos'] = {}
 priors['ori'] = {}
-with open('./latentspace/obj-semantic.json') as f:
-    obj_semantic = json.load(f)
-with open('./latentspace/name_to_ls.json') as f:
-    name_to_ls = json.load(f)
-with open('./latentspace/ls_to_name.json') as f:
-    ls_to_name = json.load(f)
-csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
-csrmatrix[name_to_ls['679']] = 0.0
-csrmatrix[name_to_ls['681']] = 0.0
-csrmatrix[:, name_to_ls['679']] = 0.0
-csrmatrix[:, name_to_ls['681']] = 0.0
-csrmatrix[name_to_ls['236']] = 0.0
-csrmatrix[:, name_to_ls['236']] = 0.0
-csrmatrix[name_to_ls['680']] = 0.0
-csrmatrix[:, name_to_ls['680']] = 0.0
-csrmatrix[name_to_ls['458']] = 0.0
-csrmatrix[:, name_to_ls['458']] = 0.0
-ymatrix = torch.from_numpy(np.load("./latentspace/ymatrix.npy")).float()
-ymatrix[name_to_ls['271'], name_to_ls['267']] = 1.0
-ymatrix[name_to_ls['267'], name_to_ls['271']] = 1.0
-ymatrix[name_to_ls['83'], name_to_ls['79']] = 1.0
-ymatrix[name_to_ls['79'], name_to_ls['83']] = 1.0
+
 MAX_ITERATION = 20
 REC_MAX = 20
 
@@ -172,12 +152,12 @@ def sample_translateRela(child, obj):
                 priors['pos'][priorid] = json.load(f)[child['modelId']]
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
-def collision_loss(translate, room_shape, yrelation=None):
+def collision_loss(translate, room_shape, yrelation=None, wallrelation=None, cornerrelation=None):
     loss = loss_2(translate, yrelation=yrelation)  # pairwise collision loss
     loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
     # loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
-    loss += loss_wall(translate, room_shape)  # nearest wall loss (Inside)
-    loss += loss_corner(translate, room_shape)  # nearest corner loss (Inside)
+    loss += loss_wall(translate, room_shape, wallrelation)  # nearest wall loss (Inside)
+    loss += loss_corner(translate, room_shape, cornerrelation)  # nearest corner loss (Inside)
     return loss
 
 def children_translate(pend_obj_list, translate, total_obj_num):
@@ -234,6 +214,8 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     return torch.sum(hausdorff * csrrelation)
 
 def loss_wall(x, room_shape, wrelation=None):
+    if wrelation is None:
+        wrelation = torch.zeros((len(x)), dtype=torch.float)
     wall = torch.zeros((len(x), 4, len(room_shape), 3, 3), dtype=torch.float)
     sign = torch.zeros(len(x), 4, len(room_shape), dtype=torch.float)
     W = torch.zeros(len(room_shape), 2, 2)
@@ -247,9 +229,12 @@ def loss_wall(x, room_shape, wrelation=None):
     determinant = torch.det(wall)
     min_value = torch.min(torch.abs(determinant) / room_length, dim=2)[0]
     min_value = torch.min(min_value, dim=1)[0]
-    return torch.sum(min_value)
+    return torch.sum(min_value * wrelation)
 
 def loss_corner(x, room_shape, crelation=None):
+    if crelation is None:
+        crelation = torch.zeros((len(x)), dtype=torch.float)
+    crelation = crelation.reshape(len(x), 1)
     wall = torch.zeros((len(x), 4, len(room_shape), 3, 3), dtype=torch.float)
     sign = torch.zeros(len(x), 4, len(room_shape), dtype=torch.float)
     W = torch.zeros(len(room_shape), 2, 2)
@@ -263,7 +248,8 @@ def loss_corner(x, room_shape, crelation=None):
     determinant = torch.det(wall)
     min_value = torch.topk(torch.abs(determinant) / room_length, k=2, dim=2, largest=False)[0]
     min_value = torch.min(min_value, dim=1)[0]
-    return torch.sum(min_value)
+    print(min_value * crelation)
+    return torch.sum(min_value * crelation)
 
 def fa_layout_pro(rj):
     pend_obj_list = []
@@ -286,6 +272,8 @@ def fa_layout_pro(rj):
     diag_indices_ = (torch.arange(len(pend_obj_list)), torch.arange(len(pend_obj_list)))
     csrrelation = csrmatrix[bbindex][:, bbindex]
     yrelation = ymatrix[bbindex][:, bbindex]
+    wallrelation = wallvector[bbindex]
+    cornerrelation = cornervector[bbindex]
     csrrelation[diag_indices_] = 0.0
     SSIZE = 1000
     rng = np.random.default_rng()
@@ -354,7 +342,7 @@ def fa_layout_pro(rj):
     # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
     start_time = time.time()
     loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
-    c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
+    c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation), wallrelation, cornerrelation)
     loss += c_loss
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
@@ -367,7 +355,7 @@ def fa_layout_pro(rj):
         orient.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
-        c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation))
+        c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation), wallrelation, cornerrelation)
         loss += c_loss
         iteration += 1
     print("--- %s seconds ---" % (time.time() - start_time))
