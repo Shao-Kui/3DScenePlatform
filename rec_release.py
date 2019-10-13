@@ -175,8 +175,9 @@ def sample_translateRela(child, obj):
 def collision_loss(translate, room_shape, yrelation=None):
     loss = loss_2(translate, yrelation=yrelation)  # pairwise collision loss
     loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
-    loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
+    # loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
     loss += loss_wall(translate, room_shape)  # nearest wall loss (Inside)
+    loss += loss_corner(translate, room_shape)  # nearest corner loss (Inside)
     return loss
 
 def children_translate(pend_obj_list, translate, total_obj_num):
@@ -232,7 +233,7 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
 
     return torch.sum(hausdorff * csrrelation)
 
-def loss_wall(x, room_shape):
+def loss_wall(x, room_shape, wrelation=None):
     wall = torch.zeros((len(x), 4, len(room_shape), 3, 3), dtype=torch.float)
     sign = torch.zeros(len(x), 4, len(room_shape), dtype=torch.float)
     W = torch.zeros(len(room_shape), 2, 2)
@@ -245,6 +246,22 @@ def loss_wall(x, room_shape):
     wall[:, :, :, :, 2] = 1.0
     determinant = torch.det(wall)
     min_value = torch.min(torch.abs(determinant) / room_length, dim=2)[0]
+    min_value = torch.min(min_value, dim=1)[0]
+    return torch.sum(min_value)
+
+def loss_corner(x, room_shape, crelation=None):
+    wall = torch.zeros((len(x), 4, len(room_shape), 3, 3), dtype=torch.float)
+    sign = torch.zeros(len(x), 4, len(room_shape), dtype=torch.float)
+    W = torch.zeros(len(room_shape), 2, 2)
+    i = torch.arange(1, len(room_shape)+1)
+    i[len(room_shape)-1] = 0
+    room_length = torch.norm(room_shape - room_shape[i], dim=1)
+    wall[:, :, :, 0, 0:2] = room_shape
+    wall[:, :, :, 1, 0:2] = room_shape[i]
+    wall[:, :, :, 2, 0:2] = x.reshape(len(x), 4, 1, 2)
+    wall[:, :, :, :, 2] = 1.0
+    determinant = torch.det(wall)
+    min_value = torch.topk(torch.abs(determinant) / room_length, k=2, dim=2, largest=False)[0]
     min_value = torch.min(min_value, dim=1)[0]
     return torch.sum(min_value)
 
