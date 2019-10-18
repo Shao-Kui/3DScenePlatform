@@ -8,7 +8,7 @@ from shapely.geometry import Point
 from projection2d import process as p2d
 from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
 import matplotlib.pyplot as plt
-BANNED = ['switch', 'column']
+BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "./latentspace/pos-orient-denoised/{}.json"
@@ -17,7 +17,7 @@ priors = {}
 priors['pos'] = {}
 priors['ori'] = {}
 
-MAX_ITERATION = 20
+MAX_ITERATION = 10
 REC_MAX = 20
 
 def recommendation_ls_euclidean(objList):
@@ -62,6 +62,12 @@ def disturbance(obj, scale, room_shape=None):
             tz = obj['translate'][2] + np.random.randn() * scale
         obj['translate'][0] = tx
         obj['translate'][2] = tz
+        randori = obj['orient'] + np.random.randn()
+        while randori > np.pi:
+            randori -= 2 * np.pi
+        while randori < -np.pi:
+            randori += 2 * np.pi
+        obj['orient'] = randori
 
 def loss_2(x, yrelation=None):
     loss = torch.zeros((len(x), len(x), 4, 4, 3, 3), dtype=torch.float)
@@ -153,7 +159,7 @@ def sample_translateRela(child, obj):
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
 def collision_loss(translate, room_shape, yrelation=None, wallrelation=None, cornerrelation=None):
-    loss = loss_2(translate, yrelation=yrelation)  # pairwise collision loss
+    loss = 0.5 * loss_2(translate, yrelation=yrelation)  # pairwise collision loss
     loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
     # loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
     loss += loss_wall(translate, room_shape, wallrelation)  # nearest wall loss (Inside)
@@ -190,7 +196,9 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     # x should be pure translations of pending objects.
     diff = x - x[:, None]  # each row i means centering obj i and other objects move to its relative position
     diff = pos_priors - diff.reshape(len(x), len(x), 1, 2)
+
     diff = torch.norm(diff, dim=3)
+    # diff = torch.sum(diff, dim=3) ** 2
 
     oridiff = torch.abs(ori - ori[:, None])
     oridiff.data[oridiff.data >  np.pi] -= 2 * np.pi
@@ -203,7 +211,7 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     # oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     oridiff = torch.exp(oridiff)
 
-    hausdorff = torch.min(diff + oridiff, dim=2)
+    hausdorff = torch.min(diff + oridiff.data, dim=2)
     # indexes = hausdorff[1].flatten() + (torch.arange(len(x) * len(x)) * len(ori_priors[0, 0]))
     # indexes = indexes.flatten()
     # print("Dis Part: \r\n", diff.data.flatten()[indexes].reshape(len(x), len(x)))
@@ -211,7 +219,7 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     hausdorff = hausdorff[0]
     # print("Hau Part: \r\n", hausdorff)
 
-    return torch.sum(hausdorff * csrrelation)
+    return loss_orth(ori) + torch.sum(hausdorff * csrrelation)
 
 def loss_wall(x, room_shape, wrelation=None):
     if wrelation is None:
@@ -248,8 +256,12 @@ def loss_corner(x, room_shape, crelation=None):
     determinant = torch.det(wall)
     min_value = torch.topk(torch.abs(determinant) / room_length, k=2, dim=2, largest=False)[0]
     min_value = torch.min(min_value, dim=1)[0]
-    print(min_value * crelation)
-    return torch.sum(min_value * crelation)
+    return 3 * torch.sum(min_value * crelation)
+
+def loss_orth(ori):
+    diff = (ori[:, None] - torch.tensor([-np.pi, -np.pi/2, 0, np.pi/2, np.pi], dtype=torch.float)) ** 2
+    diff = torch.min(diff, dim=1)[0]
+    return 10.0 * torch.sum(diff)
 
 def fa_layout_pro(rj):
     pend_obj_list = []
@@ -284,12 +296,12 @@ def fa_layout_pro(rj):
             priorid = "{}-{}".format(center['modelId'], obj['modelId'])
             if priorid not in priors['pos']:
                 with open(PRIORS.format(center['modelId'])) as f:
-                    theprior = np.array(json.load(f)[obj['modelId']], dtype=np.float)
-                    if len(theprior) == 0:
-                        csrrelation[centerid, objid] = 0
+                    if csrrelation[centerid, objid] == 0.0:
                         theprior = np.zeros((SSIZE, 4), dtype=np.float)
-                    if len(theprior) <= 10:
-                        csrrelation[centerid, objid] = 0
+                    else:
+                        theprior = np.array(json.load(f)[obj['modelId']], dtype=np.float)
+                    if len(theprior) == 0:
+                        theprior = np.zeros((SSIZE, 4), dtype=np.float)
                     while len(theprior) < SSIZE:
                         theprior = np.vstack((theprior, theprior))
                     rng.shuffle(theprior)
@@ -337,7 +349,6 @@ def fa_layout_pro(rj):
 
     translate.requires_grad_()
     orient.requires_grad_()
-    # time for collision detection
     iteration = 0
     # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
     start_time = time.time()
@@ -347,7 +358,7 @@ def fa_layout_pro(rj):
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
         loss.backward()
-        translate.data = translate.data - translate.grad * 0.05
+        translate.data = translate.data - (1.0 / (1 + torch.sum(csrrelation, dim=1))).reshape(len(pend_obj_list), 1) * translate.grad * 0.05
         translate.grad = None
         orient.data = orient.data - orient.grad * 0.01
         orient.data[orient.data >  np.pi] -= 2 * np.pi
@@ -361,7 +372,10 @@ def fa_layout_pro(rj):
     print("--- %s seconds ---" % (time.time() - start_time))
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
-        print(o['modelId'], csrrelation[i])
+        print(o['modelId'], o['coarseSemantic'])
+        for j in range(len(pend_obj_list)):
+            if csrrelation[i][j] == 1.0:
+                print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
     print(csrrelation)
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
@@ -383,3 +397,33 @@ if __name__ == "__main__":
     # with open('./examples/00d0a6f041e710f2a198557cbad92e19-l0.json') as f:
     #     ex = json.load(f)
     # fa_layout_pro(ex['rooms'][6])
+
+def fa_reshuffle(rj):
+    pend_obj_list = []
+    final_obj_list = []
+    bbindex = []
+    ol = rj['objList']
+    print("Total Number of objects: ", len(ol))
+    for o in ol:
+        if o is None:
+            continue
+        if o['modelId'] not in obj_semantic:
+            final_obj_list.append(o)
+            continue
+        if 'coarseSemantic' in o:
+            if o['coarseSemantic'] in BANNED:
+                final_obj_list.append(o)
+                continue
+        bbindex.append(name_to_ls[o['modelId']])
+        pend_obj_list.append(o)
+    room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
+    room_polygon = Polygon(room_meta[:, 0:2])
+    room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
+    room_shape_norm = torch.from_numpy(room_meta).float()
+    for o in pend_obj_list:
+        disturbance(o, 0.5, room_polygon)
+    for o in pend_obj_list:
+        o['rotate'][0] = 0.0
+        o['rotate'][1] = o['orient']
+        o['rotate'][2] = 0.0
+    return rj

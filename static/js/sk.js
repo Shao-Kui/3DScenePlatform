@@ -312,6 +312,24 @@ var setting_up = function(){
         }
       });
     });
+    $("#reshuffle").click(function(){
+      if(currentRoomId === undefined){
+        console.log("No room is specified. ");
+        return
+      }
+      $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/reshuffle",
+        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+        success: function (data) {
+          data = JSON.parse(data);
+          temp = data;
+          manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
+          manager.renderManager.refresh_instances();
+        }
+      });
+    });
 		function onWindowResize() { //改用画布的height width
 			camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
 			camera.updateProjectionMatrix();

@@ -10,7 +10,7 @@ import base64
 import re
 from io import BytesIO
 from PIL import Image
-from rec_release import recommendation_ls_euclidean, fa_layout_pro
+from rec_release import recommendation_ls_euclidean, fa_layout_pro, fa_reshuffle
 from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
@@ -210,6 +210,13 @@ def sklayout():
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
+@app.route("/reshuffle", methods=['POST', 'GET'])
+def reshuffle():
+    if request.method == 'POST':
+        return json.dumps(fa_reshuffle(request.json))
+    if request.method == 'GET':
+        return "Do not support using GET to using recommendation. "
+
 @app.route('/toy_uploader', methods=['GET', 'POST'])
 def toy_uploader():
     uuid4 = uuid.uuid4()
@@ -248,6 +255,6 @@ def toy_uploader():
 
     print(result)
     os.remove(filename)
-    return result
+    return json.dumps(result)
 
 app.run(host="0.0.0.0",port=11425,debug=True)
