@@ -327,6 +327,23 @@ def file_search(path):
             print("Entering " + path + "/" + file + '(%d/%d)' % (dir_nump, dir_num))
             file_search(path + "/" + file)
 
+def connected_component(name,adj):
+    size = len(name)
+    vis = np.zeros(size,dtype=np.bool)
+    ans=[]
+
+    def dfs(u):
+        vis[u]=True
+        ans[-1].append(name[u])
+        for v in range(size):
+            if vis[v]==False and adj[u][v]==1:
+                dfs(v)
+
+    for u in range(size):
+        if vis[u]==False:
+            ans.append([])
+            dfs(u)
+    return ans
 
 if __name__ == "__main__":
 
