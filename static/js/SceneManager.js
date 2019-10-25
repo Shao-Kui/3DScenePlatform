@@ -166,7 +166,7 @@ class SceneManager{
 				instance.scale.set(inst.scale[0],inst.scale[1],inst.scale[2]);
 				instance.rotation.set(inst.rotate[0],inst.rotate[1],inst.rotate[2],inst.rotateOrder);
 				instance.position.set(inst.translate[0],inst.translate[1],inst.translate[2]);
-				instance.userData={"type":"object","key":inst.key,"roomId":inst.roomId,"name": inst.modelId};
+				instance.userData={"type":"object","key":inst.key,"roomId":inst.roomId,"name": inst.modelId,"coarseSemantic":inst.coarseSemantic};
 				self.instanceKeyCache[inst.key]=instance;
 				self.scene.add(instance);
 				self.renderer.render(self.scene,self.camera);

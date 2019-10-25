@@ -3,15 +3,11 @@ import os
 import json
 import functools
 import pdb
-import skimage.draw
-import skimage.filters
 import scipy.misc
 import sklearn.decomposition
 import random
-import skimage.transform
 import joblib
 import time
-import sklearn.mixture
 import itertools
 import pyclipper
 import matplotlib.path as mpltPath
@@ -88,26 +84,26 @@ def getroomcontour(origin,room):
 		paths=pyclipper.scale_from_clipper(paths)
 		ymin,ymax=np.min(vys),np.max(vys)
 	return ((ymin,ymax),paths)
-	
+
 def find_category_and_rotate_given_placement(origin,level,roomid,objList,translate): # The first 3 parameters are not used here #refer to build_obj_index.py for the function
 	objs=objList
 	poss=np.array(lmap(lambda x:x["translate"],objs))
 	rots=np.array(lmap(lambda x:x["rotate"],objs))
 	dists=np.linalg.norm(np.array(translate)[np.newaxis,:]-poss,axis=1)
-	
+
 	# Please refer to build_obj_binrel.py
 	i2s=np.argsort(dists)[1:int(min(5,2+len(objs)*0.25,len(objs)-1))]
 	o2s=[objs[i2] for i2 in i2s]
 	t2s=[coarse_mapping[coarsemappingdict[o2["modelId"]]] for o2 in o2s]
 	reltranss=[translate-np.array(o2["translate"]) for o2 in o2s]
 	rotinvs=[np.array([[cos(-rots[i2,1]/180*np.pi),0,sin(-rots[i2,1]/180*np.pi)],[0,1,0],[-sin(-rots[i2,1]/180*np.pi),0,cos(-rots[i2,1]/180*np.pi)]]) for i2 in i2s]
-	
+
 	relposs=[rotinv.dot(reltrans) for (rotinv,reltrans) in zip(rotinvs,reltranss)]
-	
+
 	scores=[]
 
 
-	for t1 in candidate_categories: 
+	for t1 in candidate_categories:
 		if coarse_categories[t1] in ["coffin", "roof", "window", "door", "fence", "curtain", "chandelier", "outdoor_seating", "arch", "pet", "person", "curtain", "stairs", "chair_set"]:
 			continue
 		# if coarse_categories[t1] in ["window", "door"]:
@@ -120,9 +116,9 @@ def find_category_and_rotate_given_placement(origin,level,roomid,objList,transla
 		priorscores=np.array([np.log(rel["nsample"]) if rel else priorscore_lo_thres for rel in rels])+0.01
 		score_total=np.sum(gmmscores*priorscores)/np.sum(priorscores)+np.sum(priorscores)*0.1
 		scores.append(score_total)
-	
+
 	t1=candidate_categories[np.argmax(scores)]
-	
+
 	#get rotation
 	rotquant_candidate=np.array(list(itertools.product(range(8),range(8),range(8))))
 	relrot_candidate=np.round(rots[i2s,np.newaxis,:]/(np.pi*0.25)).astype("int")-rotquant_candidate[np.newaxis,:,:]
@@ -136,7 +132,7 @@ def find_category_and_rotate_given_placement(origin,level,roomid,objList,transla
 	priorscores=np.array([np.log(rel["nsample"]) if rel else priorscore_lo_thres for rel in rels])+0.01
 	scores=(priorscores[:,np.newaxis]*gmmscores).sum(axis=0)
 	return coarse_categories[t1],rotquant_candidate[np.argmax(scores)]*(np.pi*0.25)
-	
+
 def find_placement_and_rotate_given_category(origin,level,roomid,objList,category,objectName=None): # The level parameter is not used here
 	if category not in coarse_mapping:
 		category = coarsemappingdict[objectName]
@@ -144,28 +140,28 @@ def find_placement_and_rotate_given_category(origin,level,roomid,objList,categor
 	objs=objList
 	poss=np.array(lmap(lambda x:x["translate"],objs))
 	rots=np.array(lmap(lambda x:x["rotate"],objs))
-	
+
 	((ymin,ymax),contour)=getroomcontour(origin,roomid)
 	contour=np.array(contour[0])
 	path = mpltPath.Path(contour)
 	[xmin,zmin]=contour.min(axis=0)
 	[xmax,zmax]=contour.max(axis=0)
-	
+
 	#refer to find_category_and_rotate_given_placement, modified for fast batch processing
 	poss_candidate=np.array(list(itertools.product(np.linspace(xmin,xmax,20),[ymin],np.linspace(zmin,zmax,20))))
 	poss_candidate=poss_candidate[path.contains_points(poss_candidate[:,[0,2]])] #candidate point in room
 	dists=np.linalg.norm(poss_candidate[:,np.newaxis,:]-poss[np.newaxis,:,:],axis=2)
-	
-	
+
+
 	t1=coarse_mapping[category]
 	i2ss=[np.argsort(dists[i])[1:int(min(5,2+len(objs)*0.25,len(objs)-1))] for i in range(len(poss_candidate))]
 	o2ss=[[objs[i2] for i2 in i2s] for i2s in i2ss]
 	t2ss=[[coarse_mapping[coarsemappingdict[o2["modelId"]]] for o2 in o2s] for o2s in o2ss]
 	reltransss=poss_candidate[:,np.newaxis,:]-poss[i2ss]
 	rotinvss=[[np.array([[cos(-rots[i2,1]/180*np.pi),0,sin(-rots[i2,1]/180*np.pi)],[0,1,0],[-sin(-rots[i2,1]/180*np.pi),0,cos(-rots[i2,1]/180*np.pi)]]) for i2 in i2s]for i2s in i2ss]
-	
+
 	relposss=[[rotinv.dot(reltrans) for (rotinv,reltrans) in zip(rotinvs,reltranss)]for (rotinvs,reltranss) in zip(rotinvss,reltransss)]
-	
+
 	relss=[[binrel[(t1,t2)] if ((t1,t2) in binrel) else None for t2 in t2s] for t2s in t2ss]
 	gmmss=[[rel["posmodel"] if (rel) else None for rel in rels ] for rels in relss]
 	gmmscoress=np.array([[gmm.score([relpos]) if gmm else gmmscore_lo_thres for (gmm,relpos) in zip(gmms,relposs)] for (gmms,relposs) in zip(gmmss,relposss)])
@@ -173,7 +169,7 @@ def find_placement_and_rotate_given_category(origin,level,roomid,objList,categor
 	gmmscoress[gmmscoress>gmmscore_hi_thres]=gmmscore_hi_thres
 	priorscoress=np.array([[np.log(rel["nsample"]) if rel else priorscore_lo_thres for rel in rels]for rels in relss])+0.01
 	score_total=np.sum(gmmscoress*priorscoress,axis=1)/np.sum(priorscoress,axis=1)+np.sum(priorscoress,axis=1)*0.1
-	
+
 	sel=np.argmax(score_total)
 	translate=poss_candidate[sel]
 	relposs=relposss[sel]

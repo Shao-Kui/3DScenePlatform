@@ -2,6 +2,8 @@ import json
 import transform3d
 import os
 
+with open('./full-obj-semantic.json') as f:
+    obj_semantic = json.load(f)
 
 def process(fpath):
     print("start to process: " + fpath)
@@ -37,13 +39,16 @@ def process(fpath):
                     if 'modelId' not in obj:
                         continue
                     matrix = obj.pop('transform', None)
-                    if matrix is None:
+                    if None in matrix:
                         continue
                     T, S, R = transform3d.decompose16(matrix)
                     obj['translate'] = T.tolist()
                     obj['scale'] = S.tolist()
                     obj['rotate'] = R.tolist()
                     obj['rotateOrder'] = 'XYZ'
+                    obj['orient'] = transform3d.orient(matrix)
+                    if obj['modelId'] in obj_semantic:
+                        obj['coarseSemantic'] = obj_semantic[obj['modelId']]
                     obj['roomId'] = room_id
                     # pop some unneeded features:
                     obj.pop('materials', None)
@@ -56,11 +61,14 @@ def process(fpath):
         with open("F:/3DIndoorScenePlatform/suncg/level/{}/{}-l{}.json".format(h['id'], h['id'], level['id']), 'w')\
                 as f:
             json.dump(new_level, f)
-            print("saved {}. ".format(level['id']))
+            # print("saved {}. ".format(level['id']))
 
 
 names = os.listdir('D:/suncg/house')
-for n in names:
+interruptid = 0
+for n in names[interruptid:]:
     if not os.path.exists('F:/3DIndoorScenePlatform/suncg/level/' + n):
         os.mkdir('F:/3DIndoorScenePlatform/suncg/level/' + n)
     process('D:/suncg/house/{}/house.json'.format(n))
+    print("Finished : {}. ".format(interruptid))
+    interruptid += 1
