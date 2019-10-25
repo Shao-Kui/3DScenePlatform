@@ -8,6 +8,7 @@ import os
 import smart_op
 import base64
 import re
+import time
 from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean
@@ -167,8 +168,9 @@ def sketch():
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-        
-        results = sketch_search('./qs.png',400)
+        start_time = time.time()
+        results = sketch_search('./qs.png',400,'chair')
+        end_time = time.time()
         tmp = []
         for i in results:
             if i not in tmp:
@@ -182,6 +184,7 @@ def sketch():
         results = orm.query_model_by_names(results)
         #print(results)
         ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
+        print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
 
