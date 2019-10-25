@@ -173,13 +173,9 @@ def sketch():
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-<<<<<<< HEAD
         start_time = time.time()
         results = sketch_search('./qs.png',400,'chair')
         end_time = time.time()
-=======
-        results = sketch_search('./qs.png',400)
->>>>>>> 12878b71932fffcf431ddfe5ebd6a4303c3341bd
         tmp = []
         for i in results:
             if i not in tmp:
