@@ -5,7 +5,7 @@ import orm
 import json
 import pdb
 import os
-# import smart_op
+import smart_op
 import base64
 import re
 import time
@@ -16,7 +16,7 @@ from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
 import librosa
-# from generate_descriptor import sketch_search
+from generate_descriptor import sketch_search
 
 
 app = Flask(__name__)
