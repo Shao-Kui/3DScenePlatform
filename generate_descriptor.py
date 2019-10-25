@@ -102,8 +102,8 @@ def load_cnet():
 def sketch_search(filename=search_file,k=20,classname=None):
     start_time = time.time()
     f_42 = generate_feature(cnet,filename)
-    end_time = time.time()
-    print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
+    
+    print("\r\n\r\n------- %s secondes1 --- \r\n\r\n" % (time.time() - start_time))
     
     #print(datetime.now())
     if not classname:
@@ -119,11 +119,14 @@ def sketch_search(filename=search_file,k=20,classname=None):
         key_features = np.array(key_features)
         key_objs = np.array(key_objs)
 
+    print("\r\n\r\n------- %s secondes2 --- \r\n\r\n" % (time.time() - start_time))
     #print(len(key_features),len(key_objs),'-----------------------------')
     distances = np.linalg.norm(key_features-f_42,axis=1)
     distances = distances.tolist()
     #print(datetime.now())
     min_num_index=map(distances.index, heapq.nsmallest(k,distances))
+    end_time = time.time()
+    print("\r\n\r\n------- %s secondes3 --- \r\n\r\n" % (end_time - start_time))
     results = [key_objs[x] for x in min_num_index]
     return results
     
