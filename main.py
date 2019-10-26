@@ -240,6 +240,8 @@ def sketchNaudio():
         elif audio_sketch_word == '椅子':
             audio_sketch_eng = 'chair'
         results = sketch_search('./qs.png', 400, audio_sketch_eng)
+        audio_sketch_eng = None
+        audio_sketch_word = None
         end_time = time.time()
         tmp = []
         for i in results:
