@@ -106,10 +106,10 @@
                 <h4 class="my-0 font-weight-normal">3D Indoor Scene Synthesis System</h4>
             </div>
             <div class="card-body">
-                <button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
-                <button type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
+                <button id="text_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
+                <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
                 <button id="rec_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Rec</button>
-                <div style="margin-top: 10px">
+                <div style="margin-top: 10px" id="record_panel">
                     <button id="start_record_button" type="button" onclick="start_reco()" class="btn btn-lg btn-primary"
                             style="width:49%;">Start
                         Recording
@@ -133,6 +133,12 @@
             </div>
             <div id="collaborative_container">
                 <canvas id="drawing-canvas" height="224" width="224"></canvas>
+                <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
+                  <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
+                  style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">Sketch Search</button>
+                  <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchclearbtn"
+                  style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">Sketch Clear</button>
+                </div>
                 <div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
                     <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
                            style="width:75%;margin-left:5%;" id="searchinput">

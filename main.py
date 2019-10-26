@@ -175,7 +175,7 @@ def sketch():
         with open(filename, 'wb') as f:
             f.write(imgdata)
         start_time = time.time()
-        results = sketch_search('./qs.png',400,'chair')
+        results = sketch_search('./qs.png',400)
         end_time = time.time()
         tmp = []
         for i in results:

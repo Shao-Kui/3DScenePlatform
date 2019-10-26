@@ -76,10 +76,10 @@ var updateMousePosition = function(){
   mouse.y = - ( (event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight ) * 2 + 1;
 }
 
-var clickSearchButtion = function(){
-	while(catalogItems.firstChild){
-		catalogItems.firstChild.remove();
-	}
+var clickSketchSearchButton = function(){
+  while(catalogItems.firstChild){
+    catalogItems.firstChild.remove();
+  }
 
   var dataURL = drawingCanvas.toDataURL();
   dataURL = dataURL.split(',')[1]
@@ -90,9 +90,8 @@ var clickSearchButtion = function(){
        imgBase64: dataURL
     }
     }).done(function(o) {
-      //console.log('saved');
       searchResults = JSON.parse(o);
-    searchResults.forEach(function(item){
+      searchResults.forEach(function(item){
       var iDiv = document.createElement('div');
       iDiv.className = "catalogItem";
       iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
@@ -103,8 +102,13 @@ var clickSearchButtion = function(){
       catalogItems.appendChild(iDiv);
     })
   });
+};
 
-  /*
+var clickTextSearchButton = function(){
+	while(catalogItems.firstChild){
+		catalogItems.firstChild.remove();
+	}
+
 	var search_url = "/query?kw=" + document.getElementById("searchinput").value;
 	$.getJSON(search_url, function(data){
 		searchResults = data;
@@ -119,8 +123,6 @@ var clickSearchButtion = function(){
 			catalogItems.appendChild(iDiv);
 		})
 	});
-
-  */
 };
 
 var clickCatalogItem = function(e){
@@ -277,22 +279,47 @@ function onDocumentMouseMove(event){
   updateMousePosition();
 };
 var temp;
+var clear_panel = function(){
+  Auto_Rec_Mode = false;
+  document.getElementById("rec_container").style.display = "none";
+  document.getElementById("record_panel").style.display = "none";
+  document.getElementById("searchinput").style.display = "none";
+  document.getElementById("searchbtn").style.display = "none";
+  document.getElementById("drawing-canvas").style.display = "none";
+  document.getElementById("sketchsearchdiv").style.display = "none";
+  document.getElementById("sketchsearchbtn").style.display = "none";
+  document.getElementById("rec_button").style.backgroundColor = '#007bff';
+};
 var setting_up = function(){
+    clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
 		render_initialization();
     orth_initialization();
-    $("#searchbtn").click(clickSearchButtion);
+    $("#searchbtn").click(clickTextSearchButton);
+    $("#sketchsearchbtn").click(clickSketchSearchButton);
+    $("#sketchclearbtn").click(clearCanvas);
     $("#rec_button").click(function(){
+      clear_panel();
       Auto_Rec_Mode = true;
       document.getElementById("rec_container").style.display = "block";
-      document.getElementById("collaborative_container").style.display = "none";
       document.getElementById("rec_button").style.backgroundColor = '#9400D3';
     });
     $("#colla_button").click(function(){
-      Auto_Rec_Mode = false;
-      document.getElementById("rec_container").style.display = "none";
-      document.getElementById("collaborative_container").style.display = "block";
-      document.getElementById("rec_button").style.backgroundColor = '#007bff';
+      clear_panel();
+      document.getElementById("drawing-canvas").style.display = "block";
+      document.getElementById("record_panel").style.display = "block";
+      document.getElementById("sketchsearchdiv").style.display = "flex";
+    });
+    $("#text_button").click(function(){
+      clear_panel();
+      document.getElementById("searchinput").style.display = "inline-block";
+      document.getElementById("searchbtn").style.display = "inline-block";
+    });
+    $("#sketch_button").click(function(){
+      clear_panel();
+      document.getElementById("drawing-canvas").style.display = "block";
+      document.getElementById("sketchsearchdiv").style.display = "flex";
+      document.getElementById("sketchsearchbtn").style.display = "block";
     });
     $("#sklayout").click(function(){
       if(currentRoomId === undefined){
