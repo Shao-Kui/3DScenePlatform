@@ -11,6 +11,7 @@ import re
 from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean, fa_layout_pro, fa_reshuffle
+from sk import sceneSynthesis
 from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
@@ -206,7 +207,7 @@ def palette_recommendation():
 @app.route("/sklayout", methods=['POST', 'GET'])
 def sklayout():
     if request.method == 'POST':
-        return json.dumps(fa_layout_pro(request.json))
+        return json.dumps(sceneSynthesis(request.json))
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
