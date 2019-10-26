@@ -64,6 +64,30 @@ function get_audio() {
                     $("#searchinput").val(data.result[0])
                     $("#audio_error").hide()
                     $("#audio_ok").show()
+                    while(catalogItems.firstChild){
+                        catalogItems.firstChild.remove();
+                    }
+                    var dataURL = drawingCanvas.toDataURL();
+                    dataURL = dataURL.split(',')[1]
+                    $.ajax({
+                        type: "POST",
+                        url: "/sketchNaudio",
+                        data: {
+                            imgBase64: dataURL
+                        }
+                    }).done(function(o) {
+                        searchResults = JSON.parse(o);
+                        searchResults.forEach(function(item){
+                        var iDiv = document.createElement('div');
+                            iDiv.className = "catalogItem";
+                            iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+                            iDiv.setAttribute('objectID', item.id);
+                            iDiv.setAttribute('objectName', item.name);
+                            iDiv.setAttribute('semantic', item.semantic);
+                            iDiv.addEventListener('click', clickCatalogItem)
+                            catalogItems.appendChild(iDiv);
+                        })
+                    });
                 }
             }
         })

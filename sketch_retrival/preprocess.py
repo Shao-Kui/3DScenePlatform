@@ -13,8 +13,9 @@ def model_statistics():
     objs_data=glob.glob('../objedge20/*')
     objs_data = [d.split('/')[-1] for d in objs_data]
     objs = [d for d in objs if d[0] in objs_data and not d[1] in ['door','wall','window','floor','ceil']]
+    keys = [d[1] for d in objs]
     classnames = list(set([d[1] for d in objs]))
-    return classnames,objs
+    return classnames,objs,keys
 
 
 def fix_views():

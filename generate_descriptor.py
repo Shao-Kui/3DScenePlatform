@@ -1,6 +1,7 @@
 #coding=utf-8
 
 import torch
+import time
 import glob
 import os,shutil,json
 from datetime import datetime
@@ -68,12 +69,15 @@ def model_statistics():
     # Warning: in Linux use '/' and in Windows use '\\'
     objs_data = [d.split('\\')[-1] for d in objs_data]
     objs = [d for d in objs if d[0] in objs_data and not d[1] in ['door','wall','window','floor','ceil']]
+    keys = {}
+    for d in objs:
+        keys[d[0]]=d[1]
     classnames = list(set([d[1] for d in objs]))
-    return classnames,objs
+    return classnames,objs,keys
 
 
 def load_cnet():
-    classnames,objs = model_statistics()
+    classnames,objs,keys = model_statistics()
 
     #print(classnames,objs)
     # model=2493,classnames=180
@@ -92,21 +96,42 @@ def load_cnet():
         np.save(feature_dir+'features.npy',features)
         np.save(feature_dir+'objs.npy',objs)
     
-    return cnet,features,objs 
+    return cnet,features,objs,keys
 
 
-def sketch_search(filename=search_file,k=20):
+def sketch_search(filename=search_file,k=20,classname=None):
+    start_time = time.time()
     f_42 = generate_feature(cnet,filename)
+    
+    print("\r\n\r\n------- %s secondes1 --- \r\n\r\n" % (time.time() - start_time))
+    
     #print(datetime.now())
-    distances = np.linalg.norm(features-f_42,axis=1)
+    if not classname:
+        key_features = features.copy()
+        key_objs = objs.copy()
+    else:
+        key_features =[]
+        key_objs = []
+        for feature,o in zip(features,objs):
+            if classname == keys[o]:
+                key_features.append(feature)
+                key_objs.append(o)
+        key_features = np.array(key_features)
+        key_objs = np.array(key_objs)
+
+    print("\r\n\r\n------- %s secondes2 --- \r\n\r\n" % (time.time() - start_time))
+    #print(len(key_features),len(key_objs),'-----------------------------')
+    distances = np.linalg.norm(key_features-f_42,axis=1)
     distances = distances.tolist()
     #print(datetime.now())
     min_num_index=map(distances.index, heapq.nsmallest(k,distances))
-    results = [objs[x] for x in min_num_index]
+    end_time = time.time()
+    print("\r\n\r\n------- %s secondes3 --- \r\n\r\n" % (end_time - start_time))
+    results = [key_objs[x] for x in min_num_index]
     return results
     
 
-cnet,features,objs = load_cnet()
+cnet,features,objs,keys = load_cnet()
 
 if __name__ == '__main__':
     print(datetime.now())

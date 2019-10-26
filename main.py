@@ -5,9 +5,10 @@ import orm
 import json
 import pdb
 import os
-# import smart_op
+import smart_op
 import base64
 import re
+import time
 from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean, fa_layout_pro, fa_reshuffle
@@ -16,7 +17,7 @@ from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
 import librosa
-# from generate_descriptor import sketch_search
+from generate_descriptor import sketch_search
 
 
 app = Flask(__name__)
@@ -173,7 +174,9 @@ def sketch():
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-        results = sketch_search('./qs.png',400)
+        start_time = time.time()
+        results = sketch_search('./qs.png',400,'chair')
+        end_time = time.time()
         tmp = []
         for i in results:
             if i not in tmp:
@@ -187,6 +190,7 @@ def sketch():
         results = orm.query_model_by_names(results)
         #print(results)
         ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
+        print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
 
@@ -217,6 +221,45 @@ def reshuffle():
         return json.dumps(fa_reshuffle(request.json))
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
+
+audio_sketch_word = None
+audio_sketch_eng = None
+
+@app.route("/sketchNaudio", methods=['POST', 'GET'])
+def sketchNaudio():
+    if request.method == 'POST':
+        image_data = bytes(request.form.get('imgBase64'), encoding="ascii")
+        imgdata = base64.b64decode(image_data)
+        filename = './qs.png'
+        with open(filename, 'wb') as f:
+            f.write(imgdata)
+        start_time = time.time()
+        global audio_sketch_eng
+        global audio_sketch_word
+        if audio_sketch_word == '桌子':
+            audio_sketch_eng = 'table'
+        elif audio_sketch_word == '椅子':
+            audio_sketch_eng = 'chair'
+        results = sketch_search('./qs.png', 400, audio_sketch_eng)
+        audio_sketch_eng = None
+        audio_sketch_word = None
+        end_time = time.time()
+        tmp = []
+        for i in results:
+            if i not in tmp:
+                tmp.append(i)
+                if len(tmp)>=20:
+                    break
+        results = tmp
+        #print(tmp)
+        print(results)
+
+        results = orm.query_model_by_names(results)
+        #print(results)
+        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
+        print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
+        return json.dumps(ret)
+    return "Post image! "
 
 @app.route('/toy_uploader', methods=['GET', 'POST'])
 def toy_uploader():
@@ -253,8 +296,12 @@ def toy_uploader():
     result = client.asr(get_file_content(filename), 'wav', 16000, {
         'dev_pid': 1536,
     })
+    global audio_sketch_word
+    global audio_sketch_eng
+    if 'result' in result:
+        audio_sketch_word = result['result'][0]
 
-    print(result)
+    print(audio_sketch_word)
     os.remove(filename)
     return json.dumps(result)
 
