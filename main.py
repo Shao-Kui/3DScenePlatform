@@ -240,6 +240,22 @@ def sketchNaudio():
             audio_sketch_eng = 'table'
         elif audio_sketch_word == '椅子':
             audio_sketch_eng = 'chair'
+        elif audio_sketch_word == '扶手椅':
+            audio_sketch_eng = 'armchair'
+        elif audio_sketch_word == '长椅':
+            audio_sketch_eng = 'bench_chair'
+        elif audio_sketch_word == '书架':
+            audio_sketch_eng = 'bookshelf'
+        elif audio_sketch_word == '箱式凳':
+            audio_sketch_eng = 'ottoman'
+        elif audio_sketch_word == '橱柜':
+            audio_sketch_eng = 'kitchen_cabinet'
+        elif audio_sketch_word == "马桶":
+            audio_sketch_eng = 'toilet'
+        elif audio_sketch_word == '双人床':
+            audio_sketch_eng = 'double_bed'
+        elif audio_sketch_word == '单人床':
+            audio_sketch_eng = 'single_bed'
         results = sketch_search('./qs.png', 400, audio_sketch_eng)
         audio_sketch_eng = None
         audio_sketch_word = None
