@@ -263,7 +263,7 @@ def sketchNaudio():
         for i in results:
             if i not in tmp:
                 tmp.append(i)
-                if len(tmp)>=20:
+                if len(tmp)>=50:
                     break
         results = tmp
         #print(tmp)
