@@ -9,6 +9,7 @@ import smart_op
 import base64
 import re
 import time
+import datetime
 from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean, fa_layout_pro, fa_reshuffle
@@ -257,8 +258,6 @@ def sketchNaudio():
         elif audio_sketch_word == '单人床':
             audio_sketch_eng = 'single_bed'
         results = sketch_search('./qs.png', 400, audio_sketch_eng)
-        audio_sketch_eng = None
-        audio_sketch_word = None
         end_time = time.time()
         tmp = []
         for i in results:
@@ -274,6 +273,17 @@ def sketchNaudio():
         #print(results)
         ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
         print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
+
+        logger = {}
+        logger['sketch_time'] = "-- %s secondes --" % (end_time - start_time)
+        logger['sketch_t'] = (end_time - start_time)
+        logger['audio_sketch_eng'] = audio_sketch_eng
+        logger['audio_sketch_word'] = audio_sketch_word
+        logger['ret'] = ret
+        with open('./test/sketchtime/{}.json'.format(datetime.datetime.now().strftime('%y-%m-%d_%H-%M-%S')), 'w') as f:
+            json.dump(logger, f)
+        audio_sketch_eng = None
+        audio_sketch_word = None
         return json.dumps(ret)
     return "Post image! "
 
