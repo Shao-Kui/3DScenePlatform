@@ -5,15 +5,16 @@ import orm
 import json
 import pdb
 import os
-import smart_op
+# import smart_op
+import numpy as np
 import base64
 import re
 import time
 import datetime
 from io import BytesIO
 from PIL import Image
-from rec_release import recommendation_ls_euclidean, fa_layout_pro, fa_reshuffle
-from sk import sceneSynthesis
+from rec_release import recommendation_ls_euclidean, fa_reshuffle
+from autolayout import sceneSynthesis
 from flask import Flask,render_template,send_file,request
 import uuid
 from aip import AipSpeech
@@ -134,21 +135,38 @@ def set_scene_configuration():
 def magic_position():
     objs = []
     if request.method == 'POST':
-        for o in request.json["objList"]:
-            if o is not None:
-                objs.append(o)
-        with open('./mp.json', 'w') as f:
-            json.dump({"objList":objs, "translate": request.json["translate"]}, f)
-        result = smart_op.find_category_and_rotate_given_placement("_",0,"_",objs,request.json["translate"])
-        d = {'cat':result[0], 'rotate':[result[1][0], result[1][1], result[1][2]]}
-        models=orm.query_models(result[0],(0,1))
-        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in models]
-        if len(ret) == 0:
-            return json.dumps({'valid':0})
-        ret = ret[0]
-        ret['rotate'] = d['rotate']
+        # for o in request.json["objList"]:
+        #     if o is not None:
+        #         objs.append(o)
+        # with open('./mp.json', 'w') as f:
+        #     json.dump({"objList":objs, "translate": request.json["translate"]}, f)
+        # result = smart_op.find_category_and_rotate_given_placement("_",0,"_",objs,request.json["translate"])
+        # d = {'cat':result[0], 'rotate':[result[1][0], result[1][1], result[1][2]]}
+        # models=orm.query_models(result[0],(0,1))
+        # ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in models]
+        # if len(ret) == 0:
+        #     return json.dumps({'valid':0})
+        # ret = ret[0]
+        # ret['rotate'] = d['rotate']
+        # ret['valid'] = 1
+        # return json.dumps(ret)
+        room_json = request.json["roomjson"]
+        thetranslate = np.array(request.json["translate"])
+        hid = room_json['origin']
+        with open('./suncg/level/{}/{}-l0.json'.format(hid, hid)) as f:
+        	origin_room_json = json.load(f)['rooms'][room_json['roomId']]
+        odis = 10000
+        ret = {}
+        for obj in origin_room_json['objList']:
+        	dis = np.linalg.norm(thetranslate - np.array(obj['translate']))
+        	if dis < odis:
+        		odis = dis
+        		ret['name'] = obj['modelId']
+        		ret['rotate'] = obj['rotate']
+        		ret['scale'] = obj['scale']
         ret['valid'] = 1
         return json.dumps(ret)
+
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
 
@@ -185,7 +203,6 @@ def sketch():
                 if len(tmp)>=20:
                     break
         results = tmp
-        #print(tmp)
         print(results)
 
         results = orm.query_model_by_names(results)
@@ -241,6 +258,8 @@ def sketchNaudio():
             audio_sketch_eng = 'table'
         elif audio_sketch_word == '椅子':
             audio_sketch_eng = 'chair'
+        elif audio_sketch_word == '办公椅':
+            audio_sketch_eng = 'office_chair'
         elif audio_sketch_word == '扶手椅':
             audio_sketch_eng = 'armchair'
         elif audio_sketch_word == '长椅':
