@@ -7,8 +7,14 @@ import numpy as np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d, connected_component
-from sk_loader import obj_semantic, name_to_ls, ls_to_name
 from rec_release import rotate_pos_prior, rotate_bb_local_para, loss_2, loss_4
+
+with open('./latentspace/obj-semantic.json') as f:
+    obj_semantic = json.load(f)
+with open('./latentspace/name_to_ls.json') as f:
+    name_to_ls = json.load(f)
+with open('./latentspace/ls_to_name.json') as f:
+    ls_to_name = json.load(f)
 
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
 leaderlist = ['double_bed', 'desk', 'coffee_table']
