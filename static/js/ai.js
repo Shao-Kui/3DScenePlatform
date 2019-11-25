@@ -6,7 +6,7 @@ var mage_add_control = function(event){
 var mage_add_object = function(){
   var d = {};
   var pos = findGroundTranslation();
-  d.objList = manager.renderManager.scene_json.rooms[currentRoomId].objList;
+  d.roomjson = manager.renderManager.scene_json.rooms[currentRoomId];
   d.translate = [pos.x, pos.y, pos.z];
   $.ajax({
     type: "POST",
@@ -16,9 +16,6 @@ var mage_add_object = function(){
     data: JSON.stringify(d),
     success: function (data) {
       console.log(data);
-      if(data.valid === 0){
-        return;
-      }
       INSERT_OBJ = {
         "modelId":data.name,
         "translate": [
@@ -27,9 +24,9 @@ var mage_add_object = function(){
           pos.z
         ],
         "scale": [
-          1.0,
-          1.0,
-          1.0
+          data.scale[0],
+          data.scale[1],
+          data.scale[2]
         ],
         "rotate": [
           data.rotate[0],
@@ -116,20 +113,32 @@ var auto_layout = function(event){
   d.body.origin = room.origin;
   //d.body.level = ;
   d.body.roomid = room.modelId;
+  // $.ajax({
+  //   type: "POST",
+  //   contentType: "application/json; charset=utf-8",
+  //   url: "http://166.111.71.45:11426/generate",
+  //   crossDomain: true,
+  //   data: JSON.stringify(d),
+  //   success: function (data) {
+  //     manager.renderManager.scene_json.rooms[currentRoomId].objList = data;
+  //     manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(function(obj){
+  //       obj.roomId = currentRoomId;
+  //     });
+  //     manager.renderManager.refresh_instances();
+  //   },
+  //   dataType: "json"
+  // });
   $.ajax({
     type: "POST",
     contentType: "application/json; charset=utf-8",
-    url: "http://166.111.71.45:11426/generate",
-    crossDomain: true,
-    data: JSON.stringify(d),
+    url: "/sklayout",
+    data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
     success: function (data) {
-      manager.renderManager.scene_json.rooms[currentRoomId].objList = data;
-      manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(function(obj){
-        obj.roomId = currentRoomId;
-      });
+      data = JSON.parse(data);
+      temp = data;
+      manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
       manager.renderManager.refresh_instances();
-    },
-    dataType: "json"
+    }
   });
 };
 

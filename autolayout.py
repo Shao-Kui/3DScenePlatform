@@ -126,15 +126,15 @@ def wall_out_dis(bb, walls, wallid):
     return gradi
 
 def heuristic_wall(cg, walls):
+    print('start to place {} (dominator). '.format(cg['objList'][cg['leaderID']]['coarseSemantic']))
     walln = walls[:, 2:4]
     wallid = cg['wallid']
     # determine main direction w.r.t wall; 
     # currently, only one strategy exist, i.e., cg follows leader and leader orients 0.0; 
     # cg['orient'] = cg['orient_offset'] + np.arctan2(walln[wallid][0], walln[wallid][1])
     cg['orient'] = np.arctan2(walln[wallid][0], walln[wallid][1])
-    print(np.arctan2(-walln[wallid][1], walln[wallid][0]), walln[wallid])
-    o = cg # o here stands for an entire coherent group; 
-    t = np.array([o['translate'][0], o['translate'][2]], dtype=np.float)
+    # print('Offsets: ', cg['objList'][cg['leaderID']]['coarseSemantic'], cg['orient_offset'])
+    t = np.array([cg['translate'][0], cg['translate'][2]], dtype=np.float)
     cg['bb'] = rotate_bb_local_np(cg['bb'].numpy(), cg['orient'], np.array([1., 1.], dtype=np.float))
     cg['bb'] += t
     p1 = walls[wallid, 0:2]
@@ -156,10 +156,8 @@ def heuristic_wall(cg, walls):
 def sceneSynthesis(rj):
     pend_obj_list = []
     bbindex = []
-    ol = rj['objList']
-    print("Total Number of objects: ", len(ol))
     # identifying objects to arrange; 
-    for o in ol:
+    for o in rj['objList']:
         if o is None or o['modelId'] not in obj_semantic:
             continue
         if 'coarseSemantic' in o:
@@ -238,18 +236,14 @@ def sceneSynthesis(rj):
     np.random.shuffle(wallindices)
     for index, cg in zip(range(len(cgs)), cgs):
         cg['wallid'] = wallindices[index % len(wallindices)]
-        # ratio = np.random.rand()
-        ratio = 0.5
+        ratio = np.random.rand()
         p1 = room_shape[cg['wallid']]
         p2 = room_shape[(cg['wallid']+1) % len(room_shape)]
         p = ratio * p1 + (1 - ratio) * p2
         cg['translate'][0] = p[0].item()
         cg['translate'][2] = p[1].item()
-        for o in cg['objList']:
-            print(o['coarseSemantic'], o['translate'])
         heuristic_wall(cg, room_meta)
     for cg in cgs:
-        print(cg['translate'])
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
             o['orient'] += cg['orient']

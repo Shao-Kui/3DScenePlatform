@@ -393,8 +393,5 @@ var setting_up = function(){
     var radial_remove_button = document.getElementsByClassName("glyphicon-remove")[0];
     radial_remove_button.addEventListener('click', radial_remove_control);
 
-    var axis = new THREE.AxesHelper(1000);
-    scene.add(axis);
-
 		gameLoop();
 };
