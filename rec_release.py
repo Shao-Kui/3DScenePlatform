@@ -6,7 +6,7 @@ import numpy as np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
-from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
+# from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
 import matplotlib.pyplot as plt
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
@@ -37,9 +37,9 @@ def recommendation_ls_euclidean(objList):
     counter = 0
     results = []
     for i in indices:
-        if ls_to_name[i] in e_room:
+        if ls_to_name[str(i)] in e_room:
             continue
-        results.append(ls_to_name[i])
+        results.append(ls_to_name[str(i)])
         counter += 1
         if counter >= REC_MAX:
             break
@@ -62,12 +62,12 @@ def disturbance(obj, scale, room_shape=None):
             tz = obj['translate'][2] + np.random.randn() * scale
         obj['translate'][0] = tx
         obj['translate'][2] = tz
-        randori = obj['orient'] + np.random.randn()
-        while randori > np.pi:
-            randori -= 2 * np.pi
-        while randori < -np.pi:
-            randori += 2 * np.pi
-        obj['orient'] = randori
+        # randori = obj['orient'] + np.random.randn()
+        # while randori > np.pi:
+        #     randori -= 2 * np.pi
+        # while randori < -np.pi:
+        #     randori += 2 * np.pi
+        # obj['orient'] = randori
 
 def loss_2(x, yrelation=None):
     loss = torch.zeros((len(x), len(x), 4, 4, 3, 3), dtype=torch.float)
@@ -159,11 +159,11 @@ def sample_translateRela(child, obj):
     child['translateRela'] = priors['pos'][priorid][np.random.randint(len(priors['pos'][priorid]))]
 
 def collision_loss(translate, room_shape, yrelation=None, wallrelation=None, cornerrelation=None):
-    loss = 0.5 * loss_2(translate, yrelation=yrelation)  # pairwise collision loss
-    loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
-    # loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
-    loss += loss_wall(translate, room_shape, wallrelation)  # nearest wall loss (Inside)
-    loss += loss_corner(translate, room_shape, cornerrelation)  # nearest corner loss (Inside)
+    loss = loss_2(translate, yrelation=yrelation)  # pairwise collision loss
+    # loss += loss_3(translate, room_shape)  # nearest wall loss (Outside)
+    loss += loss_4(translate, room_shape)  # not feasible for non-convex shape
+    # loss += loss_wall(translate, room_shape, wallrelation)  # nearest wall loss (Inside)
+    # loss += loss_corner(translate, room_shape, cornerrelation)  # nearest corner loss (Inside)
     return loss
 
 def children_translate(pend_obj_list, translate, total_obj_num):
@@ -211,7 +211,7 @@ def distribution_loss_orient(x, ori, pos_priors, ori_priors, csrrelation=None):
     # oridiff = torch.min(2 * np.pi - oridiff, oridiff)
     oridiff = torch.exp(oridiff)
 
-    hausdorff = torch.min(diff + oridiff.data, dim=2)
+    hausdorff = torch.min(diff + oridiff, dim=2)
     # indexes = hausdorff[1].flatten() + (torch.arange(len(x) * len(x)) * len(ori_priors[0, 0]))
     # indexes = indexes.flatten()
     # print("Dis Part: \r\n", diff.data.flatten()[indexes].reshape(len(x), len(x)))
@@ -358,12 +358,14 @@ def fa_layout_pro(rj):
     while loss.item() > 0.0 and iteration < MAX_ITERATION:
         print("Start iteration {}...".format(iteration))
         loss.backward()
-        translate.data = translate.data - (1.0 / (1 + torch.sum(csrrelation, dim=1))).reshape(len(pend_obj_list), 1) * translate.grad * 0.05
+        # translate.data = translate.data - (1.0 / (1 + torch.sum(csrrelation, dim=1))).reshape(len(pend_obj_list), 1) * translate.grad * 0.05
+        translate.data = translate.data - translate.grad * 0.05
         translate.grad = None
-        orient.data = orient.data - orient.grad * 0.01
-        orient.data[orient.data >  np.pi] -= 2 * np.pi
-        orient.data[orient.data < -np.pi] += 2 * np.pi
-        orient.grad = None
+        # if orient.grad is not None:
+        #     orient.data = orient.data - orient.grad * 0.01
+        #     orient.data[orient.data >  np.pi] -= 2 * np.pi
+        #     orient.data[orient.data < -np.pi] += 2 * np.pi
+        #     orient.grad = None
         # loss = distribution_loss(translate, pos_priors[:, :, :, [0, 2]], csrrelation)
         loss = distribution_loss_orient(translate, orient, pos_priors[:, :, :, [0, 2]], ori_priors, csrrelation)
         c_loss = collision_loss(translate.reshape(len(pend_obj_list), 1, 2) + bb, room_shape, yrelation * (1 - csrrelation), wallrelation, cornerrelation)
@@ -372,6 +374,8 @@ def fa_layout_pro(rj):
     print("--- %s seconds ---" % (time.time() - start_time))
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
+        if 'coarseSemantic' not in o:
+            break
         print(o['modelId'], o['coarseSemantic'])
         for j in range(len(pend_obj_list)):
             if csrrelation[i][j] == 1.0:
