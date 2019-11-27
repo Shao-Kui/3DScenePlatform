@@ -198,6 +198,7 @@ def sceneSynthesis(rj):
         cg['csrrelation'] = csrrelation[pend_group][:, pend_group]
         cg['translate'] = [0.0, 0.0, 0.0]
         cg['orient'] = 0.0
+        # determine layouts of each group; 
         heuristic(cg)
         cgs.append(cg)
     # load and process room shapes; 
@@ -221,7 +222,7 @@ def sceneSynthesis(rj):
     bb = four_points_xz[bbindex].float()
     for i in range(len(pend_obj_list)):
         bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
-    bb_tran = translate.reshape(len(pend_obj_list), 1, 3)[:, :, [0, 2]] + bb
+    bb_tran = translate.reshape(len(pend_obj_list), 1, 3)[:, :, [0, 2]] + bb # note that bbs are around (0,0,0) after heuristic(cg)
     # calculate bounding box of coherent groups; 
     for gid in range(len(pend_groups)):
         pend_group = pend_groups[gid]
@@ -236,8 +237,7 @@ def sceneSynthesis(rj):
         cg['bb'][2] = minp
         cg['bb'][3][0] = maxp[0]
         cg['bb'][3][1] = minp[1]
-    # assingning walls to each coherent group;
-    # note that it is better to set segments to each group; (improvement for intern student :) ~~~ )
+    # assingning walls to each coherent group; 
     wallindices = np.arange(len(room_shape), dtype=np.int)
     np.random.shuffle(wallindices)
     for index, cg in zip(range(len(cgs)), cgs):
@@ -259,6 +259,45 @@ def sceneSynthesis(rj):
             o['translate'][0] += cg['translate'][0]
             o['translate'][1] += cg['translate'][1]
             o['translate'][2] += cg['translate'][2]
+    # detect collision, if collision exists, simply re-run the entire algorithm; 
+    # note that this is a naive judgement, we need to improve it using S.K.'s range tree; 
+    dbbs = []
+    for o in rj['objList']:
+        if 'coarseSemantic' in o:
+            if o['coarseSemantic'] == 'door':
+                dbb = torch.zeros((4, 2), dtype=torch.float)
+                t = torch.tensor([o['translate'][0], o['translate'][2]])
+                doororient = torch.tensor([np.sin(o['orient']), np.cos(o['orient'])])
+                doornorm = torch.tensor([np.cos(o['orient']), np.sin(o['orient'])])
+                maxp = doororient * 1.5 + doornorm * 0.51 + t
+                minp = -doororient * 1.5 - doornorm * 0.51 + t
+                dbb[0] = maxp
+                dbb[1][0] = minp[0]
+                dbb[1][1] = maxp[1]
+                dbb[2] = minp
+                dbb[3][0] = maxp[0]
+                dbb[3][1] = minp[1]
+
+                dbb = torch.zeros((4, 2), dtype=torch.float)
+                maxp = doororient * 0.1 + doornorm * 0.51 + t
+                minp = -doororient * 0.1 - doornorm * 0.51 + t
+                dbb[0] = maxp
+                dbb[1][0] = minp[0]
+                dbb[1][1] = maxp[1]
+                dbb[2] = minp
+                dbb[3][0] = maxp[0]
+                dbb[3][1] = minp[1]
+
+                dbbs.append(dbb)
+    cgbb = torch.zeros((len(cgs) + len(dbbs), 4, 2))
+    for i in range(len(cgs)):
+        cgbb[i] = torch.from_numpy(cgs[i]['bb'])
+    for i in range(len(dbbs)):
+        cgbb[i + len(cgs)] = dbbs[i]
+    loss = loss_2(cgbb)
+    print(loss)
+    if loss > 0.0:
+        return sceneSynthesis(rj)
     # log coherent groups; 
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]
