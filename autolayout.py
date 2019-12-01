@@ -4,6 +4,7 @@ import time
 import math
 import torch
 import numpy as np
+from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d, connected_component
@@ -99,14 +100,6 @@ def heuristic(cg):
         o['isHeu'] = False
     heuristic_recur(pend_group, cg['leaderID'], adj)
 
-def rotate_bb_local_np(points, angle, scale):
-    result = points.copy()
-    scaled = points.copy()
-    scaled = scaled * scale
-    result[:, 0] = np.cos(angle) * scaled[:, 0] + np.sin(angle) * scaled[:, 1]
-    result[:, 1] = -np.sin(angle) * scaled[:, 0] + np.cos(angle) * scaled[:, 1]
-    return result
-
 def rotate(origin, point, angle):
     ox = origin[0]
     oy = origin[1]
@@ -115,49 +108,6 @@ def rotate(origin, point, angle):
     qx = ox + math.cos(angle) * (px - ox) + math.sin(angle) * (py - oy)
     qy = oy - math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return qx, qy
-
-def wall_out_dis(bb, walls, wallid):
-    wallid = wallid % len(walls)
-    p1 = walls[wallid, 0:2]
-    p2 = walls[(wallid+1) % len(walls), 0:2]
-    dets = np.ones(shape=(len(bb), 3, 3), dtype=np.float)
-    dets[:, 0:2, 0] = p1
-    dets[:, 0:2, 1] = p2
-    dets[:, 0:2, 2] = bb
-    dets = np.linalg.det(dets) / np.linalg.norm(p1 - p2)
-    dets[dets > 0.] = 0.
-    dets = np.abs(dets)
-    dets = np.max(dets)
-    gradi = walls[wallid, 2:4] * dets
-    return gradi
-
-def heuristic_wall(cg, walls):
-    print('start to place {} (dominator). '.format(cg['objList'][cg['leaderID']]['coarseSemantic']))
-    walln = walls[:, 2:4]
-    wallid = cg['wallid']
-    # determine main direction w.r.t wall; 
-    # currently, only one strategy exist, i.e., cg follows leader and leader orients 0.0; 
-    # cg['orient'] = cg['orient_offset'] + np.arctan2(walln[wallid][0], walln[wallid][1])
-    cg['orient'] = np.arctan2(walln[wallid][0], walln[wallid][1])
-    # print('Offsets: ', cg['objList'][cg['leaderID']]['coarseSemantic'], cg['orient_offset'])
-    t = np.array([cg['translate'][0], cg['translate'][2]], dtype=np.float)
-    cg['bb'] = rotate_bb_local_np(cg['bb'].numpy(), cg['orient'], np.array([1., 1.], dtype=np.float))
-    cg['bb'] += t
-    p1 = walls[wallid, 0:2]
-    p2 = walls[(wallid+1) % len(walls), 0:2]
-    dets = np.ones(shape=(len(cg['bb']), 3, 3), dtype=np.float)
-    dets[:, 0:2, 0] = p1
-    dets[:, 0:2, 1] = p2
-    dets[:, 0:2, 2] = cg['bb']
-    dets = np.linalg.det(dets) / np.linalg.norm(p1 - p2)
-    dets[dets > 0.] = 0.
-    dets = np.abs(dets)
-    dis = np.max(dets)
-    t += walls[wallid, 2:4] * dis
-    t += wall_out_dis(cg['bb'], walls, wallid-1)
-    t += wall_out_dis(cg['bb'], walls, wallid+1)
-    cg['translate'][0] = t[0]
-    cg['translate'][2] = t[1]
 
 def sceneSynthesis(rj):
     pend_obj_list = []
@@ -204,13 +154,9 @@ def sceneSynthesis(rj):
     # load and process room shapes; 
     room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
     room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
-    room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
-    room_shape_norm = torch.from_numpy(room_meta).float()
-
     translate = torch.zeros((len(pend_obj_list), 3)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
     scale = torch.zeros((len(pend_obj_list), 3)).float()
-    
     for i in range(len(pend_obj_list)):
         translate[i][0] = pend_obj_list[i]['translate'][0]
         translate[i][1] = pend_obj_list[i]['translate'][1]
@@ -237,18 +183,7 @@ def sceneSynthesis(rj):
         cg['bb'][2] = minp
         cg['bb'][3][0] = maxp[0]
         cg['bb'][3][1] = minp[1]
-    # assingning walls to each coherent group; 
-    wallindices = np.arange(len(room_shape), dtype=np.int)
-    np.random.shuffle(wallindices)
-    for index, cg in zip(range(len(cgs)), cgs):
-        cg['wallid'] = wallindices[index % len(wallindices)]
-        ratio = np.random.rand()
-        p1 = room_shape[cg['wallid']]
-        p2 = room_shape[(cg['wallid']+1) % len(room_shape)]
-        p = ratio * p1 + (1 - ratio) * p2
-        cg['translate'][0] = p[0].item()
-        cg['translate'][2] = p[1].item()
-        heuristic_wall(cg, room_meta)
+    naive_heuristic(cgs, room_meta)
     for cg in cgs:
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
@@ -259,45 +194,6 @@ def sceneSynthesis(rj):
             o['translate'][0] += cg['translate'][0]
             o['translate'][1] += cg['translate'][1]
             o['translate'][2] += cg['translate'][2]
-    # detect collision, if collision exists, simply re-run the entire algorithm; 
-    # note that this is a naive judgement, we need to improve it using S.K.'s range tree; 
-    dbbs = []
-    for o in rj['objList']:
-        if 'coarseSemantic' in o:
-            if o['coarseSemantic'] == 'door':
-                dbb = torch.zeros((4, 2), dtype=torch.float)
-                t = torch.tensor([o['translate'][0], o['translate'][2]])
-                doororient = torch.tensor([np.sin(o['orient']), np.cos(o['orient'])])
-                doornorm = torch.tensor([np.cos(o['orient']), np.sin(o['orient'])])
-                maxp = doororient * 1.5 + doornorm * 0.51 + t
-                minp = -doororient * 1.5 - doornorm * 0.51 + t
-                dbb[0] = maxp
-                dbb[1][0] = minp[0]
-                dbb[1][1] = maxp[1]
-                dbb[2] = minp
-                dbb[3][0] = maxp[0]
-                dbb[3][1] = minp[1]
-
-                dbb = torch.zeros((4, 2), dtype=torch.float)
-                maxp = doororient * 0.1 + doornorm * 0.51 + t
-                minp = -doororient * 0.1 - doornorm * 0.51 + t
-                dbb[0] = maxp
-                dbb[1][0] = minp[0]
-                dbb[1][1] = maxp[1]
-                dbb[2] = minp
-                dbb[3][0] = maxp[0]
-                dbb[3][1] = minp[1]
-
-                dbbs.append(dbb)
-    cgbb = torch.zeros((len(cgs) + len(dbbs), 4, 2))
-    for i in range(len(cgs)):
-        cgbb[i] = torch.from_numpy(cgs[i]['bb'])
-    for i in range(len(dbbs)):
-        cgbb[i + len(cgs)] = dbbs[i]
-    loss = loss_2(cgbb)
-    print(loss)
-    if loss > 0.0:
-        return sceneSynthesis(rj)
     # log coherent groups; 
     for i in range(len(pend_obj_list)):
         o = pend_obj_list[i]

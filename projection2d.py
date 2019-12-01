@@ -327,7 +327,7 @@ def file_search(path):
             print("Entering " + path + "/" + file + '(%d/%d)' % (dir_nump, dir_num))
             file_search(path + "/" + file)
 
-def connected_component(name,adj):
+def connected_component(name, adj):
     size = len(name)
     vis = np.zeros(size,dtype=np.bool)
     ans=[]

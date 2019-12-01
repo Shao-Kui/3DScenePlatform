@@ -2,6 +2,9 @@ var directionalLight;
 var ambientLight;
 
 var render_initialization = function(){
+  var axis = new THREE.AxesHelper(1000);
+  scene.add(axis);
+
   directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.3);
   directionalLight.castShadow = true;
   directionalLight.position.y = 0.5;
@@ -13,6 +16,6 @@ var render_initialization = function(){
 
 var render_update = function(){
   var time= Date.now() * 0.0001;
-  directionalLight.position.x = Math.sin(time);
-  directionalLight.position.z = Math.cos(time);
+  //directionalLight.position.x = Math.sin(time);
+  //directionalLight.position.z = Math.cos(time);
 }

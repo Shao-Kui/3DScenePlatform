@@ -1,11 +1,16 @@
 /rooms
 /suncg
 /test
+/directvideo
 /__pycache__
 */__pycache__
 /level/test
 ./*.json
 ./*.png
+*.wav
+*.rar
+mp.json
+qs.png
 ./*.pyc
 .pyc
 /sketch_retrival/features
