@@ -207,7 +207,7 @@ def sketch():
 
         results = orm.query_model_by_names(results)
         #print(results)
-        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
+        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results if m != None]
         print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
