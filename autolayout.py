@@ -16,8 +16,10 @@ with open('./latentspace/name_to_ls.json') as f:
     name_to_ls = json.load(f)
 with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
+with open('./latentspace/windoorblock.json') as f:
+    windoorblock = json.load(f)
 
-BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
+BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater', 'picture_frame']
 leaderlist = ['double_bed', 'desk', 'coffee_table']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
@@ -109,16 +111,48 @@ def rotate(origin, point, angle):
     qy = oy - math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return qx, qy
 
+def windoorblock_f(o):
+    currentwindoor = windoorblock[o['modelId']]
+    block = {}
+    block['modelId'] = o['modelId']
+    block['coarseSemantic'] = o['coarseSemantic']
+    block['max'] = currentwindoor['max'].copy()
+    block['min'] = currentwindoor['min'].copy()
+    block['max'][0] = block['max'][0] * o['scale'][0]
+    block['max'][1] = block['max'][1] * o['scale'][1]
+    block['max'][2] = block['max'][2] * o['scale'][2]
+    block['min'][0] = block['min'][0] * o['scale'][0]
+    block['min'][1] = block['min'][1] * o['scale'][1]
+    block['min'][2] = block['min'][2] * o['scale'][2]
+    block['max'][0], block['max'][2] = rotate([0,0], [block['max'][0], block['max'][2]], o['orient'])
+    block['min'][0], block['min'][2] = rotate([0,0], [block['min'][0], block['min'][2]], o['orient'])
+    block['max'][0] = block['max'][0] + o['translate'][0]
+    block['max'][1] = block['max'][1] + o['translate'][1]
+    block['max'][2] = block['max'][2] + o['translate'][2]
+    block['min'][0] = block['min'][0] + o['translate'][0]
+    block['min'][1] = block['min'][1] + o['translate'][1]
+    block['min'][2] = block['min'][2] + o['translate'][2]
+    windoorbb = np.array(currentwindoor['four_points_xz'], dtype=np.float)
+    block['windoorbb'] = rotate_bb_local_np(windoorbb, o['orient'], np.array([o['scale'][0], o['scale'][2]], dtype=np.float))
+    block['windoorbb'][:, 0] += o['translate'][0]
+    block['windoorbb'][:, 1] += o['translate'][2]
+    return block
+
 def sceneSynthesis(rj):
     pend_obj_list = []
     bbindex = []
+    blocks = []
     # identifying objects to arrange; 
     for o in rj['objList']:
-        if o is None or o['modelId'] not in obj_semantic:
+        if o is None:
             continue
-        if 'coarseSemantic' in o:
-            if o['coarseSemantic'] in BANNED:
-                continue
+        # if 'coarseSemantic' in o:
+        if o['coarseSemantic'] in BANNED:
+            continue
+        if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window':
+            blocks.append(windoorblock_f(o))
+        if o['modelId'] not in obj_semantic:
+            continue
         bbindex.append(name_to_ls[o['modelId']])
         pend_obj_list.append(o)
     # load priors; 
@@ -183,7 +217,8 @@ def sceneSynthesis(rj):
         cg['bb'][2] = minp
         cg['bb'][3][0] = maxp[0]
         cg['bb'][3][1] = minp[1]
-    naive_heuristic(cgs, room_meta)
+    # generate 
+    naive_heuristic(cgs, room_meta, blocks)
     for cg in cgs:
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
