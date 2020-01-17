@@ -15,7 +15,6 @@ function create_stream(user_media) {
     reco = new Recorder(stream_input);
 }
 
-
 function start_reco() {
     console.log('start recording')
     $("#audio_error").hide()
