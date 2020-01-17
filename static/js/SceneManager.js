@@ -8,11 +8,12 @@ function pausecomp(millis) {
 }
 
 class SceneManager {
-    constructor(parent_manager, canvas) {
+    constructor(parent_manager, canvas,is_ls = false) {
         this.parent_manager = parent_manager;
         this.canvas = canvas;
         this.objectInfoCache = {};
         this.instanceKeyCache = {};
+        this.latent_space_scene = is_ls;
         this.cwfCache = [];
         this.init_canvas();
     }
@@ -24,7 +25,10 @@ class SceneManager {
         this.camera.userData = {"type": "camera"};
         this.scene.add(this.camera);
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, alpha: true, antialias: 4});
-        this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
+        if(this.latent_space_scene==false)
+            this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
+        else
+            this.renderer.setClearColor(0x000000, 0);
         // Start to configurate the orthogonal top renderer and camera.
         this.orthrenderer = new THREE.WebGLRenderer({
             canvas: ($(this.parent_manager.uiDOM).find("#orthcanvas"))[0],
@@ -136,9 +140,7 @@ class SceneManager {
                 } else {
                     //to prevent incomplete model to be deleted by this.scene_remove
                     //newkeycache[inst.key]=true;
-                    if (self.objectInfoCache[inst.modelId]) {
-                        self.load_instance(inst);
-                    } else {
+                    if (!(self.objectInfoCache[inst.modelId])) {
                         fetch("/objmeta/" + inst.modelId).then(function (response) {
                             return response.json();
                         })
@@ -149,6 +151,8 @@ class SceneManager {
                                 self.objectInfoCache[inst.modelId] = meta;
                                 self.load_instance(inst);
                             });
+                    } else {
+                        self.load_instance(inst);
                     }
                 }
                 self.renderer.render(self.scene, self.camera);
@@ -218,8 +222,9 @@ class SceneManager {
 }
 
 class SceneController {
-    constructor(uiDOM) {
+    constructor(uiDOM,is_ls = false) {
         this.uiDOM = uiDOM;
+        this.latent_space_scene = is_ls
         this.renderManager = new SceneManager(this, ($(this.uiDOM).find("#scenecanvas"))[0])
         this.init_menu();
     }
@@ -229,13 +234,23 @@ class SceneController {
     }
 
     init_load_button() {
-        this.load_button = ($(this.uiDOM).find("#load_button"))[0];
-        this.load_dialog = ($(this.uiDOM).find("#load_dialog"))[0];
-        this.load_dialog_input = ($(this.uiDOM).find("#load_dialog_input"))[0];
-        this.load_dialog_button = ($(this.uiDOM).find("#load_dialog_button"))[0];
-        $(this.load_dialog).dialog({autoOpen: false});
-        $(this.load_button).click(this.load_button_click());
-        $(this.load_dialog_button).click(this.load_dialog_button_click());
+        if(this.latent_space_scene==false) {
+            this.load_button = ($(this.uiDOM).find("#load_button"))[0];
+            this.load_dialog = ($(this.uiDOM).find("#load_dialog"))[0];
+            this.load_dialog_input = ($(this.uiDOM).find("#load_dialog_input"))[0];
+            this.load_dialog_button = ($(this.uiDOM).find("#load_dialog_button"))[0];
+            $(this.load_dialog).dialog({autoOpen: false});
+            $(this.load_button).click(this.load_button_click());
+            $(this.load_dialog_button).click(this.load_dialog_button_click());
+        }else{
+            this.load_button = ($(this.uiDOM).find("#ls_load_button"))[0];
+            this.load_dialog = ($(this.uiDOM).find("#ls_load_dialog"))[0];
+            this.load_dialog_input = ($(this.uiDOM).find("#ls_load_dialog_input"))[0];
+            this.load_dialog_button = ($(this.uiDOM).find("#ls_load_dialog_button"))[0];
+            $(this.load_dialog).dialog({autoOpen: false});
+            $(this.load_button).click(this.load_button_click());
+            $(this.load_dialog_button).click(this.load_dialog_button_click());
+        }
     }
 
     load_button_click() { //use closure to pass self
@@ -264,6 +279,7 @@ class SceneController {
 
     load_scene(json) {
         this.renderManager.refresh_scene(json, true);
+        toggle_latent_space(this.latent_space_mode)
     }
 
 }

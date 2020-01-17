@@ -44,11 +44,14 @@
 
         //Global variables, will be initialize only once.
         var manager;
+        var sc_manager;
+        var ls_manager;
         var menu;
         var radial;
         var renderer;
         var camera;
         var scene;
+
         var mouse = new THREE.Vector2();
         var orthmouse = new THREE.Vector2();
         var raycaster = new THREE.Raycaster();
@@ -61,11 +64,15 @@
         var searchResults;
         var currentRoomId;
         var orthline;
+        var latent_space_mode;
+
         $(document).ready(function () {
-            manager = new SceneController($("#ui")[0]);
-            renderer = manager.renderManager.renderer;
-            camera = manager.renderManager.camera;
-            scene = manager.renderManager.scene;
+            sc_manager = new SceneController($("#ui")[0]);
+            ls_manager = new SceneController($("#ui")[0],true);
+            latent_space_mode = true;
+            toggle_latent_space();
+
+
             scenecanvas = document.getElementById('scenecanvas');
             orthcanvas = document.getElementById('orthcanvas');
             radial = new Radial(rad_items, rad_options);
@@ -75,6 +82,7 @@
             drawingCanvas = document.getElementById('drawing-canvas');
             setting_up();
         })
+
 
 
 
@@ -91,6 +99,7 @@
             </div>
             <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
+                <button id="ls_load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load L-S</button>
                 <button id="mage_button" type="button" class="btn btn-lg btn-primary nav_sk_button">MageAdd</button>
                 <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert</button>
                 <button id="reshuffle" type="button" class="btn btn-lg btn-primary nav_sk_button">Shuffle</button>
@@ -162,6 +171,13 @@
             <input type="file" class="form-control-file" id="load_dialog_input">
         </div>
         <button type="button" class="btn btn-primary" id="load_dialog_button">载入</button>
+    </div>
+    <div id="ls_load_dialog" class="dialog" title="Load Scene File">
+        <div class="form-group">
+            <label for="ls_load_dialog_input">载入latent space文件</label>
+            <input type="file" class="form-control-file" id="ls_load_dialog_input">
+        </div>
+        <button type="button" class="btn btn-primary" id="ls_load_dialog_button">载入</button>
     </div>
 
     <div id="menu2"></div>

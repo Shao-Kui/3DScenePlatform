@@ -2,12 +2,27 @@ var gameLoop = function () {
     render_update();
     orth_view_port_update();
     keyboard_update();
-    requestAnimationFrame(gameLoop);
+
     camera.updateMatrixWorld();
     manager.renderManager.orthcamera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, camera);
     renderer.render(scene, camera);
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
+    requestAnimationFrame(gameLoop);
+};
+var toggle_latent_space = function (to_mode = !latent_space_mode) {
+    if (to_mode === latent_space_mode)
+        return;
+    if (latent_space_mode == false) {
+        latent_space_mode = true;
+        manager = ls_manager;
+    } else {
+        latent_space_mode = false;
+        manager = sc_manager;
+    }
+    renderer = manager.renderManager.renderer;
+    camera = manager.renderManager.camera;
+    scene = manager.renderManager.scene;
 };
 
 var screen_to_ground = function (mx, my, ground_y = 0) {
@@ -191,6 +206,7 @@ var addCatalogItem = function () {
 }
 
 var onClickObj = function (event) {
+    console.log(latent_space_mode ? 'now in latent space' : 'now in design space');
     scenecanvas.style.cursor = "auto";
     //Do raycasting, judge whether or not users choose a new object.
     camera.updateMatrixWorld();
@@ -293,7 +309,8 @@ var clear_panel = function () {
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
-    render_initialization();
+    render_initialization(sc_manager.renderManager.scene);
+    render_initialization(ls_manager.renderManager.scene);
     orth_initialization();
     $("#searchbtn").click(clickTextSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
