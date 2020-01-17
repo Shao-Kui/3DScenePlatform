@@ -393,5 +393,9 @@ var setting_up = function(){
     var radial_remove_button = document.getElementsByClassName("glyphicon-remove")[0];
     radial_remove_button.addEventListener('click', radial_remove_control);
 
+    // a stub for Wei-Yu
+    var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
+    //radial_latentspace_button.addEventListener('click', write_function_here);
+
 		gameLoop();
 };

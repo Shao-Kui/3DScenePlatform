@@ -1,5 +1,5 @@
 var rad_items = [
-  {className: 'glyphicon glyphicon-plus', html: ''},
+  {className: 'glyphicon glyphicon-star', html: ''},
   {className: 'glyphicon glyphicon-move', html: ''},
   {className: 'glyphicon glyphicon-repeat', html: ''},
   {className: 'glyphicon glyphicon-remove', html: ''}
