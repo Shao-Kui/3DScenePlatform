@@ -93,6 +93,9 @@ def textquery():
     lo=flask.request.args.get('lo', default = 0, type = int) #
     hi=flask.request.args.get('hi', default = 20, type = int)
     models=orm.query_models(kw,(lo,hi))
+    modelofid = orm.query_model_by_name(kw)
+    if modelofid is not None:
+        models.append(modelofid)
     ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in models]
     return json.dumps(ret)
 
