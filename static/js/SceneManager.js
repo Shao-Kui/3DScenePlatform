@@ -7,8 +7,9 @@ function pausecomp(millis) {
     while (curDate - date < millis);
 }
 
+
 class SceneManager {
-    constructor(parent_manager, canvas,is_ls = false) {
+    constructor(parent_manager, canvas, is_ls = false) {
         this.parent_manager = parent_manager;
         this.canvas = canvas;
         this.objectInfoCache = {};
@@ -25,7 +26,7 @@ class SceneManager {
         this.camera.userData = {"type": "camera"};
         this.scene.add(this.camera);
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, alpha: true, antialias: 4});
-        if(this.latent_space_scene==false)
+        if (this.latent_space_scene == false)
             this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
         else
             this.renderer.setClearColor(0x000000, 0);
@@ -43,6 +44,7 @@ class SceneManager {
         this.scene.add(this.orthcamera);
         this.on_resize();
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+
     }
 
     scene_remove(datafilter) {
@@ -129,7 +131,8 @@ class SceneManager {
                     return;
                 }
                 if (!(inst.key)) {
-                    inst.key = THREE.Math.generateUUID();
+                    // inst.key = THREE.Math.generateUUID();
+                    inst.key = inst.modelId
                 }
                 if (self.instanceKeyCache[inst.key]) {
                     var instance = self.instanceKeyCache[inst.key];
@@ -173,6 +176,7 @@ class SceneManager {
             objLoader.setMaterials(materials);
             objLoader.load(meta.mesh, function (event) {
                 var instance = event.detail.loaderRootNode;
+                instance.name = inst.key
                 instance.scale.set(inst.scale[0], inst.scale[1], inst.scale[2]);
                 instance.rotation.set(inst.rotate[0], inst.rotate[1], inst.rotate[2], inst.rotateOrder);
                 instance.position.set(inst.translate[0], inst.translate[1], inst.translate[2]);
@@ -222,7 +226,7 @@ class SceneManager {
 }
 
 class SceneController {
-    constructor(uiDOM,is_ls = false) {
+    constructor(uiDOM, is_ls = false) {
         this.uiDOM = uiDOM;
         this.latent_space_scene = is_ls
         this.renderManager = new SceneManager(this, ($(this.uiDOM).find("#scenecanvas"))[0])
@@ -234,7 +238,7 @@ class SceneController {
     }
 
     init_load_button() {
-        if(this.latent_space_scene==false) {
+        if (this.latent_space_scene == false) {
             this.load_button = ($(this.uiDOM).find("#load_button"))[0];
             this.load_dialog = ($(this.uiDOM).find("#load_dialog"))[0];
             this.load_dialog_input = ($(this.uiDOM).find("#load_dialog_input"))[0];
@@ -242,7 +246,7 @@ class SceneController {
             $(this.load_dialog).dialog({autoOpen: false});
             $(this.load_button).click(this.load_button_click());
             $(this.load_dialog_button).click(this.load_dialog_button_click());
-        }else{
+        } else {
             this.load_button = ($(this.uiDOM).find("#ls_load_button"))[0];
             this.load_dialog = ($(this.uiDOM).find("#ls_load_dialog"))[0];
             this.load_dialog_input = ($(this.uiDOM).find("#ls_load_dialog_input"))[0];
@@ -279,7 +283,7 @@ class SceneController {
 
     load_scene(json) {
         this.renderManager.refresh_scene(json, true);
-        toggle_latent_space(this.latent_space_mode)
+        toggle_latent_space(this.latent_space_scene)
     }
 
 }

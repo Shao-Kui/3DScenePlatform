@@ -10,20 +10,8 @@ var gameLoop = function () {
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
     requestAnimationFrame(gameLoop);
 };
-var toggle_latent_space = function (to_mode = !latent_space_mode) {
-    if (to_mode === latent_space_mode)
-        return;
-    if (latent_space_mode == false) {
-        latent_space_mode = true;
-        manager = ls_manager;
-    } else {
-        latent_space_mode = false;
-        manager = sc_manager;
-    }
-    renderer = manager.renderManager.renderer;
-    camera = manager.renderManager.camera;
-    scene = manager.renderManager.scene;
-};
+
+
 
 var screen_to_ground = function (mx, my, ground_y = 0) {
     var vec = new THREE.Vector3();
@@ -61,6 +49,8 @@ var find_object_json = function (obj) {
     }
     return null;
 };
+
+
 
 var synchronize_json_object = function (object) {
     var i = find_object_json(object);
@@ -415,7 +405,7 @@ var setting_up = function () {
 
     // a stub for Wei-Yu
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-    //radial_latentspace_button.addEventListener('click', write_function_here);
+    radial_latentspace_button.addEventListener('click', to_latent_space);
 
 	gameLoop();
 };
