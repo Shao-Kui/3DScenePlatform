@@ -191,6 +191,7 @@ var addCatalogItem = function () {
 }
 
 var onClickObj = function (event) {
+
     scenecanvas.style.cursor = "auto";
     //Do raycasting, judge whether or not users choose a new object.
     camera.updateMatrixWorld();
@@ -233,8 +234,8 @@ var onClickObj = function (event) {
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        console.log(INTERSECT_OBJ);
         console.log(INTERSECT_OBJ.userData);
-        console.log(INTERSECT_OBJ.position, INTERSECT_OBJ.rotation)
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
         if (!isToggle) {
@@ -248,6 +249,9 @@ var onClickObj = function (event) {
             radial.toggle();
             isToggle = !isToggle;
         }
+    }
+    if (latent_space_mode == true && INTERSECT_OBJ) {
+        manager.renderManager.add_latent_obj();
     }
     if (Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined) {
         palette_recommendation();
@@ -398,7 +402,7 @@ var setting_up = function () {
 
     // a stub for Wei-Yu
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-    //radial_latentspace_button.addEventListener('click', write_function_here);
+    radial_latentspace_button.addEventListener('click', manager.renderManager.latent_space_click);
 
     gameLoop();
 };

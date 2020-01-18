@@ -27,6 +27,7 @@
     <script src="/static/js/QE.js"></script>
     <script src="/static/js/ai.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/latent_space.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script>
         //Global state & variables! Careful!
@@ -61,7 +62,10 @@
         var searchResults;
         var currentRoomId;
         var orthline;
+
+        var latent_space_mode;
         $(document).ready(function () {
+            latent_space_mode = false;
             manager = new SceneController($("#ui")[0]);
             renderer = manager.renderManager.renderer;
             camera = manager.renderManager.camera;

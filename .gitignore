@@ -13,6 +13,7 @@ mp.json
 qs.png
 ./*.pyc
 .pyc
+*.pyc
 /sketch_retrival/features
 /sketch_retrival/MVCNN_stage_1
 /sketch_retrival/MVCNN_stage_2

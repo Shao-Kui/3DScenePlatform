@@ -15,12 +15,11 @@ from io import BytesIO
 from PIL import Image
 from rec_release import recommendation_ls_euclidean, fa_reshuffle
 from autolayout import sceneSynthesis
-from flask import Flask,render_template,send_file,request
+from flask import Flask, render_template, send_file, request
 import uuid
 from aip import AipSpeech
 import librosa
 from generate_descriptor import sketch_search
-
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -34,93 +33,124 @@ def set_response_headers(response):
     response.headers['Expires'] = '0'
     return response
 
+
 @app.route("/")
 def main():
-    return flask.send_from_directory("static","index.html")
+    return flask.send_from_directory("static", "index.html")
+
 
 @app.route("/static/<fname>")
 def send(fname):
-    return flask.send_from_directory("static",fname)
+    return flask.send_from_directory("static", fname)
+
 
 @app.route("/objmeta/<obj>")
 def objmeta(obj):
-    m=orm.query_model_by_name(obj)
+    m = orm.query_model_by_name(obj)
     if m is None:
         return json.dumps({})
-    ret={"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d/"%(m.id,)}
-    if (m.format=="OBJ"):
-        ret["mesh"]="/mesh/%s"%m.id
-        ret["mtl"]="/mtl/%s"%m.id
-        ret["texture"]="/texture/"
+    ret = {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d/" % (m.id,)}
+    if (m.format == "OBJ"):
+        ret["mesh"] = "/mesh/%s" % m.id
+        ret["mtl"] = "/mtl/%s" % m.id
+        ret["texture"] = "/texture/"
         return json.dumps(ret)
+
 
 @app.route("/objmeta_by_id/<id>")
 def objmeta_by_id(id):
-    m=orm.query_model_by_id(id)
-    ret={"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d/"%(m.id,)}
-    if (m.format=="OBJ"):
-        ret["mesh"]="/mesh/%s"%m.id
-        ret["mtl"]="/mtl/%s"%m.id
-        ret["texture"]="/texture/"
+    m = orm.query_model_by_id(id)
+    ret = {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d/" % (m.id,)}
+    if (m.format == "OBJ"):
+        ret["mesh"] = "/mesh/%s" % m.id
+        ret["mtl"] = "/mtl/%s" % m.id
+        ret["texture"] = "/texture/"
         return json.dumps(ret)
+
+
 @app.route("/mesh/<id>")
 def mesh(id):
-    m=orm.query_model_by_id(id)
+    m = orm.query_model_by_id(id)
     return flask.send_file(json.loads(m.resources)["mesh"])
+
+
 @app.route("/thumbnail/<id>/<int:view>")
-def thumbnail(id,view):
-    m=orm.query_model_by_id(id)
-    return flask.send_from_directory(os.path.join(".","suncg","objd20",m.name,"render20"),"render-%s-%d.png"%(m.name,view))
+def thumbnail(id, view):
+    m = orm.query_model_by_id(id)
+    return flask.send_from_directory(os.path.join(".", "suncg", "objd20", m.name, "render20"),
+                                     "render-%s-%d.png" % (m.name, view))
+
+
 @app.route("/thumbnail/<id>")
 def thumbnail_sk(id):
-    m=orm.query_model_by_id(id)
-    return flask.send_from_directory(os.path.join(".","suncg","object",m.name,"render20"),"render-%s-%d.png"%(m.name,10))
+    m = orm.query_model_by_id(id)
+    return flask.send_from_directory(os.path.join(".", "suncg", "object", m.name, "render20"),
+                                     "render-%s-%d.png" % (m.name, 10))
+
+
 @app.route("/mtl/<id>")
 def mtl(id):
-    m=orm.query_model_by_id(id)
+    m = orm.query_model_by_id(id)
     return flask.send_file(json.loads(m.resources)["mtl"])
+
 
 @app.route("/texture//<id>")
 def texture(id):
-    return flask.send_from_directory(os.path.join(".","suncg","texture"),id)
+    return flask.send_from_directory(os.path.join(".", "suncg", "texture"), id)
+
+
 @app.route("/texture/<id>")
 def texture_(id):
-    return flask.send_from_directory(os.path.join(".","suncg","texture"),id)
+    return flask.send_from_directory(os.path.join(".", "suncg", "texture"), id)
+
 
 @app.route("/query")
 def textquery():
-    kw=flask.request.args.get('kw', default = "", type = str) # keyword
-    lo=flask.request.args.get('lo', default = 0, type = int) #
-    hi=flask.request.args.get('hi', default = 20, type = int)
-    models=orm.query_models(kw,(lo,hi))
-    ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in models]
+    kw = flask.request.args.get('kw', default="", type=str)  # keyword
+    lo = flask.request.args.get('lo', default=0, type=int)  #
+    hi = flask.request.args.get('hi', default=20, type=int)
+    models = orm.query_models(kw, (lo, hi))
+    ret = [{"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d" % (m.id,)}
+           for m in models]
     return json.dumps(ret)
+
 
 @app.route("/room/<houseid>/<roomid>")
-def roominfo(houseid,roomid):
-    structs={"c":"c.obj","w":"w.obj","f":"f.obj"}
-    ret=[k for k in structs if os.path.isfile(os.path.join("suncg","room",houseid,roomid+structs[k]))]
+def roominfo(houseid, roomid):
+    structs = {"c": "c.obj", "w": "w.obj", "f": "f.obj"}
+    ret = [k for k in structs if os.path.isfile(os.path.join("suncg", "room", houseid, roomid + structs[k]))]
     return json.dumps(ret)
 
+
 @app.route("/room/<houseid>/<roomid>f.obj")
-def floor(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"f.obj"))
+def floor(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "f.obj"))
+
+
 @app.route("/room/<houseid>/<roomid>w.obj")
-def wall(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"w.obj"))
+def wall(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "w.obj"))
+
+
 @app.route("/room/<houseid>/<roomid>c.obj")
-def ceil(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"c.obj"))
+def ceil(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "c.obj"))
+
 
 @app.route("/room/<houseid>/<roomid>f.mtl")
-def floor_mtl(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"f.mtl"))
+def floor_mtl(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "f.mtl"))
+
+
 @app.route("/room/<houseid>/<roomid>w.mtl")
-def wall_mtl(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"w.mtl"))
+def wall_mtl(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "w.mtl"))
+
+
 @app.route("/room/<houseid>/<roomid>c.mtl")
-def ceil_mtl(houseid,roomid):
-    return flask.send_file(os.path.join("suncg","room",houseid,roomid+"c.mtl"))
+def ceil_mtl(houseid, roomid):
+    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "c.mtl"))
+
 
 @app.route("/set_scene_configuration", methods=['POST', 'GET'])
 def set_scene_configuration():
@@ -130,6 +160,7 @@ def set_scene_configuration():
         return "POST scene configuration. "
     if request.method == 'GET':
         return "Do not support using GET to configurate scene. "
+
 
 @app.route("/magic_position", methods=['POST', 'GET'])
 def magic_position():
@@ -154,21 +185,22 @@ def magic_position():
         thetranslate = np.array(request.json["translate"])
         hid = room_json['origin']
         with open('./suncg/level/{}/{}-l0.json'.format(hid, hid)) as f:
-        	origin_room_json = json.load(f)['rooms'][room_json['roomId']]
+            origin_room_json = json.load(f)['rooms'][room_json['roomId']]
         odis = 10000
         ret = {}
         for obj in origin_room_json['objList']:
-        	dis = np.linalg.norm(thetranslate - np.array(obj['translate']))
-        	if dis < odis:
-        		odis = dis
-        		ret['name'] = obj['modelId']
-        		ret['rotate'] = obj['rotate']
-        		ret['scale'] = obj['scale']
+            dis = np.linalg.norm(thetranslate - np.array(obj['translate']))
+            if dis < odis:
+                odis = dis
+                ret['name'] = obj['modelId']
+                ret['rotate'] = obj['rotate']
+                ret['scale'] = obj['scale']
         ret['valid'] = 1
         return json.dumps(ret)
 
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
+
 
 @app.route("/magic_category", methods=['POST', 'GET'])
 def magic_category():
@@ -178,12 +210,17 @@ def magic_category():
             if o is not None:
                 objs.append(o)
         with open('./mp.json', 'w') as f:
-            json.dump({"objList":objs, "category": request.json["category"], "origin": request.json["origin"], "modelId": request.json["modelId"]}, f)
-        result = smart_op.find_placement_and_rotate_given_category(request.json["origin"], 0, request.json["modelId"], objs, request.json["category"], request.json["objectName"])
-        d = {'translate':[result[0][0], result[0][1], result[0][2]], 'rotate':[result[1][0], result[1][1], result[1][2]]}
+            json.dump({"objList": objs, "category": request.json["category"], "origin": request.json["origin"],
+                       "modelId": request.json["modelId"]}, f)
+        result = smart_op.find_placement_and_rotate_given_category(request.json["origin"], 0, request.json["modelId"],
+                                                                   objs, request.json["category"],
+                                                                   request.json["objectName"])
+        d = {'translate': [result[0][0], result[0][1], result[0][2]],
+             'rotate': [result[1][0], result[1][1], result[1][2]]}
         return json.dumps(d)
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
+
 
 @app.route("/sketch", methods=['POST', 'GET'])
 def sketch():
@@ -194,23 +231,26 @@ def sketch():
         with open(filename, 'wb') as f:
             f.write(imgdata)
         start_time = time.time()
-        results = sketch_search('./qs.png',400)
+        results = sketch_search('./qs.png', 400)
         end_time = time.time()
         tmp = []
         for i in results:
             if i not in tmp:
                 tmp.append(i)
-                if len(tmp)>=20:
+                if len(tmp) >= 20:
                     break
         results = tmp
         print(results)
 
         results = orm.query_model_by_names(results)
-        #print(results)
-        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results if m != None]
+        # print(results)
+        ret = [
+            {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d" % (m.id,)}
+            for m in results if m != None]
         print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
+
 
 @app.route("/palette_recommendation", methods=['POST', 'GET'])
 def palette_recommendation():
@@ -219,12 +259,14 @@ def palette_recommendation():
         result = []
         for item in rec_results:
             m = orm.query_model_by_name(item)
-            ret = {"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)}
+            ret = {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset,
+                   "thumbnail": "/thumbnail/%d" % (m.id,)}
             result.append(ret)
         print(result)
         return json.dumps(result)
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
+
 
 @app.route("/sklayout", methods=['POST', 'GET'])
 def sklayout():
@@ -233,6 +275,7 @@ def sklayout():
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
+
 @app.route("/reshuffle", methods=['POST', 'GET'])
 def reshuffle():
     if request.method == 'POST':
@@ -240,8 +283,10 @@ def reshuffle():
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
+
 audio_sketch_word = None
 audio_sketch_eng = None
+
 
 @app.route("/sketchNaudio", methods=['POST', 'GET'])
 def sketchNaudio():
@@ -282,15 +327,17 @@ def sketchNaudio():
         for i in results:
             if i not in tmp:
                 tmp.append(i)
-                if len(tmp)>=50:
+                if len(tmp) >= 50:
                     break
         results = tmp
-        #print(tmp)
+        # print(tmp)
         print(results)
 
         results = orm.query_model_by_names(results)
-        #print(results)
-        ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in results]
+        # print(results)
+        ret = [
+            {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d" % (m.id,)}
+            for m in results]
         print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
 
         logger = {}
@@ -306,6 +353,7 @@ def sketchNaudio():
         return json.dumps(ret)
     return "Post image! "
 
+
 @app.route('/toy_uploader', methods=['GET', 'POST'])
 def toy_uploader():
     uuid4 = uuid.uuid4()
@@ -317,7 +365,6 @@ def toy_uploader():
     request.files['record'].save(filename)
     # 开始语音转文字
 
-
     """ 你的 APPID AK SK """
     APP_ID = '17228695'
     API_KEY = 'pga4PIogoyENxqGvTlBljRau'
@@ -325,17 +372,17 @@ def toy_uploader():
 
     client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
     # 读取文件
-    y,sr = librosa.load(filename,sr=16000)
+    y, sr = librosa.load(filename, sr=16000)
     y = librosa.to_mono(y)
     import soundfile
     soundfile.write(filename, y, sr, subtype='PCM_16')
 
     print(filename)
 
-
     def get_file_content(filePath):
         with open(filePath, 'rb') as fp:
             return fp.read()
+
     # 识别本地文件
 
     result = client.asr(get_file_content(filename), 'wav', 16000, {
@@ -350,4 +397,73 @@ def toy_uploader():
     os.remove(filename)
     return json.dumps(result)
 
-app.run(host="0.0.0.0",port=11425,debug=True)
+
+LATENT_SPACE_ROOT = "C:\\Users\\Ervin\\Desktop\\SceneEmbedding-more\\test\\smoth transmitt 2"
+
+ls = np.load(os.path.join(LATENT_SPACE_ROOT, 'ls.npy'))
+
+with open('./latentspace/obj-semantic.json') as f:
+    obj_semantic = json.load(f)
+with open("./latentspace/ls_to_name.json", 'r') as f:
+    ls_to_name = json.load(f)
+with open("./latentspace/name_to_ls.json", 'r') as f:
+    name_to_ls = json.load(f)
+
+
+@app.route("/latent_space/<obj_id>/<x>/<y>/<z>/")
+def latent_space(obj_id, x, y, z):
+    x = float(x)
+    y = float(y)
+    z = float(z)
+    idx = name_to_ls[obj_id]
+    dis = ls.copy()
+    dis = dis - dis[idx]
+    dis = np.linalg.norm(dis, axis=1)
+    rc = np.argsort(dis)[1:31]
+
+    rn = [instance(ls_to_name[str(i)], [(ls[i] - ls[idx])[0].item()*100 + x,
+                                        y,
+                                       (ls[i] - ls[idx])[1].item()*100 + z]) for i in rc]
+    return json.dumps(rn)
+
+
+def instance(name, cor):
+    re = {
+        "modelId": name,
+        "translate": [
+            cor[0],
+            cor[1],
+            cor[2]
+        ],
+        "scale": [
+            1,
+            1,
+            1
+        ],
+        "rotate": [
+            0,
+            0,
+            0
+        ],
+        "coarseSemantic": obj_semantic[name],
+        "bbox": {
+            "min": [
+                cor[0] - 1,
+                cor[1] - 1,
+                cor[2] - 1
+            ],
+            "max": [
+                cor[0] + 1,
+                cor[1] + 1,
+                cor[2] + 1
+            ]
+        }}
+    return re
+
+
+@app.route("/semantic/<obj_id>")
+def semantic(obj_id):
+    return obj_semantic[obj_id]
+
+
+app.run(host="0.0.0.0", port=11425, debug=True)
