@@ -66,14 +66,15 @@
         var searchResults;
         var currentRoomId;
         var orthline;
+
+
         var latent_space_mode;
-
         $(document).ready(function () {
-            sc_manager = new SceneController($("#ui")[0]);
-            ls_manager = new SceneController($("#ui")[0],true);
-            latent_space_mode = true;
-            toggle_latent_space();
-
+            latent_space_mode = false;
+            manager = new SceneController($("#ui")[0]);
+            renderer = manager.renderManager.renderer;
+            camera = manager.renderManager.camera;
+            scene = manager.renderManager.scene;
 
             scenecanvas = document.getElementById('scenecanvas');
             orthcanvas = document.getElementById('orthcanvas');
@@ -84,9 +85,6 @@
             drawingCanvas = document.getElementById('drawing-canvas');
             setting_up();
         })
-
-
-
 
 
     </script>
@@ -103,7 +101,8 @@
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
                 <button id="ls_load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load L-S</button>
                 <button id="mage_button" type="button" class="btn btn-lg btn-primary nav_sk_button">MageAdd</button>
-                <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert</button>
+                <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert
+                </button>
                 <button id="reshuffle" type="button" class="btn btn-lg btn-primary nav_sk_button">Shuffle</button>
                 <button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">HeuLayout</button>
                 <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout</button>
@@ -118,7 +117,8 @@
             </div>
             <div class="card-body">
                 <button id="text_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
-                <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch</button>
+                <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch
+                </button>
                 <button id="rec_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Rec</button>
                 <div style="margin-top: 10px" id="record_panel">
                     <button id="start_record_button" type="button" onclick="start_reco()" class="btn btn-lg btn-primary"
@@ -133,9 +133,13 @@
                             style="width:49%;">Submit
                         Recording
                     </button>
-                    <div id="audio_error" class="alert alert-danger" style="display: none; margin-top: 10px">Error!</div>
-                    <div id="audio_processing" class="alert alert-info" style="display: none; margin-top: 10px">Audio Processing ...</div>
-                    <div id="audio_ok" class="alert alert-success" style="display: none; margin-top: 10px">Success!</div>
+                    <div id="audio_error" class="alert alert-danger" style="display: none; margin-top: 10px">Error!
+                    </div>
+                    <div id="audio_processing" class="alert alert-info" style="display: none; margin-top: 10px">Audio
+                        Processing ...
+                    </div>
+                    <div id="audio_ok" class="alert alert-success" style="display: none; margin-top: 10px">Success!
+                    </div>
                 </div>
                 <button id="colla_button" type="button" class="btn btn-lg btn-primary"
                         style="margin-top: 10px; width:100%;">
@@ -144,11 +148,16 @@
             </div>
             <div id="collaborative_container">
                 <canvas id="drawing-canvas" height="224" width="224"></canvas>
-                <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
-                  <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
-                  style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">Sketch Search</button>
-                  <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchclearbtn"
-                  style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">Sketch Clear</button>
+                <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
+                     style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
+                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
+                        Sketch Search
+                    </button>
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchclearbtn"
+                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
+                        Sketch Clear
+                    </button>
                 </div>
                 <div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
                     <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"

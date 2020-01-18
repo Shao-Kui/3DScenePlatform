@@ -8,10 +8,9 @@ var gameLoop = function () {
     raycaster.setFromCamera(mouse, camera);
     renderer.render(scene, camera);
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
+
     requestAnimationFrame(gameLoop);
 };
-
-
 
 var screen_to_ground = function (mx, my, ground_y = 0) {
     var vec = new THREE.Vector3();
@@ -49,7 +48,6 @@ var find_object_json = function (obj) {
     }
     return null;
 };
-
 
 
 var synchronize_json_object = function (object) {
@@ -196,7 +194,7 @@ var addCatalogItem = function () {
 }
 
 var onClickObj = function (event) {
-    console.log(latent_space_mode ? 'now in latent space' : 'now in design space');
+
     scenecanvas.style.cursor = "auto";
     //Do raycasting, judge whether or not users choose a new object.
     camera.updateMatrixWorld();
@@ -224,6 +222,7 @@ var onClickObj = function (event) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
         return;
+
     }
     if (On_Magic_ADD) {
         On_Magic_ADD = false;
@@ -239,8 +238,8 @@ var onClickObj = function (event) {
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        console.log(INTERSECT_OBJ);
         console.log(INTERSECT_OBJ.userData);
-        console.log(INTERSECT_OBJ.position, INTERSECT_OBJ.rotation)
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
         if (!isToggle) {
@@ -255,6 +254,10 @@ var onClickObj = function (event) {
             isToggle = !isToggle;
         }
     }
+    if (latent_space_mode == true && INTERSECT_OBJ) {
+        manager.renderManager.add_latent_obj();
+    }
+
     if (Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined) {
         palette_recommendation();
     }
@@ -299,8 +302,9 @@ var clear_panel = function () {
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
-    render_initialization(sc_manager.renderManager.scene);
-    render_initialization(ls_manager.renderManager.scene);
+
+    render_initialization();
+
     orth_initialization();
     $("#searchbtn").click(clickTextSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
@@ -405,7 +409,9 @@ var setting_up = function () {
 
     // a stub for Wei-Yu
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-    radial_latentspace_button.addEventListener('click', to_latent_space);
 
-	gameLoop();
+    radial_latentspace_button.addEventListener('click', manager.renderManager.latent_space_click);
+
+    gameLoop();
+
 };

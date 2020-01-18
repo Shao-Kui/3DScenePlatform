@@ -9,27 +9,31 @@ function pausecomp(millis) {
 
 
 class SceneManager {
-    constructor(parent_manager, canvas, is_ls = false) {
+    constructor(parent_manager, canvas) {
+
         this.parent_manager = parent_manager;
         this.canvas = canvas;
         this.objectInfoCache = {};
         this.instanceKeyCache = {};
-        this.latent_space_scene = is_ls;
+
+        this.latentKeyCache = {};
+
         this.cwfCache = [];
         this.init_canvas();
     }
 
-    init_canvas() {
+
+    init_canvas = () => {
+
         var self = this;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, $(this.canvas).width() / $(this.canvas).height(), 0.01, 1000);
         this.camera.userData = {"type": "camera"};
         this.scene.add(this.camera);
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, alpha: true, antialias: 4});
-        if (this.latent_space_scene == false)
-            this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
-        else
-            this.renderer.setClearColor(0x000000, 0);
+
+        this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
+
         // Start to configurate the orthogonal top renderer and camera.
         this.orthrenderer = new THREE.WebGLRenderer({
             canvas: ($(this.parent_manager.uiDOM).find("#orthcanvas"))[0],
@@ -45,9 +49,10 @@ class SceneManager {
         this.on_resize();
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
 
-    }
+    };
 
-    scene_remove(datafilter) {
+    scene_remove = datafilter => {
+
         var self = this;
         var instances_to_remove = [];
         this.scene.children.forEach(function (inst) {
@@ -61,10 +66,12 @@ class SceneManager {
         instances_to_remove.forEach(function (inst) {
             self.scene.remove(inst);
         });
-    }
+
+    };
 
 
-    refresh_scene(scene_json, refresh_camera = false) {
+    refresh_scene = (scene_json, refresh_camera = false) => {
+
         this.scene_remove(function (userData) {
             if (userData.type === 'w' || userData.type === 'f' || userData.type === 'c') {
                 return true;
@@ -77,17 +84,22 @@ class SceneManager {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
-    }
 
-    refresh_wall_and_floor() {
+    };
+
+
+    refresh_wall_and_floor = () => {
+
         this.cwfCache = [];
         var self = this;
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
         }
-    }
 
-    load_cwf_room_meta(room) {
+    };
+
+    load_cwf_room_meta = room => {
+
         var self = this;
         fetch("/room/" + this.scene_json.origin + "/" + room.modelId).then(function (response) {
             return response.json();
@@ -99,9 +111,11 @@ class SceneManager {
                 self.load_cwf_instances(room.modelId, meta[j], room.roomId);
             }
         })
-    }
 
-    load_cwf_instances(modelId, suffix, roomId) {
+    };
+
+    load_cwf_instances = (modelId, suffix, roomId) => {
+
         var meta = modelId + suffix;
         var self = this;
         var objLoader = new THREE.OBJLoader2();
@@ -119,54 +133,126 @@ class SceneManager {
                 }
             }, null, null, null, false);
         });
-    }
+
+    };
+
 
     refresh_instances() {
         //try to add unique id for each instanceof
         var self = this;
-        var newkeycache = {};
+        self.instanceKeyCache = {}
         this.scene_json.rooms.forEach(function (room) {
-            room.objList.forEach(function (inst) { //an obj is a instance
+            room.objList.forEach(inst => { //an obj is a instance
                 if (inst === null || inst == undefined) {
                     return;
                 }
-                if (!(inst.key)) {
-                    // inst.key = THREE.Math.generateUUID();
-                    inst.key = inst.modelId
-                }
-                if (self.instanceKeyCache[inst.key]) {
-                    var instance = self.instanceKeyCache[inst.key];
-                    instance.scale.set(inst.scale[0], inst.scale[1], inst.scale[2]);
-                    instance.rotation.set(inst.rotate[0], inst.rotate[1], inst.rotate[2], inst.rotateOrder);
-                    instance.position.set(inst.translate[0], inst.translate[1], inst.translate[2]);
-                    newkeycache[inst.key] = instance;
+                inst.key = THREE.Math.generateUUID();
+                if (self.objectInfoCache[inst.modelId]) {
+                    self.load_instance(inst);
                 } else {
-                    //to prevent incomplete model to be deleted by this.scene_remove
-                    //newkeycache[inst.key]=true;
-                    if (!(self.objectInfoCache[inst.modelId])) {
-                        fetch("/objmeta/" + inst.modelId).then(function (response) {
+                    fetch("/objmeta/" + inst.modelId)
+                        .then(function (response) {
                             return response.json();
-                        })
-                            .then(function (meta) {
-                                if (meta.id === undefined || meta.name === undefined) {
-                                    return;
-                                }
-                                self.objectInfoCache[inst.modelId] = meta;
-                                self.load_instance(inst);
-                            });
-                    } else {
+                        }).then(function (meta) {
+                        if (meta.id === undefined || meta.name === undefined) {
+                            return;
+                        }
+                        self.objectInfoCache[inst.modelId] = meta;
                         self.load_instance(inst);
-                    }
+                    });
                 }
                 self.renderer.render(self.scene, self.camera);
             });
         });
 
-        this.scene_remove((userData) => (userData.type == "object" && !newkeycache[userData.key]));
-        this.instanceKeyCache = newkeycache;
     }
 
-    load_instance(inst) {
+    add_latent_obj = () => {
+        var self = this;
+        fetch("/latent_space/" + INTERSECT_OBJ.userData.name + "/"
+            + INTERSECT_OBJ.position.x + "/"
+            + INTERSECT_OBJ.position.y + "/"
+            + INTERSECT_OBJ.position.z + "/").then(re => {
+            return re.json()
+        }).then(list => {
+            list.forEach(inst => {
+                if (inst === null || inst === undefined) {
+                    return;
+                }
+                if (this.latentKeyCache[inst.modelId]) {
+                    return;
+                }
+                inst.key = THREE.Math.generateUUID();
+                if (self.objectInfoCache[inst.modelId]) {
+                    self.load_instance(inst, "latent");
+                } else {
+                    fetch("/objmeta/" + inst.modelId)
+                        .then(function (response) {
+                            return response.json();
+                        }).then(function (meta) {
+                        if (meta.id === undefined || meta.name === undefined) {
+                            return;
+                        }
+                        self.objectInfoCache[inst.modelId] = meta;
+                        self.load_instance(inst, "latent");
+                    });
+                }
+                this.latentKeyCache[inst.modelId] = inst;
+                self.renderer.render(self.scene, self.camera);
+            });
+        });
+    };
+
+    enter_latent = () => {
+        var self = this;
+        var iid = INTERSECT_OBJ.uuid;
+        self.add_latent_obj();
+        scene.children.forEach(inst => {
+            if (inst.userData.type === "object" ||
+                inst.userData.type === "w" ||
+                inst.userData.type === "f" ||
+                inst.userData.type === "c") {
+                if (inst.uuid !== iid) {
+                    inst.visible = false;
+                }
+            }
+        });
+    };
+
+    quit_latent = () => {
+        var self = this;
+        if (INTERSECT_OBJ) {
+            INTERSECT_OBJ.userData.type = 'object';
+            INTERSECT_OBJ.userData.roomId = 0;
+            self.instanceKeyCache[INTERSECT_OBJ.userData.key] = INTERSECT_OBJ;
+            self.scene_json.rooms[0]['objList'].push(self.latentKeyCache[INTERSECT_OBJ.userData.name]);
+            self.latentKeyCache = {};
+        }
+        scene.children.forEach(inst => {
+            if (inst.userData.type === "object" ||
+                inst.userData.type === "w" ||
+                inst.userData.type === "f" ||
+                inst.userData.type === "c") {
+                inst.visible = true;
+            }
+        });
+        self.scene_remove(userData => {
+            return userData.type === "latent";
+        })
+    };
+
+    latent_space_click = () => {
+        var self = this;
+        if (latent_space_mode === false) {
+            self.enter_latent();
+        } else {
+            self.quit_latent();
+        }
+        latent_space_mode = !latent_space_mode;
+    };
+
+
+    load_instance = (inst, object_type = 'object') => {
         //pausecomp(300);
         var self = this;
         var meta = this.objectInfoCache[inst.modelId];
@@ -176,12 +262,11 @@ class SceneManager {
             objLoader.setMaterials(materials);
             objLoader.load(meta.mesh, function (event) {
                 var instance = event.detail.loaderRootNode;
-                instance.name = inst.key
                 instance.scale.set(inst.scale[0], inst.scale[1], inst.scale[2]);
                 instance.rotation.set(inst.rotate[0], inst.rotate[1], inst.rotate[2], inst.rotateOrder);
                 instance.position.set(inst.translate[0], inst.translate[1], inst.translate[2]);
                 instance.userData = {
-                    "type": "object",
+                    "type": object_type,
                     "key": inst.key,
                     "roomId": inst.roomId,
                     "name": inst.modelId,
@@ -192,10 +277,9 @@ class SceneManager {
                 self.renderer.render(self.scene, self.camera);
             }, null, null, null, false);
         });
+    };
 
-    }
-
-    refresh_camera() {
+    refresh_camera = () => {
         console.log("start to refresh camera! ");
         var bbox = this.scene_json.bbox;
         var lx = (bbox.max[0] + bbox.min[0]) / 2;
@@ -214,22 +298,21 @@ class SceneManager {
         this.orthcamera.updateProjectionMatrix();
         this.orthcamera.position.set(lx, 200, lz);
         this.orthcamera.lookAt(lx, 0, lz);
-    }
+    };
 
-    on_resize() {
+    on_resize = () => {
         this.canvas.width = $(this.canvas).width();
         this.canvas.height = $(this.canvas).height();
         this.camera.aspect = this.canvas.width / this.canvas.height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.canvas.width, this.canvas.height);
-    }
+    };
 }
 
 class SceneController {
-    constructor(uiDOM, is_ls = false) {
+    constructor(uiDOM) {
         this.uiDOM = uiDOM;
-        this.latent_space_scene = is_ls
-        this.renderManager = new SceneManager(this, ($(this.uiDOM).find("#scenecanvas"))[0])
+        this.renderManager = new SceneManager(this, ($(this.uiDOM).find("#scenecanvas"))[0]);
         this.init_menu();
     }
 
@@ -238,23 +321,13 @@ class SceneController {
     }
 
     init_load_button() {
-        if (this.latent_space_scene == false) {
-            this.load_button = ($(this.uiDOM).find("#load_button"))[0];
-            this.load_dialog = ($(this.uiDOM).find("#load_dialog"))[0];
-            this.load_dialog_input = ($(this.uiDOM).find("#load_dialog_input"))[0];
-            this.load_dialog_button = ($(this.uiDOM).find("#load_dialog_button"))[0];
-            $(this.load_dialog).dialog({autoOpen: false});
-            $(this.load_button).click(this.load_button_click());
-            $(this.load_dialog_button).click(this.load_dialog_button_click());
-        } else {
-            this.load_button = ($(this.uiDOM).find("#ls_load_button"))[0];
-            this.load_dialog = ($(this.uiDOM).find("#ls_load_dialog"))[0];
-            this.load_dialog_input = ($(this.uiDOM).find("#ls_load_dialog_input"))[0];
-            this.load_dialog_button = ($(this.uiDOM).find("#ls_load_dialog_button"))[0];
-            $(this.load_dialog).dialog({autoOpen: false});
-            $(this.load_button).click(this.load_button_click());
-            $(this.load_dialog_button).click(this.load_dialog_button_click());
-        }
+        this.load_button = ($(this.uiDOM).find("#load_button"))[0];
+        this.load_dialog = ($(this.uiDOM).find("#load_dialog"))[0];
+        this.load_dialog_input = ($(this.uiDOM).find("#load_dialog_input"))[0];
+        this.load_dialog_button = ($(this.uiDOM).find("#load_dialog_button"))[0];
+        $(this.load_dialog).dialog({autoOpen: false});
+        $(this.load_button).click(this.load_button_click());
+        $(this.load_dialog_button).click(this.load_dialog_button_click());
     }
 
     load_button_click() { //use closure to pass self
@@ -280,10 +353,8 @@ class SceneController {
             $(self.load_dialog).dialog("close");
         };
     }
-
     load_scene(json) {
         this.renderManager.refresh_scene(json, true);
-        toggle_latent_space(this.latent_space_scene)
     }
 
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 var c1m, c2m, o1m, o2m, io1m, ic2m;
 var to_latent_space = function () {
     if (latent_space_mode == false) {
@@ -79,3 +80,9 @@ var toggle_latent_space = function (to_mode = !latent_space_mode) {
     camera = manager.renderManager.camera;
     scene = manager.renderManager.scene;
 };
+=======
+var to_latent_space = () => {
+
+
+};
+>>>>>>> fa54f4e17b14dc121b235d25513516f80ecc8e66
