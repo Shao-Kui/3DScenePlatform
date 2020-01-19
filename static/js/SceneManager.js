@@ -16,7 +16,7 @@ class SceneManager {
         this.objectInfoCache = {};
         this.instanceKeyCache = {};
 
-        this.latentKeyCache = {};
+        this.latentNameCache = {};
 
         this.cwfCache = [];
         this.init_canvas();
@@ -52,7 +52,6 @@ class SceneManager {
     };
 
     scene_remove = datafilter => {
-
         var self = this;
         var instances_to_remove = [];
         this.scene.children.forEach(function (inst) {
@@ -73,7 +72,10 @@ class SceneManager {
     refresh_scene = (scene_json, refresh_camera = false) => {
 
         this.scene_remove(function (userData) {
-            if (userData.type === 'w' || userData.type === 'f' || userData.type === 'c') {
+            if (userData.type === 'w' ||
+                userData.type === 'f' ||
+                userData.type === 'c'||
+                userData.type=='object') {
                 return true;
             }
         });
@@ -137,10 +139,10 @@ class SceneManager {
     };
 
 
-    refresh_instances() {
+    refresh_instances = ()=> {
         //try to add unique id for each instanceof
         var self = this;
-        self.instanceKeyCache = {}
+        self.instanceKeyCache = {};
         this.scene_json.rooms.forEach(function (room) {
             room.objList.forEach(inst => { //an obj is a instance
                 if (inst === null || inst == undefined) {
@@ -164,11 +166,13 @@ class SceneManager {
                 self.renderer.render(self.scene, self.camera);
             });
         });
-
-    }
+    };
 
     add_latent_obj = () => {
         var self = this;
+        if (!this.latentNameCache[INTERSECT_OBJ.userData.name]) {
+            self.latentNameCache[INTERSECT_OBJ.userData.name] = self.instanceKeyCache[INTERSECT_OBJ.userData.key];
+        }
         fetch("/latent_space/" + INTERSECT_OBJ.userData.name + "/"
             + INTERSECT_OBJ.position.x + "/"
             + INTERSECT_OBJ.position.y + "/"
@@ -179,7 +183,7 @@ class SceneManager {
                 if (inst === null || inst === undefined) {
                     return;
                 }
-                if (this.latentKeyCache[inst.modelId]) {
+                if (this.latentNameCache[inst.modelId]) {
                     return;
                 }
                 inst.key = THREE.Math.generateUUID();
@@ -197,10 +201,22 @@ class SceneManager {
                         self.load_instance(inst, "latent");
                     });
                 }
-                this.latentKeyCache[inst.modelId] = inst;
                 self.renderer.render(self.scene, self.camera);
             });
         });
+    };
+    refresh_latent = () => {
+        var hidetype = "";
+        if (INTERSECT_OBJ)
+            hidetype = INTERSECT_OBJ.userData.coarseSemantic;
+        self.scene.children.forEach(inst => {
+            if (inst.userData.type === "latent") {
+                inst.visible = inst.userData.coarseSemantic !== hidetype;
+            }
+            if (INTERSECT_OBJ)
+                INTERSECT_OBJ.visible = true;
+        });
+
     };
 
     enter_latent = () => {
@@ -224,9 +240,13 @@ class SceneManager {
         if (INTERSECT_OBJ) {
             INTERSECT_OBJ.userData.type = 'object';
             INTERSECT_OBJ.userData.roomId = 0;
+            self.scene_json.rooms[0]['objList'].push(object_to_listobject(INTERSECT_OBJ));
+            for (let name in self.latentNameCache) {
+                if(self.latentNameCache[name].userData.type==="latent")
+                    delete self.instanceKeyCache[self.latentNameCache[name].userData.key];
+            }
             self.instanceKeyCache[INTERSECT_OBJ.userData.key] = INTERSECT_OBJ;
-            self.scene_json.rooms[0]['objList'].push(self.latentKeyCache[INTERSECT_OBJ.userData.name]);
-            self.latentKeyCache = {};
+            self.latentNameCache = {};
         }
         scene.children.forEach(inst => {
             if (inst.userData.type === "object" ||
@@ -273,6 +293,8 @@ class SceneManager {
                     "coarseSemantic": inst.coarseSemantic
                 };
                 self.instanceKeyCache[inst.key] = instance;
+                if (object_type === "latent")
+                    self.latentNameCache[inst.modelId] = instance;
                 self.scene.add(instance);
                 self.renderer.render(self.scene, self.camera);
             }, null, null, null, false);
@@ -308,6 +330,24 @@ class SceneManager {
         this.renderer.setSize(this.canvas.width, this.canvas.height);
     };
 }
+
+var object_to_listobject = (obj) => {
+    re = {
+        id: "to-do",
+        type: obj.userData.type,
+        modelId: obj.userData.name,
+        bbox: {min: Array(3), max: Array(3)},
+        translate: [obj.position.x, obj.position.y, obj.position.z],
+        scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+        rotate: [obj.rotation._x, obj.rotation._y, obj.rotation._z],
+        rotateOrder: obj.rotation._order,
+        orient: "to-do",
+        coarseSemantic: obj.userData.coarseSemantic,
+        roomId: 0,
+        key: obj.userData.key
+    };
+    return re;
+};
 
 class SceneController {
     constructor(uiDOM) {
@@ -348,11 +388,12 @@ class SceneController {
             fr.onload = function (e) {
                 var result = JSON.parse(e.target.result);
                 self.load_scene(result);
-            }
+            };
             fr.readAsText(files.item(0));
             $(self.load_dialog).dialog("close");
         };
     }
+
     load_scene(json) {
         this.renderManager.refresh_scene(json, true);
     }

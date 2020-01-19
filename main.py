@@ -400,7 +400,6 @@ def toy_uploader():
     return json.dumps(result)
 
 
-# LATENT_SPACE_ROOT = "C:\\Users\\Ervin\\Desktop\\SceneEmbedding-more\\test\\smoth transmitt 2"
 LATENT_SPACE_ROOT = './latentspace'
 
 ls = np.load(os.path.join(LATENT_SPACE_ROOT, 'ls.npy'))
@@ -422,7 +421,7 @@ def latent_space(obj_id, x, y, z):
     dis = ls.copy()
     dis = dis - dis[idx]
     dis = np.linalg.norm(dis, axis=1)
-    rc = np.argsort(dis)[1:31]
+    rc = np.argsort(dis)[1:51]
 
     rn = [instance(ls_to_name[str(i)], [(ls[i] - ls[idx])[0].item()*100 + x,
                                         y,

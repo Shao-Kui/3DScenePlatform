@@ -254,8 +254,12 @@ var onClickObj = function (event) {
             isToggle = !isToggle;
         }
     }
+
     if (latent_space_mode == true && INTERSECT_OBJ) {
         manager.renderManager.add_latent_obj();
+    }
+    if (latent_space_mode == true) {
+        manager.renderManager.refresh_latent();
     }
 
     if (Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined) {
