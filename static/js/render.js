@@ -23,12 +23,19 @@ var render_initialization = function () {
         // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/mp_impaler/impaler-point_rt.tga"), side: THREE.DoubleSide}),
         // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/mp_impaler/impaler-point_lf.tga"), side: THREE.DoubleSide})
 
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_ft.tga"), side: THREE.DoubleSide}),
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_bk.tga"), side: THREE.DoubleSide}),
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_up.tga"), side: THREE.DoubleSide}),
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_dn.tga"), side: THREE.DoubleSide}),
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_rt.tga"), side: THREE.DoubleSide}),
-        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_lf.tga"), side: THREE.DoubleSide})
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_ft.tga"), side: THREE.DoubleSide}),
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_bk.tga"), side: THREE.DoubleSide}),
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_up.tga"), side: THREE.DoubleSide}),
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_dn.tga"), side: THREE.DoubleSide}),
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_rt.tga"), side: THREE.DoubleSide}),
+        // new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ame_fade/fadeaway_lf.tga"), side: THREE.DoubleSide})
+
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_ft.tga"), side: THREE.DoubleSide}),
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_bk.tga"), side: THREE.DoubleSide}),
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_up.tga"), side: THREE.DoubleSide}),
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_dn.tga"), side: THREE.DoubleSide}),
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_rt.tga"), side: THREE.DoubleSide}),
+        new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_lf.tga"), side: THREE.DoubleSide})
     ];
     var sky = new THREE.Mesh(skyGeo, skyMaterials);
     scene.add(sky);
