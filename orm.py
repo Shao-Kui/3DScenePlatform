@@ -14,7 +14,8 @@ from nltk.corpus import wordnet
 from sqlalchemy.orm import backref
 
 
-engine = create_engine('sqlite:///database.db', echo=True)
+# engine = create_engine('sqlite:///database.db', echo=True, connect_args={'check_same_thread': False})
+engine = create_engine('sqlite:///database.db', connect_args={'check_same_thread': False})
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
