@@ -62,6 +62,7 @@ class SceneManager {
                 }
             }
         });
+        console.log(instances_to_remove);
         instances_to_remove.forEach(function (inst) {
             self.scene.remove(inst);
         });
@@ -70,6 +71,7 @@ class SceneManager {
 
 
     refresh_scene = (scene_json, refresh_camera = false) => {
+        console.log('called refresh scene! ');
 
         this.scene_remove(function (userData) {
             if (userData.type === 'w' ||
@@ -138,35 +140,50 @@ class SceneManager {
 
     };
 
+    refresh_instances(){
+	//try to add unique id for each instanceof
+	var self=this;
+	var newkeycache={};
+    this.scene_json.rooms.forEach(function(room){
+      room.objList.forEach(function(inst){ //an obj is a instance
+        if(inst === null || inst == undefined){
+          return;
+        }
+  			if(!(inst.key)){
+  				inst.key=THREE.Math.generateUUID();
+  			}
+  			if(self.instanceKeyCache[inst.key]){
+  				var instance=self.instanceKeyCache[inst.key];
+  				instance.scale.set(inst.scale[0],inst.scale[1],inst.scale[2]);
+  				instance.rotation.set(inst.rotate[0],inst.rotate[1],inst.rotate[2],inst.rotateOrder);
+  				instance.position.set(inst.translate[0],inst.translate[1],inst.translate[2]);
+  				newkeycache[inst.key]=instance;
+  			}
+  			else{
+          //to prevent incomplete model to be deleted by this.scene_remove
+  				//newkeycache[inst.key]=true;
+  				if(!(self.objectInfoCache[inst.modelId])){
+  					fetch("/objmeta/"+inst.modelId).then(function(response) {
+  						return response.json();
+  					})
+  					.then(function(meta) {
+              if(meta.id === undefined || meta.name === undefined){
+                return;
+              }
+  						self.objectInfoCache[inst.modelId]=meta;
+  						self.load_instance(inst);
+  					});
+  				} else{
+  					self.load_instance(inst);
+  				}
+  			}
+        self.renderer.render(self.scene,self.camera);
+  		});
+    });
 
-    refresh_instances = ()=> {
-        //try to add unique id for each instanceof
-        var self = this;
-        self.instanceKeyCache = {};
-        this.scene_json.rooms.forEach(function (room) {
-            room.objList.forEach(inst => { //an obj is a instance
-                if (inst === null || inst == undefined) {
-                    return;
-                }
-                inst.key = THREE.Math.generateUUID();
-                if (self.objectInfoCache[inst.modelId]) {
-                    self.load_instance(inst);
-                } else {
-                    fetch("/objmeta/" + inst.modelId)
-                        .then(function (response) {
-                            return response.json();
-                        }).then(function (meta) {
-                        if (meta.id === undefined || meta.name === undefined) {
-                            return;
-                        }
-                        self.objectInfoCache[inst.modelId] = meta;
-                        self.load_instance(inst);
-                    });
-                }
-                self.renderer.render(self.scene, self.camera);
-            });
-        });
-    };
+		this.scene_remove((userData)=>(userData.type=="object" && !newkeycache[userData.key]));
+		this.instanceKeyCache=newkeycache;
+	}
 
     add_latent_obj = () => {
         var self = this;

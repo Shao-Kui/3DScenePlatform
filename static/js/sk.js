@@ -49,7 +49,6 @@ var find_object_json = function (obj) {
     return null;
 };
 
-
 var synchronize_json_object = function (object) {
     var i = find_object_json(object);
     var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
@@ -79,55 +78,6 @@ var updateMousePosition = function () {
     mouse.y = -((event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1;
 }
 
-var clickSketchSearchButton = function () {
-    while (catalogItems.firstChild) {
-        catalogItems.firstChild.remove();
-    }
-
-    var dataURL = drawingCanvas.toDataURL();
-    dataURL = dataURL.split(',')[1]
-    $.ajax({
-        type: "POST",
-        url: "/sketch",
-        data: {
-            imgBase64: dataURL
-        }
-    }).done(function (o) {
-        searchResults = JSON.parse(o);
-        searchResults.forEach(function (item) {
-            var iDiv = document.createElement('div');
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
-            iDiv.setAttribute('objectID', item.id);
-            iDiv.setAttribute('objectName', item.name);
-            iDiv.setAttribute('semantic', item.semantic);
-            iDiv.addEventListener('click', clickCatalogItem)
-            catalogItems.appendChild(iDiv);
-        })
-    });
-};
-
-var clickTextSearchButton = function () {
-    while (catalogItems.firstChild) {
-        catalogItems.firstChild.remove();
-    }
-
-    var search_url = "/query?kw=" + document.getElementById("searchinput").value;
-    $.getJSON(search_url, function (data) {
-        searchResults = data;
-        searchResults.forEach(function (item) {
-            var iDiv = document.createElement('div');
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
-            iDiv.setAttribute('objectID', item.id);
-            iDiv.setAttribute('objectName', item.name);
-            iDiv.setAttribute('semantic', item.semantic);
-            iDiv.addEventListener('click', clickCatalogItem)
-            catalogItems.appendChild(iDiv);
-        })
-    });
-};
-
 var clickCatalogItem = function (e) {
     if (!manager.renderManager.scene_json) {
         return;
@@ -141,6 +91,7 @@ var clickCatalogItem = function (e) {
     scenecanvas.style.cursor = "crosshair";
     INSERT_OBJ = {
         "modelId": $(e.target).attr("objectName"),
+        "coarseSemantic": $(e.target).attr("coarseSemantic"), 
         "translate": [
             0.0,
             0.0,
@@ -291,69 +242,15 @@ function onDocumentMouseMove(event) {
     }
     updateMousePosition();
 };
+
 var temp;
-var clear_panel = function () {
-    Auto_Rec_Mode = false;
-    document.getElementById("rec_container").style.display = "none";
-    document.getElementById("record_panel").style.display = "none";
-    document.getElementById("searchinput").style.display = "none";
-    document.getElementById("searchbtn").style.display = "none";
-    document.getElementById("drawing-canvas").style.display = "none";
-    document.getElementById("sketchsearchdiv").style.display = "none";
-    document.getElementById("sketchsearchbtn").style.display = "none";
-    document.getElementById("rec_button").style.backgroundColor = '#007bff';
-};
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
-
     render_initialization();
-
     orth_initialization();
-    $("#searchbtn").click(clickTextSearchButton);
-    $("#sketchsearchbtn").click(clickSketchSearchButton);
-    $("#sketchclearbtn").click(clearCanvas);
-    $("#rec_button").click(function () {
-        clear_panel();
-        Auto_Rec_Mode = true;
-        document.getElementById("rec_container").style.display = "block";
-        document.getElementById("rec_button").style.backgroundColor = '#9400D3';
-    });
-    $("#colla_button").click(function () {
-        clear_panel();
-        document.getElementById("drawing-canvas").style.display = "block";
-        document.getElementById("record_panel").style.display = "block";
-        document.getElementById("sketchsearchdiv").style.display = "flex";
-    });
-    $("#text_button").click(function () {
-        clear_panel();
-        document.getElementById("searchinput").style.display = "inline-block";
-        document.getElementById("searchbtn").style.display = "inline-block";
-    });
-    $("#sketch_button").click(function () {
-        clear_panel();
-        document.getElementById("drawing-canvas").style.display = "block";
-        document.getElementById("sketchsearchdiv").style.display = "flex";
-        document.getElementById("sketchsearchbtn").style.display = "block";
-    });
-    $("#sklayout").click(function () {
-        if (currentRoomId === undefined) {
-            console.log("No room is specified. ");
-            return
-        }
-        $.ajax({
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            url: "/sklayout",
-            data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
-            success: function (data) {
-                data = JSON.parse(data);
-                temp = data;
-                manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
-                manager.renderManager.refresh_instances();
-            }
-        });
-    });
+    searchPanelInitialization();
+    $("#sklayout").click(auto_layout);
     $("#reshuffle").click(function () {
         if (currentRoomId === undefined) {
             console.log("No room is specified. ");
@@ -413,7 +310,6 @@ var setting_up = function () {
 
     // a stub for Wei-Yu
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-
     radial_latentspace_button.addEventListener('click', manager.renderManager.latent_space_click);
 
     gameLoop();

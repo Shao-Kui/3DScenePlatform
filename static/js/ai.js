@@ -99,46 +99,22 @@ var mage_auto_insert = function(e){
   });
 };
 
-var auto_layout = function(event){
-  if(currentRoomId === undefined){
-    return;
+var auto_layout = function(){
+  if (currentRoomId === undefined) {
+      console.log("No room is specified. ");
+      return
   }
-  var room = manager.renderManager.scene_json.rooms[currentRoomId];
-  if(room.roomTypes.length === 0){
-    return;
-  }
-  var d = {};
-  d.body = {};
-  d.body.roomtype = room.roomTypes[0];
-  d.body.origin = room.origin;
-  //d.body.level = ;
-  d.body.roomid = room.modelId;
-  // $.ajax({
-  //   type: "POST",
-  //   contentType: "application/json; charset=utf-8",
-  //   url: "http://166.111.71.45:11426/generate",
-  //   crossDomain: true,
-  //   data: JSON.stringify(d),
-  //   success: function (data) {
-  //     manager.renderManager.scene_json.rooms[currentRoomId].objList = data;
-  //     manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(function(obj){
-  //       obj.roomId = currentRoomId;
-  //     });
-  //     manager.renderManager.refresh_instances();
-  //   },
-  //   dataType: "json"
-  // });
   $.ajax({
-    type: "POST",
-    contentType: "application/json; charset=utf-8",
-    url: "/sklayout",
-    data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
-    success: function (data) {
-      data = JSON.parse(data);
-      temp = data;
-      manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
-      manager.renderManager.refresh_instances();
-    }
+      type: "POST",
+      contentType: "application/json; charset=utf-8",
+      url: "/sklayout",
+      data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+      success: function (data) {
+          data = JSON.parse(data);
+          temp = data;
+          manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
+          manager.renderManager.refresh_instances();
+      }
   });
 };
 
