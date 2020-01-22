@@ -7,6 +7,30 @@ function pausecomp(millis) {
     while (curDate - date < millis);
 }
 
+var traverseObjSetting = function (object) {
+    if(object instanceof THREE.Mesh){
+        object.castShadow = true;
+        object.receiveShadow = true;
+        if(Array.isArray(object.material)){
+            for(var i = 0; i < object.material.length; i++){
+                if(object.material[i].transparent){
+                    object.castShadow = false;
+                }
+            }
+        }else{
+            if(object.material.transparent){
+                object.castShadow = false;
+            }
+        }
+        return;
+    }
+    if(object.children.length === 0){
+        return;
+    }
+    object.children.forEach(function(child){
+        traverseObjSetting(child);
+    })
+};
 
 class SceneManager {
     constructor(parent_manager, canvas) {
@@ -84,12 +108,21 @@ class SceneManager {
         this.scene_json = scene_json;
         this.refresh_wall_and_floor();
         this.refresh_instances();
+        this.refresh_light();
         if (refresh_camera) {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
 
     };
+
+    refresh_light(){
+        var bbox = this.scene_json.bbox;
+        lx_level = (bbox.max[0] + bbox.min[0]) / 2;
+        lz_level = (bbox.max[2] + bbox.min[2]) / 2;
+        spotLight.position.set(lx_level, 12, lz_level);
+        spotLight.target.position.set(lx_level, 0, lz_level);
+    }
 
 
     refresh_wall_and_floor = () => {
@@ -131,6 +164,9 @@ class SceneManager {
             objLoader.load(obj_path, function (event) {
                 var instance = event.detail.loaderRootNode;
                 instance.userData = {"type": suffix, "roomId": roomId};
+                instance.castShadow = true;
+                instance.receiveShadow = true;
+                traverseObjSetting(instance);
                 self.scene.add(instance);
                 if (suffix === 'f') {
                     self.cwfCache.push(instance);
@@ -160,7 +196,7 @@ class SceneManager {
   				newkeycache[inst.key]=instance;
   			}
   			else{
-          //to prevent incomplete model to be deleted by this.scene_remove
+                //to prevent incomplete model to be deleted by this.scene_remove
   				//newkeycache[inst.key]=true;
   				if(!(self.objectInfoCache[inst.modelId])){
   					fetch("/objmeta/"+inst.modelId).then(function(response) {
@@ -312,6 +348,9 @@ class SceneManager {
                 self.instanceKeyCache[inst.key] = instance;
                 if (object_type === "latent")
                     self.latentNameCache[inst.modelId] = instance;
+                instance.castShadow = true;
+                instance.receiveShadow = true;
+                traverseObjSetting(instance);
                 self.scene.add(instance);
                 self.renderer.render(self.scene, self.camera);
             }, null, null, null, false);
