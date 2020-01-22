@@ -13,8 +13,7 @@ def draw(ps):
         for p in ps[c]:
             x, y = p.exterior.xy
             plt.plot(x, y, c=c)
-    plt.show()
-    pass
+    # plt.show()
 
 
 def rotate_numpy(p, ori):

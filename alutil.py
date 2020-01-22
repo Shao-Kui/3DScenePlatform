@@ -76,11 +76,7 @@ def naive_heuristic(cgs, room_meta, block=None):
 
 
 def attempt_heuristic(cgs, room_meta, blocks=None):
-    # the following logics are left for Qian-Yang; 
-    # Qian-Yang is fully able to add more functions or modify this function; 
-    # blocks are typically doors and windows, which are definitely concerns in following version of this algorithm;
-
-    # coded by Wei-yu
+    # coded by Wei-Yu @CopyRight
     print('attempt_heuristic')
     cg_bb = []
     block_bb = []
