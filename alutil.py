@@ -82,15 +82,37 @@ def attempt_heuristic(cgs, room_meta, blocks=None):
 
     # coded by Wei-yu
     print('attempt_heuristic')
-    function_areas = []
+    cg_bb = []
+    block_bb = []
+    win_bb = []
 
     for cg in cgs:
-        function_areas.append(cg['bb'].numpy().tolist())
+        print(cg)
+        t = cg['bb'].numpy()
+        cg_bb.append(
+            [np.min(t[:, 0]), cg['ground'], np.min(t[:, 1]), np.max(t[:, 0]), cg['height'], np.max(t[:, 1])])
 
-    print(function_areas)
+    room_meta = np.array(room_meta)
+    room_bb = [np.min(room_meta[:, 0]), 0, np.min(room_meta[:, 1]), np.max(room_meta[:, 0]), 0, np.max(room_meta[:, 1])]
+
     for b in blocks:
+        if b['coarseSemantic']=='door':
+            block_bb.append(b['min'] + b['max'])
+        else:
+            win_bb.append(b['min'] + b['max'])
         print(b)
 
+    print(cg_bb)
+    print(room_bb)
+    print(block_bb)
+    print(win_bb)
 
-    try_possible_layout(function_areas, room_meta, blocks)
+    ori, tra = try_possible_layout(cg_bb, room_bb, block_bb,win_bb)
+    for t in tra:
+        t.insert(1,0)
+
+    for i in range(len(ori)):
+        # attention here
+        cgs[i]['orient'] = ori[i]
+        cgs[i]['translate'] = tra[i]
     pass
