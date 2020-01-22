@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+from relayout import *
+
 
 def rotate_bb_local_np(points, angle, scale):
     result = points.copy()
@@ -9,10 +11,11 @@ def rotate_bb_local_np(points, angle, scale):
     result[:, 1] = -np.sin(angle) * scaled[:, 0] + np.cos(angle) * scaled[:, 1]
     return result
 
+
 def wall_out_dis(bb, walls, wallid):
     wallid = wallid % len(walls)
     p1 = walls[wallid, 0:2]
-    p2 = walls[(wallid+1) % len(walls), 0:2]
+    p2 = walls[(wallid + 1) % len(walls), 0:2]
     dets = np.ones(shape=(len(bb), 3, 3), dtype=np.float)
     dets[:, 0:2, 0] = p1
     dets[:, 0:2, 1] = p2
@@ -23,6 +26,7 @@ def wall_out_dis(bb, walls, wallid):
     dets = np.max(dets)
     gradi = walls[wallid, 2:4] * dets
     return gradi
+
 
 def heuristic_wall(cg, walls):
     print('start to place {} (dominator). '.format(cg['objList'][cg['leaderID']]['coarseSemantic']))
@@ -37,7 +41,7 @@ def heuristic_wall(cg, walls):
     cg['bb'] = rotate_bb_local_np(cg['bb'].numpy(), cg['orient'], np.array([1., 1.], dtype=np.float))
     cg['bb'] += t
     p1 = walls[wallid, 0:2]
-    p2 = walls[(wallid+1) % len(walls), 0:2]
+    p2 = walls[(wallid + 1) % len(walls), 0:2]
     dets = np.ones(shape=(len(cg['bb']), 3, 3), dtype=np.float)
     dets[:, 0:2, 0] = p1
     dets[:, 0:2, 1] = p2
@@ -47,12 +51,13 @@ def heuristic_wall(cg, walls):
     dets = np.abs(dets)
     dis = np.max(dets)
     t += walls[wallid, 2:4] * dis
-    t += wall_out_dis(cg['bb'], walls, wallid-1)
-    t += wall_out_dis(cg['bb'], walls, wallid+1)
+    t += wall_out_dis(cg['bb'], walls, wallid - 1)
+    t += wall_out_dis(cg['bb'], walls, wallid + 1)
     cg['translate'][0] = t[0]
     cg['translate'][2] = t[1]
 
-def naive_heuristic(cgs, room_meta):
+
+def naive_heuristic(cgs, room_meta, block=None):
     # pre-process room meta; 
     room_shape = torch.from_numpy(room_meta[:, 0:2]).float()
     room_shape_norm = torch.from_numpy(room_meta).float()
@@ -63,14 +68,29 @@ def naive_heuristic(cgs, room_meta):
         cg['wallid'] = wallindices[index % len(wallindices)]
         ratio = np.random.rand()
         p1 = room_shape[cg['wallid']]
-        p2 = room_shape[(cg['wallid']+1) % len(room_shape)]
+        p2 = room_shape[(cg['wallid'] + 1) % len(room_shape)]
         p = ratio * p1 + (1 - ratio) * p2
         cg['translate'][0] = p[0].item()
         cg['translate'][2] = p[1].item()
         heuristic_wall(cg, room_meta)
 
+
 def attempt_heuristic(cgs, room_meta, blocks=None):
     # the following logics are left for Qian-Yang; 
     # Qian-Yang is fully able to add more functions or modify this function; 
-    # blocks are typically doors and windows, which are definitely concerns in following version of this algorithm; 
+    # blocks are typically doors and windows, which are definitely concerns in following version of this algorithm;
+
+    # coded by Wei-yu
+    print('attempt_heuristic')
+    function_areas = []
+
+    for cg in cgs:
+        function_areas.append(cg['bb'].numpy().tolist())
+
+    print(function_areas)
+    for b in blocks:
+        print(b)
+
+
+    try_possible_layout(function_areas, room_meta, blocks)
     pass

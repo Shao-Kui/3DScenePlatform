@@ -10,7 +10,7 @@ with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
 
 csrbanlist = ['522', '144', '257', '153', '251', '138', '271', '781', '235', '124', '493', '736', '225', '508', '481']
-csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix_53.npy")).float()
+csrmatrix = torch.from_numpy(np.load("./latentspace/csrmatrix.npy")).float()
 csrmatrix[(torch.arange(len(csrmatrix)), torch.arange(len(csrmatrix)))] = 0.0
 csrmatrix[name_to_ls['679']] = 0.0
 csrmatrix[name_to_ls['681']] = 0.0
