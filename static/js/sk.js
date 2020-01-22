@@ -169,6 +169,11 @@ var onClickObj = function (event) {
         synchronize_roomId(INTERSECT_OBJ);
         return;
     }
+    if (On_LIFT) {
+        On_LIFT = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        return;
+    }
     if (On_ROTATE) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
@@ -240,6 +245,15 @@ function onDocumentMouseMove(event) {
             INTERSECT_OBJ.position.y + pos.y,
             INTERSECT_OBJ.position.z + pos.z);
     }
+    if (On_LIFT && INTERSECT_OBJ != null) {
+        var last_y = mouse.y;
+        updateMousePosition();
+        var this_y = mouse.y;
+        INTERSECT_OBJ.position.set(
+            INTERSECT_OBJ.position.x,
+            INTERSECT_OBJ.position.y + 2 * (this_y - last_y),
+            INTERSECT_OBJ.position.z);
+    }
     updateMousePosition();
 };
 
@@ -307,6 +321,9 @@ var setting_up = function () {
 
     var radial_remove_button = document.getElementsByClassName("glyphicon-remove")[0];
     radial_remove_button.addEventListener('click', radial_remove_control);
+
+    var radial_lift_button = document.getElementsByClassName("glyphicon-resize-vertical")[0];
+    radial_lift_button.addEventListener('click', radial_lift_control);
 
     // a stub for Wei-Yu
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];

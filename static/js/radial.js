@@ -1,6 +1,8 @@
 var rad_items = [
     {className: 'glyphicon glyphicon-star', html: ''},
     {className: 'glyphicon glyphicon-move', html: ''},
+    {className: 'glyphicon glyphicon-plus', html: ''},
+    {className: 'glyphicon glyphicon-resize-vertical', html: ''},
     {className: 'glyphicon glyphicon-repeat', html: ''},
     {className: 'glyphicon glyphicon-remove', html: ''}
 ];
@@ -31,6 +33,11 @@ var radial_rotate_control = function (event) {
     On_ROTATE = true;
     toggles();
 };
+
+var radial_lift_control = function(event){
+    On_LIFT = true;
+    toggles();
+}
 
 var radial_remove_control = function (event) {
     var roomId = INTERSECT_OBJ.userData.roomId;
