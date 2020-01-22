@@ -26,11 +26,7 @@ def insert_new_obj(obj: Polygon, room_polygon: Polygon, blocks, density=1):
     w = np.max(olist[:, 1]) - np.min(olist[:, 1])
     anchor = np.array([(np.max(olist[:, 0]) + np.min(olist[:, 0])) / 2, np.min(olist[:, 1])])
 
-    room_polygon_bigger = shapely.geometry.box(
-        room_polygon.bounds[0] - 1e-6,
-        room_polygon.bounds[1] - 1e-6,
-        room_polygon.bounds[2] + 1e-6,
-        room_polygon.bounds[3] + 1e-6)
+    room_polygon_bigger = room_polygon.buffer(1e-6)
 
     rlist = np.array(list(room_polygon.exterior.coords))
     diff = rlist[1:] - rlist[:-1]
@@ -141,7 +137,8 @@ def insert_objects(objs, room_polygon: Polygon, blocks, windows):
 
 
 def try_possible_layout(function_areas, room_shape, blocks, windows):
-    room = shapely.geometry.box(room_shape[0], room_shape[2], room_shape[3], room_shape[5])
+    room = shapely.geometry.Polygon([(p[0],p[1]) for p in room_shape])
+
     fa = [[shapely.geometry.box(x[0], x[2], x[3], x[5]), x[1], x[4]] for x in function_areas]
     bs = [[shapely.geometry.box(x[0], x[2], x[3], x[5]), x[1], x[4]] for x in blocks]
     ws = [[shapely.geometry.box(x[0], x[2], x[3], x[5]), x[1], x[4]] for x in windows]
