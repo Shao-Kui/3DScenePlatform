@@ -52,6 +52,9 @@ var find_object_json = function (obj) {
 var synchronize_json_object = function (object) {
     var i = find_object_json(object);
     var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
+    inst.scale[0] = object.scale.x;
+    inst.scale[1] = object.scale.y;
+    inst.scale[2] = object.scale.z;
     inst.translate[0] = object.position.x;
     inst.translate[1] = object.position.y;
     inst.translate[2] = object.position.z;
@@ -174,6 +177,10 @@ var onClickObj = function (event) {
         synchronize_json_object(INTERSECT_OBJ);
         return;
     }
+    if (On_SCALE) {
+        On_SCALE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+    }
     if (On_ROTATE) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
@@ -254,7 +261,42 @@ function onDocumentMouseMove(event) {
             INTERSECT_OBJ.position.y + 2 * (this_y - last_y),
             INTERSECT_OBJ.position.z);
     }
+    if (On_SCALE && INTERSECT_OBJ != null){
+        var last_x = mouse.x;
+        updateMousePosition();
+        var this_x = mouse.x;
+        s = 0.3;
+        INTERSECT_OBJ.scale.set(
+            INTERSECT_OBJ.scale.x + s * (this_x - last_x),
+            INTERSECT_OBJ.scale.y + s * (this_x - last_x),
+            INTERSECT_OBJ.scale.z + s * (this_x - last_x));
+    }
     updateMousePosition();
+};
+
+var onWindowResize = function() { //改用画布的height width
+    camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight);
+}
+
+var reshuffleRoom = function () {
+    if (currentRoomId === undefined) {
+        console.log("No room is specified. ");
+        return
+    }
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/reshuffle",
+        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+        success: function (data) {
+            data = JSON.parse(data);
+            temp = data;
+            manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
+            manager.renderManager.refresh_instances();
+        }
+    });
 };
 
 var temp;
@@ -264,35 +306,14 @@ var setting_up = function () {
     render_initialization();
     orth_initialization();
     searchPanelInitialization();
+    radial_initialization();
+    
     $("#sklayout").click(auto_layout);
-    $("#reshuffle").click(function () {
-        if (currentRoomId === undefined) {
-            console.log("No room is specified. ");
-            return
-        }
-        $.ajax({
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            url: "/reshuffle",
-            data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
-            success: function (data) {
-                data = JSON.parse(data);
-                temp = data;
-                manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
-                manager.renderManager.refresh_instances();
-            }
-        });
-    });
+    $("#layout_button").click(auto_layout);
+    $("#reshuffle").click(reshuffleRoom);
+    $("#mage_button").click(mage_add_control);
+    $("#autoinsert_button").click(auto_insert_control);
 
-    function onWindowResize() { //改用画布的height width
-        camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight);
-    }
-
-    r = document.getElementsByClassName('radial__container')[0];
-    r.style.width = "0px";
-    r.style.height = "0px";
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     window.addEventListener('resize', onWindowResize, false);
     scenecanvas.addEventListener('click', onClickObj);
@@ -303,32 +324,5 @@ var setting_up = function () {
     orthcanvas.addEventListener('mousemove', orth_mousemove);
     orthcanvas.addEventListener('click', orth_mouseclick);
 
-    var mage_button = document.getElementById("mage_button");
-    mage_button.addEventListener('click', mage_add_control);
-
-    var layout_button = document.getElementById("layout_button");
-    layout_button.addEventListener('click', auto_layout);
-
-    var autoinsert_button = document.getElementById("autoinsert_button");
-    autoinsert_button.addEventListener('click', auto_insert_control);
-
-    //Config radial logic
-    var radial_move_button = document.getElementsByClassName("glyphicon-move")[0];
-    radial_move_button.addEventListener('click', radial_move_control);
-
-    var radial_rotate_button = document.getElementsByClassName("glyphicon-repeat")[0];
-    radial_rotate_button.addEventListener('click', radial_rotate_control);
-
-    var radial_remove_button = document.getElementsByClassName("glyphicon-remove")[0];
-    radial_remove_button.addEventListener('click', radial_remove_control);
-
-    var radial_lift_button = document.getElementsByClassName("glyphicon-resize-vertical")[0];
-    radial_lift_button.addEventListener('click', radial_lift_control);
-
-    // a stub for Wei-Yu
-    var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-    radial_latentspace_button.addEventListener('click', manager.renderManager.latent_space_click);
-
     gameLoop();
-
 };
