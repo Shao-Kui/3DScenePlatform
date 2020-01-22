@@ -147,6 +147,11 @@ def windoorblock_f(o):
     block['min'][0] = block['min'][0] + o['translate'][0]
     block['min'][1] = block['min'][1] + o['translate'][1]
     block['min'][2] = block['min'][2] + o['translate'][2]
+    for i in range(0, 3):
+        new_max = max(block['max'][i], block['min'][i])
+        new_min = min(block['max'][i], block['min'][i])
+        block['max'][i] = new_max
+        block['min'][i] = new_min
     windoorbb = np.array(currentwindoor['four_points_xz'], dtype=np.float)
     block['windoorbb'] = rotate_bb_local_np(windoorbb, o['orient'], np.array([o['scale'][0], o['scale'][2]], dtype=np.float))
     block['windoorbb'][:, 0] += o['translate'][0]
