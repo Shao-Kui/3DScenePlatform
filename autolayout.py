@@ -18,7 +18,8 @@ with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
 with open('./latentspace/windoorblock.json') as f:
     windoorblock = json.load(f)
-
+max_bb = torch.load('./latentspace/max_bb.pt')
+min_bb = torch.load('./latentspace/min_bb.pt')
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater', 'picture_frame']
 leaderlist = ['double_bed', 'desk', 'coffee_table']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
@@ -111,6 +112,20 @@ def rotate(origin, point, angle):
     qy = oy - math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return qx, qy
 
+'''
+:param point: the given point in a 3D space
+:param translate: the translation in 3D
+:param angle: the rotation angle on XOZ plain
+:param scale: the scale in 3D
+'''
+def transform_a_point(point, translate, angle, scale):
+    result = point.clone()
+    scaled = point.clone()
+    scaled = point * scale
+    result[0] =  torch.cos(angle) * scaled[0] + torch.sin(angle) * scaled[2]
+    result[2] = -torch.sin(angle) * scaled[0] + torch.cos(angle) * scaled[2]
+    return result + translate
+
 def windoorblock_f(o):
     currentwindoor = windoorblock[o['modelId']]
     block = {}
@@ -200,14 +215,20 @@ def sceneSynthesis(rj):
         scale[i][1] = pend_obj_list[i]['scale'][1]
         scale[i][2] = pend_obj_list[i]['scale'][2]
     bb = four_points_xz[bbindex].float()
+    max_points = max_bb[bbindex].float()
+    min_points = min_bb[bbindex].float()
     for i in range(len(pend_obj_list)):
         bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
+        max_points[i] = transform_a_point(max_points[i], translate[i], orient[i], scale[i])
+        min_points[i] = transform_a_point(min_points[i], translate[i], orient[i], scale[i])
     bb_tran = translate.reshape(len(pend_obj_list), 1, 3)[:, :, [0, 2]] + bb # note that bbs are around (0,0,0) after heuristic(cg)
     # calculate bounding box of coherent groups; 
     for gid in range(len(pend_groups)):
         pend_group = pend_groups[gid]
         cg = cgs[gid]
         points = bb_tran[pend_group].reshape(-1, 2)
+        max_points_of_cg = max_points[pend_group]
+        min_points_of_cg = min_points[pend_group]
         maxp = torch.max(points, dim=0)[0]
         minp = torch.min(points, dim=0)[0]
         cg['bb'] = torch.zeros((4, 2), dtype=torch.float)
@@ -217,8 +238,10 @@ def sceneSynthesis(rj):
         cg['bb'][2] = minp
         cg['bb'][3][0] = maxp[0]
         cg['bb'][3][1] = minp[1]
-    # generate 
-    naive_heuristic(cgs, room_meta, blocks)
+        cg['height'] = torch.max(max_points_of_cg, dim=0)[0][1].item()
+        cg['ground'] = torch.min(min_points_of_cg, dim=0)[0][1].item()
+    # generate
+    attempt_heuristic(cgs, room_meta, blocks)
     for cg in cgs:
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
