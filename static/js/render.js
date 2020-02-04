@@ -34,12 +34,12 @@ var render_initialization = function () {
 
     //lighting and shadowing
     //0.9 is the stable lightness of ambient light after mid-term; 
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.6);
+    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.9);
     scene.add(ambientLight);
 
     //0.3 is the stable lightness of directional light after mid-term; 
-    var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.9);
-    directionalLight.castShadow = true;
+    var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+    directionalLight.castShadow = false;
     directionalLight.position.set(0, 10, 0);
     directionalLight.shadow.mapSize.width = 4096 * 4;
     directionalLight.shadow.mapSize.height = 4096 * 4;
@@ -49,8 +49,8 @@ var render_initialization = function () {
     directionalLight.shadow.camera.right = 100;
     directionalLight.shadow.camera.top = 100;
     directionalLight.shadow.camera.bottom = -100;
-    // scene.add(directionalLight);
-    // scene.add(directionalLight.target)
+    scene.add(directionalLight);
+    scene.add(directionalLight.target)
 
     //Create a PointLight and turn on shadows for the light
     spotLight.angle = Math.PI / 4;
@@ -62,8 +62,8 @@ var render_initialization = function () {
     spotLight.shadow.mapSize.height = 4096;
     spotLight.shadow.camera.near = 0.01;
     spotLight.shadow.camera.far = 1000;
-    scene.add( spotLight );
-    scene.add( spotLight.target );
+    // scene.add( spotLight );
+    // scene.add( spotLight.target );
 
     //adding skybox
     var skyGeo = new THREE.CubeGeometry(1000, 1000, 1000);
