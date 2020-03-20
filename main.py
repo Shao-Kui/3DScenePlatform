@@ -192,4 +192,4 @@ def reshuffle():
 def semantic(obj_id):
     return obj_semantic[obj_id]
 
-app.run(host="0.0.0.0", port=11425, debug=True)
+app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)

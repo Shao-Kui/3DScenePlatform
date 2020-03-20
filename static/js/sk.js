@@ -313,6 +313,23 @@ var setting_up = function () {
     $("#reshuffle").click(reshuffleRoom);
     $("#mage_button").click(mage_add_control);
     $("#autoinsert_button").click(auto_insert_control);
+    $("#download_button").click(function(){
+        let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
+        // delete unnecessary keys; 
+        json_to_dl.rooms.forEach(function(room){
+            room.objList.forEach(function(inst){
+                if(inst === null || inst === undefined){
+                    return
+                }
+                delete inst.key;
+            })
+        })
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
+        var dlAnchorElem = document.getElementById('downloadAnchorElem');
+        dlAnchorElem.setAttribute("href",     dataStr     );
+        dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
+        dlAnchorElem.click();
+    });
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     window.addEventListener('resize', onWindowResize, false);

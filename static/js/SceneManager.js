@@ -101,7 +101,7 @@ class SceneManager {
             if (userData.type === 'w' ||
                 userData.type === 'f' ||
                 userData.type === 'c'||
-                userData.type=='object') {
+                userData.type === 'object') {
                 return true;
             }
         });
@@ -113,7 +113,6 @@ class SceneManager {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
-
     };
 
     refresh_light(){
