@@ -75,38 +75,39 @@ def naive_heuristic(cgs, room_meta, block=None):
         heuristic_wall(cg, room_meta)
 
 
-def attempt_heuristic(cgs, room_meta, blocks=None):
-    # coded by Wei-Yu @CopyRight
+def attempt_heuristic(cgs, room_polygon, blocks=None):
+    # coded by Weiyu
     print('attempt_heuristic')
-    cg_bb = []
+    function_areas = []
     block_bb = []
-    win_bb = []
+    windows_bb = []
 
     for cg in cgs:
         print(cg)
         t = cg['bb'].numpy()
-        cg_bb.append(
+        function_areas.append(
             [np.min(t[:, 0]), cg['ground'], np.min(t[:, 1]), np.max(t[:, 0]), cg['height'], np.max(t[:, 1])])
 
-
     for b in blocks:
-        if b['coarseSemantic']=='door':
+        if b['coarseSemantic'] == 'door':
             block_bb.append(b['min'] + b['max'])
         else:
-            win_bb.append(b['min'] + b['max'])
+            windows_bb.append(b['min'] + b['max'])
         print(b)
 
-    print(cg_bb)
-    print(room_meta)
+    print(function_areas)
+    print(room_polygon)
     print(block_bb)
-    print(win_bb)
+    print(windows_bb)
 
-    ori, tra = try_possible_layout(cg_bb, room_meta, block_bb,win_bb)
-    for t in tra:
-        t.insert(1,0)
+    rotations, translations = try_possible_layout(function_areas, room_polygon, block_bb, windows_bb)
+    # The translation data is two dimensional, so we add the y coordinate.
+    for t in translations:
+        t.insert(1, 0)
 
-    for i in range(len(ori)):
+    # Change the rotation and translation.
+    for i in range(len(rotations)):
         # attention here
-        cgs[i]['orient'] = ori[i]
-        cgs[i]['translate'] = tra[i]
+        cgs[i]['orient'] = rotations[i]
+        cgs[i]['translate'] = translations[i]
     pass
