@@ -127,7 +127,6 @@ def insert_objects(function_areas, room_polygon: Polygon, blocks, windows):
 
         # try most 2^n times
         try_2_pow_times = 6
-        cnt = 0
 
         for j in range(0, try_2_pow_times):
             new_positions = insert_new_obj(function_area[0], room_polygon, blocks_and_windows, 2 ** j)
@@ -174,7 +173,7 @@ def try_possible_layout(function_areas, room_shape, blocks, windows):
     # blocks:  no function can intersect with these areas
     blocks = [[shapely.geometry.box(x[0], x[2], x[3], x[5]), x[1], x[4]] for x in blocks]
 
-    # windows function areas can intersect with these areas partly
+    # windows function areas can intersect with these areas partly(a shelf could cover the lower part of a window)
     windows = [[shapely.geometry.box(x[0], x[2], x[3], x[5]), x[1], x[4]] for x in windows]
 
     re = insert_objects(function_areas, room, blocks, windows)
