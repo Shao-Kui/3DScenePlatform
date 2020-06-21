@@ -336,8 +336,9 @@ def connected_component(name, adj):
         vis[u]=True
         ans[-1].append(name[u])
         for v in range(size):
-            if vis[v]==False and adj[u][v]==1:
-                dfs(v)
+            if vis[v]==False:
+                if adj[u][v] == 1 or adj[v][u] == 1:
+                    dfs(v)
 
     for u in range(size):
         if vis[u]==False:
@@ -348,13 +349,13 @@ def connected_component(name, adj):
 if __name__ == "__main__":
 
     savefile = True
-    # savepic = True
+    savepic = True
     get_norm = True
-    # file_search('/Users/ervinxie/Desktop/suncg/room')
-    # process('.', 'fr_0rm_0f.obj')
+    file_search('./suncg/room')
+    process('.', 'fr_0rm_0f.obj')
 
-    # process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_3f.obj')
-    # process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_2f.obj')
+    process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_3f.obj')
+    process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_2f.obj')
 
     file_search('./suncg_subset/room')
 

@@ -20,8 +20,10 @@ with open('./latentspace/windoorblock.json') as f:
     windoorblock = json.load(f)
 max_bb = torch.load('./latentspace/max_bb.pt')
 min_bb = torch.load('./latentspace/min_bb.pt')
-BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater', 'picture_frame']
+# , 'picture_frame'
+BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
 leaderlist = ['double_bed', 'desk', 'coffee_table']
+NaiveChainList = ['kitchen_cabinet', 'shelving']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "./latentspace/pos-orient-3/{}.json"
@@ -30,6 +32,9 @@ with open('./latentspace/nwdo-represent.json') as f:
 priors = {}
 priors['pos'] = {}
 priors['ori'] = {}
+priors['chain'] = {}
+priors['nextchain'] = {}
+priors['chainlength'] = {}
 REC_MAX = 20
 SSIZE = 1000
 
@@ -37,7 +42,14 @@ def preload_prior(centername, objname):
     global SSIZE
     rng = np.random.default_rng()
     priorid = "{}-{}".format(centername, objname)
+    priors['nextchain'][priorid] = []
     if priorid not in priors['pos']:
+        priors['chainlength'][priorid] = 1
+        if os.path.isfile(PRIORS.format(priorid)):
+            with open(PRIORS.format(priorid)) as f:
+                priors['chain'][priorid] = json.load(f)
+                priors['nextchain'][priorid] = priors['chain'][priorid][np.random.randint(len(priors['chain'][priorid]))].copy()
+                priors['chainlength'][priorid] = len(priors['chain'][priorid][np.random.randint(len(priors['chain'][priorid]))])
         if not os.path.isfile(PRIORS.format(centername)):
             return
         with open(PRIORS.format(centername)) as f:
@@ -47,18 +59,26 @@ def preload_prior(centername, objname):
             theprior = np.array(thepriors[objname], dtype=np.float)
         while len(theprior) < SSIZE:
             theprior = np.vstack((theprior, theprior))
-        rng.shuffle(theprior)
+        # rng.shuffle(theprior)
         priors['pos'][priorid] = torch.from_numpy(theprior[:, 0:3]).float()
         priors['ori'][priorid] = torch.from_numpy(theprior[:, 3].flatten()).float()
 
 def heuristic_assign(dominator, o):
     priorid = "{}-{}".format(dominator['modelId'], o['modelId'])
+    print(priorid)
     pos_prior = rotate_pos_prior(priors['pos'][priorid], torch.tensor(dominator['orient'], dtype=torch.float))
     ori_prior = priors['ori'][priorid]
     pindex = np.random.randint(len(pos_prior))
-    o['translate'][0] = dominator['translate'][0] + pos_prior[pindex][0].item()
-    o['translate'][1] = dominator['translate'][1] + pos_prior[pindex][1].item()
-    o['translate'][2] = dominator['translate'][2] + pos_prior[pindex][2].item()
+    # if pattern chains exist between two pending objects, we sample a pattern chain for relative transformations; 
+    if priorid in priors['chain']:
+        if len(priors['nextchain'][priorid]) == 0: 
+            # warning: we should delete objects beyond the pattern chain; 
+            priors['nextchain'][priorid] = priors['chain'][priorid][np.random.randint(len(priors['chain'][priorid]))].copy()
+        pindex = priors['nextchain'][priorid].pop(0)
+        print('pattern chain')
+    o['translate'][0] = dominator['translate'][0] + pos_prior[pindex][0].item() * dominator['scale'][0]
+    o['translate'][1] = dominator['translate'][1] + pos_prior[pindex][1].item() * dominator['scale'][1]
+    o['translate'][2] = dominator['translate'][2] + pos_prior[pindex][2].item() * dominator['scale'][2]
     o['orient'] = dominator['orient'] + ori_prior[pindex].item()
 
 def heuristic_recur(pend_group, did, adj):
@@ -166,7 +186,8 @@ def sceneSynthesis(rj):
     for o in rj['objList']:
         if o is None:
             continue
-        # if 'coarseSemantic' in o:
+        if 'coarseSemantic' not in o:
+            continue
         if o['coarseSemantic'] in BANNED:
             continue
         if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window':
@@ -174,6 +195,8 @@ def sceneSynthesis(rj):
         if o['modelId'] not in obj_semantic:
             continue
         bbindex.append(name_to_ls[o['modelId']])
+        o['childnum'] = {}
+        o['hasAparent'] = False
         pend_obj_list.append(o)
     # load priors; 
     csrrelation = torch.zeros((len(pend_obj_list), len(pend_obj_list)), dtype=torch.float)
@@ -184,16 +207,24 @@ def sceneSynthesis(rj):
         center = pend_obj_list[centerid]
         for objid in range(len(pend_obj_list)):
             if objid == centerid:
-                csrrelation[centerid, objid] = 0.
                 continue
             obj = pend_obj_list[objid]
-            if "{}-{}".format(center['modelId'], obj['modelId']) in priors['pos']:
-                csrrelation[centerid, objid] = 1.
-                csrrelation[objid, centerid] = 1.
-            else:
-                csrrelation[centerid, objid] = 0.
+            # if the obj has a parent, we have to continue; 
+            # because if multiple parents exist, two parent may share a same child while another child has no parent;
+            if obj['hasAparent']:
                 continue
+            pid = "{}-{}".format(center['modelId'], obj['modelId'])
+            if pid in priors['pos']:
+                print(pid)
+                if obj['modelId'] not in center['childnum']:
+                    center['childnum'][obj['modelId']] = 0
+                if center['childnum'][obj['modelId']] >= priors['chainlength'][pid]:
+                    continue
+                csrrelation[centerid, objid] = 1.
+                obj['hasAparent'] = True
+                center['childnum'][obj['modelId']] += 1
     # partition coherent groups; 
+    print(csrrelation)
     pend_groups = connected_component(np.arange(len(pend_obj_list)), csrrelation)
     cgs = []
     for pend_group in pend_groups:
@@ -204,6 +235,13 @@ def sceneSynthesis(rj):
         cg['orient'] = 0.0
         # determine layouts of each group; 
         heuristic(cg)
+        # the following code is for chain pattern; 
+        # if only one object exists in a cg && the object follows chain layout, 
+        # e.g., kitchen cabinet, shelving, etc; 
+        if len(cg['objList']) == 1 and cg['objList'][0]['coarseSemantic'] in NaiveChainList:
+            cg['chain'] = cg['objList'][0]['coarseSemantic']
+        else:
+            cg['chain'] = 'n'
         cgs.append(cg)
     # load and process room shapes; 
     room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
@@ -248,6 +286,9 @@ def sceneSynthesis(rj):
     # generate
     attempt_heuristic(cgs, room_meta, blocks)
     for cg in cgs:
+        if cg['objList'][cg['leaderID']]['coarseSemantic'] == 'picture_frame':
+            cg['translate'][0] += np.sin(cg['orient']) * 0.05
+            cg['translate'][2] += np.cos(cg['orient']) * 0.05
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
             o['orient'] += cg['orient']
