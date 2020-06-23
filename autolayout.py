@@ -3,6 +3,7 @@ import json
 import time
 import math
 import torch
+import random
 import numpy as np
 from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
 from shapely.geometry.polygon import Polygon
@@ -105,8 +106,14 @@ def heuristic(cg):
         if o['coarseSemantic'] in leaderlist:
             cg['leaderID'] = oid
     if 'leaderID' not in cg:
-        cg['leaderID'] = torch.argmax(torch.sum(adj, axis=1) + torch.sum(adj, axis=0)).item()
+        # cg['leaderID'] = torch.argmax(torch.sum(adj, axis=1) + torch.sum(adj, axis=0)).item()
+        # cg['leaderID'] = torch.argmax(torch.sum(adj, axis=1)).item()
+        ao = pend_group[0]
+        while ao['myparent'] is not None:
+            ao = ao['myparent']
+        cg['leaderID'] = pend_group.index(ao)
     dominator = pend_group[cg['leaderID']]
+    print(dominator['coarseSemantic'])
     # set leader to (0, 0, 0, 0)
     # keep input Y currently...
     pend_group[cg['leaderID']]['translate'] = [0.0, pend_group[cg['leaderID']]['translate'][1], 0.0]
@@ -179,9 +186,11 @@ def windoorblock_f(o):
     return block
 
 def sceneSynthesis(rj):
+    print(rj['origin'])
     pend_obj_list = []
     bbindex = []
     blocks = []
+    random.shuffle(rj['objList'])
     # identifying objects to arrange; 
     for o in rj['objList']:
         if o is None:
@@ -196,7 +205,7 @@ def sceneSynthesis(rj):
             continue
         bbindex.append(name_to_ls[o['modelId']])
         o['childnum'] = {}
-        o['hasAparent'] = False
+        o['myparent'] = None
         pend_obj_list.append(o)
     # load priors; 
     csrrelation = torch.zeros((len(pend_obj_list), len(pend_obj_list)), dtype=torch.float)
@@ -211,7 +220,7 @@ def sceneSynthesis(rj):
             obj = pend_obj_list[objid]
             # if the obj has a parent, we have to continue; 
             # because if multiple parents exist, two parent may share a same child while another child has no parent;
-            if obj['hasAparent']:
+            if obj['myparent'] is not None:
                 continue
             pid = "{}-{}".format(center['modelId'], obj['modelId'])
             if pid in priors['pos']:
@@ -221,10 +230,9 @@ def sceneSynthesis(rj):
                 if center['childnum'][obj['modelId']] >= priors['chainlength'][pid]:
                     continue
                 csrrelation[centerid, objid] = 1.
-                obj['hasAparent'] = True
+                obj['myparent'] = center
                 center['childnum'][obj['modelId']] += 1
     # partition coherent groups; 
-    print(csrrelation)
     pend_groups = connected_component(np.arange(len(pend_obj_list)), csrrelation)
     cgs = []
     for pend_group in pend_groups:
