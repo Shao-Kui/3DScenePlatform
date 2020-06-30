@@ -14,6 +14,7 @@
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
+    <script src="/static/3rdparty/RayTracingRenderer.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
@@ -69,6 +70,7 @@
         var skyBox;
         var lx_level;
         var lz_level;
+        var renderTime = 0.6; 
 
         var latent_space_mode;
         $(document).ready(function () {
@@ -108,6 +110,7 @@
                 <button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">HeuLayout</button>
                 <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout</button>
                 <button id="download_button" type="button" class="btn btn-lg btn-primary nav_sk_button">DL</button>
+                <button id="screenshot" type="button" class="btn btn-lg btn-primary nav_sk_button">SS</button>
                 <a id="downloadAnchorElem" style="display:none"></a>
             </div>
         </div>

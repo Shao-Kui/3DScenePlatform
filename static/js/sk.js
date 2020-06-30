@@ -299,6 +299,19 @@ var reshuffleRoom = function () {
     });
 };
 
+var saveFile = function (strData, filename) {
+    var link = document.createElement('a');
+    if (typeof link.download === 'string') {
+        document.body.appendChild(link); //Firefox requires the link to be in the body
+        link.download = filename;
+        link.href = strData;
+        link.click();
+        document.body.removeChild(link); //remove the link when done
+    } else {
+        location.replace(uri);
+    }
+}
+
 var temp;
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
@@ -329,6 +342,19 @@ var setting_up = function () {
         dlAnchorElem.setAttribute("href",     dataStr     );
         dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
         dlAnchorElem.click();
+    });
+    $("#screenshot").click(function(){
+        var imgData;
+        try {
+            var strMime = "image/jpeg";
+            imgData = renderer.domElement.toDataURL(strMime);
+            console.log(imgData);
+            saveFile(imgData.replace(strMime, "image/octet-stream"), 
+            `${manager.renderManager.scene_json.origin}-${manager.renderManager.scene_json.id}.jpg`);
+        } catch (e) {
+            console.log(e);
+            return;
+        }
     });
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);

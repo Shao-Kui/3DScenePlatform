@@ -54,9 +54,17 @@ class SceneManager {
         this.camera = new THREE.PerspectiveCamera(75, $(this.canvas).width() / $(this.canvas).height(), 0.01, 1000);
         this.camera.userData = {"type": "camera"};
         this.scene.add(this.camera);
-        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, alpha: true, antialias: 4});
+        // const renderer = new THREE.RayTracingRenderer();
+        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, 
+            alpha: true, 
+            antialias: 4, 
+            preserveDrawingBuffer: true});
 
         this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
+        this.renderer.physicallyCorrectLights = true;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.toneMapping = THREE.ReinhardToneMapping;
 
         // Start to configurate the orthogonal top renderer and camera.
         this.orthrenderer = new THREE.WebGLRenderer({
@@ -65,6 +73,10 @@ class SceneManager {
             antialias: 4
         });
         this.orthrenderer.setClearColor(0xeeeeee, 0.66);
+        this.orthrenderer.physicallyCorrectLights = true;
+        this.orthrenderer.outputEncoding = THREE.sRGBEncoding;
+        this.orthrenderer.shadowMap.enabled = true;
+        this.orthrenderer.toneMapping = THREE.ReinhardToneMapping;
         var owidth = 50;
         var oheight = 50;
         this.orthcamera = new THREE.OrthographicCamera(owidth / -2, owidth / 2, oheight / 2, oheight / -2, 0.01, 1000);
