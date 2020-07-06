@@ -4,12 +4,14 @@ import time
 import math
 import torch
 import random
+import threading
 import numpy as np
 from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d, connected_component
 from rec_release import rotate_pos_prior, rotate_bb_local_para, loss_2, loss_4
+import patternChain
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -36,6 +38,7 @@ priors['ori'] = {}
 priors['chain'] = {}
 priors['nextchain'] = {}
 priors['chainlength'] = {}
+HYPER = './latentspace/pos-orient-3/hyper/{}-{}.json'
 REC_MAX = 20
 SSIZE = 1000
 
@@ -64,29 +67,54 @@ def preload_prior(centername, objname):
         priors['pos'][priorid] = torch.from_numpy(theprior[:, 0:3]).float()
         priors['ori'][priorid] = torch.from_numpy(theprior[:, 3].flatten()).float()
 
-def heuristic_assign(dominator, o):
+def heuristic_assign(dominator, o, pindex=None, usechain=True):
     priorid = "{}-{}".format(dominator['modelId'], o['modelId'])
-    print(priorid)
     pos_prior = rotate_pos_prior(priors['pos'][priorid], torch.tensor(dominator['orient'], dtype=torch.float))
     ori_prior = priors['ori'][priorid]
-    pindex = np.random.randint(len(pos_prior))
+    if pindex is None:
+        pindex = np.random.randint(len(pos_prior))
     # if pattern chains exist between two pending objects, we sample a pattern chain for relative transformations; 
-    if priorid in priors['chain']:
+    if priorid in priors['chain'] and usechain:
+        print('use a pattern chain')
         if len(priors['nextchain'][priorid]) == 0: 
             # warning: we should delete objects beyond the pattern chain; 
             priors['nextchain'][priorid] = priors['chain'][priorid][np.random.randint(len(priors['chain'][priorid]))].copy()
         pindex = priors['nextchain'][priorid].pop(0)
-        print('pattern chain')
     o['translate'][0] = dominator['translate'][0] + pos_prior[pindex][0].item() * dominator['scale'][0]
     o['translate'][1] = dominator['translate'][1] + pos_prior[pindex][1].item() * dominator['scale'][1]
     o['translate'][2] = dominator['translate'][2] + pos_prior[pindex][2].item() * dominator['scale'][2]
     o['orient'] = dominator['orient'] + ori_prior[pindex].item()
+    o['isHeu'] = True
 
 def heuristic_recur(pend_group, did, adj):
     dominator = pend_group[did]
-    if dominator['isHeu']:
-        return
-    dominator['isHeu'] = True
+    # check if hyper priors are available; 
+    relatedIndeces = np.where(adj[did] == 1.)[0]
+    relatednames = []
+    for i in relatedIndeces:
+        relatednames.append(pend_group[i]['modelId'])
+    relatednames.sort()
+    rnms = '_'.join(relatednames)
+    pth = HYPER.format(pend_group[did]['modelId'], rnms)
+    if os.path.exists(pth):
+        print('Assembling hyper priors...')
+        with open(pth) as f:
+            hyperps = json.load(f)
+        hyperp = hyperps[np.random.randint(len(hyperps))].copy()
+        for i in relatedIndeces:
+            o = pend_group[i]
+            if o['isHeu']:
+                continue
+            try:
+                pindex = hyperp[o['modelId']].pop()
+            except Exception as e:
+                print(e)
+                continue
+            heuristic_assign(dominator, o, pindex, False)
+    else:
+        if len(set(relatednames)) > 1 and rnms not in patternChain.pendingList and pend_group[did]['coarseSemantic'] in ['coffee_table', 'dining_table']:
+            patternChain.pendingList.append(rnms)
+            threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
     for oid in range(len(pend_group)):
         o = pend_group[oid]
         if o['isHeu']:
@@ -123,11 +151,14 @@ def heuristic(cg):
     doris = wallpriors[dominator['modelId']]['ori']
     if len(doris) != 0:
         cg['orient_offset'] = doris[np.random.randint(len(doris))]
+        # pend_group[cg['leaderID']]['orient'] += cg['orient_offset']
     else:
         cg['orient_offset'] = 0.
     print('dominant obj: {} ({}). '.format(dominator['modelId'], dominator['coarseSemantic']))
+    # initially, all objects are not arranged; 
     for o in pend_group:
         o['isHeu'] = False
+    pend_group[cg['leaderID']]['isHeu'] = True
     heuristic_recur(pend_group, cg['leaderID'], adj)
 
 def rotate(origin, point, angle):
@@ -294,9 +325,9 @@ def sceneSynthesis(rj):
     # generate
     attempt_heuristic(cgs, room_meta, blocks)
     for cg in cgs:
-        if cg['objList'][cg['leaderID']]['coarseSemantic'] == 'picture_frame':
-            cg['translate'][0] += np.sin(cg['orient']) * 0.05
-            cg['translate'][2] += np.cos(cg['orient']) * 0.05
+        if cg['objList'][cg['leaderID']]['coarseSemantic'] in ['sink', 'dressing_table', 'picture_frame', 'television', 'mirror', 'clock', 'dining_table']:
+            cg['translate'][0] += np.sin(cg['orient']) * 0.08
+            cg['translate'][2] += np.cos(cg['orient']) * 0.08
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
             o['orient'] += cg['orient']

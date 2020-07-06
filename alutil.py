@@ -83,7 +83,7 @@ def attempt_heuristic(cgs, room_polygon, blocks=None):
     windows_bb = []
 
     for cg in cgs:
-        print(cg)
+        # print(cg)
         t = cg['bb'].numpy()
         function_areas.append(
             [np.min(t[:, 0]), cg['ground'], np.min(t[:, 1]), np.max(t[:, 0]), cg['height'], np.max(t[:, 1])])
@@ -93,12 +93,14 @@ def attempt_heuristic(cgs, room_polygon, blocks=None):
             block_bb.append(b['min'] + b['max'])
         else:
             windows_bb.append(b['min'] + b['max'])
-        print(b)
+        # print(b)
 
+    """
     print(function_areas)
     print(room_polygon)
     print(block_bb)
     print(windows_bb)
+    """
 
     rotations, translations = try_possible_layout(function_areas, room_polygon, block_bb, windows_bb)
     # The translation data is two dimensional, so we add the y coordinate.
