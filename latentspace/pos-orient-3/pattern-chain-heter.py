@@ -13,8 +13,8 @@ This code tries a brute-force way to build a dpc index;
 # pri = '549'
 # secs = ['116', 's__588', 's__587', '235']
 # tier = {'235': 0}
-pri = '551'
-secs = ['259', '259', '261', '153', '258']
+pri = '77'
+secs = ['233', '233', '617', '558']
 tier = {'238': 0, '153': 0}
 # default tier is 1; 
 for s in secs:

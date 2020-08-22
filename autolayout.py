@@ -9,11 +9,11 @@ import numpy as np
 from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-from projection2d import process as p2d, connected_component
+from projection2d import processGeo as p2d, connected_component
 from rec_release import rotate_pos_prior, rotate_bb_local_para, loss_2, loss_4
 import patternChain
 
-with open('./latentspace/obj-semantic.json') as f:
+with open('./latentspace/obj_coarse_semantic.json') as f:
     obj_semantic = json.load(f)
 with open('./latentspace/name_to_ls.json') as f:
     name_to_ls = json.load(f)
@@ -24,8 +24,8 @@ with open('./latentspace/windoorblock.json') as f:
 max_bb = torch.load('./latentspace/max_bb.pt')
 min_bb = torch.load('./latentspace/min_bb.pt')
 # , 'picture_frame'
-BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
-leaderlist = ['double_bed', 'desk', 'coffee_table']
+BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 'Pendant Lamp']
+leaderlist = ['double_bed', 'desk', 'coffee_table', 'King-size Bed', 'Coffee Table']
 NaiveChainList = ['kitchen_cabinet', 'shelving']
 four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
@@ -44,7 +44,7 @@ SSIZE = 1000
 
 def preload_prior(centername, objname):
     global SSIZE
-    rng = np.random.default_rng()
+    # rng = np.random.default_rng()
     priorid = "{}-{}".format(centername, objname)
     priors['nextchain'][priorid] = []
     if priorid not in priors['pos']:
@@ -112,9 +112,10 @@ def heuristic_recur(pend_group, did, adj):
                 continue
             heuristic_assign(dominator, o, pindex, False)
     else:
-        if len(set(relatednames)) > 1 and rnms not in patternChain.pendingList and pend_group[did]['coarseSemantic'] in ['coffee_table', 'dining_table']:
-            patternChain.pendingList.append(rnms)
-            threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
+        if len(set(relatednames)) > 1 and rnms not in patternChain.pendingList:
+            if pend_group[did]['coarseSemantic'] in ['coffee_table', 'dining_table'] or pend_group[did]['modelId'] in ['1093']:
+                patternChain.pendingList.append(rnms)
+                threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
     for oid in range(len(pend_group)):
         o = pend_group[oid]
         if o['isHeu']:
@@ -139,16 +140,23 @@ def heuristic(cg):
         ao = pend_group[0]
         while ao['myparent'] is not None:
             ao = ao['myparent']
+        # for oid in range(len(pend_group)):
+        #     o = pend_group[oid]
+        #     print(o)
+        #     if o['id'] == ao['id']:
+        #         cg['leaderID'] = oid
         cg['leaderID'] = pend_group.index(ao)
     dominator = pend_group[cg['leaderID']]
-    print(dominator['coarseSemantic'])
     # set leader to (0, 0, 0, 0)
     # keep input Y currently...
     pend_group[cg['leaderID']]['translate'] = [0.0, pend_group[cg['leaderID']]['translate'][1], 0.0]
     pend_group[cg['leaderID']]['rotate'] = [0.0, 0.0, 0.0]
     pend_group[cg['leaderID']]['orient'] = 0.0
     # get wall orient offset for leader; 
-    doris = wallpriors[dominator['modelId']]['ori']
+    if dominator['modelId'] in wallpriors:
+        doris = wallpriors[dominator['modelId']]['ori']
+    else:
+        doris = [0.0, 0.0]
     if len(doris) != 0:
         cg['orient_offset'] = doris[np.random.randint(len(doris))]
         # pend_group[cg['leaderID']]['orient'] += cg['orient_offset']
@@ -232,6 +240,7 @@ def sceneSynthesis(rj):
             continue
         if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window':
             blocks.append(windoorblock_f(o))
+            continue
         if o['modelId'] not in obj_semantic:
             continue
         bbindex.append(name_to_ls[o['modelId']])
@@ -283,7 +292,8 @@ def sceneSynthesis(rj):
             cg['chain'] = 'n'
         cgs.append(cg)
     # load and process room shapes; 
-    room_meta = p2d('.', '/suncg/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
+    room_meta = p2d('.', '/dataset/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
+    print(room_meta[:, 0:2])
     room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
     translate = torch.zeros((len(pend_obj_list), 3)).float()
     orient = torch.zeros((len(pend_obj_list))).float()

@@ -3,16 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import re
-from shapely.geometry import Polygon
-from shapely.geometry.polygon import orient
 import json
 
 eps = 1e-1
+
 check_norm = False
 savepic = False
-get_norm = False
 savefile = False
-savefile_kind = 'npy'
+get_norm = True
 
 record_file_path = './record_file.json'
 parallel = {}
@@ -62,7 +60,7 @@ class point:
         return self.complex_product(self.unit(theta))
 
     def complex_product(self, b):
-        return point(self.x * b.x - self.z * b.z, self.y, self.x * b.z + self.z * b.x)
+        return point(self.x * b.x - self.z * b.z, 0, self.x * b.z + self.z * b.x)
 
     def normalize(self):
         return self / self.__len__()
@@ -111,6 +109,7 @@ class polygen:
     def get_norm(self):
         theta = 0
 
+
         for i in range(0, self.size):
 
             v1 = self.parr[(i + 1) % self.size] - self.parr[i]
@@ -147,7 +146,6 @@ class polygen:
 
 
 def process(path, file_name):
-    ans = np.zeros(1)
     try:
         objfile = open(path + '/' + file_name)
         point_num = 0
@@ -206,8 +204,6 @@ def process(path, file_name):
             nip = np.array(nid_point[i], dtype=np.float)
             nip = nip.sum(axis=0) / np.array([nip.shape[0], nip.shape[0]])
             new_point.append(point(nip[0], 0, nip[1]))
-
-        # print(new_point)
 
         # 领接集合
         adj = []
@@ -280,15 +276,20 @@ def process(path, file_name):
 
         if get_norm:
             p = polygen(ans)
-            # print(ans)
             ans = p.get_norm()
-
     except Exception as e:
+
         print('!!!Wrong at ' + file_name + '\n' + str(e))
-        print(ans)
+        # print(ans)
         # plt.scatter(parr[:, 0], parr[:, 1], s=0.1)
         # plt.show()
-        return ans
+        if savepic:
+            plt.cla()
+            plt.scatter(ans[:, 0], ans[:, 1], s=1)
+            for i in range(0, len(ans_list)):
+                plt.annotate(i, (ans[i][0], ans[i][1]))
+            plt.savefig(path + '/' + file_name + '.png')
+        return np.zeros(1)
     finally:
         if savepic:
             plt.cla()
@@ -301,94 +302,7 @@ def process(path, file_name):
         return ans
 
 
-def processGeo(path, file_name):
-    print(file_name)
-    ans = np.zeros(1)
-    try:
-        objfile = open(path + '/' + file_name)
-        point_num = 0
-        face_num = 0
-        point_buf_arr = []
-        face_buf_arr = []
-        input_str = objfile.readline()
-        while input_str != "":
-            input_str = objfile.readline()
-            if input_str[:2] == 'v ':
-                point_num += 1
-                for i in range(1, 4):
-                    point_buf_arr.append(eval(input_str.split()[i]))
-            elif input_str[:2] == 'f ':
-                face_num += 1
-                for i in range(1, 4):
-                    face_buf_arr.append(int(eval(input_str.split()[i].split('/')[0])))
-
-        if point_num == 0 or face_num == 0:
-            return np.zeros(1)
-
-        parr = np.array(point_buf_arr, dtype=np.float)
-        parr = parr.reshape(point_num, 3)
-        delta = parr.max(axis=0) - parr.min(axis=0)
-        parr = np.delete(parr, np.where(delta == min(delta)), axis=1)
-
-        farr = np.array(face_buf_arr, dtype=np.int)
-        farr = farr.reshape(face_num, 3) - np.ones((face_num, 3))
-
-        # print(parr, point_num)
-
-        # print(farr, face_num)
-
-        re = Polygon()
-        for f in farr:
-            points = [(parr[int(p)][0], parr[int(p)][1]) for p in f]
-            poly = Polygon(points)
-
-            # print(poly)
-            # plt.plot(*poly.exterior.xy)
-            # plt.show()
-            if (poly.is_valid):
-                re = re.union(poly)
-            # print(re)
-            # plt.plot(*re.exterior.xy)
-            # plt.show()
-            # input()
-
-        # plt.cla()
-        # plt.plot(*re.exterior.xy)
-        # plt.show()
-        # print(re)
-        # print(re)
-        # print( orient(re,1.0))
-        re = orient(re,1.0)
-        ans = np.array(re.exterior.xy).T
-        ans = ans[:-1]
-
-
-        if get_norm:
-            p = polygen(ans)
-            ans = p.get_norm()
-        # print(ans)
-
-    except Exception as e:
-        print('!!!Wrong at ' + file_name + '\n' + str(e))
-        print(ans)
-        return ans
-
-    finally:
-
-        if savepic:
-            plt.cla()
-            plt.scatter(ans[:, 0], ans[:, 1], s=1)
-            if get_norm:
-                plt.scatter(ans[:, 0] + ans[:, 2], ans[:, 1] + ans[:, 3], s=2)
-            plt.plot(*re.exterior.xy)
-            for i in range(0, len(ans)):
-                plt.annotate(i, (ans[i][0], ans[i][1]))
-            plt.savefig(path + '/' + file_name + '.png')
-
-        return ans
-
-
-def file_search(path, parent='.'):
+def file_search(path):
     files = os.listdir(path)  # 得到文件夹下的所有文件名称
     file_num = 0
     file_nump = 0
@@ -405,28 +319,13 @@ def file_search(path, parent='.'):
             if re.match('.*f.obj$', str(file)):
                 file_nump += 1
                 # print("Dealing with " + path + "/" + file + ' (%d/%d)' % (file_nump, file_num))
-                ans = processGeo(path, file)
-
-                try:
-                    if savefile:
-                        if savefile_kind == 'npy':
-                            np.save(path + "/" + file, ans)
-                        elif savefile_kind == 'json':
-                            save = {}
-                            save['house'] = parent
-                            save['room'] = str(file)
-                            save['vertices'] = ans[:, 0:2].tolist()
-                            save['normals'] = ans[:, 2:4].tolist()
-                            # print(save)
-                            open('./shape_json/' + parent + '-' + str(file) + '.json', 'w').write(json.dumps(save))
-                except Exception as e:
-                    print('save file wrong!')
-
-
+                ans = process(path, file)
+                if savefile:
+                    np.save(path + "/" + file, ans)
         elif os.path.isdir(path + "/" + file):
             dir_nump += 1
             print("Entering " + path + "/" + file + '(%d/%d)' % (dir_nump, dir_num))
-            file_search(path + "/" + file, file)
+            file_search(path + "/" + file)
 
 def connected_component(name, adj):
     size = len(name)
@@ -447,51 +346,21 @@ def connected_component(name, adj):
             dfs(u)
     return ans
 
-def connected_component_(name, adj):
-    size = len(name)
-    vis = np.zeros(size, dtype=np.bool)
-    ans = []
-
-    def dfs(u):
-        vis[u] = True
-        ans[-1].append(name[u])
-        for v in range(size):
-            if vis[v] == False and adj[u][v] == 1:
-                dfs(v)
-
-    for u in range(size):
-        if vis[u] == False:
-            ans.append([])
-            dfs(u)
-    return ans
-
-
-# if __name__ == "__main__":
-#
-#     name = [78,266,108,335,120]
-#     adj = [[0., 0., 0., 0., 0.],
-#      [0., 0., 0., 0., 0.],
-#      [0., 0., 0., 0., 1.],
-#      [0., 0., 0., 0., 1.],
-#      [0., 0., 1., 1., 0.]]
-#     print(connected_component(name,adj))
-
 if __name__ == "__main__":
-    savefile = True
-    savefile_kind = 'npy'
 
-    check_norm = False
+    savefile = True
     savepic = True
     get_norm = True
-    file_search('/Users/ervinxie/Research/Fast3DISS/00a4ff0c-ec69-4202-9420-cc8536ffffe0')
+    file_search('./suncg/room')
+    process('.', 'fr_0rm_0f.obj')
 
-    # file_search('/Users/ervinxie/Desktop/suncg/room/3e60029ce929bf20fd66204028a72c1b')
-    # process('.', 'fr_0rm_0f.obj')
+    process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_3f.obj')
+    process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_2f.obj')
 
-    # process('D:/3DIndoorScenePlatform/suncg/room/0a213b456bb8ad4d45c0c80f2c3f6b5d', 'fr_0rm_5f.obj')
-    # process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_2f.obj')
+    file_search('./suncg_subset/room')
 
-    # file_search('./suncg_subset/room')
 
-    # if check_norm:
-    #     open(record_file_path, 'w').write(json.dumps(parallel, indent=1))
+    if check_norm:
+        open(record_file_path, 'w').write(json.dumps(parallel, indent=1))
+
+# /Users/ervinxie/Desktop/innerdesign/suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_3f.obj.png
