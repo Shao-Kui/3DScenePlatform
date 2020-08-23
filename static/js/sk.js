@@ -321,6 +321,7 @@ var setting_up = function () {
     searchPanelInitialization();
     radial_initialization();
     
+    $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
     $("#layout_button").click(auto_layout);
     $("#reshuffle").click(reshuffleRoom);
@@ -348,7 +349,6 @@ var setting_up = function () {
         try {
             var strMime = "image/jpeg";
             imgData = renderer.domElement.toDataURL(strMime);
-            console.log(imgData);
             saveFile(imgData.replace(strMime, "image/octet-stream"), 
             `${manager.renderManager.scene_json.origin}-${manager.renderManager.scene_json.id}.jpg`);
         } catch (e) {

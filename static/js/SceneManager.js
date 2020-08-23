@@ -83,7 +83,7 @@ class SceneManager {
         this.orthcamera.userData = {"type": "camera"};
         this.scene.add(this.orthcamera);
         this.on_resize();
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
 
     };
 
@@ -147,7 +147,6 @@ class SceneManager {
     };
 
     load_cwf_room_meta = room => {
-
         var self = this;
         fetch("/room/" + this.scene_json.origin + "/" + room.modelId).then(function (response) {
             return response.json();
@@ -159,11 +158,9 @@ class SceneManager {
                 self.load_cwf_instances(room.modelId, meta[j], room.roomId);
             }
         })
-
     };
 
     load_cwf_instances = (modelId, suffix, roomId) => {
-
         var meta = modelId + suffix;
         var self = this;
         var objLoader = new THREE.OBJLoader2();
@@ -183,50 +180,70 @@ class SceneManager {
                     self.cwfCache.push(instance);
                 }
             }, null, null, null, false);
+        }, null, function(){
+            objLoader.setModelName(meta);
+            objLoader.load(obj_path, function (event) {
+                var instance = event.detail.loaderRootNode;
+                instance.userData = {"type": suffix, "roomId": roomId};
+                instance.castShadow = true;
+                instance.receiveShadow = true;
+                traverseObjSetting(instance);
+                self.scene.add(instance);
+                if (suffix === 'f') {
+                    self.cwfCache.push(instance);
+                }
+            }, null, null, null, false);
         });
-
     };
 
     refresh_instances(){
-	//try to add unique id for each instanceof
-	var self=this;
-	var newkeycache={};
-    this.scene_json.rooms.forEach(function(room){
-      room.objList.forEach(function(inst){ //an obj is a instance
-        if(inst === null || inst == undefined){
-          return;
-        }
-  			if(!(inst.key)){
-  				inst.key=THREE.Math.generateUUID();
-  			}
-  			if(self.instanceKeyCache[inst.key]){
-  				var instance=self.instanceKeyCache[inst.key];
-  				instance.scale.set(inst.scale[0],inst.scale[1],inst.scale[2]);
-  				instance.rotation.set(inst.rotate[0],inst.rotate[1],inst.rotate[2],inst.rotateOrder);
-  				instance.position.set(inst.translate[0],inst.translate[1],inst.translate[2]);
-  				newkeycache[inst.key]=instance;
-  			}
-  			else{
-                //to prevent incomplete model to be deleted by this.scene_remove
-  				//newkeycache[inst.key]=true;
-  				if(!(self.objectInfoCache[inst.modelId])){
-  					fetch("/objmeta/"+inst.modelId).then(function(response) {
-  						return response.json();
-  					})
-  					.then(function(meta) {
-              if(meta.id === undefined || meta.name === undefined){
-                return;
-              }
-  						self.objectInfoCache[inst.modelId]=meta;
-  						self.load_instance(inst);
-  					});
-  				} else{
-  					self.load_instance(inst);
-  				}
-  			}
-        self.renderer.render(self.scene,self.camera);
-  		});
-    });
+	    //try to add unique id for each instanceof
+	    var self=this;
+	    var newkeycache={};
+        this.scene_json.rooms.forEach(function(room){
+            room.objList.forEach(function(inst){ //an obj is a instance
+                if(inst === null || inst == undefined){
+                    return;
+                }
+                if('inDatabase' in inst)
+                    if(!inst.inDatabase)
+                        return;
+                if(!(inst.key)){
+                    inst.key=THREE.Math.generateUUID();
+                }
+                if(self.instanceKeyCache[inst.key]){
+                    var instance=self.instanceKeyCache[inst.key];
+                    instance.scale.set(inst.scale[0],inst.scale[1],inst.scale[2]);
+                    instance.rotation.set(inst.rotate[0],inst.rotate[1],inst.rotate[2],inst.rotateOrder);
+                    instance.position.set(inst.translate[0],inst.translate[1],inst.translate[2]);
+                    newkeycache[inst.key]=instance;
+                }
+                else{
+                    // to prevent incomplete model to be deleted by this.scene_remove
+                    // newkeycache[inst.key]=true;
+                    if(!(self.objectInfoCache[inst.modelId])){
+                        /*fetch("/objmeta/"+inst.modelId).then(function(response) {
+                            return response.json();
+                        })
+                        .then(function(meta) {
+                            if(meta.id === undefined || meta.name === undefined){
+                                return;
+                            }
+                            self.objectInfoCache[inst.modelId]=meta;
+                            self.load_instance(inst);
+                        });*/
+                        let meta = {};
+                        meta.mesh = `/mesh/${inst.modelId}`;
+                        meta.mtl = `/mtl/${inst.modelId}`;
+                        self.objectInfoCache[inst.modelId]=meta;
+                        self.load_instance(inst);
+                    }else{
+                        self.load_instance(inst);
+                    }
+                }
+                self.renderer.render(self.scene,self.camera);
+            });
+        });
 
 		this.scene_remove((userData)=>(userData.type=="object" && !newkeycache[userData.key]));
 		this.instanceKeyCache=newkeycache;
@@ -376,7 +393,7 @@ class SceneManager {
         this.camera.rotation.order = 'YXZ';
         this.camera.position.set(lx, 6, lz);
         this.camera.lookAt(lx, 0, lz);
-        this.controls.target.set(lx, 0, lz);
+        orbitControls.target.set(lx, 0, lz);
         //Start to set orthogonal camera.
         var width = bbox.max[0] - bbox.min[0];
         var height = bbox.max[2] - bbox.min[2];
