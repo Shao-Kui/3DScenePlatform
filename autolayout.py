@@ -4,6 +4,7 @@ import time
 import math
 import torch
 import random
+import trimesh
 import threading
 import numpy as np
 from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
@@ -21,13 +22,15 @@ with open('./latentspace/ls_to_name.json') as f:
     ls_to_name = json.load(f)
 with open('./latentspace/windoorblock.json') as f:
     windoorblock = json.load(f)
-max_bb = torch.load('./latentspace/max_bb.pt')
-min_bb = torch.load('./latentspace/min_bb.pt')
+# max_bb = torch.load('./latentspace/max_bb.pt')
+# min_bb = torch.load('./latentspace/min_bb.pt')
 # , 'picture_frame'
-BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 'Pendant Lamp']
+BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 
+'Pendant Lamp', 'Ceiling Lamp']
 leaderlist = ['double_bed', 'desk', 'coffee_table', 'King-size Bed', 'Coffee Table']
+hyperleaders = ['coffee_table', 'dining_table', 'Coffee Table', 'Dining Table']
 NaiveChainList = ['kitchen_cabinet', 'shelving']
-four_points_xz = torch.load("./latentspace/four_points_xz.pt")
+# four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "./latentspace/pos-orient-3/{}.json"
 with open('./latentspace/nwdo-represent.json') as f:
@@ -39,6 +42,8 @@ priors['chain'] = {}
 priors['nextchain'] = {}
 priors['chainlength'] = {}
 HYPER = './latentspace/pos-orient-3/hyper/{}-{}.json'
+bbcache = {}
+AABBcache = {}
 REC_MAX = 20
 SSIZE = 1000
 
@@ -113,8 +118,9 @@ def heuristic_recur(pend_group, did, adj):
             heuristic_assign(dominator, o, pindex, False)
     else:
         if len(set(relatednames)) > 1 and rnms not in patternChain.pendingList:
-            if pend_group[did]['coarseSemantic'] in ['coffee_table', 'dining_table'] or pend_group[did]['modelId'] in ['1093']:
+            if pend_group[did]['coarseSemantic'] in hyperleaders or pend_group[did]['modelId'] in ['1093']:
                 patternChain.pendingList.append(rnms)
+                print(f'Start to generating hyper relations for {pend_group[did]["modelId"]} ...')
                 threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
     for oid in range(len(pend_group)):
         o = pend_group[oid]
@@ -185,6 +191,7 @@ def rotate(origin, point, angle):
 :param scale: the scale in 3D
 '''
 def transform_a_point(point, translate, angle, scale):
+    print(point)
     result = point.clone()
     scaled = point.clone()
     scaled = point * scale
@@ -224,26 +231,107 @@ def windoorblock_f(o):
     block['windoorbb'][:, 1] += o['translate'][2]
     return block
 
+# code is from https://github.com/mikedh/trimesh/issues/507
+def as_mesh(scene_or_mesh):
+    """
+    Convert a possible scene to a mesh.
+    If conversion occurs, the returned mesh has only vertex and face data.
+    """
+    if isinstance(scene_or_mesh, trimesh.Scene):
+        if len(scene_or_mesh.geometry) == 0:
+            mesh = None  # empty scene
+        else:
+            # we lose texture information here
+            mesh = trimesh.util.concatenate(
+                tuple(trimesh.Trimesh(vertices=g.vertices, faces=g.faces)
+                    for g in scene_or_mesh.geometry.values()))
+    else:
+        # assert(isinstance(mesh, trimesh.Trimesh))
+        mesh = scene_or_mesh
+    return mesh
+
+def load_AABB(i):
+    if i in AABBcache:
+        return AABBcache[i]
+    if os.path.exists(f'./dataset/object/{i}/{i}-AABB.json'):
+        try:
+            with open(f'./dataset/object/{i}/{i}-AABB.json') as f:
+                AABBcache[i] = json.load(f)
+            return AABBcache[i]
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+    mesh = as_mesh(trimesh.load(f'./dataset/object/{i}/{i}.obj'))
+    AABB = {}
+    AABB['max'] = [0,0,0]
+    AABB['min'] = [0,0,0]
+    AABB['max'][0] = np.max(mesh.vertices[:, 0]).tolist()
+    AABB['max'][1] = np.max(mesh.vertices[:, 1]).tolist()
+    AABB['max'][2] = np.max(mesh.vertices[:, 2]).tolist()
+    AABB['min'][0] = np.min(mesh.vertices[:, 0]).tolist()
+    AABB['min'][1] = np.min(mesh.vertices[:, 1]).tolist()
+    AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
+    with open(f'./dataset/object/{i}/{i}-AABB.json', 'w') as f:
+        json.dump(AABB, f)
+    AABBcache[i] = AABB
+    return AABBcache[i]
+
+def load_boundingbox(i):
+    if i in bbcache:
+        return bbcache[i]
+    if os.path.exists(f'./dataset/object/{i}/{i}-4p.json'):
+        try:
+            with open(f'./dataset/object/{i}/{i}-4p.json') as f:
+                bbcache[i] = json.load(f)
+            return bbcache[i]
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+    mesh = as_mesh(trimesh.load(f'./dataset/object/{i}/{i}.obj'))
+    bb = np.zeros(shape=(4,2)).tolist()
+    bb[0][0] = np.max(mesh.vertices[:, 0]).tolist()
+    bb[0][1] = np.max(mesh.vertices[:, 2]).tolist()
+    bb[1][0] = np.min(mesh.vertices[:, 0]).tolist()
+    bb[1][1] = np.max(mesh.vertices[:, 2]).tolist()
+    bb[2][0] = np.min(mesh.vertices[:, 0]).tolist()
+    bb[2][1] = np.min(mesh.vertices[:, 2]).tolist()
+    bb[3][0] = np.max(mesh.vertices[:, 0]).tolist()
+    bb[3][1] = np.min(mesh.vertices[:, 2]).tolist()
+    with open(f'./dataset/object/{i}/{i}-4p.json', 'w') as f:
+        json.dump(bb, f)
+    bbcache[i] = bb
+    return bbcache[i]
+
 def sceneSynthesis(rj):
     print(rj['origin'])
     pend_obj_list = []
     bbindex = []
     blocks = []
     random.shuffle(rj['objList'])
+    # bounding boxes of given furniture objects; 
+    boundingboxes = []
+    max_points = []
+    min_points = []
     # identifying objects to arrange; 
     for o in rj['objList']:
         if o is None:
+            print('this is a None object; ')
             continue
         if 'coarseSemantic' not in o:
+            print('a given object does not have coarseSemantic; ')
             continue
         if o['coarseSemantic'] in BANNED:
+            print('a given object is not a furniture;' )
             continue
         if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window':
             blocks.append(windoorblock_f(o))
             continue
-        if o['modelId'] not in obj_semantic:
-            continue
-        bbindex.append(name_to_ls[o['modelId']])
+        # if o['modelId'] not in obj_semantic:
+        #     print(f'a given object {o["modelId"]} is not a furniture;' )
+        #     continue
+        # bbindex.append(name_to_ls[o['modelId']])
+        boundingboxes.append(load_boundingbox(o['modelId']))
+        aabb = load_AABB(o['modelId'])
+        max_points.append(aabb['max'])
+        min_points.append(aabb['min'])
         o['childnum'] = {}
         o['myparent'] = None
         pend_obj_list.append(o)
@@ -306,9 +394,13 @@ def sceneSynthesis(rj):
         scale[i][0] = pend_obj_list[i]['scale'][0]
         scale[i][1] = pend_obj_list[i]['scale'][1]
         scale[i][2] = pend_obj_list[i]['scale'][2]
-    bb = four_points_xz[bbindex].float()
-    max_points = max_bb[bbindex].float()
-    min_points = min_bb[bbindex].float()
+    # bb = four_points_xz[bbindex].float()
+    # max_points = max_bb[bbindex].float()
+    # min_points = min_bb[bbindex].float()
+    bb = torch.tensor(boundingboxes).float()
+    max_points = torch.tensor(max_points).float()
+    print('maxpoints', max_points)
+    min_points = torch.tensor(min_points).float()
     for i in range(len(pend_obj_list)):
         bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
         max_points[i] = transform_a_point(max_points[i], translate[i], orient[i], scale[i])
@@ -335,9 +427,12 @@ def sceneSynthesis(rj):
     # generate
     attempt_heuristic(cgs, room_meta, blocks)
     for cg in cgs:
-        if cg['objList'][cg['leaderID']]['coarseSemantic'] in ['sink', 'dressing_table', 'picture_frame', 'television', 'mirror', 'clock', 'dining_table']:
-            cg['translate'][0] += np.sin(cg['orient']) * 0.08
-            cg['translate'][2] += np.cos(cg['orient']) * 0.08
+        # the following code is reserving for lifting of each coherent group; 
+        cg['translate'][0] += np.sin(cg['orient']) * 0.08
+        cg['translate'][2] += np.cos(cg['orient']) * 0.08
+        # if cg['objList'][cg['leaderID']]['coarseSemantic'] in ['sink', 'dressing_table', 'picture_frame', 'television', 'mirror', 'clock', 'dining_table']:
+        #     cg['translate'][0] += np.sin(cg['orient']) * 0.08
+        #     cg['translate'][2] += np.cos(cg['orient']) * 0.08
         for o in cg['objList']:
             o['translate'][0], o['translate'][2] = rotate([0, 0], [o['translate'][0], o['translate'][2]], cg['orient'])
             o['orient'] += cg['orient']
