@@ -57,7 +57,7 @@ var orth_mousedown = function(event){
   }
   On_Orth_MOVE = true;
   orthline.visible = false;
-  manager.renderManager.controls.enabled = false;
+  orbitControls.enabled = false;
   var x_ = (orthmouse.x + 1)/2;
   var z_ = (orthmouse.y + 1)/2;
   var bbox = manager.renderManager.scene_json.bbox;
@@ -77,10 +77,10 @@ var orth_mouseup = function(event){
   var bbox = manager.renderManager.scene_json.bbox;
   var lx = (1 - x_) * bbox.min[0] + x_ * bbox.max[0];
   var lz = z_ * bbox.min[2] + (1 - z_) * bbox.max[2];
-  manager.renderManager.controls.target.set(lx, 0, lz);
+  orbitControls.target.set(lx, 0, lz);
   On_Orth_MOVE = false;
   orthline.visible = true;
-  manager.renderManager.controls.enabled = true;
+  orbitControls.enabled = true;
 };
 var orth_mousemove = function(event){
   orthmouse.x = ( (event.clientX - $(orthcanvas).offset().left) / orthcanvas.clientWidth ) * 2 - 1;
@@ -92,7 +92,7 @@ var orth_mousemove = function(event){
     var lx = (1 - x_) * bbox.min[0] + x_ * bbox.max[0];
     var lz = y_ * bbox.min[2] + (1 - y_) * bbox.max[2];
     //manager.renderManager.camera.lookAt(lx, 0, lz);
-    //manager.renderManager.controls.target.set(lx, 0, lz);
+    //orbitControls.target.set(lx, 0, lz);
     manager.renderManager.camera.position.x += (lx - last_look.x);
     manager.renderManager.camera.position.z += (lz - last_look.z);
     last_look.set(lx, 0, lz);

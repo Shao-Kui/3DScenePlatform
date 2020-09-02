@@ -66,77 +66,85 @@ def objmeta_by_id(id):
         ret["texture"] = "/texture/"
         return json.dumps(ret)
 
-@app.route("/mesh/<id>")
-def mesh(id):
-    m = orm.query_model_by_id(id)
-    return flask.send_file(json.loads(m.resources)["mesh"])
+@app.route("/mesh/<name>")
+def mesh(name):
+    # m = orm.query_model_by_id(id)
+    # return flask.send_file(json.loads(m.resources)["mesh"])
+    return flask.send_file(f'./dataset/object/{name}/{name}.obj')
 
 @app.route("/thumbnail/<id>/<int:view>")
 def thumbnail(id, view):
     m = orm.query_model_by_id(id)
-    return flask.send_from_directory(os.path.join(".", "suncg", "objd20", m.name, "render20"),
+    return flask.send_from_directory(os.path.join(".", "dataset", "objd20", m.name, "render20"),
                                      "render-%s-%d.png" % (m.name, view))
 
-@app.route("/thumbnail/<id>")
-def thumbnail_sk(id):
-    m = orm.query_model_by_id(id)
-    return flask.send_from_directory(os.path.join(".", "suncg", "object", m.name, "render20"),
-                                     "render-%s-%d.png" % (m.name, 10))
+@app.route("/thumbnail/<name>")
+def thumbnail_sk(name):
+    # m = orm.query_model_by_id(id)
+    # return flask.send_from_directory(os.path.join(".", "dataset", "object", m.name, "render20"), "render-%s-%d.png" % (m.name, 10))
+    return flask.send_from_directory(os.path.join(".", "dataset", "object", name, "render20"), "render-%s-%d.png" % (name, 10))
 
-@app.route("/mtl/<id>")
-def mtl(id):
-    m = orm.query_model_by_id(id)
-    return flask.send_file(json.loads(m.resources)["mtl"])
+@app.route("/mtl/<name>")
+def mtl(name):
+    # m = orm.query_model_by_id(id)
+    # return flask.send_file(json.loads(m.resources)["mtl"])
+    return flask.send_file(f'./dataset/object/{name}/{name}.mtl')
 
 @app.route("/texture//<id>")
 def texture(id):
-    return flask.send_from_directory(os.path.join(".", "suncg", "texture"), id)
+    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
 
 @app.route("/texture/<id>")
 def texture_(id):
-    return flask.send_from_directory(os.path.join(".", "suncg", "texture"), id)
+    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
 
 @app.route("/query")
 def textquery():
     kw=flask.request.args.get('kw', default = "", type = str) # keyword
     lo=flask.request.args.get('lo', default = 0, type = int) #
-    hi=flask.request.args.get('hi', default = 20, type = int)
+    hi=flask.request.args.get('hi', default = 100, type = int)
     models=orm.query_models(kw,(lo,hi))
     modelofid = orm.query_model_by_name(kw)
     if modelofid is not None:
         models.append(modelofid)
-    ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":"/thumbnail/%d"%(m.id,)} for m in models]
+    ret=[{"id":m.id,"name":m.name,"semantic":m.category.wordnetSynset,"thumbnail":f"/thumbnail/{m.name}"} for m in models]
+    if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
+        ret.append({
+            "id": -1,
+            "name": kw,
+            "semantic": 'currentlyUnknown',
+            "thumbnail":f"/thumbnail/{kw}"})
     return json.dumps(ret)
 
 @app.route("/room/<houseid>/<roomid>")
 def roominfo(houseid, roomid):
     structs = {"c": "c.obj", "w": "w.obj", "f": "f.obj"}
-    ret = [k for k in structs if os.path.isfile(os.path.join("suncg", "room", houseid, roomid + structs[k]))]
+    ret = [k for k in structs if os.path.isfile(os.path.join("dataset", "room", houseid, roomid + structs[k]))]
     return json.dumps(ret)
 
 @app.route("/room/<houseid>/<roomid>f.obj")
 def floor(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "f.obj"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "f.obj"))
 
 @app.route("/room/<houseid>/<roomid>w.obj")
 def wall(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "w.obj"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "w.obj"))
 
 @app.route("/room/<houseid>/<roomid>c.obj")
 def ceil(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "c.obj"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "c.obj"))
 
 @app.route("/room/<houseid>/<roomid>f.mtl")
 def floor_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "f.mtl"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "f.mtl"))
 
 @app.route("/room/<houseid>/<roomid>w.mtl")
 def wall_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "w.mtl"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "w.mtl"))
 
 @app.route("/room/<houseid>/<roomid>c.mtl")
 def ceil_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("suncg", "room", houseid, roomid + "c.mtl"))
+    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "c.mtl"))
 
 @app.route("/set_scene_configuration", methods=['POST', 'GET'])
 def set_scene_configuration():

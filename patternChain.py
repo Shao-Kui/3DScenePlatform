@@ -10,8 +10,6 @@ from copy import deepcopy
 
 pendingList = []
 
-with open('./latentspace/obj-semantic.json') as f:
-    obj_semantic = json.load(f)
 with open('./latentspace/name_to_ls.json') as f:
     name_to_ls = json.load(f)
 with open('./latentspace/ls_to_name.json') as f:
@@ -104,7 +102,7 @@ def patternChain(pri, secs, tier={'238': 0, '153': 0}):
         lsfornextlevel.append(range(len(p)))
     res = []
     # vis_patches = []
-    for i in range(2000):
+    for i in range(500):
         # Create figure and axes
         # vis_patches = []
         r = checkbb(bbs.copy(), ps.copy(), secs.copy(), lsfornextlevel.copy(), tier.copy())
@@ -114,7 +112,7 @@ def patternChain(pri, secs, tier={'238': 0, '153': 0}):
                 checkr[item].pop()
         except Exception:
             continue
-        if i % 10 == 0:
+        if i % 20 == 0:
             print(r)
         res.append(r)
     print(f'A new hyper-relation is generated - {pri} & {secs}')

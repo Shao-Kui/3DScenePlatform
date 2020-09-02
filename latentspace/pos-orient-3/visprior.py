@@ -76,8 +76,8 @@ def plot_orth(obji, objj, exid='vis', do_filter=False, imgjInverse=False):
     for cat in BAN2:
         if cat in obj_semantic[obji] or cat in obj_semantic[objj]:
             return
-    if obj_semantic[obji] == obj_semantic[objj]:
-        return
+    # if obj_semantic[obji] == obj_semantic[objj]:
+    #     return
     try:
         b = load_json_denoised(obji, objj, do_filter)
     except Exception as e:

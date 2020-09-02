@@ -123,3 +123,8 @@ html, body{
   margin-left: 1%;
   background-color:#43CD80;
 }
+
+.btn:focus {
+  outline: none;
+  box-shadow: none;
+}

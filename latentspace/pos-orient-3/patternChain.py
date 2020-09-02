@@ -58,7 +58,7 @@ def checkbb(bb, priors, l):
     lfornextlevel = []
     prior1 = priors[i]
     bb1 = rotate_bb_local_np(bb, prior1[3]) + prior1[[0, 2]]
-    polygon1 = Polygon(bb1).buffer(.15)
+    polygon1 = Polygon(bb1).buffer(.3)
 
     """
     # bb visualization; 
@@ -78,7 +78,7 @@ def checkbb(bb, priors, l):
             continue
         prior2 = np.array(priors[j])
         bb2 = rotate_bb_local_np(bb, prior2[3]) + prior2[[0, 2]]
-        polygon2 = Polygon(bb2).buffer(.05)
+        polygon2 = Polygon(bb2).buffer(.03)
         if not polygon1.intersects(polygon2):
             lfornextlevel.append(j)
     
@@ -96,13 +96,13 @@ def patternChainHomo(pri, sec, expectedLength=2):
     bb = four_points_xz[name_to_ls[sec]]
     res = []
     vis_patches = []
-    for i in range(500):
+    for i in range(256):
         # Create figure and axes
         vis_patches = []
         r = checkbb(bb, p, range(len(p)))
         if len(r) < expectedLength:
             continue
-        if i % 100 == 0:
+        if i % 50 == 0:
             print(r)
         res.append(r)
     # print(res)

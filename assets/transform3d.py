@@ -1,5 +1,36 @@
 import numpy as np
-from math import asin, atan2, pi
+from math import asin, atan2, pi, copysign
+
+def quaternion_to_euler(qlist):
+    q = {}
+    q['x'] = qlist[0]
+    q['y'] = qlist[1]
+    q['z'] = qlist[2]
+    q['w'] = qlist[3]
+
+    # roll (x-axis rotation)
+    sinr_cosp = 2 * (q['w'] * q['x'] + q['y'] * q['z'])
+    cosr_cosp = 1 - 2 * (q['x'] * q['x'] + q['y'] * q['y'])
+    roll = atan2(sinr_cosp, cosr_cosp)
+
+    # pitch (y-axis rotation)
+    sinp = 2 * (q['w'] * q['y'] - q['z'] * q['x'])
+    if abs(sinp) >= 1:
+        pitch = copysign(np.pi / 2, sinp) # use 90 degrees if out of range
+    else:
+        pitch = asin(sinp)
+
+    # yaw (z-axis rotation)
+    siny_cosp = 2 * (q['w'] * q['z'] + q['x'] * q['y'])
+    cosy_cosp = 1 - 2 * (q['y'] * q['y'] + q['z'] * q['z'])
+    yaw = atan2(siny_cosp, cosy_cosp)
+
+    return (roll, pitch, yaw)
+
+print(quaternion_to_euler([0,1,0,0]))
+print(quaternion_to_euler([0,-0.70711,0,0.70711]))
+print(quaternion_to_euler([0,-0.70711,0,-0.70711]))
+print(quaternion_to_euler([0,-1,0,0]))
 
 def correlation_atan(theta):
     while theta > pi/2:

@@ -101,6 +101,8 @@ def attempt_heuristic(cgs, room_polygon, blocks=None):
     print(block_bb)
     print(windows_bb)
     """
+    print(block_bb)
+    print(windows_bb)
 
     rotations, translations = try_possible_layout(function_areas, room_polygon, block_bb, windows_bb)
     # The translation data is two dimensional, so we add the y coordinate.
