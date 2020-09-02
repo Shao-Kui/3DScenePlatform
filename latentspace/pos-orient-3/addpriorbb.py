@@ -12,7 +12,7 @@ with open('../name_to_ls.json') as f:
 with open('../ls_to_name.json') as f:
     ls_to_name = json.load(f)
 
-def bbfitting(pattern, bborigin, bbnow):
+def bbfitting(pattern, bborigin, bbnow, rotateInverse=False):
     # print(pattern[-1])
     pattern = np.array(pattern)
     ratio = bbnow / bborigin
@@ -35,9 +35,11 @@ def bbfitting(pattern, bborigin, bbnow):
         pattern[qdt4, 0] *= ratio[3][0]
         pattern[qdt4, 2] *= ratio[3][1]
     # print(pattern.tolist()[-1])
+    if rotateInverse:
+        pattern[:, 3] += np.pi
     return pattern.tolist()
 
-def addpriorbb(names, check_pc=False):
+def addpriorbb(names, check_pc=False, rotateInverse=False):
     with open('../pos-orient-denoised-2/{}.json'.format(names[2])) as f_origin:
         if os.path.isfile('./{}.json'.format(names[0])):
             with open('./{}.json'.format(names[0])) as f_target:
@@ -47,18 +49,22 @@ def addpriorbb(names, check_pc=False):
         j_target[names[1]] = bbfitting(
             json.load(f_origin)[names[3]], 
             four_points_xz[name_to_ls[names[2]]], 
-            four_points_xz[name_to_ls[names[0]]]
+            four_points_xz[name_to_ls[names[0]]],rotateInverse=rotateInverse
             )
         with open('./{}.json'.format(names[0]), 'w') as f_target:
             json.dump(j_target, f_target)
-    visprior.plot_orth(names[0], names[1])
     if check_pc:
         print('start to generate pattern chain')
         threading.Thread(target=patternChain.patternChainHomo, args=(names[0], names[1])).start()
+    with open("transferlog.txt", "a") as transferlog:
+        transferlog.write(' '.join(names) + '\n')
+    visprior.plot_orth(names[0], names[1])
 
 if __name__ == '__main__':
     thenames = sys.argv[1:5]
     if len(sys.argv) == 6:
         addpriorbb(thenames, check_pc=True)
+    elif len(sys.argv) == 7:
+        addpriorbb(thenames, check_pc=bool(sys.argv[5]), rotateInverse=bool(sys.argv[6]))
     else:
         addpriorbb(thenames)

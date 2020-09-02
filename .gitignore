@@ -33,3 +33,8 @@ qs.png
 /venv/
 /csrmatrices/
 /latentspace/pos-orient-3/
+latentspace/ymatrix.npy
+latentspace/four_points_xz.pt
+static/js/SceneUIManager.js
+latentspace/pos-orient-3/75.json
+timecount.txt
