@@ -48,6 +48,7 @@ var radial_remove_control = function (event) {
     var roomId = INTERSECT_OBJ.userData.roomId;
     delete manager.renderManager.scene_json.rooms[roomId].objList
         [find_object_json(INTERSECT_OBJ)];
+    delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
     manager.renderManager.scene_remove(userData => {
         return INTERSECT_OBJ.userData.key === userData.key;
     });

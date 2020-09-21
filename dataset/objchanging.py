@@ -70,6 +70,18 @@ def switchModel(i, j):
     shutil.copy(f'./object/{j}/{j}.mtl', f'./object/{newname}/{newname}.mtl')
     shutil.copy(f'./object/{j}/render20/render-{j}-10.png', f'./object/{newname}/render20/render-{newname}-10.png')
 
+def planitfixing(config):
+    for room, roomId in zip(config['rooms'], range(len(config['rooms']))):
+        room['roomId']
+        for o in room['objList']:
+            if o is None:
+                continue
+            o['roomId'] = roomId
+            if o['modelId'] in mapping:
+                if mapping[o['modelId']] != "":
+                    o['modelId'] = '_to_'.join([mapping[o['modelId']], o['modelId']])
+    return config
+
 if __name__ == "__main__":
     for m in mapping:
         if mapping[m] == "":
@@ -77,3 +89,16 @@ if __name__ == "__main__":
         print(f'switching {m} and {mapping[m]} ...')
         switchModel(m, mapping[m])
         switchPattern(m, mapping[m])
+    casenames = os.listdir('./planit/')
+    for casename in casenames:
+        casefilejson = ""
+        for f in os.listdir(f'./planit/{casename}'):
+            if '.json' in f:
+                casefilejson = f
+                break
+        with open(f'./planit/{casename}/{casefilejson}') as fj:
+            config = json.load(fj)
+        if not os.path.exists(f'./planitfix/{casename}/'):
+            os.makedirs(f'./planitfix/{casename}/')
+        with open(f'./planitfix/{casename}/{casefilejson}', 'w') as f:
+            json.dump(planitfixing(config), f)

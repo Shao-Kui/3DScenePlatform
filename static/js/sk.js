@@ -164,6 +164,7 @@ var onClickObj = function (event) {
         On_ADD = false;
         if (currentRoomId != undefined) {
             addCatalogItem();
+            return;
         }
     }
     if (On_MOVE) {
@@ -180,6 +181,7 @@ var onClickObj = function (event) {
     if (On_SCALE) {
         On_SCALE = false;
         synchronize_json_object(INTERSECT_OBJ);
+        return;
     }
     if (On_ROTATE) {
         On_ROTATE = false;
@@ -194,6 +196,7 @@ var onClickObj = function (event) {
         }
         if (currentRoomId != undefined) {
             mage_add_object();
+            return;
         }
     }
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
