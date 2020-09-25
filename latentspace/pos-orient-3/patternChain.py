@@ -20,15 +20,15 @@ This code tries a brute-force way to build a dpc index;
 # sec = 's__2100'
 with open('../obj_coarse_semantic.json') as f:
     obj_semantic = json.load(f)
-with open('../name_to_ls.json') as f:
-    name_to_ls = json.load(f)
-with open('../ls_to_name.json') as f:
-    ls_to_name = json.load(f)
+# with open('../name_to_ls.json') as f:
+#     name_to_ls = json.load(f)
+# with open('../ls_to_name.json') as f:
+#     ls_to_name = json.load(f)
 # with open('../windoorblock.json') as f:
 #     windoorblock = json.load(f)
 # max_bb = torch.load('../max_bb.pt').numpy()
 # min_bb = torch.load('../min_bb.pt').numpy()
-four_points_xz = torch.load("../four_points_xz.pt").numpy()
+# four_points_xz = torch.load("../four_points_xz.pt").numpy()
 
 def transform_a_point(point, translate, angle, scale):
     result = point.copy()
@@ -93,7 +93,8 @@ def patternChainHomo(pri, sec, expectedLength=2):
     # MAXL = len(p)
     # sec_max_bb = max_bb[name_to_ls[sec]]
     # sec_min_bb = min_bb[name_to_ls[sec]]
-    bb = four_points_xz[name_to_ls[sec]]
+    with open(f'../../dataset/object/{sec}/{sec}-4p.json') as f:
+        bb = np.array(json.load(f))
     res = []
     vis_patches = []
     for i in range(256):

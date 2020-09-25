@@ -133,6 +133,7 @@ def heuristic_recur(pend_group, did, adj):
             heuristic_recur(pend_group, oid, adj)
 
 def heuristic(cg):
+    
     pend_group = cg['objList']
     adj = cg['csrrelation']
     # determine leader; 
@@ -191,7 +192,6 @@ def rotate(origin, point, angle):
 :param scale: the scale in 3D
 '''
 def transform_a_point(point, translate, angle, scale):
-    print(point)
     result = point.clone()
     scaled = point.clone()
     scaled = point * scale
@@ -250,31 +250,6 @@ def as_mesh(scene_or_mesh):
         mesh = scene_or_mesh
     return mesh
 
-def load_AABB(i):
-    if i in AABBcache:
-        return AABBcache[i]
-    if os.path.exists(f'./dataset/object/{i}/{i}-AABB.json'):
-        try:
-            with open(f'./dataset/object/{i}/{i}-AABB.json') as f:
-                AABBcache[i] = json.load(f)
-            return AABBcache[i]
-        except json.decoder.JSONDecodeError as e:
-            print(e)
-    mesh = as_mesh(trimesh.load(f'./dataset/object/{i}/{i}.obj'))
-    AABB = {}
-    AABB['max'] = [0,0,0]
-    AABB['min'] = [0,0,0]
-    AABB['max'][0] = np.max(mesh.vertices[:, 0]).tolist()
-    AABB['max'][1] = np.max(mesh.vertices[:, 1]).tolist()
-    AABB['max'][2] = np.max(mesh.vertices[:, 2]).tolist()
-    AABB['min'][0] = np.min(mesh.vertices[:, 0]).tolist()
-    AABB['min'][1] = np.min(mesh.vertices[:, 1]).tolist()
-    AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
-    with open(f'./dataset/object/{i}/{i}-AABB.json', 'w') as f:
-        json.dump(AABB, f)
-    AABBcache[i] = AABB
-    return AABBcache[i]
-
 def load_boundingbox(i):
     if i in bbcache:
         return bbcache[i]
@@ -300,8 +275,34 @@ def load_boundingbox(i):
     bbcache[i] = bb
     return bbcache[i]
 
+def load_AABB(i):
+    if i in AABBcache:
+        return AABBcache[i]
+    if os.path.exists(f'./dataset/object/{i}/{i}-AABB.json'):
+        try:
+            with open(f'./dataset/object/{i}/{i}-AABB.json') as f:
+                AABBcache[i] = json.load(f)
+            return AABBcache[i]
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+    mesh = as_mesh(trimesh.load(f'./dataset/object/{i}/{i}.obj'))
+    AABB = {}
+    AABB['max'] = [0,0,0]
+    AABB['min'] = [0,0,0]
+    AABB['max'][0] = np.max(mesh.vertices[:, 0]).tolist()
+    AABB['max'][1] = np.max(mesh.vertices[:, 1]).tolist()
+    AABB['max'][2] = np.max(mesh.vertices[:, 2]).tolist()
+    AABB['min'][0] = np.min(mesh.vertices[:, 0]).tolist()
+    AABB['min'][1] = np.min(mesh.vertices[:, 1]).tolist()
+    AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
+    with open(f'./dataset/object/{i}/{i}-AABB.json', 'w') as f:
+        json.dump(AABB, f)
+    AABBcache[i] = AABB
+    return AABBcache[i]
+
 def sceneSynthesis(rj):
     print(rj['origin'])
+    start_time = time.time()
     pend_obj_list = []
     bbindex = []
     blocks = []
@@ -328,7 +329,10 @@ def sceneSynthesis(rj):
         #     print(f'a given object {o["modelId"]} is not a furniture;' )
         #     continue
         # bbindex.append(name_to_ls[o['modelId']])
-        boundingboxes.append(load_boundingbox(o['modelId']))
+        try:
+            boundingboxes.append(load_boundingbox(o['modelId']))
+        except Exception as e:
+            continue
         aabb = load_AABB(o['modelId'])
         max_points.append(aabb['max'])
         min_points.append(aabb['min'])
@@ -352,7 +356,6 @@ def sceneSynthesis(rj):
                 continue
             pid = "{}-{}".format(center['modelId'], obj['modelId'])
             if pid in priors['pos']:
-                print(pid)
                 if obj['modelId'] not in center['childnum']:
                     center['childnum'][obj['modelId']] = 0
                 if center['childnum'][obj['modelId']] >= priors['chainlength'][pid]:
@@ -378,10 +381,11 @@ def sceneSynthesis(rj):
             cg['chain'] = cg['objList'][0]['coarseSemantic']
         else:
             cg['chain'] = 'n'
+        if cg['objList'][cg['leaderID']]['modelId'] in ['781'] and cg['objList'][cg['leaderID']]['translate'][1] == 0:
+            cg['objList'][cg['leaderID']]['translate'][1] = 1.04
         cgs.append(cg)
     # load and process room shapes; 
     room_meta = p2d('.', '/dataset/room/{}/{}f.obj'.format(rj['origin'], rj['modelId']))
-    print(room_meta[:, 0:2])
     room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
     translate = torch.zeros((len(pend_obj_list), 3)).float()
     orient = torch.zeros((len(pend_obj_list))).float()
@@ -399,7 +403,6 @@ def sceneSynthesis(rj):
     # min_points = min_bb[bbindex].float()
     bb = torch.tensor(boundingboxes).float()
     max_points = torch.tensor(max_points).float()
-    print('maxpoints', max_points)
     min_points = torch.tensor(min_points).float()
     for i in range(len(pend_obj_list)):
         bb[i] = rotate_bb_local_para(bb[i], orient[i], scale[i][[0, 2]])
@@ -451,6 +454,7 @@ def sceneSynthesis(rj):
         for j in range(len(pend_obj_list)):
             if csrrelation[i][j] == 1.0:
                 print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
+    print("\r\n------- %s secondes --- \r\n" % (time.time() - start_time))
     return rj
 
 if __name__ == "__main__":

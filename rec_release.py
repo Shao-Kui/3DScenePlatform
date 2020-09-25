@@ -6,7 +6,7 @@ import numpy as np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from projection2d import process as p2d
-from sk_loader import obj_semantic, name_to_ls, ls_to_name
+# from sk_loader import obj_semantic, name_to_ls, ls_to_name
 # from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
 import matplotlib.pyplot as plt
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']

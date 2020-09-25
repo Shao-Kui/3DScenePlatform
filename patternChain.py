@@ -10,15 +10,15 @@ from copy import deepcopy
 
 pendingList = []
 
-with open('./latentspace/name_to_ls.json') as f:
-    name_to_ls = json.load(f)
-with open('./latentspace/ls_to_name.json') as f:
-    ls_to_name = json.load(f)
+# with open('./latentspace/name_to_ls.json') as f:
+#     name_to_ls = json.load(f)
+# with open('./latentspace/ls_to_name.json') as f:
+#     ls_to_name = json.load(f)
 with open('./latentspace/windoorblock.json') as f:
     windoorblock = json.load(f)
 max_bb = torch.load('./latentspace/max_bb.pt').numpy()
 min_bb = torch.load('./latentspace/min_bb.pt').numpy()
-four_points_xz = torch.load("./latentspace/four_points_xz.pt").numpy()
+# four_points_xz = torch.load("./latentspace/four_points_xz.pt").numpy()
 
 def transform_a_point(point, translate, angle, scale):
     result = point.copy()
@@ -98,7 +98,8 @@ def patternChain(pri, secs, tier={'238': 0, '153': 0}):
         with open('./latentspace/pos-orient-3/{}.json'.format(pri)) as f:
             p = np.array(json.load(f)[sec])
         ps.append(p)
-        bbs.append(four_points_xz[name_to_ls[sec]])
+        with open(f'./dataset/object/{sec}/{sec}-4p.json') as f:
+            bbs.append(np.array(json.load(f)))
         lsfornextlevel.append(range(len(p)))
     res = []
     # vis_patches = []

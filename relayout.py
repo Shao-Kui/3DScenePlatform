@@ -116,11 +116,11 @@ def insert_objects(function_areas, room_polygon: Polygon, blocks, windows):
         #     'r': [b[0] for b in blocks] + [w[0] for w in windows],
         # })
         blocks_and_windows = [x[0] for x in blocks]
-        print('function area:', function_area)
+        # print('function area:', function_area)
 
         # the height of the function area can at most cover half of the window
         for x in windows:
-            print(x)
+            # print(x)
             if (x[1] + x[2]) / 2 < function_area[2]:
                 blocks_and_windows.append(x[0])
                 pass

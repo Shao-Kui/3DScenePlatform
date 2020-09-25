@@ -117,6 +117,7 @@ def plot_orth(obji, objj, exid='vis', do_filter=False, imgjInverse=False):
     plt.yticks([])
 
     plt.scatter(b[:, 0], b[:, 2], c=mpl.colors.hsv_to_rgb(scolors), marker='.', alpha=thealpha, s=72)
+    # plt.scatter(b[:, 0], b[:, 2], c=(0, 0, 0), marker='.', alpha=thealpha, s=72)
     if with_arrow is True:
         plt.quiver(b[:, 0], b[:, 2], np.sin(b[:, 3]), -np.cos(b[:, 3]), width=0.0005, scale=24, headlength=10,
                    headwidth=9)
@@ -159,7 +160,7 @@ def plot_orth(obji, objj, exid='vis', do_filter=False, imgjInverse=False):
     start_1 = int((objjimg_pend.shape[1] / 2) + (asample[0] / grain) * (scatimg.shape[1] / 2) - objj_img.shape[1] / 2)
     print(objj_img.shape)
     print(start_0, start_1)
-    objjimg_pend[start_0:start_0 + objj_img.shape[0], start_1:start_1 + objj_img.shape[1], 0:3] = objj_img
+    objjimg_pend[start_0:start_0 + objj_img.shape[0], start_1:start_1 + objj_img.shape[1], 0:3] = objj_img[:, :, 0:3]
     objjimg_pend[start_0:start_0 + objj_img.shape[0], start_1:start_1 + objj_img.shape[1], 3] = 0.5
     objjimg_pend = objjimg_pend[int((objj_img.shape[0] + 1) / 2): -int(objj_img.shape[0] / 2),
                    int((objj_img.shape[1] + 1) / 2): -int(objj_img.shape[1] / 2)]
