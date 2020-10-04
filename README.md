@@ -21,7 +21,7 @@ matplotlib==2.2.2
 Pillow==7.2.0
 scikit_learn==0.23.2
 ```  
-This platform is under cooperations with other organizations, so other packages may be required, e.g., ```baidu_aip```, ```librosa```, etc. Such features are not mandatory. Thus, you can simply `comment` the unnecessary packages. Note that for running the server, especially the algorithm, some packages are mandatory such as ```torch``, ```flask```, etc. We still recommend you installing the entire 'requirements.txt' on the safe side. To install packages, you needn't strictly match the versions above, those versions work for our deployment. Please issue us if you have troubles of deploying. 
+This platform is under cooperations with other organizations, so other packages may be required, e.g., ```baidu_aip```, ```librosa```, etc. Such features are not mandatory. Thus, you can simply `comment` the unnecessary packages. Note that for running the server, especially the algorithm, some packages are mandatory such as ```torch```, ```flask```, etc. We still recommend you installing the entire 'requirements.txt' on the safe side. To install packages, you needn't strictly match the versions above, those versions work for our deployment. Please issue us if you have troubles of deploying. 
 
 # Datasets
 This section discuss how we organize datasets. Note that we have no copyright to distribute datasets, especially SUNCG. 3D-Front is available, please refer to their [website][3dfront] for downloading.  
