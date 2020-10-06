@@ -7,7 +7,7 @@ Manipulating             |  Rendering
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/4.png "Manipulating")  |  ![Rendering](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/5.png "Rendering")
 
-This is the repository of the paper ``Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Our group is small. This repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo. 
+This is the repository of the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Our group is small. This repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to directly use a ready clone. 
 
@@ -76,7 +76,6 @@ up
 front
 rooms:[
   room1:{
-  |  id
   |  modelId
   |  roomTypes:[...]
   |  bbox:{
@@ -86,7 +85,6 @@ rooms:[
   |  roomId
   |  objList:[
   |    object1:{
-  |    |  id
   |    |  type
   |    |  modelId
   |    |  bbox
@@ -109,17 +107,25 @@ rooms:[
   ...
 ]
 ```
+In sum, each config contains a list of rooms and a room contains a list of objects. Each config file has an ```origin``` denoting where it derives from, since our platform has it own supported data structure. For instance, in 3D-Front, it could be ```ffca6fce-0adb-48e4-be68-17343d6efffd```. A ```bbox``` denotes AABB bounding box of an entire layout, a room or an object. ```up``` and ```front``` are used by the perspective camera denoting 'up vector' and 'camera direction', which is typically '[0,1,0]' and '[0,0,1]'.  
 
+Each room optionally has a ```roomTypes```, e.g., '['living room', 'kitchen']'. A 'modelId' of a room indexes to its ceiling, floor and wall. In this platform, similar to SUNCG, we split a room mesh into a ceiling, a floor and a wall. For example, a room with ```modelId: KidsRoom-1704``` has a 'KidsRoom-1704c.obj', 'KidsRoom-1704f.obj' and a 'KidsRoom-1704w.obj' in the 'root/dataset/room/{```origin```}/' directory. This simply separate room meshes with objects and separate floors, ceilling and walls, which is a enginneering and design decision for researches on scene synthesis or layout generation. If this separation is not necessary in your reasearch, you can simply ignore this attribute and take all meshes as 'objects' in ```objList```. ```roomId``` is necessary in our platform. It is the index of this room in ```rooms``` list of a config file. This attribute is used for fast indexing rooms and objects. Similarly each object also has a ```roomId``` denoting its room. 
+
+Each object must has a ```modelId``` indexing its mesh in directory 'root/dataset/object/{```modelId```}'. ```translate```, ```scale``` and ```rotate``` are also mandatory. They are all lists with 3 element, e.g., ```"rotate": [0.0,-0.593,0.0],```. ```type``` is optional, we use this attribute to separate ordinary objects, windows, doors, etc. ```rotateOrder``` is typically 'XYZ' in our platform, but we allow custom rotating orders. ```coarseSemantic``` is optional if you would label objects, e.g., 'armchair'. 
 # Layout Framework
-Our layout framework is mainly included in the following files:
+Our layout framework in the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects" is included in the following files: 
 ```
 root
   autolayout.py
-  relayout.py
   patternChain.py
   alutil.py
+  relayout.py
   projection2d.py
 ```
+autolayout.py: coherent grouping, prior loading, prior caching, setting up and bounding box generating, etc;  
+patternChain.py: the code to dynamically check and generate hyper-relations;  
+alutil.py and relayout.py: geometric arranging;  
+projection2d.py: converting room meshes to polygons (room shape);  
 # Manuals  
 **MouseClick-Left**:  
 **MouseClick-Right**:  
