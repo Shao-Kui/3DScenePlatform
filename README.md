@@ -122,14 +122,15 @@ root
   relayout.py
   projection2d.py
 ```
-autolayout.py: coherent grouping, prior loading, prior caching, setting up and bounding box generating, etc;  
-patternChain.py: the code to dynamically check and generate hyper-relations;  
-alutil.py and relayout.py: geometric arranging;  
-projection2d.py: converting room meshes to polygons (room shape);  
+**autolayout.py**: coherent grouping, prior loading, prior caching, setting up and bounding box generating, etc;  
+**patternChain.py**: the code to dynamically check and generate hyper-relations;  
+**alutil.py** and **relayout.py**: geometric arranging;  
+**projection2d.py**: converting room meshes to polygons (room shape);  
 # Manuals  
-**MouseClick-Left**:  
-**MouseClick-Right**:  
-**↑**:  
+Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
+**MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished. 
+**MouseClick-RightHold**: Right click and hold in the scene results in transiting the perspective camera. 
+**↑**: Moving  
 **↓**:  
 **←**:  
 **→**:  
