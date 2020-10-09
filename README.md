@@ -128,11 +128,11 @@ root
 **projection2d.py**: converting room meshes to polygons (room shape);  
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
-**MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished. 
-**MouseClick-RightHold**: Right click and hold in the scene results in transiting the perspective camera. 
-**↑**: Moving  
-**↓**:  
-**←**:  
-**→**:  
-
+**MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished.  
+**MouseClick-RightHold**: Right click and hold in the scene results in transiting the perspective camera.  
+**↑**: Camera moving up;  
+**↓**: Camera moving down;  
+**←**: Camera moving left;  
+**→**: Camera moving right;  
+# Future works
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
