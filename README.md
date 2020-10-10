@@ -7,7 +7,7 @@ Manipulating             |  Rendering
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/4.png "Manipulating")  |  ![Rendering](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/5.png "Rendering")
 
-This is the repository of the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Our group is small. This repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo. 
+This is the repository of the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Our group is small. This repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to directly use a ready clone. 
 
@@ -63,7 +63,10 @@ Note that textures are also reusable by another ```texture``` folder in ```datas
 ```
 
 ## Priors
-Priors are origanized in ... ... ...
+Priors are organized in 'root/latentspace/pos-orient-3/'. In this directory, each .json file with a single object name contains pairwise priors for this object as a dominate object. For example, a .json file named '1435.json' contain priors for the dominate object named 1435, where several attributes exist such as '2497' and '2356' which are secondary objects related to the dominate objects. Thus, using two names of a dominate object and a secondary obejct index to a list of priors. Our priors are discrete as discussed in our paper. An item in a prior list (set) between two objects has four values: X, Y, Z, theta. The former three values are transitions spatially and the last one is rotation of Y-axis. Though our platform support different rotating orders in engineering, but our layout framework ONLY support the 'XYZ' rotation. 
+
+In the same directory, each .json file with two object names is a prior set of a pattern chain. Each pattern chain file is a list of another list. The 'outer' list has a number of chains and the 'inner' list includes indices to the source pairwise relations. Hpyer-Priors are organized in 'root/latentspace/pos-orient-3/hyper'. Similaly, the 'outer' list has a number of hyper-priors, but the 'inner' one is a dict object indexing to different source pairwise relations. Note that hyper-relations are generated online when our framework requires. 
+
 ## Layout Configuration
 A 'layout-config' file is a json including essential attributes of a scene. The stucture of a config file is presented below: 
 ```
@@ -135,4 +138,13 @@ Our platform is split into two panel: operation & 3D scene. In operation panel, 
 **←**: Camera moving left;  
 **→**: Camera moving right;  
 # Future works
+We will improve the rendering in the future. We do have tried libraries of [Three.js][threejsweb] and several related 3rd-party repositories. Yet, better effects are still not generated. We will continue investigating this to figure out whether we got enginneering problems or we need resort to global rendering in the back-end. We will be extremely grateful if you have better ideas of improving rendering! 
+# Acknowledgement
+This platform is designed, structured and implemented by Shao-Kui Zhang (zhangsk18@mails.tsinghua.edu.cn), Song-Hai Zhang and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice retrieval and object recommendation using latent space (TBD). 
+
+Our layout framework is designed and implemented by Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang. 
+
+Please cite our paper if the repository helps! 
+# Copyright
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
+[threejsweb]:https://threejs.org/
