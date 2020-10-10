@@ -140,11 +140,13 @@ Our platform is split into two panel: operation & 3D scene. In operation panel, 
 # Future works
 We will improve the rendering in the future. We do have tried libraries of [Three.js][threejsweb] and several related 3rd-party repositories. Yet, better effects are still not generated. We will continue investigating this to figure out whether we got enginneering problems or we need resort to global rendering in the back-end. We will be extremely grateful if you have better ideas of improving rendering! 
 # Acknowledgement
-This platform is designed, structured and implemented by Shao-Kui Zhang (zhangsk18@mails.tsinghua.edu.cn), Song-Hai Zhang and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice retrieval and object recommendation using latent space (TBD). 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui] (zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice retrieval and object recommendation using latent space (TBD). 
 
-Our layout framework is designed and implemented by Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang. 
+Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. 
 
 Please cite our paper if the repository helps! 
 # Copyright
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
+[songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
+[shaokui]:https://github.com/Shao-Kui
