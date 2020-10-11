@@ -74,7 +74,6 @@ def naive_heuristic(cgs, room_meta, block=None):
         cg['translate'][2] = p[1].item()
         heuristic_wall(cg, room_meta)
 
-
 def attempt_heuristic(cgs, room_polygon, blocks=None):
     # coded by Weiyu
     print('attempt_heuristic')

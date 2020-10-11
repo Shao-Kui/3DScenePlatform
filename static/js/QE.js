@@ -30,6 +30,12 @@ let topdownview = function(){
   camera.position.set(lx, camHeight, lz);
   camera.lookAt(lx, 0, lz);
   orbitControls.target.set(lx, 0, lz);
+  let lx_length = bbox.max[0] - bbox.min[0];
+  let lz_length = bbox.max[2] - bbox.min[2];
+  if(lz_length > lx_length){
+    orbitControls.sphericalDelta.theta+=3.14/2;
+    orbitControls.update();
+  }
 };
 var onKeyDown = function (event) {
   switch ( event.keyCode ) {

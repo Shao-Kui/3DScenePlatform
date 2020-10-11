@@ -82,6 +82,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.position0 = this.object.position.clone();
 	this.zoom0 = this.object.zoom;
 
+	this.spherical = new THREE.Spherical();
+	this.sphericalDelta = new THREE.Spherical();
+
 	//
 	// public methods
 	//
@@ -257,8 +260,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var EPS = 0.000001;
 
 	// current position in spherical coordinates
-	var spherical = new THREE.Spherical();
-	var sphericalDelta = new THREE.Spherical();
+	var spherical = this.spherical;
+	var sphericalDelta = this.sphericalDelta;
 
 	var scale = 1;
 	var panOffset = new THREE.Vector3();

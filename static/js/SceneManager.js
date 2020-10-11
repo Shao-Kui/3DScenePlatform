@@ -189,7 +189,19 @@ class SceneManager {
                 instance.receiveShadow = true;
                 traverseObjSetting(instance);
                 self.scene.add(instance);
+                if(suffix === 'w'){
+                    instance.traverse(function(child){
+                        if(child instanceof THREE.Mesh){
+                            child.material.color.setHex(0xFFFFFF);
+                        }
+                    });
+                }
                 if (suffix === 'f') {
+                    instance.traverse(function(child){
+                        if(child instanceof THREE.Mesh){
+                            child.material.color.setHex(0x8899AA);
+                        }
+                    });
                     self.cwfCache.push(instance);
                 }
             }, null, null, null, false);

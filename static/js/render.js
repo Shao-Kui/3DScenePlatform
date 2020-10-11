@@ -66,7 +66,7 @@ var render_initialization = function () {
     scene.add( spotLight.target );
 
     // add HemisphereLight
-    let hlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 4.4 );
+    let hlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 8.4 );
     scene.add( hlight );
 
     //adding skybox
