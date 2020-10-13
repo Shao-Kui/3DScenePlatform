@@ -131,14 +131,23 @@ root
 **projection2d.py**: converting room meshes to polygons (room shape);  
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
-**MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished.  
+**MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished. If clicking a room, the platform with take the room as the current operational room, e.g., layout.  
+**MouseClick-LeftHold**: Left click and rotate the perspective camera for various views. The rotation (eulerangles) supports 'pitch' and 'yaw'.  
 **MouseClick-RightHold**: Right click and hold in the scene results in transiting the perspective camera.  
+**Space**: Automatically align the camera with respect to the selected room, and adjust the height of the camera.  
+**Mouse Wheel**: Zoom In & Zoom Out.  
 **↑**: Camera moving up;  
 **↓**: Camera moving down;  
 **←**: Camera moving left;  
 **→**: Camera moving right;  
+**Q**: Anti-clockwise rotating 'yaw' of the perspective camera;(TBD)  
+**E**: Clockwise rotating 'yaw' of the perspective camera;(TBD)  
+
 # Future works
 We will improve the rendering in the future. We do have tried libraries of [Three.js][threejsweb] and several related 3rd-party repositories. Yet, better effects are still not generated. We will continue investigating this to figure out whether we got enginneering problems or we need resort to global rendering in the back-end. We will be extremely grateful if you have better ideas of improving rendering! 
+
+This repo will also be continuously updated, with more functions, features and open-source researches. We also welcome more collaborators, especially if you want to merge your algorithms or functionalities. 
+
 # Acknowledgement
 This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui] (zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice retrieval and object recommendation using latent space (TBD). 
 
