@@ -685,12 +685,14 @@ THREE.OrbitControls = function ( object, domElement ) {
 	//
 
 	function onMouseDown( event ) {
+		//console.log('orbit controller. ');
 
 		if ( scope.enabled === false ) return;
 
 		// Prevent the browser from scrolling.
 
 		event.preventDefault();
+		scenecanvas.addEventListener('click', onClickObj);
 
 		// Manually set the focus since calling preventDefault above
 		// prevents the browser from setting it automatically.
@@ -759,6 +761,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 		if ( scope.enabled === false ) return;
 
 		event.preventDefault();
+		scenecanvas.removeEventListener('click', onClickObj);
 
 		switch ( state ) {
 
@@ -802,7 +805,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 		scope.dispatchEvent( endEvent );
 
 		state = STATE.NONE;
-
+		// scenecanvas.addEventListener('click', onClickObj);
+		// event.stopPropagation(); 
 	}
 
 	function onMouseWheel( event ) {

@@ -1,16 +1,17 @@
 var Q_DOWN = false;
 var E_DOWN = false;
 var prevTime = performance.now();
-var QE_initialization = function(){};
+//var QE_initialization = function(){};
 var keyboard_update = function(){
   var time = performance.now();
-  var delta = 0; // ( time - prevTime ) / 300;
+  var delta = ( time - prevTime ) / 300;
   if(Q_DOWN){
-    camera.rotation.y += delta;
+    orbitControls.sphericalDelta.theta += delta;
   }
   if(E_DOWN){
-    camera.rotation.y -= delta;
+    orbitControls.sphericalDelta.theta -= delta;
   }
+  orbitControls.update();
   prevTime = time;
 };
 let topdownview = function(){
@@ -38,10 +39,15 @@ let topdownview = function(){
   }
 };
 var onKeyDown = function (event) {
+  if(event.target.matches("input")) return;
   switch ( event.keyCode ) {
       case 81: // Q
           Q_DOWN = true;
           break;
+      case 67: // C
+        orbitControls.enabled = !orbitControls.enabled;
+        scenecanvas.addEventListener('click', onClickObj);
+        break;
       case 69: // E
           E_DOWN = true;
           break;

@@ -148,7 +148,6 @@ var addCatalogItem = function () {
 }
 
 var onClickObj = function (event) {
-
     scenecanvas.style.cursor = "auto";
     //Do raycasting, judge whether or not users choose a new object.
     camera.updateMatrixWorld();
@@ -274,6 +273,12 @@ function onDocumentMouseMove(event) {
             INTERSECT_OBJ.scale.y + s * (this_x - last_x),
             INTERSECT_OBJ.scale.z + s * (this_x - last_x));
     }
+    // var instanceKeyCache = manager.renderManager.instanceKeyCache;
+    // instanceKeyCache = Object.values(instanceKeyCache);
+    // intersects = raycaster.intersectObjects(instanceKeyCache, true);
+    // if (instanceKeyCache.length > 0 && intersects.length > 0) {
+    //     console.log(intersects[0].object.parent);
+    // }
     updateMousePosition();
 };
 
@@ -361,8 +366,9 @@ var setting_up = function () {
     });
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
+    scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());
     window.addEventListener('resize', onWindowResize, false);
-    scenecanvas.addEventListener('click', onClickObj);
+    //scenecanvas.addEventListener('click', onClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
     orthcanvas.addEventListener('mousedown', orth_mousedown);

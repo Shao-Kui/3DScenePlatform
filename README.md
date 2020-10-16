@@ -140,8 +140,9 @@ Our platform is split into two panel: operation & 3D scene. In operation panel, 
 **↓**: Camera moving down;  
 **←**: Camera moving left;  
 **→**: Camera moving right;  
-**Q**: Anti-clockwise rotating 'yaw' of the perspective camera;(TBD)  
-**E**: Clockwise rotating 'yaw' of the perspective camera;(TBD)  
+**Q**: Anti-clockwise rotating 'yaw' of the perspective camera;  
+**E**: Clockwise rotating 'yaw' of the perspective camera;  
+**C**: Disable/Enable the orbital controller. This is very useful if you wish to freeze your view, transform several objects and render, instead of mistakenly tuning views;  
 
 # Future works
 We will improve the rendering in the future. We do have tried libraries of [Three.js][threejsweb] and several related 3rd-party repositories. Yet, better effects are still not generated. We will continue investigating this to figure out whether we got enginneering problems or we need resort to global rendering in the back-end. We will be extremely grateful if you have better ideas of improving rendering! 
