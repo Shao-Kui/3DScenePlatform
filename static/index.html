@@ -3,6 +3,8 @@
     <meta charset="utf-8">
     <!-- 3rd party libraries -->
     <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
+    <script src="/static/3rdparty/tf.min.js"></script>
+    <script src="/static/3rdparty/numjs.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
@@ -43,6 +45,7 @@
         var isToggle = false;
         var Auto_Insert_Mode = false;
         var Auto_Rec_Mode = false;
+        let AUXILIARY_MODE = false;
         var INTERSECT_OBJ;
         var INSERT_OBJ;
 
@@ -105,7 +108,8 @@
             <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
                 <button id="mage_button" type="button" class="btn btn-lg btn-primary nav_sk_button">MageAdd</button>
-                <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoInsert
+                <button id="autoinsert_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
+                style="width: 10%">AuxiliaryMode
                 </button>
                 <button id="reshuffle" type="button" class="btn btn-lg btn-primary nav_sk_button">Shuffle</button>
                 <button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">layout2</button>

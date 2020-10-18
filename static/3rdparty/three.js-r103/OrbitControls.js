@@ -685,8 +685,6 @@ THREE.OrbitControls = function ( object, domElement ) {
 	//
 
 	function onMouseDown( event ) {
-		//console.log('orbit controller. ');
-
 		if ( scope.enabled === false ) return;
 
 		// Prevent the browser from scrolling.
@@ -805,8 +803,6 @@ THREE.OrbitControls = function ( object, domElement ) {
 		scope.dispatchEvent( endEvent );
 
 		state = STATE.NONE;
-		// scenecanvas.addEventListener('click', onClickObj);
-		// event.stopPropagation(); 
 	}
 
 	function onMouseWheel( event ) {

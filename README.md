@@ -63,7 +63,7 @@ Note that textures are also reusable by another ```texture``` folder in ```datas
 ```
 
 ## Priors
-Priors are organized in 'root/latentspace/pos-orient-3/'. In this directory, each .json file with a single object name contains pairwise priors for this object as a dominate object. For example, a .json file named '1435.json' contain priors for the dominate object named 1435, where several attributes exist such as '2497' and '2356' which are secondary objects related to the dominate objects. Thus, using two names of a dominate object and a secondary obejct index to a list of priors. Our priors are discrete as discussed in our paper. An item in a prior list (set) between two objects has four values: X, Y, Z, theta. The former three values are transitions spatially and the last one is rotation of Y-axis. Though our platform support different rotating orders in engineering, but our layout framework ONLY support the 'XYZ' rotation. 
+Priors are organized in 'root/latentspace/pos-orient-3/'. In this directory, each .json file with a single object name contains pairwise priors for this object as a dominate object. For example, a .json file named '1435.json' contain priors for the dominate object named 1435, where several attributes exist such as '2497' and '2356' which are secondary objects related to the dominate objects. Thus, using two names of a dominate object and a secondary obejct index to a list of priors. Our priors are discrete as discussed in our paper. An item in a prior list (set) between two objects has four values: X, Y, Z, theta. The former three values are transitions and the fourth one is rotation of Y-axis. Though our platform support different rotating orders in engineering, but our layout framework ONLY support the 'XYZ' rotation. 
 
 In the same directory, each .json file with two object names is a prior set of a pattern chain. Each pattern chain file is a list of another list. The 'outer' list has a number of chains and the 'inner' list includes indices to the source pairwise relations. Hpyer-Priors are organized in 'root/latentspace/pos-orient-3/hyper'. Similaly, the 'outer' list has a number of hyper-priors, but the 'inner' one is a dict object indexing to different source pairwise relations. Note that hyper-relations are generated online when our framework requires. 
 
@@ -150,13 +150,16 @@ We will improve the rendering in the future. We do have tried libraries of [Thre
 This repo will also be continuously updated, with more functions, features and open-source researches. We also welcome more collaborators, especially if you want to merge your algorithms or functionalities. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui] (zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice retrieval and object recommendation using latent space (TBD). 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui] (zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). 
 
-Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. 
+Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
 Please cite our paper if the repository helps! 
 # Copyright
+This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end it NOT security guaranteed if you have sensitive or private data, which is significant if you would like deploy publicly. 
+
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
 [songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
 [shaokui]:https://github.com/Shao-Kui
+[GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html

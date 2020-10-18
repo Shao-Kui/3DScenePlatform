@@ -1,3 +1,68 @@
+var objectCache = {}
+let loadObjectToCache = function(modelId){
+    if(modelId in objectCache){
+        return;
+    }
+    let mtlurl = `/mtl/${modelId}`;
+    let meshurl = `/mesh/${modelId}`;
+    var objLoader = new THREE.OBJLoader2();
+    objLoader.loadMtl(mtlurl, null, function (materials) {
+        objLoader.setModelName(modelId);
+        objLoader.setMaterials(materials);
+        objLoader.load(meshurl, function (event) {
+            var instance = event.detail.loaderRootNode;
+            instance.userData = {
+                "type": 'object',
+                "roomId": currentRoomId,
+                "modelId": modelId,
+                "name": modelId,
+                "coarseSemantic": ""
+            };
+            instance.castShadow = true;
+            instance.receiveShadow = true;
+            instance.children.forEach(child => {
+                child.material.transparent = true;
+                child.material.opacity = 0.6;
+            });
+            objectCache[modelId] = instance;
+        }, null, null, null, false);
+    });
+};
+
+let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0]}){
+    if(!modelId in objectCache) return;
+    let objToInsert = {
+        "modelId": modelId,
+        "coarseSemantic": "_fromCache", 
+        "translate": transform.translate,
+        "scale": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "roomId": currentRoomId,
+        "rotate": transform.rotate,
+        "orient": transform.rotate[1], 
+        "key": THREE.Math.generateUUID()
+    };
+    let object3d = objectCache[modelId].clone();
+    object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
+    object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
+    object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
+    object3d.userData = {
+        "type": 'object',
+        "key": objToInsert.key,
+        "roomId": currentRoomId,
+        "modelId": modelId,
+        "coarseSemantic": ""
+    };
+    manager.renderManager.scene_json.rooms[currentRoomId].objList.push(objToInsert);
+    manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
+    //manager.renderManager.refresh_instances();
+    scene.add(object3d)
+    renderer.render(scene, camera);
+};
+
 var gameLoop = function () {
     render_update();
     orth_view_port_update();
@@ -86,10 +151,10 @@ var clickCatalogItem = function (e) {
         return;
     }
     //check if auto insert mode is on
-    if (Auto_Insert_Mode) {
-        mage_auto_insert(e);
-        return;
-    }
+    // if (Auto_Insert_Mode) {
+    //     mage_auto_insert(e);
+    //     return;
+    // }
     On_ADD = true;
     scenecanvas.style.cursor = "crosshair";
     INSERT_OBJ = {
@@ -149,7 +214,7 @@ var addCatalogItem = function () {
 
 var onClickObj = function (event) {
     scenecanvas.style.cursor = "auto";
-    //Do raycasting, judge whether or not users choose a new object.
+    // do raycasting, judge whether or not users choose a new object; 
     camera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, camera);
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
@@ -158,6 +223,9 @@ var onClickObj = function (event) {
         console.log("Current Room ID: " + currentRoomId);
     } else {
         currentRoomId = undefined;
+    }
+    if(AUXILIARY_MODE){
+        auxiliaryMode();
     }
     if (On_ADD) {
         On_ADD = false;
@@ -202,6 +270,7 @@ var onClickObj = function (event) {
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        console.log(intersects);
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         console.log(INTERSECT_OBJ);
         console.log(INTERSECT_OBJ.userData);
@@ -273,12 +342,35 @@ function onDocumentMouseMove(event) {
             INTERSECT_OBJ.scale.y + s * (this_x - last_x),
             INTERSECT_OBJ.scale.z + s * (this_x - last_x));
     }
-    // var instanceKeyCache = manager.renderManager.instanceKeyCache;
-    // instanceKeyCache = Object.values(instanceKeyCache);
-    // intersects = raycaster.intersectObjects(instanceKeyCache, true);
-    // if (instanceKeyCache.length > 0 && intersects.length > 0) {
-    //     console.log(intersects[0].object.parent);
-    // }
+    if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
+        let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+        .concat(Object.values(manager.renderManager.cwfCache));
+        intersects = raycaster.intersectObjects(intersectObjList, true);
+        if (intersectObjList.length > 0 && intersects.length > 0) {
+            let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
+            let vecSub = tf.transpose(tf.transpose(auxiliaryPrior.tensor).slice([0], [3])).sub(intersectPoint)
+            // transform priors
+            let index = tf.argMin(tf.norm(vecSub, 'euclidean', 1)).arraySync();
+            let objname = auxiliaryPrior.index[index];
+            let theprior = auxiliaryPrior.prior[index];
+            if(!objname in objectCache){
+                console.log(objectCache)
+                return;
+            }
+            let auxiliaryName = 'auxiliaryObject'
+            objectCache[objname].name = auxiliaryName;
+            if(!scene.getObjectByName(auxiliaryName)){
+                scene.add(objectCache[objname]);
+            }
+            if(scene.getObjectByName(auxiliaryName).userData.modelId !== objname){
+                console.log('objSwitch to ' + objname);
+                scene.remove(scene.getObjectByName(auxiliaryName));
+                scene.add(objectCache[objname]);
+            }
+            objectCache[objname].position.set(intersects[0].point.x, theprior[1], intersects[0].point.z);
+            objectCache[objname].rotation.set(0, theprior[3], 0, 'XYZ');
+        }
+    }
     updateMousePosition();
 };
 
