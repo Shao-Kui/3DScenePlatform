@@ -127,6 +127,9 @@ var synchronize_json_object = function (object) {
     inst.rotate[1] = object.rotation.y;
     inst.rotate[2] = object.rotation.z;
     inst.orient = Math.atan2(Math.sin(object.rotation.y), Math.cos(object.rotation.x) * Math.cos(object.rotation.y));
+    if(AUXILIARY_MODE){
+        auxiliaryMode();
+    }
 };
 
 var synchronize_roomId = function (object) {
@@ -220,7 +223,7 @@ var onClickObj = function (event) {
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
-        console.log("Current Room ID: " + currentRoomId);
+        console.log(`Current room ID: ${currentRoomId} of room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
     } else {
         currentRoomId = undefined;
     }
@@ -345,26 +348,38 @@ function onDocumentMouseMove(event) {
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
         .concat(Object.values(manager.renderManager.cwfCache));
+        updateMousePosition();
         intersects = raycaster.intersectObjects(intersectObjList, true);
         if (intersectObjList.length > 0 && intersects.length > 0) {
             let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
-            let vecSub = tf.transpose(tf.transpose(auxiliaryPrior.tensor).slice([0], [3])).sub(intersectPoint)
-            // transform priors
-            let index = tf.argMin(tf.norm(vecSub, 'euclidean', 1)).arraySync();
-            let objname = auxiliaryPrior.index[index];
-            let theprior = auxiliaryPrior.prior[index];
-            if(!objname in objectCache){
-                console.log(objectCache)
+            let vecSub;
+            // if auxiliaryPiror.tensor.shape[0] equals to 0, then no context exists; 
+            if(auxiliaryPrior.tensor.shape[0] !== 0){
+                vecSub = tf.transpose(tf.transpose(auxiliaryPrior.tensor).slice([0], [3])).sub(intersectPoint);
+            }else{
                 return;
             }
-            let auxiliaryName = 'auxiliaryObject'
-            objectCache[objname].name = auxiliaryName;
-            if(!scene.getObjectByName(auxiliaryName)){
+            // transform priors
+            let eucNorm = tf.norm(vecSub, 'euclidean', 1);
+            let index = tf.argMin(eucNorm).arraySync();
+            let eucDis = eucNorm.slice([index], [1]).arraySync();
+            // console.log(`index: ${index}, dis: ${eucDis}, mouse: ${mouse.x}.`);
+            let objname = auxiliaryPrior.index[index];
+            let theprior = auxiliaryPrior.prior[index];
+            if(objectCache[objname] === undefined){
+                return;
+            }
+            objectCache[objname].name = AUXILIARY_NAME;
+            if(eucDis >= 1.0){
+                scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+                return;
+            }
+            if(!scene.getObjectByName(AUXILIARY_NAME)){
                 scene.add(objectCache[objname]);
             }
-            if(scene.getObjectByName(auxiliaryName).userData.modelId !== objname){
+            if(scene.getObjectByName(AUXILIARY_NAME).userData.modelId !== objname){
                 console.log('objSwitch to ' + objname);
-                scene.remove(scene.getObjectByName(auxiliaryName));
+                scene.remove(scene.getObjectByName(AUXILIARY_NAME));
                 scene.add(objectCache[objname]);
             }
             objectCache[objname].position.set(intersects[0].point.x, theprior[1], intersects[0].point.z);
@@ -426,7 +441,7 @@ var setting_up = function () {
     $("#layout_button").click(auto_layout);
     $("#reshuffle").click(reshuffleRoom);
     $("#mage_button").click(mage_add_control);
-    $("#autoinsert_button").click(auto_insert_control);
+    $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
         let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
         // delete unnecessary keys; 

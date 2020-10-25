@@ -200,4 +200,9 @@ def reshuffle():
 def semantic(obj_id):
     return obj_semantic[obj_id]
 
+# https://icon-icons.com/icon/audience-theater-scene-curtains/54210
+@app.route('/favicon.ico') 
+def favicon(): 
+    return flask.send_from_directory('static', 'iconfinder-stagingsite-4263528_117848.ico', mimetype='image/vnd.microsoft.icon')
+
 app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)

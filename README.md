@@ -110,7 +110,7 @@ rooms:[
   ...
 ]
 ```
-In sum, each config contains a list of rooms and a room contains a list of objects. Each config file has an ```origin``` denoting where it derives from, since our platform has it own supported data structure. For instance, in 3D-Front, it could be ```ffca6fce-0adb-48e4-be68-17343d6efffd```. A ```bbox``` denotes AABB bounding box of an entire layout, a room or an object. ```up``` and ```front``` are used by the perspective camera denoting 'up vector' and 'camera direction', which is typically '[0,1,0]' and '[0,0,1]'.  
+In sum, each config contains a list of rooms and a room contains a list of objects. Each config file has an ```origin``` denoting where it derives from, since our platform has it own supported data structure. For instance, in 3D-Front, it could be ```ffca6fce-0adb-48e4-be68-17343d6efffd```. A ```bbox``` denotes AABB bounding box of an entire layout, a room or an object. Although ```bbox``` is optional, it is still useful if users wish to [automatic calibrate the camera][#manuals]. ```up``` and ```front``` are used by the perspective camera denoting 'up vector' and 'camera direction', which is typically '[0,1,0]' and '[0,0,1]'.  
 
 Each room optionally has a ```roomTypes```, e.g., '['living room', 'kitchen']'. A 'modelId' of a room indexes to its ceiling, floor and wall. In this platform, similar to SUNCG, we split a room mesh into a ceiling, a floor and a wall. For example, a room with ```modelId: KidsRoom-1704``` has a 'KidsRoom-1704c.obj', 'KidsRoom-1704f.obj' and a 'KidsRoom-1704w.obj' in the 'root/dataset/room/{```origin```}/' directory. This simply separate room meshes with objects and separate floors, ceilling and walls, which is a enginneering and design decision for researches on scene synthesis or layout generation. If this separation is not necessary in your reasearch, you can simply ignore this attribute and take all meshes as 'objects' in ```objList```. ```roomId``` is necessary in our platform. It is the index of this room in ```rooms``` list of a config file. This attribute is used for fast indexing rooms and objects. Similarly each object also has a ```roomId``` denoting its room. 
 
@@ -156,7 +156,7 @@ Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], W
 
 Please cite our paper if the repository helps! 
 # Copyright
-This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end it NOT security guaranteed if you have sensitive or private data, which is significant if you would like deploy publicly. 
+This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT security guaranteed if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
 
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
