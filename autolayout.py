@@ -133,7 +133,6 @@ def heuristic_recur(pend_group, did, adj):
             heuristic_recur(pend_group, oid, adj)
 
 def heuristic(cg):
-    
     pend_group = cg['objList']
     adj = cg['csrrelation']
     # determine leader; 

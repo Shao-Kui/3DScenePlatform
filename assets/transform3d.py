@@ -1,5 +1,5 @@
 import numpy as np
-from math import asin, atan2, pi, copysign
+from math import asin, atan2, pi, copysign, sin, cos
 
 def quaternion_to_euler(qlist):
     q = {}
@@ -27,10 +27,10 @@ def quaternion_to_euler(qlist):
 
     return (roll, pitch, yaw)
 
-print(quaternion_to_euler([0,1,0,0]))
-print(quaternion_to_euler([0,-0.70711,0,0.70711]))
-print(quaternion_to_euler([0,-0.70711,0,-0.70711]))
-print(quaternion_to_euler([0,-1,0,0]))
+# print(quaternion_to_euler([0,1,0,0]))
+# print(quaternion_to_euler([0,-0.70711,0,0.70711]))
+# print(quaternion_to_euler([0,-0.70711,0,-0.70711]))
+# print(quaternion_to_euler([0,-1,0,0]))
 
 def correlation_atan(theta):
     while theta > pi/2:
@@ -74,6 +74,20 @@ def orient(matrix):
     S = np.linalg.norm(matrix, axis=0)[0:3]
     matrix[0:3] = matrix[0:3] / np.linalg.norm(matrix, axis=0)
     return atan2(matrix[0, 2], matrix[2, 2])
+
+def orient33(matrix):
+    # print(np.linalg.det(matrix[0:3, 0:3]))
+    return atan2(matrix[0, 2], matrix[2, 2])
+
+def euler_to_matrix(thetaX, thetaY, thetaZ):
+    X = np.array([[1,0,0],[0,cos(thetaX),-sin(thetaX)],[0,sin(thetaX),cos(thetaX)]])
+    Y = np.array([[cos(thetaY),0,sin(thetaY)],[0,1,0],[-sin(thetaY),0,cos(thetaY)]])
+    Z = np.array([[cos(thetaZ),-sin(thetaZ),0],[sin(thetaZ),cos(thetaZ),0],[0,0,1]])
+    return Z @ Y @ X
+
+print(orient33(euler_to_matrix(3.14,0,3.14)))
+print(orient33(euler_to_matrix(0,1.57,0)))
+print(orient33(euler_to_matrix(3.141592653589793, 0, 3.141592653589793)))
 
 def decompose16_debug(matrix):
     matrix = np.array(matrix).reshape(4, 4)

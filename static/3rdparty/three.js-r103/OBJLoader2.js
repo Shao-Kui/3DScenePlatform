@@ -17,7 +17,7 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  */
 
 THREE.OBJLoader2 = function ( manager ) {
-	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
+	// console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
 
 	this.manager = THREE.LoaderSupport.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.logging = {
