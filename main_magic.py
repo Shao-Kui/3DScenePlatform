@@ -1,8 +1,137 @@
 from flask import Blueprint, request
 import numpy as np
+import os
 import json
+import random
+from shapely.geometry.polygon import Polygon
+from shapely.geometry import Point
+from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat
 
 app_magic = Blueprint('app_magic', __name__)
+
+def priorTransform(p, translate, orient, scale):
+    p = np.array(p)
+    translate = np.array(translate)
+    orient = np.array(orient)
+    scale = np.array(scale)
+    result = p.copy()
+    result[:, [0,1,2]] *= scale
+    result[:, 0] =  np.cos(orient) * p[:, 0] + np.sin(orient) * p[:, 2]
+    result[:, 2] = -np.sin(orient) * p[:, 0] + np.cos(orient) * p[:, 2]
+    result[:, [0,1,2]] += translate
+    result[:, 3] += orient # transformations include orientations; 
+    return result.tolist()
+
+@app_magic.route("/priors_of_roomShape", methods=['POST'])
+def priors_of_roomShape():
+    rj = request.json
+    existingCatList = []
+    for obj in rj['objList']:
+        if obj is None:
+            continue
+        if obj['modelId'] not in objCatList:
+            continue
+        if len(objCatList[obj['modelId']]) == 0:
+            continue
+        if objCatList[obj['modelId']][0] not in existingCatList:
+            existingCatList.append(objCatList[obj['modelId']][0])
+    print(existingCatList)
+    res = {'object': [], 'prior': [], 'index': []}
+    # load and process room shapes; 
+    room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    wallSecIndices = np.arange(1, len(room_meta)).tolist() + [0]
+    res['room_meta'] = room_meta.tolist()
+    rv = room_meta[:] - room_meta[wallSecIndices]
+    normals = rv[:, [1,0]]
+    normals[:, 1] = -normals[:, 1]
+    res['room_orient'] = np.arctan2(normals[:, 0], normals[:, 1]).tolist()
+    # room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
+    # currently, we hack few available coherent groups...
+    if 'auxiliaryDomObj' not in rj:
+        categoryList = []
+        for rt in rj['roomTypes']:
+            categoryList += roomTypeDemo[rt]
+        for cat in categoryList:
+            if cat in existingCatList:
+                continue
+            res['object'].append(random.choice(objListCat[cat]))
+    else:
+        for objname in rj['auxiliaryDomObj']['object']:
+            if objCatList[objname][0] in existingCatList:
+                continue
+            res['object'].append(objname)
+    print(res['object'])
+    # if('MasterBedroom' in rj['roomTypes']):
+    #     res['object'] += ['5650', '5010', '8547', '6568', '8127']
+
+    # load wall priors; 
+    for obj in res['object']:
+        with open(f'./latentspace/wdot-3/{obj}.json') as f:
+            wallpri = json.load(f)
+            res['prior'] += wallpri
+            res['index'] += np.full(len(wallpri), obj).tolist()
+    return json.dumps(res)
+
+if __name__ == "__main__":
+    priors_of_roomShape()
+
+@app_magic.route("/priors_of_objlist", methods=['POST', 'GET'])
+def priors_of_objlist():
+    if request.method == 'GET':
+        return "Please refer to POST method for acquiring priors. "
+    # indexIndicator = 0
+    res = {'prior': [], 'index': [], 'object': []}
+    room_json = request.json
+    for obj in room_json['objList']:
+        if obj is None:
+            continue
+        if 'modelId' not in obj:
+            continue
+        ppri = f'./latentspace/pos-orient-3/{obj["modelId"]}.json'
+        if os.path.exists(ppri):
+            with open(ppri) as f:
+                pri = json.load(f)
+        else:
+            continue
+        for objname in pri:
+            if objname not in res['object']:
+                res['object'].append(objname)
+            res['prior'] += priorTransform(pri[objname], obj['translate'], obj['orient'], obj['scale'])
+            res['index'] += np.full(len(pri[objname]), objname).tolist()
+            # np.arange(indexIndicator, indexIndicator + len(pri[objname])).tolist()
+            # indexIndicator = indexIndicator + len(pri[objname])
+    return json.dumps(res)
+
+@app_magic.route("/magic_add", methods=['POST', 'GET'])
+def magic_add():
+    objs = []
+    if request.method == 'POST':
+        room_json = request.json["roomjson"]
+        thetranslate = np.array(request.json["translate"])
+        # if no object is in the room, 
+        if len(room_json['objList']) == 0:
+            # then infer the first object; 
+            ret['valid'] = 0
+            return json.dumps(ret)
+        # find the nearest object; 
+        odis = 1000000
+        ret = {}
+        nearestObj = None
+        for obj in room_json['objList']:
+            dis = np.linalg.norm(thetranslate - np.array(obj['translate']))
+            if dis < odis:
+                odis = dis
+                nearestObj = obj
+        # if no object in the room; 
+        if nearestObj is None:
+            # infer the first object
+            ret['valid'] = 0
+            return json.dumps(ret)
+        ret['valid'] = 1
+        return json.dumps(ret)
+
+    if request.method == 'GET':
+        return "Do not support using GET to using magic add. "
 
 @app_magic.route("/magic_position", methods=['POST', 'GET'])
 def magic_position():
