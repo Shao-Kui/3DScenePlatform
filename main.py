@@ -13,7 +13,7 @@ from PIL import Image
 from rec_release import fa_reshuffle
 from autolayout import sceneSynthesis
 from flask import Flask, render_template, send_file, request
-from generate_descriptor import sketch_search
+# from generate_descriptor import sketch_search
 # import blueprints for app to register; 
 from main_audio import app_audio
 from main_ls import app_ls
@@ -205,4 +205,7 @@ def semantic(obj_id):
 def favicon(): 
     return flask.send_from_directory('static', 'iconfinder-stagingsite-4263528_117848.ico', mimetype='image/vnd.microsoft.icon')
 
-app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)
+if __name__ == '__main__':
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=11425, threads=6)
+    # app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)

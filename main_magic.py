@@ -35,7 +35,13 @@ def priors_of_roomShape():
             continue
         if objCatList[obj['modelId']][0] not in existingCatList:
             existingCatList.append(objCatList[obj['modelId']][0])
+    existingPendingCatList = existingCatList.copy()
+    if 'auxiliaryDomObj' in rj:
+        for objname in rj['auxiliaryDomObj']['object']:
+            if objCatList[objname][0] not in existingPendingCatList:
+                existingPendingCatList.append(objCatList[objname][0])
     print(existingCatList)
+    print(existingPendingCatList)
     res = {'object': [], 'prior': [], 'index': []}
     # load and process room shapes; 
     room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
@@ -47,19 +53,27 @@ def priors_of_roomShape():
     res['room_orient'] = np.arctan2(normals[:, 0], normals[:, 1]).tolist()
     # room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
     # currently, we hack few available coherent groups...
-    if 'auxiliaryDomObj' not in rj:
-        categoryList = []
-        for rt in rj['roomTypes']:
-            categoryList += roomTypeDemo[rt]
-        for cat in categoryList:
-            if cat in existingCatList:
-                continue
-            res['object'].append(random.choice(objListCat[cat]))
+    roomTypeSuggestedList = []
+    categoryList = []
+    for rt in rj['roomTypes']:
+        categoryList += roomTypeDemo[rt]
+    for cat in categoryList:
+        if cat in existingCatList:
+            continue
+        roomTypeSuggestedList.append(random.choice(objListCat[cat]))
+    if 'auxiliaryDomObj' not in rj: # if this is the first time calling this function for the pending room...
+        res['object'] = roomTypeSuggestedList
     else:
-        for objname in rj['auxiliaryDomObj']['object']:
-            if objCatList[objname][0] in existingCatList:
+        # re-fuel the pending object list; 
+        for newobjname in roomTypeSuggestedList:
+            if objCatList[newobjname][0] in existingPendingCatList:
                 continue
-            res['object'].append(objname)
+            rj['auxiliaryDomObj']['object'].append(newobjname)
+        res['object'] = rj['auxiliaryDomObj']['object'].copy()
+        for objname in rj['auxiliaryDomObj']['object']:
+            # if the specific instance is already in the room;
+            if objCatList[objname][0] in existingCatList: 
+                res['object'].remove(objname)
     print(res['object'])
     # if('MasterBedroom' in rj['roomTypes']):
     #     res['object'] += ['5650', '5010', '8547', '6568', '8127']
