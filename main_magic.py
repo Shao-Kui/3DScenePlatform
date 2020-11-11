@@ -5,7 +5,7 @@ import json
 import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat
+from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat, categoryRelation
 
 app_magic = Blueprint('app_magic', __name__)
 
@@ -94,24 +94,40 @@ def priors_of_objlist():
     if request.method == 'GET':
         return "Please refer to POST method for acquiring priors. "
     # indexIndicator = 0
-    res = {'prior': [], 'index': [], 'object': []}
+    # 'existPair': ['i_dom-c_sec': 'i_sec']
+    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}}
     room_json = request.json
+    if 'auxiliarySecObj' in room_json:
+        aso = room_json['auxiliarySecObj']
+    else:
+        aso = res.copy()
     for obj in room_json['objList']:
         if obj is None:
             continue
         if 'modelId' not in obj:
             continue
-        ppri = f'./latentspace/pos-orient-3/{obj["modelId"]}.json'
+        ppri = f'./latentspace/pos-orient-4/{obj["modelId"]}.json'
         if os.path.exists(ppri):
             with open(ppri) as f:
                 pri = json.load(f)
         else:
             continue
-        for objname in pri:
+        for c_sec in pri:
+            pairid = f'{obj["modelId"]}-{c_sec}'
+            if pairid in aso['existPair']:
+                objname = aso['existPair'][pairid]
+            else:
+                objname = random.choice(objListCat[c_sec])
+            res['existPair'][pairid] = objname
             if objname not in res['object']:
                 res['object'].append(objname)
-            res['prior'] += priorTransform(pri[objname], obj['translate'], obj['orient'], obj['scale'])
-            res['index'] += np.full(len(pri[objname]), objname).tolist()
+            res['prior'] += priorTransform(pri[c_sec], obj['translate'], obj['orient'], obj['scale'])
+            res['index'] += np.full(len(pri[c_sec]), objname).tolist()
+        # for objname in pri:
+        #     if objname not in res['object']:
+        #         res['object'].append(objname)
+        #     res['prior'] += priorTransform(pri[objname], obj['translate'], obj['orient'], obj['scale'])
+        #     res['index'] += np.full(len(pri[objname]), objname).tolist()
             # np.arange(indexIndicator, indexIndicator + len(pri[objname])).tolist()
             # indexIndicator = indexIndicator + len(pri[objname])
     return json.dumps(res)

@@ -33,8 +33,14 @@ let loadObjectToCache = function(modelId){
             instance.castShadow = true;
             instance.receiveShadow = true;
             traverseObjSetting(instance);
+            if('geometry' in instance){
+                instance.geometry.computeBoundingBox();
+            }
             instance.children.forEach(child => {
                 child.material = child.material.newmtr_lowopa;
+                if('geometry' in child){
+                    child.geometry.computeBoundingBox();
+                }
             });
             objectCache[modelId] = instance;
         }, null, null, null, false);
@@ -74,6 +80,47 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     scene.add(object3d)
     renderer.render(scene, camera);
 };
+
+// the following function is modified from: https://discourse.threejs.org/t/collisions-two-objects/4125/3
+function detectCollisionCubes(object1, object2){
+    if(object1.geometry === undefined || object2.geometry === undefined) return false;
+    // object1.geometry.computeBoundingBox(); //not needed if its already calculated
+    // object2.geometry.computeBoundingBox();
+    // object1.updateMatrixWorld();
+    // object2.updateMatrixWorld();
+    let box1 = object1.geometry.boundingBox.clone();
+    box1.applyMatrix4(object1.matrixWorld);
+    let box2 = object2.geometry.boundingBox.clone();
+    box2.applyMatrix4(object2.matrixWorld);
+    box1.expandByScalar(-0.03);
+    box2.expandByScalar(-0.03);
+    return box1.intersectsBox(box2);
+}
+
+function detectCollisionGroups(group1, group2){
+    if(group1 === undefined || group2 === undefined) return;
+    let objlist1, objlist2;
+    if('children' in group1){
+        objlist1 = group1.children.concat([group1]);
+    }else{
+        objlist1 = [group1];
+    }
+    if('children' in group2){
+        objlist2 = group2.children.concat([group2]);
+    }else{
+        objlist2 = [group2];
+    }
+    group1.updateMatrixWorld();
+    group2.updateMatrixWorld();
+    for(let i = 0; i < objlist1.length; i++){
+        for(let j = 0; j < objlist2.length; j++){
+            if(detectCollisionCubes(objlist1[i], objlist2[j])){
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 var gameLoop = function () {
     render_update();
@@ -210,12 +257,12 @@ var findGroundTranslation = function () {
 }
 
 var addCatalogItem = function () {
-    var vec = new THREE.Vector3();
-    var pos = new THREE.Vector3();
+    let vec = new THREE.Vector3();
+    let pos = new THREE.Vector3();
     vec.set(mouse.x, mouse.y, 0.5);
     vec.unproject(camera);
     vec.sub(camera.position).normalize();
-    var distance =
+    let distance =
         (manager.renderManager.scene_json.rooms[currentRoomId].bbox.min[1]
             - camera.position.y) / vec.y;
     pos.copy(camera.position).add(vec.multiplyScalar(distance));
@@ -333,17 +380,28 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
         return;
     }
     objectCache[objname].name = AUXILIARY_NAME;
+    objectCache[objname].position.set(x, y, z);
+    objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
+    objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
+    let olist = manager.renderManager.scene_json.rooms[currentRoomId].objList;
+    for(let i = 0; i < olist.length; i++){
+        let obj = olist[i];
+        if(obj === undefined || obj === null) continue;
+        if(!'key' in obj) continue;
+        let objmesh = manager.renderManager.instanceKeyCache[obj.key];
+        if(detectCollisionGroups(objectCache[objname], objmesh)){
+            console.log(`collide! ${objname} - ${obj.modelId}`);
+            scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+            return;
+        }
+    }
     if(!scene.getObjectByName(AUXILIARY_NAME)){
         scene.add(objectCache[objname]);
     }
     if(scene.getObjectByName(AUXILIARY_NAME).userData.modelId !== objname){
-        console.log('objSwitch to ' + objname);
         scene.remove(scene.getObjectByName(AUXILIARY_NAME));
         scene.add(objectCache[objname]);
     }
-    objectCache[objname].position.set(x, y, z);
-    objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
-    objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
 }
 
 function auxiliaryCG(theIntersects){
@@ -373,13 +431,18 @@ function auxiliaryCG(theIntersects){
             break;
         }
     }
-    //let wallIndex = tf.argMin(wallDistances).arraySync();
+    // let wallIndex = tf.argMin(wallDistances).arraySync();
     let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
-    let vecSub = tf.abs(tf.transpose(tf.transpose(ado.tensor).slice([2], [1])).sub(minDis)).reshape([-1]);
+    let vecSub;
+    if(ado.tensor.shape[0] !== 0){
+        vecSub = tf.abs(tf.transpose(tf.transpose(ado.tensor).slice([2], [1])).sub(minDis)).reshape([-1]);
+    }else{
+        return;
+    }
     let index = tf.argMin(vecSub).arraySync();
-    // if the 'minimal distance sub' is still high, results in next level 
-    console.log(index);
+    // if the 'minimal distance sub' is still high, results in next level; 
     if(vecSub.slice([index], [1]).arraySync()[0] >= 0.5){
+        scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
         return;
     }
     let objname = ado.index[index];
