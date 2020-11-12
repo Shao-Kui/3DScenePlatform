@@ -150,6 +150,10 @@ We will improve the rendering in the future. We do have tried libraries of [Thre
 
 This repo will also be continuously updated, with more functions, features and open-source researches. We also welcome more collaborators, especially if you want to merge your algorithms or functionalities. 
 
+## Known Problems or Bugs
+
+* The `click` event of the scene canvas may be defunct of unknown reasons. 
+
 # Acknowledgement
 This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). 
 

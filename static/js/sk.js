@@ -32,6 +32,7 @@ let loadObjectToCache = function(modelId){
             // enable shadowing of instances; 
             instance.castShadow = true;
             instance.receiveShadow = true;
+            instance.coarseAABB = new THREE.Box3().setFromObject(instance);
             traverseObjSetting(instance);
             if('geometry' in instance){
                 instance.geometry.computeBoundingBox();
@@ -118,6 +119,28 @@ function detectCollisionGroups(group1, group2){
                 return true;
             }
         }
+    }
+    return false;
+}
+
+const wallRayCaster = new THREE.Raycaster();
+const detectCollisionWall = function(wallMeta, object){
+    object.updateMatrixWorld();
+    let box = object.coarseAABB.clone();
+    box.applyMatrix4(object.matrixWorld);
+    let halfHeight = (box.min.y + box.max.y) / 2; 
+    for(let j = 0; j < wallMeta.length; j++){
+        let start = new THREE.Vector3(wallMeta[j][0], halfHeight, wallMeta[j][1]);
+        let end = new THREE.Vector3(
+            wallMeta[(j+1)%(wallMeta.length)][0], 
+            halfHeight, 
+            wallMeta[(j+1)%(wallMeta.length)][1]
+        );
+        let direction = end.sub(start); 
+        direction.normalize();
+        wallRayCaster.set(start, direction); 
+        var intersects = wallRayCaster.intersectObjects([object], true); 
+        if(intersects.length > 0) return true; 
     }
     return false;
 }
@@ -383,6 +406,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
     objectCache[objname].position.set(x, y, z);
     objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
     objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
+    // detecting collisions between the pending object and other objects of the same room: 
     let olist = manager.renderManager.scene_json.rooms[currentRoomId].objList;
     for(let i = 0; i < olist.length; i++){
         let obj = olist[i];
@@ -390,10 +414,16 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
         if(!'key' in obj) continue;
         let objmesh = manager.renderManager.instanceKeyCache[obj.key];
         if(detectCollisionGroups(objectCache[objname], objmesh)){
-            console.log(`collide! ${objname} - ${obj.modelId}`);
             scene.remove(scene.getObjectByName(AUXILIARY_NAME));
             return;
         }
+    }
+    // detecting collisions between the pending objects and the wall: 
+    let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
+    if(detectCollisionWall(wallMeta, objectCache[objname])){
+        scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
+        console.log('wall collided! ');
+        return; 
     }
     if(!scene.getObjectByName(AUXILIARY_NAME)){
         scene.add(objectCache[objname]);
@@ -447,7 +477,6 @@ function auxiliaryCG(theIntersects){
     }
     let objname = ado.index[index];
     let theprior = ado.prior[index];
-    //console.log(theprior[1], ado.room_orient[wallIndex]);
     realTimeObjCache(objname, // object name
         theIntersects.point.x, 0, theIntersects.point.z, // x, y, z
         ado.room_orient[wallIndex] + theprior[1], // theta
@@ -623,7 +652,7 @@ var setting_up = function () {
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());
     window.addEventListener('resize', onWindowResize, false);
-    //scenecanvas.addEventListener('click', onClickObj);
+    // scenecanvas.addEventListener('click', onClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
     orthcanvas.addEventListener('mousedown', orth_mousedown);
