@@ -42,14 +42,58 @@ var mage_add_object = function(){
   });
 };
 
-var auto_insert_control = function(){
-  var autoinsert_button = document.getElementById("autoinsert_button");
-  Auto_Insert_Mode = !Auto_Insert_Mode;
-  if(Auto_Insert_Mode){
+var auxiliary_control = function(){
+  var autoinsert_button = document.getElementById("auxiliary_button");
+  AUXILIARY_MODE = !AUXILIARY_MODE;
+  if(AUXILIARY_MODE){
+    auxiliaryMode();
     autoinsert_button.style.backgroundColor = '#9400D3';
   }else{
+    // remove 'auxiliaryObject' in the scene; 
+    scene.remove(scene.getObjectByName(AUXILIARY_NAME));
     autoinsert_button.style.backgroundColor = '#43CD80';
   }
+}
+
+let auxiliaryRoom = function(){
+    $.ajax({
+      type: "POST",
+      contentType: "application/json; charset=utf-8",
+      url: "/priors_of_roomShape",
+      data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+      success: function (data) {
+        data = JSON.parse(data);
+        data.roomShapeTensor = tf.tensor(data.room_meta);
+        data.tensor = tf.tensor(data.prior);
+        manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj = data;
+        data.object.forEach(o => {
+          loadObjectToCache(o);
+        })
+      }
+    });
+}
+
+let auxiliaryPrior;
+let auxiliaryMode = function(){
+  if(currentRoomId === undefined){
+    return;
+  }
+  auxiliaryRoom();
+  $.ajax({
+    type: "POST",
+    contentType: "application/json; charset=utf-8",
+    url: "/priors_of_objlist",
+    data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+    success: function (data) {
+      data = JSON.parse(data);
+      auxiliaryPrior = data;
+      manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj = data;
+      auxiliaryPrior.tensor = tf.tensor(auxiliaryPrior.prior);
+      data.object.forEach(o => {
+        loadObjectToCache(o);
+      })
+    }
+  });
 }
 
 var mage_auto_insert = function(e){

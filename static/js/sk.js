@@ -82,6 +82,50 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     renderer.render(scene, camera);
 };
 
+const door_mageAdd_set = []; 
+const _addDoor_mageAdd = (doorMeta) => {
+    let worldBbox = doorMeta.bbox; 
+    let _minIndex = tf.argMin([
+        worldBbox.max[0] - worldBbox.min[0], 
+        worldBbox.max[1] - worldBbox.min[1], 
+        worldBbox.max[2] - worldBbox.min[2]
+    ]).arraySync(); 
+    let scale = [1,1,1]; scale[_minIndex] = 6; 
+    let geometry = new THREE.BoxGeometry( 
+        (worldBbox.max[0] - worldBbox.min[0]) * scale[0], 
+        (worldBbox.max[1] - worldBbox.min[1]) * scale[1], 
+        (worldBbox.max[2] - worldBbox.min[2]) * scale[2]
+    ); 
+    geometry.computeBoundingBox();
+    let material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+    material.transparent = true;
+    material.opacity = 0.5
+    let cube = new THREE.Mesh( geometry, material );
+    cube.position.set(
+        (worldBbox.max[0] + worldBbox.min[0]) / 2,
+        (worldBbox.max[1] + worldBbox.min[1]) / 2,
+        (worldBbox.max[2] + worldBbox.min[2]) / 2
+    ); 
+    cube.name = doorMeta.modelId; 
+    door_mageAdd_set.push(cube);
+    scene.add(cube); 
+}
+const _refresh_mageAdd_wall = (json) => {
+    door_mageAdd_set.forEach(o3d => {
+        scene.remove(o3d); 
+    }); 
+    door_mageAdd_set.length = 0; 
+    json.rooms.forEach(room => {
+        room.objList.forEach(meta => {
+            if(meta === undefined || meta === null) return; 
+            if(!'coarseSemantic' in meta) return; 
+            if(meta.coarseSemantic === 'Door' || meta.coarseSemantic === 'door'){
+                _addDoor_mageAdd(meta); 
+            }
+        })
+    })
+}
+
 // the following function is modified from: https://discourse.threejs.org/t/collisions-two-objects/4125/3
 function detectCollisionCubes(object1, object2){
     if(object1.geometry === undefined || object2.geometry === undefined) return false;
@@ -223,6 +267,8 @@ var synchronize_roomId = function (object) {
     obj_json.roomId = currentRoomId;
     manager.renderManager.scene_json.rooms[currentRoomId].objList.push(obj_json);
     delete manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
+    manager.renderManager.scene_json.rooms[object.userData.roomId].objList = 
+    manager.renderManager.scene_json.rooms[object.userData.roomId].objList.filter( item => item !== null && item !== undefined )
     object.userData.roomId = currentRoomId;
 }
 
@@ -418,6 +464,14 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
             return;
         }
     }
+    // detecting collisions between the pending objects and buffered door meshes; 
+    for(let i = 0; i < door_mageAdd_set.length; i++){
+        let doorMesh = door_mageAdd_set[i];
+        if(detectCollisionGroups(doorMesh, objectCache[objname])){
+            scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+            return;
+        }
+    }
     // detecting collisions between the pending objects and the wall: 
     let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
     if(detectCollisionWall(wallMeta, objectCache[objname])){
@@ -480,7 +534,7 @@ function auxiliaryCG(theIntersects){
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
     let index = tf.argMin(vecSub).arraySync();
     // if the 'minimal distance sub' is still high, results in next level; 
-    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.45){
+    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.48){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
         return;
     }

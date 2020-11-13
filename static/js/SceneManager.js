@@ -34,21 +34,16 @@ var traverseObjSetting = function (object) {
 
 class SceneManager {
     constructor(parent_manager, canvas) {
-
         this.parent_manager = parent_manager;
         this.canvas = canvas;
         this.objectInfoCache = {};
         this.instanceKeyCache = {};
-
         this.latentNameCache = {};
-
         this.cwfCache = [];
         this.init_canvas();
     }
 
-
     init_canvas = () => {
-
         var self = this;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, $(this.canvas).width() / $(this.canvas).height(), 0.01, 1000);
@@ -58,8 +53,8 @@ class SceneManager {
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, 
             alpha: true, 
             antialias: 4, 
-            preserveDrawingBuffer: true});
-
+            preserveDrawingBuffer: true}
+        );
         this.renderer.setClearColor(0xffffff, 0); // second param is opacity, 0 => transparent
         this.renderer.physicallyCorrectLights = true;
         this.renderer.outputEncoding = THREE.sRGBEncoding;
@@ -102,13 +97,11 @@ class SceneManager {
         instances_to_remove.forEach(function (inst) {
             self.scene.remove(inst);
         });
-
     };
 
 
     refresh_scene = (scene_json, refresh_camera = false) => {
         console.log('called refresh scene! ');
-
         this.scene_remove(function (userData) {
             if (userData.type === 'w' ||
                 userData.type === 'f' ||
@@ -137,7 +130,6 @@ class SceneManager {
 
 
     refresh_wall_and_floor = () => {
-
         this.cwfCache = [];
         var self = this;
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
@@ -166,47 +158,74 @@ class SceneManager {
         var objLoader = new THREE.OBJLoader2();
         var mtl_path = "/room/" + self.scene_json.origin + "/" + meta + '.mtl';
         var obj_path = "/room/" + self.scene_json.origin + "/" + meta + '.obj';
-        objLoader.loadMtl(mtl_path, null, function (materials) {
-            objLoader.setModelName(meta);
-            objLoader.setMaterials(materials);
-            objLoader.load(obj_path, function (event) {
-                var instance = event.detail.loaderRootNode;
-                instance.userData = {"type": suffix, "roomId": roomId};
-                instance.castShadow = true;
-                instance.receiveShadow = true;
-                traverseObjSetting(instance);
-                self.scene.add(instance);
-                if (suffix === 'f') {
-                    self.cwfCache.push(instance);
-                }
-            }, null, null, null, false);
-        }, null, function(){
-            objLoader.setModelName(meta);
-            objLoader.load(obj_path, function (event) {
-                var instance = event.detail.loaderRootNode;
-                instance.userData = {"type": suffix, "roomId": roomId};
-                instance.castShadow = true;
-                instance.receiveShadow = true;
-                traverseObjSetting(instance);
-                self.scene.add(instance);
-                if(suffix === 'w'){
-                    instance.traverse(function(child){
-                        if(child instanceof THREE.Mesh){
-                            child.material.color.setHex(0xFFFFFF);
-                        }
-                    });
-                }
-                if (suffix === 'f') {
-                    instance.traverse(function(child){
-                        if(child instanceof THREE.Mesh){
-                            child.material.color.setHex(0x8899AA);
-                        }
-                    });
-                    self.cwfCache.push(instance);
-                }
-            }, null, null, null, false);
-        });
-    };
+        objLoader.setModelName(meta);
+        objLoader.load(obj_path, function (event) {
+            var instance = event.detail.loaderRootNode;
+            instance.userData = {"type": suffix, "roomId": roomId, "meta": meta, "modelId": modelId};
+            instance.castShadow = true;
+            instance.receiveShadow = true;
+            instance.name = meta;
+            traverseObjSetting(instance);
+            self.scene.add(instance);
+            if(suffix === 'w'){
+                instance.traverse(function(child){
+                    if(child instanceof THREE.Mesh){
+                        child.material.color.setHex(0xFFFFFF);
+                    }
+                });
+            }
+            if (suffix === 'f') {
+                instance.traverse(function(child){
+                    if(child instanceof THREE.Mesh){
+                        child.material.color.setHex(0x8899AA);
+                    }
+                });
+                self.cwfCache.push(instance);
+            }
+        }, null, null, null, false);
+    }
+
+    //     objLoader.loadMtl(mtl_path, null, function (materials) {
+    //         objLoader.setModelName(meta);
+    //         objLoader.setMaterials(materials);
+    //         objLoader.load(obj_path, function (event) {
+    //             var instance = event.detail.loaderRootNode;
+    //             instance.userData = {"type": suffix, "roomId": roomId};
+    //             instance.castShadow = true;
+    //             instance.receiveShadow = true;
+    //             traverseObjSetting(instance);
+    //             self.scene.add(instance);
+    //             if (suffix === 'f') {
+    //                 self.cwfCache.push(instance);
+    //             }
+    //         }, null, null, null, false);
+    //     }, null, function(){
+    //         objLoader.setModelName(meta);
+    //         objLoader.load(obj_path, function (event) {
+    //             var instance = event.detail.loaderRootNode;
+    //             instance.userData = {"type": suffix, "roomId": roomId};
+    //             instance.castShadow = true;
+    //             instance.receiveShadow = true;
+    //             traverseObjSetting(instance);
+    //             self.scene.add(instance);
+    //             if(suffix === 'w'){
+    //                 instance.traverse(function(child){
+    //                     if(child instanceof THREE.Mesh){
+    //                         child.material.color.setHex(0xFFFFFF);
+    //                     }
+    //                 });
+    //             }
+    //             if (suffix === 'f') {
+    //                 instance.traverse(function(child){
+    //                     if(child instanceof THREE.Mesh){
+    //                         child.material.color.setHex(0x8899AA);
+    //                     }
+    //                 });
+    //                 self.cwfCache.push(instance);
+    //             }
+    //         }, null, null, null, false);
+    //     });
+    // };
 
     refresh_instances(){
 	    //try to add unique id for each instanceof
@@ -391,6 +410,14 @@ class SceneManager {
                 instance.castShadow = true;
                 instance.receiveShadow = true;
                 traverseObjSetting(instance);
+                if('geometry' in instance){
+                    instance.geometry.computeBoundingBox();
+                }
+                instance.children.forEach(child => {
+                    if('geometry' in child){
+                        child.geometry.computeBoundingBox();
+                    }
+                });
                 self.scene.add(instance);
                 self.renderer.render(self.scene, self.camera);
             }, null, null, null, false);
@@ -491,7 +518,8 @@ class SceneController {
     }
 
     load_scene(json) {
-        this.renderManager.refresh_scene(json, true);
+        this.renderManager.refresh_scene(json, true); 
+        _refresh_mageAdd_wall(json); 
     }
 
 }
