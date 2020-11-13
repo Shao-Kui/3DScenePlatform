@@ -302,7 +302,7 @@ def process(path, file_name):
 
 
 def processGeo(path, file_name):
-    print(file_name)
+    # print(file_name)
     ans = np.zeros(1)
     try:
         objfile = open(path + '/' + file_name)
@@ -476,15 +476,410 @@ def connected_component_(name, adj):
 #      [0., 0., 1., 1., 0.]]
 #     print(connected_component(name,adj))
 
+
+class point:
+    x = 0.
+    y = 0.
+    z = 0.
+
+    def __init__(self, a, b, c):
+        self.x = a
+        self.y = b
+        self.z = c
+
+    def __len__(self):
+        return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+
+    def __str__(self):
+        return '(' + str(self.x) + ',' + str(self.y) + ',' + str(self.z) + ')'
+
+    def dis_to(self, p):
+        return math.sqrt((self.x - p.x) ** 2 + (self.y - p.y) ** 2 + (self.z - p.z) ** 2)
+
+    def __add__(self, other):
+        return point(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __sub__(self, other):
+        return point(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __mul__(self, other):
+        return point(self.x * other.x, self.y * other.y, self.z * other.z)
+
+    def __pow__(self, power, modulo=None):
+        return point(self.x ** power, self.y ** power, self.z ** power)
+
+    def __truediv__(self, other):
+        return point(self.x / other, self.y / other, self.z / other)
+
+    def dot_product(self, b):
+        return self.x * b.x + self.y * b.y + self.z * b.z
+
+    def cross_mul(self, b):
+        return point(self.y * b.z - self.z * b.y, self.z * b.x - self.x * b.z, self.x * b.y - self.y * b.x)
+
+    def rotate_theta(self, theta):
+        return self.complex_product(self.unit(theta))
+
+    def complex_product(self, b):
+        return point(self.x * b.x - self.z * b.z, self.y, self.x * b.z + self.z * b.x)
+
+    def normalize(self):
+        return self / self.__len__()
+
+    @staticmethod
+    def unit(theta):
+        return point(math.cos(theta), 0, math.sin(theta))
+
+    peps = 1E-6
+
+    def theta(self):
+        if math.isclose(self.x, 0, abs_tol=self.peps):
+            if math.isclose(self.z, 0, abs_tol=self.peps):
+                return 0
+            elif self.z > 0:
+                return math.pi / 2
+            elif self.z < 0:
+                return math.pi * 3 / 2
+        elif math.isclose(self.z, 0, abs_tol=self.peps):
+            if self.x > 0:
+                return 0
+            elif self.x < 0:
+                return math.pi
+        else:
+            t = math.atan(self.z / self.x)
+            if self.x < 0:
+                return t + math.pi
+            else:
+                if self.z < 0:
+                    return t + 2 * math.pi
+                else:
+                    return t
+
+    def thetaz(self):
+        re = math.pi / 2 - self.theta()
+        while re > math.pi:
+            re -= math.pi * 2
+        while re < -math.pi:
+            re += math.pi * 2
+        return re
+
+
+class polygen:
+    parr = []
+    norm = []
+    size = 0
+
+    def __init__(self, p):
+        self.size = p.shape[0]
+        self.parr = []
+        self.norm = []
+        for i in range(0, self.size):
+            self.parr.append(point(p[i][0], 0, p[i][1]))
+        # print(p,self.size)
+
+    def get_norm(self):
+        theta = 0
+        for i in range(0, self.size):
+
+            v1 = self.parr[(i + 1) % self.size] - self.parr[i]
+            v2 = self.parr[(i + 2) % self.size] - self.parr[(i + 1) % self.size]
+            delta = (v2.rotate_theta(-v1.theta())).theta()
+            if delta > math.pi:
+                delta = delta - math.pi * 2
+
+            theta += delta
+        # print(theta)
+        # 反转为逆时针序
+
+        # for p in self.parr:
+        #     print(str(p))
+        # print("*")
+
+        if theta < 0.0:
+            self.parr.reverse()
+
+        for i in range(0, self.size):
+            self.norm.append(((self.parr[(i + 1) % self.size] - self.parr[i]).normalize()).rotate_theta(math.pi / 2.0))
+
+        re = np.zeros((self.size, 4), dtype=np.float)
+
+        for i in range(0, self.size):
+            re[i][0] = self.parr[i].x
+            re[i][1] = self.parr[i].z
+
+            re[i][2] = self.norm[i].x
+            re[i][3] = self.norm[i].z
+        # print(re)
+        return re
+
+    def point_closest(self, p):
+
+        if len(self.norm) == 0:
+            self.get_norm()
+        closest_distance = float('inf')
+        idx = -1
+        for i in range(0, len(self.norm)):
+            temp = (p - self.parr[i]).dot_product(self.norm[i])
+            if closest_distance > temp:
+                idx = i
+                closest_distance = temp
+
+        return [closest_distance, idx]
+
+def wall_distance_orient_weiyu():
+    ROOT = './dataset/'
+    level_root = "./dataset/alilevel/"
+    room_root = "./dataset/room/"
+    object_root = "./dataset/object/"
+    with open('./dataset/sk_to_ali.json') as f:
+        obj_semantic = json.load(f)
+
+    # print('preparing the level_dirs ...')
+    # level_dirs = []
+    # for hid in os.listdir(level_root):
+    #     for lid in os.listdir(level_root + "/{}".format(hid)):
+    #         if os.path.exists(level_root + "/{}/{}".format(hid, lid)):
+    #             level_dirs.append(level_root + "/{}/{}".format(hid, lid))
+    level_dirs = os.listdir(level_root)
+
+    ds = {}
+    obj_convex = {}
+    for obj in obj_semantic:
+        ds[obj] = []
+        obj_convex[obj] = np.load(object_root + '/' + obj + '/' + obj + '-convex.npy')
+
+    for i in range(0, len(level_dirs)):
+        dire = level_dirs[i]
+
+        print('(%d/%d) tackle ' % (i + 1, len(level_dirs)) + dire)
+        with open(f'./dataset/alilevel/{dire}', 'r') as f:
+            h = json.load(f)
+
+        for i in range(0, len(h['rooms'])):
+            room = h['rooms'][i]
+            # print(room['modelId'])
+
+            # if os.path.exists(room_root + '/' + room['origin']+'/'+ room['modelId'] + 'f.npy'):
+            #     shape = np.load(room_root + '/' + room['origin']+'/'+ room['modelId'] + 'f.npy')
+            # else:
+            #     if os.path.exists(room_root + '/' + room['origin']+'/'+ room['modelId'] + 'f.obj') is False:
+            #         continue
+            #     shape = processGeo(room_root + '/' + room['origin'], room['modelId'] + 'f.obj')
+            #     np.save(room_root + '/' + room['origin']+'/'+ room['modelId'] + 'f.npy',shape)
+            try:
+                shape = processGeo(room_root + '/' + room['origin'], room['modelId'] + 'f.obj')
+                shape = polygen(shape[:, 0:2])
+                shape.get_norm()
+            except Exception as e:
+                continue
+            # plt.cla()
+            # plt.scatter(shape[:,0],shape[:,1])
+
+            
+
+            for i in range(len(room['objList'])):
+                obji = room['objList'][i]
+
+                if obji['modelId'] not in obj_semantic:
+                    continue
+                if 'translate' not in obji:
+                    continue
+                if 'orient' not in obji:
+                    continue
+
+                # vf = read_obj(object_root + '/' + obji['modelId'] + '/' + obji['modelId'] + '.obj')
+                # temp = np.array(vf['vertices'])
+                # temp = np.delete(temp,1,axis = 1)
+                # print(obji)
+                temp = obj_convex[obji['modelId']]
+                theta = obji['orient']
+
+                scale = [obji['scale'][0],obji['scale'][2]]
+                temp = temp*scale
+                # print(temp)
+                varr = np.array([temp[:, 1] * np.sin(theta) + temp[:, 0] * np.cos(theta),
+                                temp[:, 1] * np.cos(theta) - temp[:, 0] * np.sin(theta)])
+                varr = varr.transpose()
+
+                transpos = np.array([obji['translate'][0], obji['translate'][2]])
+                varr = varr + transpos
+
+                # plt.scatter(varr[:, 0], varr[:, 1])
+                # print(varr)
+                dis_idx = [float('inf'), -1]
+                for v in varr:
+                    temp = shape.point_closest(point(v[0], 0, v[1]))
+                    if temp[0] < dis_idx[0]:
+                        dis_idx = temp
+
+                dnorm = shape.norm[dis_idx[1]]
+                dnorm = point(dnorm.x, 0, dnorm.z)
+
+                # ori = theta - dnorm.thetaz()
+                # dis the wall
+                ori = theta
+
+                while ori > math.pi:
+                    ori -= 2 * math.pi
+                while ori < -math.pi:
+                    ori += 2 * math.pi
+                trandis = point(transpos[0], 0, transpos[1])
+                trandis = (trandis - shape.parr[dis_idx[1]]).dot_product(shape.norm[dis_idx[1]])
+
+                # print(dis_idx)
+                # print(theta)
+                # print(dnorm)
+                # print(dnorm.theta())
+                # print(dnorm.thetaz())
+                # print([dis_idx[0], ori, trandis])
+                ds[obji['modelId']].append([dis_idx[0], ori, trandis])
+                # break
+            # plt.show()
+        # break
+    wdotdirname = 'wdot-2'
+    cnt=0
+    for obji in ds:
+        cnt+=1
+        print('(%d/%d) saveing ' % (cnt, len(ds)) + obji)
+        if os.path.exists(f'./latentspace/{wdotdirname}') is False:
+            os.mkdir(f'./latentspace/{wdotdirname}')
+        with open(f'./latentspace/{wdotdirname}/{obji}.json', 'w') as f:
+            json.dump(ds[obji], f)
+
+origin, xaxis, yaxis, zaxis = [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]
+def wall_distance_orient():
+    import trimesh
+    ROOT = './dataset/'
+    level_root = "./dataset/alilevel_oriFix/"
+    room_root = "./dataset/room/"
+    object_root = "./dataset/object/"
+    with open('./dataset/sk_to_ali.json') as f:
+        obj_semantic = json.load(f)
+
+    level_dirs = os.listdir(level_root)
+    ds = {}
+    objMeshCache = {}
+    for obj in obj_semantic:
+        ds[obj] = []
+    for i in range(0, len(level_dirs)):
+        dire = level_dirs[i]
+        # debug mode...
+        # if dire not in ['3c29e2e4-4b96-4124-91b6-00580ba3414d.json']:
+        #     continue
+        print('(%d/%d) tackle ' % (i + 1, len(level_dirs)) + dire)
+        with open(f'./dataset/alilevel_oriFix/{dire}', 'r') as f:
+            h = json.load(f)
+        for i in range(0, len(h['rooms'])):
+            room = h['rooms'][i]
+            try:
+                shape = processGeo(room_root + '/' + room['origin'], room['modelId'] + 'f.obj')
+            except Exception as e:
+                continue
+            if len(shape) <= 2:
+                continue
+            for i in range(len(room['objList'])):
+                obji = room['objList'][i]
+
+                if obji['modelId'] not in obj_semantic:
+                    continue
+                if 'translate' not in obji:
+                    continue
+                if 'orient' not in obji:
+                    continue
+
+                # find the nearest wall; 
+                p = np.array([obji['translate'][0], obji['translate'][2]])
+                shapeEnd = shape[np.arange(1,len(shape)).tolist() + [0]]
+                a_square = np.sum((shape - p)**2, axis=1)
+                b_square = np.sum((shapeEnd - p)**2, axis=1)
+                c_square = np.sum((shape - shapeEnd)**2, axis=1)
+                area_double = 0.5 * np.sqrt(4 * a_square * b_square - (a_square + b_square - c_square)**2 )
+                distances = area_double / np.sqrt(c_square)
+                _indicesList = []
+                wallMinIndices = np.argsort(distances)
+                innerProducts = np.sum((shape - p) * (shape - shapeEnd), axis=1)
+                for i in wallMinIndices:
+                    if 0 <= innerProducts[i] and innerProducts[i] <= c_square[i]:
+                        _indicesList.append(i)
+                        if len(_indicesList) == 2:
+                            break
+                        # wallMinIndex = i
+                if len(_indicesList) < 2:
+                    continue
+                wallMinIndex = _indicesList[0]
+                minDistance = distances[wallMinIndex]
+                secMinDistance = distances[_indicesList[1]]
+
+                # calculate the wall orient; 
+                wn = (shape[wallMinIndex] - shapeEnd[wallMinIndex])[[1,0]]
+                wn[1] = -wn[1]
+
+                # ori_prior equals to ori_final - ori_wall; 
+                ori = obji['orient'] - np.arctan2(wn[0], wn[1])
+                while ori > math.pi:
+                    ori -= 2 * math.pi
+                while ori < -(math.pi):
+                    ori += 2 * math.pi
+
+                # calculate the length of this object w.r.t the wall; 
+                # wd = shapeEnd[wallMinIndex] - shape[wallMinIndex]
+                # wallorient = np.arctan2(wd[0], wd[1])
+                Ry = trimesh.transformations.rotation_matrix(-np.arctan2(wn[0], wn[1]), yaxis)
+                try:
+                    if obji['modelId'] in objMeshCache:
+                        _mesh = objMeshCache[obji['modelId']]
+                    else:
+                        print('loading ... ' + obji['modelId'])
+                        _mesh = trimesh.load(f'./dataset/object/{obji["modelId"]}/{obji["modelId"]}.obj')
+                        objMeshCache[obji['modelId']] = _mesh
+                    # we always take the copy before modifying it; 
+                    mesh = _mesh.copy()
+                    mesh.vertices *= np.array(obji['scale'])
+                    mesh.apply_transform(Ry)
+                    objWallLength = np.max(mesh.vertices[:, 0]) - np.min(mesh.vertices[:, 0])
+                    objWallLength = objWallLength.tolist() / 2 
+                except Exception as e:
+                    print(e)
+                    objWallLength = 0
+
+                # ds[obji['modelId']].append([-1, ori, minDistance, 
+                # f'{h["origin"]} - {room["roomId"]}', 
+                # obji['orient'], np.arctan2(wn[0], wn[1]), 
+                # int(wallMinIndex), shape[wallMinIndex][0], shape[wallMinIndex][1], secMinDistance])
+
+                ds[obji['modelId']].append([-1, ori, minDistance] + obji['scale'] + [objWallLength, secMinDistance])
+    wdotdirname = 'wdot-4'
+    cnt=0
+    for obji in ds:
+        if len(ds[obji]) == 0:
+            continue
+        print('(%d/%d) saving ' % (cnt, len(ds)) + obji)
+        if os.path.exists(f'./latentspace/{wdotdirname}') is False:
+            os.mkdir(f'./latentspace/{wdotdirname}')
+        with open(f'./latentspace/{wdotdirname}/{obji}.json', 'w') as f:
+            json.dump(ds[obji], f)
+        cnt+=1
+
+with open('./dataset/objCatListAliv2.json') as f:
+    objCatList = json.load(f)
+with open('./latentspace/roomTypeDemo.json') as f:
+    roomTypeDemo = json.load(f)
+with open('./dataset/objListCataAliv2.json') as f:
+    objListCat = json.load(f)
+with open('./latentspace/pos-orient-4/categoryRelation.json') as f:
+    categoryRelation = json.load(f)
+
 if __name__ == "__main__":
-    savefile = True
-    savefile_kind = 'npy'
+    # savefile = True
+    # savefile_kind = 'npy'
 
-    check_norm = False
-    savepic = True
-    get_norm = True
-    file_search('/Users/ervinxie/Research/Fast3DISS/00a4ff0c-ec69-4202-9420-cc8536ffffe0')
+    # check_norm = False
+    # savepic = True
+    # get_norm = True
+    # file_search('/Users/ervinxie/Research/Fast3DISS/00a4ff0c-ec69-4202-9420-cc8536ffffe0')
 
+    wall_distance_orient()
+    # print(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj'))
     # file_search('/Users/ervinxie/Desktop/suncg/room/3e60029ce929bf20fd66204028a72c1b')
     # process('.', 'fr_0rm_0f.obj')
 
@@ -492,6 +887,9 @@ if __name__ == "__main__":
     # process('.', 'suncg_subset/room/000d0395709d2a16e195c6f0189155c4/fr_0rm_2f.obj')
 
     # file_search('./suncg_subset/room')
+
+    # if check_norm:
+    #     open(record_file_path, 'w').write(json.dumps(parallel, indent=1))
 
     # if check_norm:
     #     open(record_file_path, 'w').write(json.dumps(parallel, indent=1))

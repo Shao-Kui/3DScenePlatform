@@ -80,7 +80,7 @@ def priors_of_roomShape():
 
     # load wall priors; 
     for obj in res['object']:
-        with open(f'./latentspace/wdot-3/{obj}.json') as f:
+        with open(f'./latentspace/wdot-4/{obj}.json') as f:
             wallpri = json.load(f)
             res['prior'] += wallpri
             res['index'] += np.full(len(wallpri), obj).tolist()

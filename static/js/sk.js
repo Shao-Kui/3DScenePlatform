@@ -422,7 +422,6 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
     let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
     if(detectCollisionWall(wallMeta, objectCache[objname])){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
-        console.log('wall collided! ');
         return; 
     }
     if(!scene.getObjectByName(AUXILIARY_NAME)){
@@ -450,28 +449,38 @@ function auxiliaryCG(theIntersects){
     let apbmcfang = tf.square(a_square.add(b_square).sub(c_square));
     let triangleArea = tf.sqrt(siafangbfang.sub(apbmcfang)).mul(0.5); // this is twice the area; 
     let wallDistances = triangleArea.div(tf.norm(wallPointEnd.sub(wallPointStart), 'euclidean', 1));
+    let _indicesList = []; 
     let wallIndex;
+    let secWallIndex; // the second nearest wall index; 
     let innerProducts = tf.sum((wallPointStart.sub(p3)).mul(wallPointStart.sub(wallPointEnd)), axis=1).arraySync();
     let wallIndices = tf.topk(wallDistances, wallDistances.shape[0], true).indices.arraySync().reverse();
     a_square = a_square.arraySync();
     for(let i = 0; i < wallIndices.length; i++){
         let wi = wallIndices[i];
         if( 0 <= innerProducts[wi] && innerProducts[wi] <= a_square[wi]){
-            wallIndex = wi;
-            break;
+            _indicesList.push(wi);
+            // wallIndex = wi;
+            if (_indicesList.length >= 2) break;
         }
     }
+    wallIndex = _indicesList[0];
+    secWallIndex = _indicesList[1]; 
     // let wallIndex = tf.argMin(wallDistances).arraySync();
     let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
+    let secMinDis = wallDistances.slice([secWallIndex], [1]); // the distance w.r.t the second nearest wall; 
     let vecSub;
+    let secVecSub; 
     if(ado.tensor.shape[0] !== 0){
         vecSub = tf.abs(tf.transpose(tf.transpose(ado.tensor).slice([2], [1])).sub(minDis)).reshape([-1]);
+        secVecSub = tf.transpose(tf.transpose(ado.tensor).slice([6], [1])).reshape([-1]); 
     }else{
         return;
     }
+    // filter out priors exceed the second nearest wall; 
+    vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
     let index = tf.argMin(vecSub).arraySync();
     // if the 'minimal distance sub' is still high, results in next level; 
-    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.5){
+    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.45){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
         return;
     }
