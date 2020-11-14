@@ -83,6 +83,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
 };
 
 const door_mageAdd_set = []; 
+const window_factor = 0.5; 
 const _addDoor_mageAdd = (doorMeta) => {
     let worldBbox = doorMeta.bbox; 
     let _minIndex = tf.argMin([
@@ -91,21 +92,39 @@ const _addDoor_mageAdd = (doorMeta) => {
         worldBbox.max[2] - worldBbox.min[2]
     ]).arraySync(); 
     let scale = [1,1,1]; scale[_minIndex] = 6; 
+    if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window'){
+        scale[1] *= (1.0 - window_factor); 
+    }
     let geometry = new THREE.BoxGeometry( 
         (worldBbox.max[0] - worldBbox.min[0]) * scale[0], 
         (worldBbox.max[1] - worldBbox.min[1]) * scale[1], 
         (worldBbox.max[2] - worldBbox.min[2]) * scale[2]
     ); 
+    // bounding box should be computed before transformations; 
     geometry.computeBoundingBox();
-    let material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+    let material;
+    if(doorMeta.coarseSemantic === 'Door' || doorMeta.coarseSemantic === 'door')
+        {material = new THREE.MeshBasicMaterial({color: 0x00ff00});}
+    else if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window')
+        {material = new THREE.MeshBasicMaterial({color: 0x87ceeb});}
+    else{material = new THREE.MeshBasicMaterial({color: 0xeeeeee});}
     material.transparent = true;
     material.opacity = 0.5
     let cube = new THREE.Mesh( geometry, material );
-    cube.position.set(
-        (worldBbox.max[0] + worldBbox.min[0]) / 2,
-        (worldBbox.max[1] + worldBbox.min[1]) / 2,
-        (worldBbox.max[2] + worldBbox.min[2]) / 2
-    ); 
+    if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window'){
+        cube.position.set(
+            (worldBbox.max[0] + worldBbox.min[0]) / 2,
+            (window_factor/2) * (worldBbox.max[1] - worldBbox.min[1]) + (worldBbox.max[1] + worldBbox.min[1]) / 2,
+            (worldBbox.max[2] + worldBbox.min[2]) / 2
+        ); 
+    }else{
+        cube.position.set(
+            (worldBbox.max[0] + worldBbox.min[0]) / 2,
+            (worldBbox.max[1] + worldBbox.min[1]) / 2,
+            (worldBbox.max[2] + worldBbox.min[2]) / 2
+        ); 
+    }
+    
     cube.name = doorMeta.modelId; 
     door_mageAdd_set.push(cube);
     scene.add(cube); 
@@ -121,6 +140,8 @@ const _refresh_mageAdd_wall = (json) => {
             if(!'coarseSemantic' in meta) return; 
             if(meta.coarseSemantic === 'Door' || meta.coarseSemantic === 'door'){
                 _addDoor_mageAdd(meta); 
+            }else if(meta.coarseSemantic === 'Window' || meta.coarseSemantic === 'widow'){
+                _addDoor_mageAdd(meta);
             }
         })
     })
@@ -137,8 +158,8 @@ function detectCollisionCubes(object1, object2){
     box1.applyMatrix4(object1.matrixWorld);
     let box2 = object2.geometry.boundingBox.clone();
     box2.applyMatrix4(object2.matrixWorld);
-    box1.expandByScalar(-0.03);
-    box2.expandByScalar(-0.03);
+    box1.expandByScalar(-0.04);
+    box2.expandByScalar(-0.04);
     return box1.intersectsBox(box2);
 }
 
