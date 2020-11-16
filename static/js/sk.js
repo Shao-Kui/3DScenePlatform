@@ -58,7 +58,8 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         "roomId": currentRoomId,
         "rotate": transform.rotate,
         "orient": transform.rotate[1], 
-        "key": THREE.Math.generateUUID()
+        "key": THREE.Math.generateUUID(),
+        "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
     let object3d = objectCache[modelId].clone();
     object3d.name = undefined;
@@ -109,7 +110,7 @@ const _addDoor_mageAdd = (doorMeta) => {
         {material = new THREE.MeshBasicMaterial({color: 0x87ceeb});}
     else{material = new THREE.MeshBasicMaterial({color: 0xeeeeee});}
     material.transparent = true;
-    material.opacity = 0.5
+    material.opacity = 0.0
     let cube = new THREE.Mesh( geometry, material );
     if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window'){
         cube.position.set(
@@ -124,7 +125,6 @@ const _addDoor_mageAdd = (doorMeta) => {
             (worldBbox.max[2] + worldBbox.min[2]) / 2
         ); 
     }
-    
     cube.name = doorMeta.modelId; 
     door_mageAdd_set.push(cube);
     scene.add(cube); 
@@ -150,7 +150,7 @@ const _refresh_mageAdd_wall = (json) => {
 // the following function is modified from: https://discourse.threejs.org/t/collisions-two-objects/4125/3
 function detectCollisionCubes(object1, object2){
     if(object1.geometry === undefined || object2.geometry === undefined) return false;
-    // object1.geometry.computeBoundingBox(); //not needed if its already calculated
+    // object1.geometry.computeBoundingBox(); //not needed if its already calculated; 
     // object2.geometry.computeBoundingBox();
     // object1.updateMatrixWorld();
     // object2.updateMatrixWorld();
@@ -443,8 +443,8 @@ var onClickObj = function (event) {
         let auxiliaryObj = scene.getObjectByName(AUXILIARY_NAME);
         if(!auxiliaryObj) return;
         addObjectFromCache(
-            scene.getObjectByName(AUXILIARY_NAME).userData.modelId,
-            {
+            modelId=scene.getObjectByName(AUXILIARY_NAME).userData.modelId,
+            transform={
                 'translate': [auxiliaryObj.position.x, auxiliaryObj.position.y, auxiliaryObj.position.z], 
                 'rotate': [auxiliaryObj.rotation.x, auxiliaryObj.rotation.y, auxiliaryObj.rotation.z],
                 'scale': [auxiliaryObj.scale.x, auxiliaryObj.scale.y, auxiliaryObj.scale.z]
@@ -465,7 +465,7 @@ var onClickObj = function (event) {
     }
 };
 
-function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
+function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
     if(objectCache[objname] === undefined){
         return;
     }
@@ -506,6 +506,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0]){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME));
         scene.add(objectCache[objname]);
     }
+    objectCache[objname].userData.mageAddDerive = mageAddDerive; 
 }
 
 function auxiliaryCG(theIntersects){
@@ -555,7 +556,7 @@ function auxiliaryCG(theIntersects){
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
     let index = tf.argMin(vecSub).arraySync();
     // if the 'minimal distance sub' is still high, results in next level; 
-    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.48){
+    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.5){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
         return;
     }
@@ -588,7 +589,6 @@ function auxiliaryMove(){
         let eucNorm = tf.norm(vecSub, 'euclidean', 1);
         let index = tf.argMin(eucNorm).arraySync();
         let eucDis = eucNorm.slice([index], [1]).arraySync();
-        // console.log(`index: ${index}, dis: ${eucDis}, mouse: ${mouse.x}.`);
         let objname = auxiliaryPrior.index[index];
         let theprior = auxiliaryPrior.prior[index];
         if(eucDis >= 0.5){
@@ -599,7 +599,9 @@ function auxiliaryMove(){
             }
             return;
         }
-        realTimeObjCache(objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3]);
+        realTimeObjCache(
+            objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+            mageAddDerive=`${auxiliaryPrior.belonging[index]}-${objname}`);
     }
 }
 
@@ -688,6 +690,19 @@ var saveFile = function (strData, filename) {
     }
 }
 
+const render_function = function(){
+    var imgData;
+    try {
+        var strMime = "image/jpeg";
+        imgData = renderer.domElement.toDataURL(strMime);
+        saveFile(imgData.replace(strMime, "image/octet-stream"), 
+        `${manager.renderManager.scene_json.origin}-${manager.renderManager.scene_json.id}.jpg`);
+    } catch (e) {
+        console.log(e);
+        return;
+    }
+}
+
 var temp;
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
@@ -720,18 +735,18 @@ var setting_up = function () {
         dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
         dlAnchorElem.click();
     });
-    $("#screenshot").click(function(){
-        var imgData;
-        try {
-            var strMime = "image/jpeg";
-            imgData = renderer.domElement.toDataURL(strMime);
-            saveFile(imgData.replace(strMime, "image/octet-stream"), 
-            `${manager.renderManager.scene_json.origin}-${manager.renderManager.scene_json.id}.jpg`);
-        } catch (e) {
-            console.log(e);
-            return;
+    $("#screenshot").click(render_function);
+    $("#axis_button").click(function(){
+        let theaxis = scene.getObjectByName('axeshelper');
+        if(theaxis === undefined){
+            let axis = new THREE.AxesHelper(1000);
+            axis.name = 'axeshelper'; 
+            scene.add(axis);
+        } 
+        else{
+            scene.remove(theaxis);
         }
-    });
+    })
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());

@@ -867,7 +867,13 @@ with open('./latentspace/roomTypeDemo.json') as f:
 with open('./dataset/objListCataAliv2.json') as f:
     objListCat = json.load(f)
 with open('./latentspace/pos-orient-4/categoryRelation.json') as f:
-    categoryRelation = json.load(f)
+    _categoryRelation = json.load(f)
+    categoryRelation = {}
+    for catdom in _categoryRelation:
+        if catdom not in categoryRelation:
+            categoryRelation[catdom] = {}
+        for sec in _categoryRelation[catdom]:
+            categoryRelation[catdom][sec['name']] = sec
 
 if __name__ == "__main__":
     # savefile = True

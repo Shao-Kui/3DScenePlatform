@@ -22,6 +22,9 @@ def priorTransform(p, translate, orient, scale):
     result[:, 3] += orient # transformations include orientations; 
     return result.tolist()
 
+def getobjCat(modelId):
+    return objCatList[modelId][0]
+
 @app_magic.route("/priors_of_roomShape", methods=['POST'])
 def priors_of_roomShape():
     rj = request.json
@@ -40,8 +43,8 @@ def priors_of_roomShape():
         for objname in rj['auxiliaryDomObj']['object']:
             if objCatList[objname][0] not in existingPendingCatList:
                 existingPendingCatList.append(objCatList[objname][0])
-    print(existingCatList)
-    print(existingPendingCatList)
+    # print(existingCatList)
+    # print(existingPendingCatList)
     res = {'object': [], 'prior': [], 'index': []}
     # load and process room shapes; 
     room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
@@ -89,18 +92,30 @@ def priors_of_roomShape():
 if __name__ == "__main__":
     priors_of_roomShape()
 
+# process priors of secondary objects; 
 @app_magic.route("/priors_of_objlist", methods=['POST', 'GET'])
 def priors_of_objlist():
     if request.method == 'GET':
         return "Please refer to POST method for acquiring priors. "
     # indexIndicator = 0
     # 'existPair': ['i_dom-c_sec': 'i_sec']
-    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}}
+    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}, 'belonging': []}
     room_json = request.json
     if 'auxiliarySecObj' in room_json:
         aso = room_json['auxiliarySecObj']
     else:
         aso = res.copy()
+    # note that we currently do not consider a dominant object with two copies; 
+    instancePairCount = {}
+    for obj in room_json['objList']:
+        if 'mageAddDerive' not in obj:
+            continue
+        if obj['mageAddDerive'] == "":
+            continue
+        if obj['mageAddDerive'] not in instancePairCount:
+            instancePairCount[obj['mageAddDerive']] = 1
+        else:
+            instancePairCount[obj['mageAddDerive']] += 1
     for obj in room_json['objList']:
         if obj is None:
             continue
@@ -118,11 +133,17 @@ def priors_of_objlist():
                 objname = aso['existPair'][pairid]
             else:
                 objname = random.choice(objListCat[c_sec])
+            pairInsid = f'{obj["modelId"]}-{objname}'
             res['existPair'][pairid] = objname
             if objname not in res['object']:
                 res['object'].append(objname)
+            if pairInsid in instancePairCount and 'max' in categoryRelation[getobjCat(obj['modelId'])][c_sec]:
+                if instancePairCount[pairInsid] >= categoryRelation[getobjCat(obj['modelId'])][c_sec]['max']:
+                    continue
+            # the following priors are involved in real-time calculation; 
             res['prior'] += priorTransform(pri[c_sec], obj['translate'], obj['orient'], obj['scale'])
             res['index'] += np.full(len(pri[c_sec]), objname).tolist()
+            res['belonging'] += np.full(len(pri[c_sec]), obj["modelId"]).tolist()
         # for objname in pri:
         #     if objname not in res['object']:
         #         res['object'].append(objname)
@@ -130,6 +151,7 @@ def priors_of_objlist():
         #     res['index'] += np.full(len(pri[objname]), objname).tolist()
             # np.arange(indexIndicator, indexIndicator + len(pri[objname])).tolist()
             # indexIndicator = indexIndicator + len(pri[objname])
+    print(instancePairCount)
     return json.dumps(res)
 
 @app_magic.route("/magic_add", methods=['POST', 'GET'])

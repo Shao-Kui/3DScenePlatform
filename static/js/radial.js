@@ -52,6 +52,9 @@ var radial_remove_control = function (event) {
     manager.renderManager.scene_remove(userData => {
         return INTERSECT_OBJ.userData.key === userData.key;
     });
+    if(AUXILIARY_MODE){
+        auxiliaryMode();
+    }
     toggles();
 };
 

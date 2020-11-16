@@ -38,6 +38,7 @@ def set_response_headers(response):
 
 @app.route("/")
 def main():
+    print(request.remote_addr)
     return flask.send_from_directory("static", "index.html")
 
 @app.route("/static/<fname>")

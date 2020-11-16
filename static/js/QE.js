@@ -38,31 +38,45 @@ let topdownview = function(){
     orbitControls.update();
   }
 };
-var onKeyDown = function (event) {
-  if(event.target.matches("input")) return;
-  switch ( event.keyCode ) {
-      case 81: // Q
-          Q_DOWN = true;
-          break;
-      case 67: // C
-        orbitControls.enabled = !orbitControls.enabled;
-        scenecanvas.addEventListener('click', onClickObj);
-        break;
-      case 69: // E
-          E_DOWN = true;
-          break;
-      case 32: // white space
-        topdownview();
-        break;
-  }
+var onKeyDown = function(event){
+    if(event.target.matches("input")) return;
+    switch ( event.keyCode ) {
+        case 81: // Q
+            Q_DOWN = true;
+            break;
+        case 67: // C
+            orbitControls.enabled = !orbitControls.enabled;
+            scenecanvas.addEventListener('click', onClickObj);
+            break;
+        case 69: // E
+            E_DOWN = true;
+            break;
+        case 32: // white space
+            topdownview();
+            break;
+        case 85: // U
+            // start to record audio; 
+            reco.record();
+            break;
+        case 82: // R
+            render_function();
+            break;
+
+    }
 };
+
 var onKeyUp = function (event) {
-  switch ( event.keyCode ) {
-      case 81: // Q
-          Q_DOWN = false;
-          break;
-      case 69: // E
-          E_DOWN = false;
-          break;
+    switch ( event.keyCode ) {
+        case 81: // Q
+            Q_DOWN = false;
+            break;
+        case 69: // E
+            E_DOWN = false;
+            break;
+        case 85: // U
+            reco.stop();
+            audioToText();
+            break;
+          
   }
 };
