@@ -128,11 +128,20 @@ def priors_of_objlist():
         else:
             continue
         for c_sec in pri:
+            # e.g., Loveseat Sofa; 
+            if c_sec not in categoryRelation[getobjCat(obj['modelId'])]:
+                continue
             pairid = f'{obj["modelId"]}-{c_sec}'
             if pairid in aso['existPair']:
                 objname = aso['existPair'][pairid]
             else:
-                objname = random.choice(objListCat[c_sec])
+                if 'share' in categoryRelation[getobjCat(obj['modelId'])][c_sec]: 
+                    objname = random.choice(objListCat[
+                        random.choice(categoryRelation[getobjCat(obj['modelId'])][c_sec]['share'])
+                    ])
+                    # print(f'selected: {objname} of {getobjCat(objname)}')
+                else:
+                    objname = random.choice(objListCat[c_sec])
             pairInsid = f'{obj["modelId"]}-{objname}'
             res['existPair'][pairid] = objname
             if objname not in res['object']:
@@ -151,7 +160,7 @@ def priors_of_objlist():
         #     res['index'] += np.full(len(pri[objname]), objname).tolist()
             # np.arange(indexIndicator, indexIndicator + len(pri[objname])).tolist()
             # indexIndicator = indexIndicator + len(pri[objname])
-    print(instancePairCount)
+    # print(instancePairCount)
     return json.dumps(res)
 
 @app_magic.route("/magic_add", methods=['POST', 'GET'])

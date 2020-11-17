@@ -372,7 +372,11 @@ var onClickObj = function (event) {
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
-        console.log(`Current room ID: ${currentRoomId} of room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
+        console.log(`
+        Current room ID: ${currentRoomId} of 
+        room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
+        $('#tab_roomid').text(currentRoomId);
+        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     } else {
         currentRoomId = undefined;
     }
@@ -423,6 +427,8 @@ var onClickObj = function (event) {
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         console.log(INTERSECT_OBJ);
         console.log(INTERSECT_OBJ.userData);
+        $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
+        $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
         if (!isToggle) {
@@ -652,10 +658,12 @@ function onDocumentMouseMove(event) {
     updateMousePosition();
 };
 
-var onWindowResize = function() { //改用画布的height width
+var onWindowResize = function(){
+    $('#scenecanvas').width('100%'); 
+    $('#scenecanvas').height('100%'); 
     camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight);
+    renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight); 
 }
 
 var reshuffleRoom = function () {

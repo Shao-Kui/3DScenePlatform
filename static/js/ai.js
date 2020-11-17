@@ -78,6 +78,9 @@ let auxiliaryMode = function(){
   if(currentRoomId === undefined){
     return;
   }
+  manager.renderManager.scene_json.rooms[currentRoomId].objList = 
+  manager.renderManager.scene_json.rooms[currentRoomId].objList
+  .filter( item => item !== null && item !== undefined ); 
   auxiliaryRoom();
   $.ajax({
     type: "POST",

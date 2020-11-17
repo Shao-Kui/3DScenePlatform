@@ -11,6 +11,8 @@ This is the repository of the paper "Geometry-Based Layout Generation with Hyper
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to directly use a ready clone. 
 
+This platform is **NOT** aimming at photo-realistic illumination, though we are continously improving the rendering. Instead, we provide an interactive environment for visualizing and debugging algorithms or frameworks related to 3D scenes. 
+
 # Requirements
 Requirements are mainly for running the back-end including the algorithm. Dependencies at front-end are already included, but Chrome is still recommended. The server is easily run by ```python main.py```, if the following requirements are satisfied:  
 ```
@@ -126,7 +128,7 @@ root
   relayout.py
   projection2d.py
 ```
-**autolayout.py**: coherent grouping, prior loading, prior caching, setting up and bounding box generating, etc;  
+**autolayout.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
 **patternChain.py**: the code to dynamically check and generate hyper-relations;  
 **alutil.py** and **relayout.py**: geometric arranging;  
 **projection2d.py**: converting room meshes to polygons (room shape);  
@@ -134,6 +136,7 @@ root
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
 **MouseClick-Left**: Left-click has multiple behaviors in this platform. If clicking an objects in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. By another left-click, object is fixed at the user-wanted position and this routin is finished. If clicking a room, the platform with take the room as the current operational room, e.g., layout.  
+**ScenePanel**: The scene panel on the left shows meta-data of current scenes, rooms and objects, e.g., room types, object categories.  
 **MouseClick-LeftHold**: Left click and rotate the perspective camera for various views. The rotation (eulerangles) supports 'pitch' and 'yaw'.  
 **MouseClick-RightHold**: Right click and hold in the scene results in transiting the perspective camera.  
 **Space**: Automatically align the camera with respect to the selected room, and adjust the height of the camera.  
@@ -142,8 +145,8 @@ Our platform is split into two panel: operation & 3D scene. In operation panel, 
 **↓**: Camera moving down;  
 **←**: Camera moving left;  
 **→**: Camera moving right;  
-**Q**: Anti-clockwise rotating 'yaw' of the perspective camera;  
-**E**: Clockwise rotating 'yaw' of the perspective camera;  
+**Q**: Anti-clockwisely rotating 'yaw' of the perspective camera;  
+**E**: Clockwisely rotating 'yaw' of the perspective camera;  
 **C**: Disable/Enable the orbital controller. This is very useful if you wish to freeze your view, transform several objects and render, instead of mistakenly tuning views; 
 **R**: Shortcut for Rendering;   
 
@@ -155,6 +158,7 @@ This repo will also be continuously updated, with more functions, features and o
 ## Known Problems or Bugs
 
 * The `click` event of the scene canvas may be defunct of unknown reasons. 
+* The navigation of mini-map (Bottom-Left) is defunct currently. 
 
 # Acknowledgement
 This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). 

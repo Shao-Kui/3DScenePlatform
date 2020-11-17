@@ -402,6 +402,7 @@ class SceneManager {
                     "key": inst.key,
                     "roomId": inst.roomId,
                     "name": inst.modelId,
+                    "modelId": inst.modelId,
                     "coarseSemantic": inst.coarseSemantic
                 };
                 self.instanceKeyCache[inst.key] = instance;
@@ -518,6 +519,7 @@ class SceneController {
     }
 
     load_scene(json) {
+        $('#tab_origin').text(json.origin);
         this.renderManager.refresh_scene(json, true); 
         _refresh_mageAdd_wall(json); 
     }

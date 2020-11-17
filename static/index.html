@@ -16,7 +16,6 @@
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
-    <script src="/static/3rdparty/RayTracingRenderer.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
@@ -130,6 +129,26 @@
             <div class="card-header">
                 <h4 class="my-0 font-weight-normal">3D Scene Platform</h4>
             </div>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th scope="row">Level</th>
+                        <td colspan="3" id="tab_origin"> </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Room ID</th>
+                        <td id="tab_roomid"></td>
+                        <th>Room Type</th>
+                        <td id="tab_roomtype"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Model ID</th>
+                        <td id="tab_modelid"> </td>
+                        <th>Category</th>
+                        <td id="tab_category"> </td>
+                    </tr>
+                </tbody>
+            </table>
             <div class="card-body">
                 <button id="text_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
                 <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch
