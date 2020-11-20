@@ -39,7 +39,9 @@ class SceneManager {
         this.objectInfoCache = {};
         this.instanceKeyCache = {};
         this.latentNameCache = {};
-        this.cwfCache = [];
+        this.cwfCache = []; 
+        this.fCache = []; 
+        this.wfCache = []; 
         this.init_canvas();
     }
 
@@ -131,6 +133,8 @@ class SceneManager {
 
     refresh_wall_and_floor = () => {
         this.cwfCache = [];
+        this.fCache = []; 
+        this.wfCache = []; 
         var self = this;
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
@@ -167,20 +171,24 @@ class SceneManager {
             instance.name = meta;
             traverseObjSetting(instance);
             self.scene.add(instance);
-            if(suffix === 'w'){
-                instance.traverse(function(child){
-                    if(child instanceof THREE.Mesh){
-                        child.material.color.setHex(0xFFFFFF);
-                    }
-                });
-            }
-            if (suffix === 'f') {
+            if(suffix === 'f'){
                 instance.traverse(function(child){
                     if(child instanceof THREE.Mesh){
                         child.material.color.setHex(0x8899AA);
                     }
                 });
                 self.cwfCache.push(instance);
+                self.fCache.push(instance);
+                self.wfCache.push(instance);
+            }
+            if(suffix === 'w'){
+                instance.traverse(function(child){
+                    if(child instanceof THREE.Mesh){
+                        child.material.color.setHex(0x8899AA);
+                    }
+                });
+                self.cwfCache.push(instance);
+                self.wfCache.push(instance);
             }
         }, null, null, null, false);
     }

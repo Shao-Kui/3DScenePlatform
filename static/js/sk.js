@@ -1,6 +1,6 @@
 var objectCache = {}
 var textureOpacityMapping = {}
-let loadObjectToCache = function(modelId){
+let loadObjectToCache = async function(modelId){
     if(modelId in objectCache){
         return;
     }
@@ -8,16 +8,16 @@ let loadObjectToCache = function(modelId){
     let meshurl = `/mesh/${modelId}`;
     var objLoader = new THREE.OBJLoader2();
     objLoader.loadMtl(mtlurl, null, function (materials) {
-        console.log('materials! ', materials)
         Object.keys(materials).forEach(mtrname => {
             let mtr = materials[mtrname];
             let newmtr_lowopa = mtr.clone();
-            console.log(newmtr_lowopa);
             newmtr_lowopa.transparent = true;
             newmtr_lowopa.opacity = 0.6;
             mtr.newmtr_lowopa = newmtr_lowopa;
             newmtr_lowopa.origin_mtr = mtr;
-        })
+            mtr.origin_mtr = mtr;
+        });
+        console.log(materials);
         objLoader.setModelName(modelId);
         objLoader.setMaterials(materials);
         objLoader.load(meshurl, function (event) {
@@ -38,7 +38,7 @@ let loadObjectToCache = function(modelId){
                 instance.geometry.computeBoundingBox();
             }
             instance.children.forEach(child => {
-                child.material = child.material.newmtr_lowopa;
+                if(child.material.newmtr_lowopa !== undefined) child.material = child.material.newmtr_lowopa;
                 if('geometry' in child){
                     child.geometry.computeBoundingBox();
                 }
@@ -158,8 +158,8 @@ function detectCollisionCubes(object1, object2){
     box1.applyMatrix4(object1.matrixWorld);
     let box2 = object2.geometry.boundingBox.clone();
     box2.applyMatrix4(object2.matrixWorld);
-    box1.expandByScalar(-0.04);
-    box2.expandByScalar(-0.04);
+    box1.expandByScalar(-0.06);
+    box2.expandByScalar(-0.06);
     return box1.intersectsBox(box2);
 }
 
@@ -419,6 +419,23 @@ var onClickObj = function (event) {
             return;
         }
     }
+
+    if(scene.getObjectByName(AUXILIARY_NAME)){
+        let auxiliaryObj = scene.getObjectByName(AUXILIARY_NAME);
+        if(!auxiliaryObj) return;
+        addObjectFromCache(
+            modelId=scene.getObjectByName(AUXILIARY_NAME).userData.modelId,
+            transform={
+                'translate': [auxiliaryObj.position.x, auxiliaryObj.position.y, auxiliaryObj.position.z], 
+                'rotate': [auxiliaryObj.rotation.x, auxiliaryObj.rotation.y, auxiliaryObj.rotation.z],
+                'scale': [auxiliaryObj.scale.x, auxiliaryObj.scale.y, auxiliaryObj.scale.z]
+            }
+        );
+        auxiliaryMode();
+        return; 
+    }
+
+    // intersect objects; 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
@@ -443,20 +460,6 @@ var onClickObj = function (event) {
             radial.toggle();
             isToggle = !isToggle;
         }
-    }
-
-    if(AUXILIARY_MODE){
-        let auxiliaryObj = scene.getObjectByName(AUXILIARY_NAME);
-        if(!auxiliaryObj) return;
-        addObjectFromCache(
-            modelId=scene.getObjectByName(AUXILIARY_NAME).userData.modelId,
-            transform={
-                'translate': [auxiliaryObj.position.x, auxiliaryObj.position.y, auxiliaryObj.position.z], 
-                'rotate': [auxiliaryObj.rotation.x, auxiliaryObj.rotation.y, auxiliaryObj.rotation.z],
-                'scale': [auxiliaryObj.scale.x, auxiliaryObj.scale.y, auxiliaryObj.scale.z]
-            }
-        );
-        auxiliaryMode();
     }
 
     if (latent_space_mode == true && INTERSECT_OBJ) {
@@ -485,6 +488,10 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
         let obj = olist[i];
         if(obj === undefined || obj === null) continue;
         if(!'key' in obj) continue;
+        if(mageAddDerive!==""){
+            let domName = mageAddDerive.split('-')[0]; 
+            if(domName === obj.modelId) continue; 
+        }
         let objmesh = manager.renderManager.instanceKeyCache[obj.key];
         if(detectCollisionGroups(objectCache[objname], objmesh)){
             scene.remove(scene.getObjectByName(AUXILIARY_NAME));
@@ -512,6 +519,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
         scene.remove(scene.getObjectByName(AUXILIARY_NAME));
         scene.add(objectCache[objname]);
     }
+    if(objname === '216') console.log(objectCache[objname])
     objectCache[objname].userData.mageAddDerive = mageAddDerive; 
 }
 
@@ -578,7 +586,7 @@ function auxiliaryCG(theIntersects){
 function auxiliaryMove(){
     // this may require a systematic optimization, since objList can be reduced to a single room; 
     let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
-    .concat(Object.values(manager.renderManager.cwfCache));
+    .concat(Object.values(manager.renderManager.fCache));
     updateMousePosition();
     intersects = raycaster.intersectObjects(intersectObjList, true);
     if (intersectObjList.length > 0 && intersects.length > 0) {
@@ -600,13 +608,14 @@ function auxiliaryMove(){
         if(eucDis >= 0.5){
             scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
             // if the intersection occurs at the floor, try suggest coherent groups; 
-            if(manager.renderManager.cwfCache.includes(intersects[0].object.parent)){
+            if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
                 auxiliaryCG(intersects[0]);
             }
             return;
         }
         realTimeObjCache(
-            objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+            // objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+            objname, intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
             mageAddDerive=`${auxiliaryPrior.belonging[index]}-${objname}`);
     }
 }

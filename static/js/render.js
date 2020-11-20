@@ -26,9 +26,6 @@ var spotLight = new THREE.SpotLight( 0xffffff, 6);
 var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 9.3);
 
 var render_initialization = function () {
-    // var axis = new THREE.AxesHelper(1000);
-    // scene.add(axis);
-
     //enabling shadow casting
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -62,8 +59,8 @@ var render_initialization = function () {
     spotLight.shadow.mapSize.height = 4096;
     spotLight.shadow.camera.near = 0.01;
     spotLight.shadow.camera.far = 1000;
-    scene.add( spotLight );
-    scene.add( spotLight.target );
+    // scene.add( spotLight );
+    // scene.add( spotLight.target );
 
     // add HemisphereLight
     let hlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 2.4 );
