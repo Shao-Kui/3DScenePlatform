@@ -55,7 +55,23 @@ var auxiliary_control = function(){
   }
 }
 
-let auxiliaryRoom = function(){
+let auxiliaryLoadWall = async function(){
+  $.ajax({
+    type: "POST",
+    contentType: "application/json; charset=utf-8",
+    url: "/priors_of_wall",
+    data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+    success: function (data) {
+      data = JSON.parse(data);
+      manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryWallObj = data;
+      data.object.forEach(o => {
+        loadObjectToCache(o);
+      })
+    }
+  });
+}
+
+let auxiliaryRoom = async function(){
     $.ajax({
       type: "POST",
       contentType: "application/json; charset=utf-8",
@@ -74,7 +90,7 @@ let auxiliaryRoom = function(){
 }
 
 let auxiliaryPrior;
-let auxiliaryMode = function(){
+let auxiliaryMode = async function(){
   if(currentRoomId === undefined){
     return;
   }
@@ -82,6 +98,7 @@ let auxiliaryMode = function(){
   manager.renderManager.scene_json.rooms[currentRoomId].objList
   .filter( item => item !== null && item !== undefined ); 
   auxiliaryRoom();
+  auxiliaryLoadWall();
   $.ajax({
     type: "POST",
     contentType: "application/json; charset=utf-8",

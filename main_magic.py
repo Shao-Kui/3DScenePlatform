@@ -5,7 +5,7 @@ import json
 import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat, categoryRelation
+from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation
 
 app_magic = Blueprint('app_magic', __name__)
 
@@ -24,6 +24,40 @@ def priorTransform(p, translate, orient, scale):
 
 def getobjCat(modelId):
     return objCatList[modelId][0]
+
+@app_magic.route("/priors_of_wall", methods=['POST'])
+def priors_of_wall():
+    rj = request.json
+    res = {}
+    res['object'] = []
+    res['mapping'] = {}
+    if 'auxiliaryWallObj' in rj:
+        res_prev = rj['auxiliaryWallObj']
+        res['emptyChoice'] = res_prev['emptyChoice']
+    else:
+        res_prev = res.copy()
+        res['emptyChoice'] = '781'
+        res['object'].append(res['emptyChoice'])
+    for obj in rj['objList']:
+        if 'key' not in obj:
+            continue
+        if obj['key'] in res_prev['mapping']:
+            res['mapping'][obj['key']] = res_prev['mapping'][obj['key']]
+            continue
+        _mageAddW = wallRelation[getobjCat(obj['modelId'])]['_mageAddWall']
+        if len(_mageAddW) == 0:
+            res['mapping'][obj['key']] = 'null'
+            continue
+        else:
+            res['mapping'][obj['key']] = random.choice(objListCat[random.choice(_mageAddW)])
+    # filling objects to be loaded to the front-end; 
+    for thekey in res['mapping']:
+        if res['mapping'][thekey] not in res['object']:
+            if res['mapping'][thekey] == 'null':
+                continue
+            res['object'].append(res['mapping'][thekey])
+    print(res)
+    return json.dumps(res)
 
 @app_magic.route("/priors_of_roomShape", methods=['POST'])
 def priors_of_roomShape():
@@ -54,6 +88,7 @@ def priors_of_roomShape():
     normals = rv[:, [1,0]]
     normals[:, 1] = -normals[:, 1]
     res['room_orient'] = np.arctan2(normals[:, 0], normals[:, 1]).tolist()
+    res['room_oriNormal'] = normals.tolist()
     # room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
     # currently, we hack few available coherent groups...
     roomTypeSuggestedList = []
@@ -77,7 +112,6 @@ def priors_of_roomShape():
             # if the specific instance is already in the room;
             if objCatList[objname][0] in existingCatList: 
                 res['object'].remove(objname)
-    print(res['object'])
     # if('MasterBedroom' in rj['roomTypes']):
     #     res['object'] += ['5650', '5010', '8547', '6568', '8127']
 

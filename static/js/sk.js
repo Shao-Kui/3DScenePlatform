@@ -1,4 +1,4 @@
-var objectCache = {}
+const objectCache = {}
 var textureOpacityMapping = {}
 let loadObjectToCache = async function(modelId){
     if(modelId in objectCache){
@@ -17,7 +17,6 @@ let loadObjectToCache = async function(modelId){
             newmtr_lowopa.origin_mtr = mtr;
             mtr.origin_mtr = mtr;
         });
-        console.log(materials);
         objLoader.setModelName(modelId);
         objLoader.setMaterials(materials);
         objLoader.load(meshurl, function (event) {
@@ -210,17 +209,15 @@ const detectCollisionWall = function(wallMeta, object){
     return false;
 }
 
-var gameLoop = function () {
+const gameLoop = function () {
     render_update();
     orth_view_port_update();
     keyboard_update();
-
     camera.updateMatrixWorld();
     manager.renderManager.orthcamera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, camera);
     renderer.render(scene, camera);
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
-
     requestAnimationFrame(gameLoop);
 };
 
@@ -302,11 +299,6 @@ var clickCatalogItem = function (e) {
     if (!manager.renderManager.scene_json) {
         return;
     }
-    //check if auto insert mode is on
-    // if (Auto_Insert_Mode) {
-    //     mage_auto_insert(e);
-    //     return;
-    // }
     On_ADD = true;
     scenecanvas.style.cursor = "crosshair";
     INSERT_OBJ = {
@@ -422,9 +414,18 @@ var onClickObj = function (event) {
 
     if(scene.getObjectByName(AUXILIARY_NAME)){
         let auxiliaryObj = scene.getObjectByName(AUXILIARY_NAME);
-        if(!auxiliaryObj) return;
+        let awo = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryWallObj;
+        if(!auxiliaryObj || !awo) return;
+        let ao = scene.getObjectByName(AUXILIARY_NAME)
+        if(ao.userData.mageAddDerive !== "" && ao.userData.mageAddDerive){
+            mad = ao.userData.mageAddDerive.split(' '); 
+            if(mad[0] === 'wall'){
+                if(mad[1] === 'empty') {awo.emptyChoice = 'null';}
+                else{awo.mapping[mad[1]] = 'null';}
+            }
+        }
         addObjectFromCache(
-            modelId=scene.getObjectByName(AUXILIARY_NAME).userData.modelId,
+            modelId=ao.userData.modelId,
             transform={
                 'translate': [auxiliaryObj.position.x, auxiliaryObj.position.y, auxiliaryObj.position.z], 
                 'rotate': [auxiliaryObj.rotation.x, auxiliaryObj.rotation.y, auxiliaryObj.rotation.z],
@@ -440,10 +441,8 @@ var onClickObj = function (event) {
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
-        console.log(intersects);
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         console.log(INTERSECT_OBJ);
-        console.log(INTERSECT_OBJ.userData);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
         menu.style.left = (event.clientX - 63) + "px";
@@ -508,9 +507,11 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
     }
     // detecting collisions between the pending objects and the wall: 
     let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
-    if(detectCollisionWall(wallMeta, objectCache[objname])){
-        scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
-        return; 
+    if(mageAddDerive.split(' ')[0] !== 'wall'){
+        if(detectCollisionWall(wallMeta, objectCache[objname])){
+            scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
+            return; 
+        }
     }
     if(!scene.getObjectByName(AUXILIARY_NAME)){
         scene.add(objectCache[objname]);
@@ -519,29 +520,89 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
         scene.remove(scene.getObjectByName(AUXILIARY_NAME));
         scene.add(objectCache[objname]);
     }
-    if(objname === '216') console.log(objectCache[objname])
     objectCache[objname].userData.mageAddDerive = mageAddDerive; 
 }
 
-function auxiliaryCG(theIntersects){
-    // find the nearest distance to the nearest wall; ( np.abs(np.cross(p2-p1, p1-p3)) / norm(p2-p1) )
+const auxiliaryWall = function(theIntersect){
+    // find the nearest wall first; 
+    let awo = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryWallObj;
     let ado = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj;
-    if(ado === undefined)
+    if(ado === undefined || awo === undefined)
         return;
+    // if(awo === undefined)
+    //     return;
+    let ftnw = findTheNearestWall(theIntersect); 
+    let wallDistances = ftnw[1]; 
+    wallIndex = ftnw[0][0]; 
+    secWallIndex = ftnw[0][1]; 
+    let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
+    let secMinDis = wallDistances.slice([secWallIndex], [1]).arraySync(); // the distance w.r.t the second nearest wall; 
+    // find object satisfying the beam distance; 
+    let beamObjList = []; 
+    let oList = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
+    let line = new THREE.Line3(); // create once and reuse
+    let B = theIntersect.point.clone().add(new THREE.Vector3(ado.room_oriNormal[wallIndex][0], 0, ado.room_oriNormal[wallIndex][1])); 
+    line.set(theIntersect.point, B);
+    let C = new THREE.Vector3();
+    for(let i = 0; i < oList.length; i++){
+        let obj = oList[i];
+        if(obj === undefined || obj === null) continue;
+        if(!'key' in obj) continue;
+        let objmesh = manager.renderManager.instanceKeyCache[obj.key];
+        if(objmesh === undefined) continue; 
+        let pos = objmesh.position.clone(); 
+        pos.y = theIntersect.point.y;
+        line.closestPointToPoint(pos, false, C); 
+        let clamp = line.closestPointToPointParameter(objmesh.position, true); 
+        let beamDis = pos.distanceTo(C);
+        if(beamDis <= 0.1 && clamp > 0.0) beamObjList.push(objmesh); 
+    }
+    // find the nearest object among the 'beamObjList'; 
+    let ascription; 
+    let minBeanEucDIs = Infinity;
+    let objname;
+    let _fromWhere;  
+    if(beamObjList.length === 0){
+        objname = awo.emptyChoice;
+        _fromWhere = 'empty'; 
+    }
+    else{
+        for(let i = 0; i < beamObjList.length; i++){
+            let objmesh = beamObjList[i]; 
+            let dis = objmesh.position.clone().sub(theIntersect.point).length(); 
+            if(dis < minBeanEucDIs){
+                minBeanEucDIs = dis; 
+                ascription = objmesh; 
+            }
+        }
+        objname = awo.mapping[ascription.userData.key]; 
+        _fromWhere = ascription.userData.key; 
+    }
+    if(objname === undefined || !objname in objectCache || objname === 'null'){scene.remove(scene.getObjectByName(AUXILIARY_NAME));return;}
+    if(objectCache[objname].coarseAABB.max.x > secMinDis){
+        scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+        return; 
+    }; 
+    realTimeObjCache(objname, // object name
+        theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, // x, y, z
+        ado.room_orient[wallIndex], // theta
+        [1, 1, 1], // scale
+        `wall ${_fromWhere}`
+    );
+};
+
+const findTheNearestWall = function(theIntersect){
     let wallPointStart = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor;
     let wallPointEnd = tf.concat([wallPointStart.slice([1], [wallPointStart.shape[0]-1]), wallPointStart.slice([0], [1])])
-    
-    let p3 = tf.tensor([theIntersects.point.x, theIntersects.point.z]);
+    let p3 = tf.tensor([theIntersect.point.x, theIntersect.point.z]);
     let a_square = tf.sum(tf.square(wallPointEnd.sub(wallPointStart)), axis=1);
     let b_square = tf.sum(tf.square(wallPointEnd.sub(p3)), axis=1);
     let c_square = tf.sum(tf.square(wallPointStart.sub(p3)), axis=1);
     let siafangbfang = a_square.mul(b_square).mul(4);
     let apbmcfang = tf.square(a_square.add(b_square).sub(c_square));
-    let triangleArea = tf.sqrt(siafangbfang.sub(apbmcfang)).mul(0.5); // this is twice the area; 
+    let triangleArea = tf.sqrt(tf.relu(siafangbfang.sub(apbmcfang))).mul(0.5); // this is twice the area; 
     let wallDistances = triangleArea.div(tf.norm(wallPointEnd.sub(wallPointStart), 'euclidean', 1));
     let _indicesList = []; 
-    let wallIndex;
-    let secWallIndex; // the second nearest wall index; 
     let innerProducts = tf.sum((wallPointStart.sub(p3)).mul(wallPointStart.sub(wallPointEnd)), axis=1).arraySync();
     let wallIndices = tf.topk(wallDistances, wallDistances.shape[0], true).indices.arraySync().reverse();
     a_square = a_square.arraySync();
@@ -553,8 +614,20 @@ function auxiliaryCG(theIntersects){
             if (_indicesList.length >= 2) break;
         }
     }
-    wallIndex = _indicesList[0];
-    secWallIndex = _indicesList[1]; 
+    return [_indicesList, wallDistances]; 
+}
+
+function auxiliaryCG(theIntersect){
+    // find the nearest distance to the nearest wall; ( np.abs(np.cross(p2-p1, p1-p3)) / norm(p2-p1) )
+    let ado = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj;
+    if(ado === undefined)
+        return;
+    let wallIndex;
+    let secWallIndex; // the second nearest wall index; 
+    let ftnw = findTheNearestWall(theIntersect); 
+    let wallDistances = ftnw[1];
+    wallIndex = ftnw[0][0];
+    secWallIndex = ftnw[0][1]; 
     // let wallIndex = tf.argMin(wallDistances).arraySync();
     let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
     let secMinDis = wallDistances.slice([secWallIndex], [1]); // the distance w.r.t the second nearest wall; 
@@ -577,17 +650,23 @@ function auxiliaryCG(theIntersects){
     let objname = ado.index[index];
     let theprior = ado.prior[index];
     realTimeObjCache(objname, // object name
-        theIntersects.point.x, 0, theIntersects.point.z, // x, y, z
+        theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
         ado.room_orient[wallIndex] + theprior[1], // theta
-        [theprior[3], theprior[4], theprior[5]]
+        [theprior[3], theprior[4], theprior[5]] // scale
     );
 }
 
 function auxiliaryMove(){
-    // this may require a systematic optimization, since objList can be reduced to a single room; 
+    updateMousePosition();
+    // first checking if the intersected point is shooted on the wall; 
+    let wallIntersects = raycaster.intersectObjects(manager.renderManager.wCache, true); 
+    if (wallIntersects.length > 0){
+        auxiliaryWall(wallIntersects[0]); 
+        return; 
+    }
+    // this may require a systematic optimization, since objList can be reduced to a single room;
     let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
     .concat(Object.values(manager.renderManager.fCache));
-    updateMousePosition();
     intersects = raycaster.intersectObjects(intersectObjList, true);
     if (intersectObjList.length > 0 && intersects.length > 0) {
         let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
@@ -717,6 +796,16 @@ const render_function = function(){
     } catch (e) {
         console.log(e);
         return;
+    }
+}
+
+const removeIntersectObject = function(){
+    let roomId = INTERSECT_OBJ.userData.roomId;
+    delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(INTERSECT_OBJ)];
+    delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
+    scene.remove(INTERSECT_OBJ)
+    if(AUXILIARY_MODE){
+        auxiliaryMode();
     }
 }
 

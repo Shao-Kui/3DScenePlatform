@@ -866,14 +866,20 @@ with open('./latentspace/roomTypeDemo.json') as f:
     roomTypeDemo = json.load(f)
 with open('./dataset/objListCataAliv2.json') as f:
     objListCat = json.load(f)
+# with open('./latentspace/pos-orient-4/categoryRelation-origin.json') as f:
+#     _categoryRelation = json.load(f)
+#     categoryRelation = {}
+#     for catdom in _categoryRelation:
+#         if catdom not in categoryRelation:
+#             categoryRelation[catdom] = {}
+#         categoryRelation[catdom]['_mageAddWall'] = []
+#         for sec in _categoryRelation[catdom]:
+#             categoryRelation[catdom][sec['name']] = sec
 with open('./latentspace/pos-orient-4/categoryRelation.json') as f:
-    _categoryRelation = json.load(f)
-    categoryRelation = {}
-    for catdom in _categoryRelation:
-        if catdom not in categoryRelation:
-            categoryRelation[catdom] = {}
-        for sec in _categoryRelation[catdom]:
-            categoryRelation[catdom][sec['name']] = sec
+    categoryRelation = json.load(f)
+with open('./latentspace/pos-orient-4/wallRelation.json') as f:
+    wallRelation = json.load(f)
+
 
 if __name__ == "__main__":
     # savefile = True

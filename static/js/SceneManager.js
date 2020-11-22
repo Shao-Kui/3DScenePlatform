@@ -42,6 +42,7 @@ class SceneManager {
         this.cwfCache = []; 
         this.fCache = []; 
         this.wfCache = []; 
+        this.wCache = []; 
         this.init_canvas();
     }
 
@@ -135,6 +136,7 @@ class SceneManager {
         this.cwfCache = [];
         this.fCache = []; 
         this.wfCache = []; 
+        this.wCache = []; 
         var self = this;
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
@@ -189,6 +191,7 @@ class SceneManager {
                 });
                 self.cwfCache.push(instance);
                 self.wfCache.push(instance);
+                self.wCache.push(instance); 
             }
         }, null, null, null, false);
     }
