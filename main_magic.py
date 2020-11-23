@@ -25,12 +25,51 @@ def priorTransform(p, translate, orient, scale):
 def getobjCat(modelId):
     return objCatList[modelId][0]
 
+SWAP_RESTART = True
+@app_magic.route("/mageAddSwapInstance", methods=['POST'])
+def mageAddSwapInstance():
+    insname = request.json['insname']
+    existList = request.json['existList']
+    inscat = getobjCat(insname)
+    # a special mechanism for wall objects and categories with only one object;  
+    if(len(objListCat[inscat]) <= 1):
+        wallalternative = ["313", "781", "124", "633"]
+        newinsname = insname
+        if insname in wallalternative:
+            while newinsname == insname:
+                newinsname = random.choice(wallalternative) 
+        return newinsname
+    # the following algorithm alleviate both IO and user satisfaction; 
+    insindex = existList.index(insname)
+    while insindex < len(existList):
+        existi = existList[insindex]
+        insindex += 1
+        if inscat == getobjCat(existi) and insname != existi:
+            return existi
+    # if being executed till then, means we do not find another newinsname; 
+    global SWAP_RESTART
+    if SWAP_RESTART:
+        for existi in existList:
+            if inscat == getobjCat(existi) and insname != existi:
+                SWAP_RESTART = not SWAP_RESTART
+                return existi 
+    else:
+        newinsname = random.choice(objListCat[inscat])
+        while newinsname == insname:
+            newinsname = random.choice(objListCat[inscat])
+        SWAP_RESTART = not SWAP_RESTART
+        return newinsname
+    # if being executed till then, means we still dont find another newinsname; 
+    newinsname = random.choice(objListCat[inscat])
+    while newinsname == insname:
+        newinsname = random.choice(objListCat[inscat])
+    SWAP_RESTART = not SWAP_RESTART
+    return newinsname
+
 @app_magic.route("/priors_of_wall", methods=['POST'])
 def priors_of_wall():
     rj = request.json
-    res = {}
-    res['object'] = []
-    res['mapping'] = {}
+    res = {'object': [], 'mapping': {}}
     if 'auxiliaryWallObj' in rj:
         res_prev = rj['auxiliaryWallObj']
         res['emptyChoice'] = res_prev['emptyChoice']
@@ -56,7 +95,6 @@ def priors_of_wall():
             if res['mapping'][thekey] == 'null':
                 continue
             res['object'].append(res['mapping'][thekey])
-    print(res)
     return json.dumps(res)
 
 @app_magic.route("/priors_of_roomShape", methods=['POST'])
@@ -133,7 +171,7 @@ def priors_of_objlist():
         return "Please refer to POST method for acquiring priors. "
     # indexIndicator = 0
     # 'existPair': ['i_dom-c_sec': 'i_sec']
-    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}, 'belonging': []}
+    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}, 'belonging': [], 'coarseSemantic': {}}
     room_json = request.json
     if 'auxiliarySecObj' in room_json:
         aso = room_json['auxiliarySecObj']
@@ -150,7 +188,7 @@ def priors_of_objlist():
             instancePairCount[obj['mageAddDerive']] = 1
         else:
             instancePairCount[obj['mageAddDerive']] += 1
-    for obj in room_json['objList']:
+    for obj in room_json['objList']: # for each existing object: 
         if obj is None:
             continue
         if 'modelId' not in obj:
@@ -195,6 +233,8 @@ def priors_of_objlist():
             # np.arange(indexIndicator, indexIndicator + len(pri[objname])).tolist()
             # indexIndicator = indexIndicator + len(pri[objname])
     # print(instancePairCount)
+    for newobjname in res['object']:
+        res['coarseSemantic'][newobjname] = getobjCat(newobjname)
     return json.dumps(res)
 
 @app_magic.route("/magic_add", methods=['POST', 'GET'])

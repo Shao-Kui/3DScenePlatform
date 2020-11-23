@@ -89,6 +89,24 @@ let auxiliaryRoom = async function(){
     });
 }
 
+const auxiliaryLoadSub = async function(){
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/priors_of_objlist",
+        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+        success: function (data) {
+            data = JSON.parse(data);
+            auxiliaryPrior = data;
+            manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj = data;
+            auxiliaryPrior.tensor = tf.tensor(auxiliaryPrior.prior);
+            data.object.forEach(o => {
+                loadObjectToCache(o);
+            })
+        }  
+    });
+}
+
 let auxiliaryPrior;
 let auxiliaryMode = async function(){
   if(currentRoomId === undefined){
@@ -99,21 +117,7 @@ let auxiliaryMode = async function(){
   .filter( item => item !== null && item !== undefined ); 
   auxiliaryRoom();
   auxiliaryLoadWall();
-  $.ajax({
-    type: "POST",
-    contentType: "application/json; charset=utf-8",
-    url: "/priors_of_objlist",
-    data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
-    success: function (data) {
-      data = JSON.parse(data);
-      auxiliaryPrior = data;
-      manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj = data;
-      auxiliaryPrior.tensor = tf.tensor(auxiliaryPrior.prior);
-      data.object.forEach(o => {
-        loadObjectToCache(o);
-      })
-    }
-  });
+  auxiliaryLoadSub(); 
 }
 
 var mage_auto_insert = function(e){

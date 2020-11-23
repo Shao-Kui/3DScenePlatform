@@ -652,7 +652,8 @@ function auxiliaryCG(theIntersect){
     realTimeObjCache(objname, // object name
         theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
         ado.room_orient[wallIndex] + theprior[1], // theta
-        [theprior[3], theprior[4], theprior[5]] // scale
+        [theprior[3], theprior[4], theprior[5]], // scale
+        'dom'
     );
 }
 
@@ -669,11 +670,12 @@ function auxiliaryMove(){
     .concat(Object.values(manager.renderManager.fCache));
     intersects = raycaster.intersectObjects(intersectObjList, true);
     if (intersectObjList.length > 0 && intersects.length > 0) {
+        let aso = manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj; 
         let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
         let vecSub;
         // if auxiliaryPiror.tensor.shape[0] equals to 0, then no context exists; 
-        if(auxiliaryPrior.tensor.shape[0] !== 0){
-            vecSub = tf.transpose(tf.transpose(auxiliaryPrior.tensor).slice([0], [3])).sub(intersectPoint);
+        if(aso.tensor.shape[0] !== 0){
+            vecSub = tf.transpose(tf.transpose(aso.tensor).slice([0], [3])).sub(intersectPoint);
         }else{
             auxiliaryCG(intersects[0]);
             return;
@@ -682,8 +684,8 @@ function auxiliaryMove(){
         let eucNorm = tf.norm(vecSub, 'euclidean', 1);
         let index = tf.argMin(eucNorm).arraySync();
         let eucDis = eucNorm.slice([index], [1]).arraySync();
-        let objname = auxiliaryPrior.index[index];
-        let theprior = auxiliaryPrior.prior[index];
+        let objname = aso.index[index];
+        let theprior = aso.prior[index];
         if(eucDis >= 0.5){
             scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
             // if the intersection occurs at the floor, try suggest coherent groups; 
@@ -692,10 +694,16 @@ function auxiliaryMove(){
             }
             return;
         }
+        let Y = intersects[0].point.y;
+        if(['Rug'].includes(aso.coarseSemantic[objname])){
+            Y = theprior[1]; 
+        }else{
+            Y = intersects[0].point.y;
+        }
         realTimeObjCache(
             // objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-            objname, intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-            mageAddDerive=`${auxiliaryPrior.belonging[index]}-${objname}`);
+            objname, intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+            mageAddDerive=`${aso.belonging[index]}-${objname}`);
     }
 }
 
@@ -809,6 +817,52 @@ const removeIntersectObject = function(){
     }
 }
 
+const auxiliarySwap = function(){
+
+}
+const onRightClickObj = function(event){
+    event.preventDefault();
+    // note that we only swap instances that are NOT placed yet; 
+    if(AUXILIARY_MODE){
+        let aobj = scene.getObjectByName(AUXILIARY_NAME); 
+        if(!aobj || !currentRoomId) return; 
+        let mageAddDerive = aobj.userData.mageAddDerive;
+        let insname = aobj.userData.modelId;
+        console.log(mageAddDerive);
+        let theroom = manager.renderManager.scene_json.rooms[currentRoomId]; 
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: "/mageAddSwapInstance",
+            // note that this work highly bases on 'category' instead of 'instance'; 
+            data: JSON.stringify({'insname': insname, 'existList': Object.keys(objectCache)}),
+            success: function (data) {
+                let newinsname = data; 
+                if(mageAddDerive.includes('wall')){
+                    let mad = mageAddDerive.split(' '); 
+                    if(mad[1] === 'empty') {theroom.auxiliaryWallObj.emptyChoice = newinsname;}
+                    else{theroom.auxiliaryWallObj.mapping[mad[1]] = newinsname;}
+                    auxiliaryLoadWall();
+                }else if(mageAddDerive.includes('dom')){
+                    let index = theroom.auxiliaryDomObj.object.indexOf(insname);
+                    if (index !== -1) {
+                        theroom.auxiliaryDomObj.object[index] = newinsname;
+                    }
+                    // for(let i = 0; i < theroom.auxiliarySecObj.belonging.length; i++){
+                    //     if(theroom.auxiliarySecObj.belonging[i] === insname) theroom.auxiliarySecObj.belonging[i] = newinsname; 
+                    // }
+                    auxiliaryRoom(); 
+                }else{
+                    theroom.auxiliarySecObj.existPair
+                    [`${mageAddDerive.split('-')[0]}-${theroom.auxiliarySecObj.coarseSemantic[insname]}`] 
+                    = newinsname; 
+                    auxiliaryLoadSub(); 
+                }
+            }
+        });
+    }
+}
+
 var temp;
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
@@ -858,6 +912,7 @@ var setting_up = function () {
     scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());
     window.addEventListener('resize', onWindowResize, false);
     // scenecanvas.addEventListener('click', onClickObj);
+    scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
     orthcanvas.addEventListener('mousedown', orth_mousedown);
