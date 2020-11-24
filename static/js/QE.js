@@ -61,7 +61,15 @@ var onKeyDown = function(event){
         case 82: // R
             render_function();
             break;
-
+        case 49: // 1
+            auxiliary_catlist(-1)
+            break;
+        case 50: // 2
+            auxiliary_catlist(1)
+            break;
+        case 192: // `
+            auxiliary_catlist(0)
+            break;
     }
 };
 

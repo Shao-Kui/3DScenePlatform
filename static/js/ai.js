@@ -3,44 +3,71 @@ var mage_add_control = function(event){
   On_Magic_ADD = true;
 }
 
-var mage_add_object = function(){
-  var d = {};
-  var pos = findGroundTranslation();
-  d.roomjson = manager.renderManager.scene_json.rooms[currentRoomId];
-  d.translate = [pos.x, pos.y, pos.z];
-  $.ajax({
-    type: "POST",
-    contentType: "application/json; charset=utf-8",
-    url: "/magic_position",
-    crossDomain: true,
-    data: JSON.stringify(d),
-    success: function (data) {
-      console.log(data);
-      INSERT_OBJ = {
-        "modelId":data.name,
-        "translate": [
-          pos.x,
-          pos.y,
-          pos.z
-        ],
-        "scale": [
-          data.scale[0],
-          data.scale[1],
-          data.scale[2]
-        ],
-        "rotate": [
-          data.rotate[0],
-          data.rotate[1],
-          data.rotate[2]
-        ]
-      };
-      INSERT_OBJ.roomId = currentRoomId;
-      manager.renderManager.scene_json.rooms[currentRoomId].objList.push(INSERT_OBJ);
-      manager.renderManager.refresh_instances();
-    },
-    dataType: "json"
-  });
-};
+// var mage_add_object = function(){
+//   var d = {};
+//   var pos = findGroundTranslation();
+//   d.roomjson = manager.renderManager.scene_json.rooms[currentRoomId];
+//   d.translate = [pos.x, pos.y, pos.z];
+//   $.ajax({
+//     type: "POST",
+//     contentType: "application/json; charset=utf-8",
+//     url: "/magic_position",
+//     crossDomain: true,
+//     data: JSON.stringify(d),
+//     success: function (data) {
+//       console.log(data);
+//       INSERT_OBJ = {
+//         "modelId":data.name,
+//         "translate": [
+//           pos.x,
+//           pos.y,
+//           pos.z
+//         ],
+//         "scale": [
+//           data.scale[0],
+//           data.scale[1],
+//           data.scale[2]
+//         ],
+//         "rotate": [
+//           data.rotate[0],
+//           data.rotate[1],
+//           data.rotate[2]
+//         ]
+//       };
+//       INSERT_OBJ.roomId = currentRoomId;
+//       manager.renderManager.scene_json.rooms[currentRoomId].objList.push(INSERT_OBJ);
+//       manager.renderManager.refresh_instances();
+//     },
+//     dataType: "json"
+//   });
+// };
+
+const auxiliary_remove = function(){
+    scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+    $('#tab_auxobj').text(" ");
+}
+const auxiliary_catlist = function(sign){
+    if(sign === 0){
+        $('#tab_auxdom').text('ALL');
+        return; 
+    }
+    let currenti = _auxCatList.indexOf($('#tab_auxdom').text());
+    currenti += sign; 
+    if(currenti === -1) currenti = _auxCatList.length-1;
+    currenti = currenti % _auxCatList.length;
+    $('#tab_auxdom').text(_auxCatList[currenti]);
+}; 
+
+const _auxCatList = ["ALL"]; 
+const gatheringAuxObjCat = async function(coarseSemantic){
+    let thekeys = Object.keys(coarseSemantic); 
+    thekeys.forEach( k => {
+        gatheringObjCat[k] = coarseSemantic[k]; 
+        if(!_auxCatList.includes(coarseSemantic[k])){
+            _auxCatList.push(coarseSemantic[k]); 
+        }
+    });
+}
 
 var auxiliary_control = function(){
   var autoinsert_button = document.getElementById("auxiliary_button");
@@ -50,11 +77,12 @@ var auxiliary_control = function(){
     autoinsert_button.style.backgroundColor = '#9400D3';
   }else{
     // remove 'auxiliaryObject' in the scene; 
-    scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+    auxiliary_remove();
     autoinsert_button.style.backgroundColor = '#43CD80';
   }
 }
 
+let categoryCodec = {}; 
 let auxiliaryLoadWall = async function(){
   $.ajax({
     type: "POST",
@@ -64,6 +92,10 @@ let auxiliaryLoadWall = async function(){
     success: function (data) {
       data = JSON.parse(data);
       manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryWallObj = data;
+      if('categoryCodec' in data){
+          categoryCodec = data.categoryCodec; 
+      }
+      gatheringAuxObjCat(data.coarseSemantic); 
       data.object.forEach(o => {
         loadObjectToCache(o);
       })
@@ -81,7 +113,9 @@ let auxiliaryRoom = async function(){
         data = JSON.parse(data);
         data.roomShapeTensor = tf.tensor(data.room_meta);
         data.tensor = tf.tensor(data.prior);
+        data.catMaskTensor = tf.tensor(data.catMask);
         manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj = data;
+        gatheringAuxObjCat(data.coarseSemantic); 
         data.object.forEach(o => {
           loadObjectToCache(o);
         })
@@ -97,9 +131,11 @@ const auxiliaryLoadSub = async function(){
         data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
         success: function (data) {
             data = JSON.parse(data);
+            data.catMaskTensor = tf.tensor(data.catMask);
             auxiliaryPrior = data;
             manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj = data;
             auxiliaryPrior.tensor = tf.tensor(auxiliaryPrior.prior);
+            gatheringAuxObjCat(data.coarseSemantic); 
             data.object.forEach(o => {
                 loadObjectToCache(o);
             })
@@ -115,6 +151,7 @@ let auxiliaryMode = async function(){
   manager.renderManager.scene_json.rooms[currentRoomId].objList = 
   manager.renderManager.scene_json.rooms[currentRoomId].objList
   .filter( item => item !== null && item !== undefined ); 
+  _auxCatList.length = 1; 
   auxiliaryRoom();
   auxiliaryLoadWall();
   auxiliaryLoadSub(); 

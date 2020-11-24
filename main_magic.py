@@ -5,7 +5,7 @@ import json
 import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation
+from projection2d import processGeo as p2d, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
 
 app_magic = Blueprint('app_magic', __name__)
 
@@ -23,7 +23,10 @@ def priorTransform(p, translate, orient, scale):
     return result.tolist()
 
 def getobjCat(modelId):
-    return objCatList[modelId][0]
+    if modelId in objCatList:
+        return objCatList[modelId][0]
+    else:
+        return "Unknown Category"
 
 SWAP_RESTART = True
 @app_magic.route("/mageAddSwapInstance", methods=['POST'])
@@ -69,7 +72,7 @@ def mageAddSwapInstance():
 @app_magic.route("/priors_of_wall", methods=['POST'])
 def priors_of_wall():
     rj = request.json
-    res = {'object': [], 'mapping': {}}
+    res = {'object': [], 'mapping': {}, 'coarseSemantic': {}}
     if 'auxiliaryWallObj' in rj:
         res_prev = rj['auxiliaryWallObj']
         res['emptyChoice'] = res_prev['emptyChoice']
@@ -77,6 +80,7 @@ def priors_of_wall():
         res_prev = res.copy()
         res['emptyChoice'] = '781'
         res['object'].append(res['emptyChoice'])
+        res['categoryCodec'] = categoryCodec
     for obj in rj['objList']:
         if 'key' not in obj:
             continue
@@ -95,6 +99,8 @@ def priors_of_wall():
             if res['mapping'][thekey] == 'null':
                 continue
             res['object'].append(res['mapping'][thekey])
+    for newobjname in res['object']:
+        res['coarseSemantic'][newobjname] = getobjCat(newobjname)
     return json.dumps(res)
 
 @app_magic.route("/priors_of_roomShape", methods=['POST'])
@@ -117,7 +123,7 @@ def priors_of_roomShape():
                 existingPendingCatList.append(objCatList[objname][0])
     # print(existingCatList)
     # print(existingPendingCatList)
-    res = {'object': [], 'prior': [], 'index': []}
+    res = {'object': [], 'prior': [], 'index': [], 'coarseSemantic': {}, 'catMask': []}
     # load and process room shapes; 
     room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
     wallSecIndices = np.arange(1, len(room_meta)).tolist() + [0]
@@ -159,6 +165,9 @@ def priors_of_roomShape():
             wallpri = json.load(f)
             res['prior'] += wallpri
             res['index'] += np.full(len(wallpri), obj).tolist()
+            res['catMask'] += np.full(len(wallpri), categoryCodec[getobjCat(obj)]).tolist()
+    for newobjname in res['object']:
+        res['coarseSemantic'][newobjname] = getobjCat(newobjname)
     return json.dumps(res)
 
 if __name__ == "__main__":
@@ -171,7 +180,7 @@ def priors_of_objlist():
         return "Please refer to POST method for acquiring priors. "
     # indexIndicator = 0
     # 'existPair': ['i_dom-c_sec': 'i_sec']
-    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}, 'belonging': [], 'coarseSemantic': {}}
+    res = {'prior': [], 'index': [], 'object': [], 'existPair': {}, 'belonging': [], 'coarseSemantic': {}, 'catMask': []}
     room_json = request.json
     if 'auxiliarySecObj' in room_json:
         aso = room_json['auxiliarySecObj']
@@ -224,6 +233,7 @@ def priors_of_objlist():
             # the following priors are involved in real-time calculation; 
             res['prior'] += priorTransform(pri[c_sec], obj['translate'], obj['orient'], obj['scale'])
             res['index'] += np.full(len(pri[c_sec]), objname).tolist()
+            res['catMask'] += np.full(len(pri[c_sec]), categoryCodec[getobjCat(objname)]).tolist()
             res['belonging'] += np.full(len(pri[c_sec]), obj["modelId"]).tolist()
         # for objname in pri:
         #     if objname not in res['object']:
@@ -317,11 +327,8 @@ def magic_category():
         with open('./mp.json', 'w') as f:
             json.dump({"objList": objs, "category": request.json["category"], "origin": request.json["origin"],
                        "modelId": request.json["modelId"]}, f)
-        result = smart_op.find_placement_and_rotate_given_category(request.json["origin"], 0, request.json["modelId"],
-                                                                   objs, request.json["category"],
-                                                                   request.json["objectName"])
-        d = {'translate': [result[0][0], result[0][1], result[0][2]],
-             'rotate': [result[1][0], result[1][1], result[1][2]]}
+        result = smart_op.find_placement_and_rotate_given_category(request.json["origin"], 0, request.json["modelId"], objs, request.json["category"], request.json["objectName"])
+        d = {'translate': [result[0][0], result[0][1], result[0][2]], 'rotate': [result[1][0], result[1][1], result[1][2]]}
         return json.dumps(d)
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "

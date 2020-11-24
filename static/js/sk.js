@@ -1,5 +1,5 @@
-const objectCache = {}
-var textureOpacityMapping = {}
+const objectCache = {}; 
+const gatheringObjCat = {}; 
 let loadObjectToCache = async function(modelId){
     if(modelId in objectCache){
         return;
@@ -51,7 +51,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     if(!modelId in objectCache) return;
     let objToInsert = {
         "modelId": modelId,
-        "coarseSemantic": "_fromCache", 
+        "coarseSemantic": gatheringObjCat[modelId], 
         "translate": transform.translate,
         "scale": transform.scale,
         "roomId": currentRoomId,
@@ -70,7 +70,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         "key": objToInsert.key,
         "roomId": currentRoomId,
         "modelId": modelId,
-        "coarseSemantic": ""
+        "coarseSemantic": gatheringObjCat[modelId]
     };
     object3d.children.forEach(child => {
         if(child.material.origin_mtr) child.material = child.material.origin_mtr;
@@ -454,6 +454,8 @@ var onClickObj = function (event) {
         return;
     }else{
         console.log("object not intersected! ");
+        $('#tab_modelid').text(" ");
+        $('#tab_category').text(" ");  
         INTERSECT_OBJ = undefined; //currentRoomId = undefined;
         if (isToggle) {
             radial.toggle();
@@ -493,7 +495,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
         }
         let objmesh = manager.renderManager.instanceKeyCache[obj.key];
         if(detectCollisionGroups(objectCache[objname], objmesh)){
-            scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+            auxiliary_remove();
             return;
         }
     }
@@ -501,7 +503,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
     for(let i = 0; i < door_mageAdd_set.length; i++){
         let doorMesh = door_mageAdd_set[i];
         if(detectCollisionGroups(doorMesh, objectCache[objname])){
-            scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+            auxiliary_remove();
             return;
         }
     }
@@ -509,7 +511,7 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
     let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
     if(mageAddDerive.split(' ')[0] !== 'wall'){
         if(detectCollisionWall(wallMeta, objectCache[objname])){
-            scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
+            auxiliary_remove();
             return; 
         }
     }
@@ -517,9 +519,10 @@ function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAd
         scene.add(objectCache[objname]);
     }
     if(scene.getObjectByName(AUXILIARY_NAME).userData.modelId !== objname){
-        scene.remove(scene.getObjectByName(AUXILIARY_NAME));
+        auxiliary_remove();
         scene.add(objectCache[objname]);
     }
+    $('#tab_auxobj').text(`${objname}: ${gatheringObjCat[objname]}`);
     objectCache[objname].userData.mageAddDerive = mageAddDerive; 
 }
 
@@ -641,9 +644,19 @@ function auxiliaryCG(theIntersect){
     }
     // filter out priors exceed the second nearest wall; 
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
+    // filter out object that the user does not interect in; 
+    if($('#tab_auxdom').text() !== 'ALL'){
+        vecSub = vecSub.where(ado.catMaskTensor.equal(categoryCodec[$('#tab_auxdom').text()]), Infinity); 
+    }
     let index = tf.argMin(vecSub).arraySync();
     // if the 'minimal distance sub' is still high, results in next level; 
-    if(vecSub.slice([index], [1]).arraySync()[0] >= 0.5){
+    let threshold; 
+    if($('#tab_auxdom').text() === 'ALL'){
+        threshold = 0.6; 
+    }else{
+        threshold = 1.5; 
+    }
+    if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
         return;
     }
@@ -682,11 +695,21 @@ function auxiliaryMove(){
         }
         // transform priors
         let eucNorm = tf.norm(vecSub, 'euclidean', 1);
+        if($('#tab_auxdom').text() !== 'ALL'){
+            eucNorm = eucNorm.where(aso.catMaskTensor.equal(categoryCodec[$('#tab_auxdom').text()]), Infinity); 
+        }
+
         let index = tf.argMin(eucNorm).arraySync();
         let eucDis = eucNorm.slice([index], [1]).arraySync();
         let objname = aso.index[index];
         let theprior = aso.prior[index];
-        if(eucDis >= 0.5){
+        let threshold; 
+        if($('#tab_auxdom').text() === 'ALL'){
+            threshold = 0.6; 
+        }else{
+            threshold = 1.5; 
+        }
+        if(eucDis >= threshold){
             scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
             // if the intersection occurs at the floor, try suggest coherent groups; 
             if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
@@ -694,9 +717,10 @@ function auxiliaryMove(){
             }
             return;
         }
-        let Y = intersects[0].point.y;
+        let Y; 
         if(['Rug'].includes(aso.coarseSemantic[objname])){
-            Y = theprior[1]; 
+            console.log(theprior[1]); 
+            Y = 0; 
         }else{
             Y = intersects[0].point.y;
         }
@@ -863,6 +887,10 @@ const onRightClickObj = function(event){
     }
 }
 
+const onWheel = function(event){
+    
+}
+
 var temp;
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
@@ -912,6 +940,7 @@ var setting_up = function () {
     scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());
     window.addEventListener('resize', onWindowResize, false);
     // scenecanvas.addEventListener('click', onClickObj);
+    scenecanvas.addEventListener('wheel', onWheel);
     scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);

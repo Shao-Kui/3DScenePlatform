@@ -879,6 +879,11 @@ with open('./latentspace/pos-orient-4/categoryRelation.json') as f:
     categoryRelation = json.load(f)
 with open('./latentspace/pos-orient-4/wallRelation.json') as f:
     wallRelation = json.load(f)
+categoryCodec = {}
+_codexid = 0
+for cat in wallRelation:
+    categoryCodec[cat] = _codexid
+    _codexid += 1
 
 
 if __name__ == "__main__":
