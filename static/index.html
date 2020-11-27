@@ -5,6 +5,8 @@
     <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
     <script src="/static/3rdparty/tf.min27.js"></script>
     <script src="/static/3rdparty/moment.min.js"></script>
+    <script src="/static/3rdparty/popper.min.js"></script>
+    <script src="/static/3rdparty/stats.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
@@ -78,6 +80,9 @@
         var axis; 
 
         var latent_space_mode;
+
+        var stats;
+
         $(document).ready(function () {
             latent_space_mode = false;
             manager = new SceneController($("#ui")[0]);
@@ -95,13 +100,11 @@
             setting_up();
         })
 
-
     </script>
 </head>
 <body>
 <div id="ui">
-
-    <nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light" style="overflow: visible;">
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand">Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a>
@@ -113,12 +116,22 @@
                 <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
                 style="width: 9%">AuxiliaryMode
                 </button>
-                <button id="reshuffle" type="button" class="btn btn-lg btn-primary nav_sk_button">Shuffle</button>
                 <button id="layout_button" type="button" class="btn btn-lg btn-primary nav_sk_button">layout2</button>
                 <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout1</button>
                 <button id="download_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Save</button>
                 <button id="screenshot" type="button" class="btn btn-lg btn-primary nav_sk_button">Render</button>
                 <button id="axis_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Axis</button>
+                <div class="btn-group" style="float:right;width: 4%;">
+                    <button type="button" class="btn btn-lg btn-primary nav_sk_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Utils<span class="caret"></span></button>
+                    <ul class="dropdown-menu" style="text-align: center;">
+                        <button type="button" id="clear_button"
+                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
+                            Clear</button>
+                        <button type="button" id="clearALL_button"
+                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
+                            ClearALL</button>
+                    </ul>
+                </div>
                 <a id="downloadAnchorElem" style="display:none"></a>
             </div>
         </div>
@@ -231,3 +244,4 @@
 </div>
 </body>
 </html>
+

@@ -210,6 +210,7 @@ const detectCollisionWall = function(wallMeta, object){
 }
 
 const gameLoop = function () {
+    stats.begin();
     render_update();
     orth_view_port_update();
     keyboard_update();
@@ -218,6 +219,7 @@ const gameLoop = function () {
     raycaster.setFromCamera(mouse, camera);
     renderer.render(scene, camera);
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
+    stats.end();
     requestAnimationFrame(gameLoop);
 };
 
@@ -538,7 +540,7 @@ const auxiliaryWall = function(theIntersect){
     let wallDistances = ftnw[1]; 
     wallIndex = ftnw[0][0]; 
     secWallIndex = ftnw[0][1]; 
-    let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
+    // let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
     let secMinDis = wallDistances.slice([secWallIndex], [1]).arraySync(); // the distance w.r.t the second nearest wall; 
     // find object satisfying the beam distance; 
     let beamObjList = []; 
@@ -719,7 +721,6 @@ function auxiliaryMove(){
         }
         let Y; 
         if(['Rug'].includes(aso.coarseSemantic[objname])){
-            console.log(theprior[1]); 
             Y = 0; 
         }else{
             Y = intersects[0].point.y;
@@ -835,7 +836,7 @@ const removeIntersectObject = function(){
     let roomId = INTERSECT_OBJ.userData.roomId;
     delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(INTERSECT_OBJ)];
     delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
-    scene.remove(INTERSECT_OBJ)
+    scene.remove(INTERSECT_OBJ); 
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
@@ -849,7 +850,7 @@ const onRightClickObj = function(event){
     // note that we only swap instances that are NOT placed yet; 
     if(AUXILIARY_MODE){
         let aobj = scene.getObjectByName(AUXILIARY_NAME); 
-        if(!aobj || !currentRoomId) return; 
+        if(!aobj || currentRoomId === undefined) return; 
         let mageAddDerive = aobj.userData.mageAddDerive;
         let insname = aobj.userData.modelId;
         console.log(mageAddDerive);
@@ -899,11 +900,41 @@ var setting_up = function () {
     orth_initialization();
     searchPanelInitialization();
     radial_initialization();
+
+    stats = new Stats();
+    stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+    stats.dom.style.top = '5%'
+    stats.dom.style.left = '25%'
+    document.getElementById('scene').appendChild(stats.dom);
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
     $("#layout_button").click(auto_layout);
-    $("#reshuffle").click(reshuffleRoom);
+    $("#clear_button").click(() => {
+        if(currentRoomId === undefined) return;
+        let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
+        for(let i = 0; i < objlist.length; i++){
+            if(objlist[i] === undefined || objlist[i] === null) continue;
+            if(['Window', 'window', 'door', 'Door'].includes(objlist[i].coarseSemantic)) continue; 
+            scene.remove(manager.renderManager.instanceKeyCache[objlist[i].key]); 
+            delete manager.renderManager.instanceKeyCache[objlist[i].key];
+            delete objlist[i];
+        }
+        manager.renderManager.scene_json.rooms[currentRoomId].objList = objlist.filter(o => o!==undefined&&o!==null); 
+    });
+    $("#clearALL_button").click(() => {
+        manager.renderManager.scene_json.rooms.forEach(room => {
+            let objlist = room.objList; 
+            for(let i = 0; i < objlist.length; i++){
+                if(objlist[i] === undefined || objlist[i] === null) continue;
+                if(['Window', 'window', 'door', 'Door'].includes(objlist[i].coarseSemantic)) continue; 
+                scene.remove(manager.renderManager.instanceKeyCache[objlist[i].key]); 
+                delete manager.renderManager.instanceKeyCache[objlist[i].key];
+                delete objlist[i];
+            }
+            room.objList = objlist.filter(o => o!==undefined&&o!==null); 
+        });
+    });
     $("#mage_button").click(mage_add_control);
     $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
