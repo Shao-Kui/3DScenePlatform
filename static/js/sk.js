@@ -892,6 +892,24 @@ const onWheel = function(event){
     
 }
 
+const encodePerspectiveCamera = function(sceneJson){
+    sceneJson.PerspectiveCamera = {}; 
+    sceneJson.PerspectiveCamera.fov = camera.fov; 
+    sceneJson.PerspectiveCamera.focalLength = camera.filmGauge; 
+    // let lookAtVector = new THREE.Vector3(0, 0, -1);
+    // lookAtVector.applyQuaternion(camera.quaternion);
+    sceneJson.PerspectiveCamera.origin = [camera.position.x, camera.position.y, camera.position.z];
+    sceneJson.PerspectiveCamera.rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
+    sceneJson.PerspectiveCamera.target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
+    let up = new THREE.Vector3()
+    up.copy(camera.up)
+    up.applyQuaternion(camera.quaternion)
+    sceneJson.PerspectiveCamera.up = [up.x, up.y, up.z];
+    sceneJson.canvas = {};
+    sceneJson.canvas.width = scenecanvas.width;
+    sceneJson.canvas.height = scenecanvas.height;
+}
+
 var temp;
 var setting_up = function () {
     clear_panel();  // clear panel first before use individual functions.
@@ -941,6 +959,7 @@ var setting_up = function () {
         let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
         // delete unnecessary keys; 
         json_to_dl.rooms.forEach(function(room){
+            room.objList = room.objList.filter( item => item !== null && item !== undefined )
             room.objList.forEach(function(inst){
                 if(inst === null || inst === undefined){
                     return
@@ -948,6 +967,7 @@ var setting_up = function () {
                 delete inst.key;
             })
         })
+        encodePerspectiveCamera(json_to_dl); 
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
         var dlAnchorElem = document.getElementById('downloadAnchorElem');
         dlAnchorElem.setAttribute("href",     dataStr     );

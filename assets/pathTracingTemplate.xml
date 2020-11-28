@@ -1,0 +1,67 @@
+<scene version="0.5.0">
+<sensor type="perspective">
+    <sampler type="ldsampler">
+        <integer name="sampleCount" value="64"/>
+    </sampler>
+    <transform name="toWorld">
+        <!-- lookat origin="4, 4, 4" target="0, 0, 0" up="0, 0, 1"-->
+        <!--rotate y="1" angle="{{ scenejson.PerspectiveCamera.rotate[1] * 180 / PI }}"/>
+        <rotate x="1" angle="{{ scenejson.PerspectiveCamera.rotate[0] * 180 / PI }}"/>
+        <rotate z="1" angle="{{ scenejson.PerspectiveCamera.rotate[2] * 180 / PI }}"/>
+        <translate 
+        x="{{scenejson.PerspectiveCamera.origin[0]}}" 
+        y="{{scenejson.PerspectiveCamera.origin[1]}}" 
+        z="{{scenejson.PerspectiveCamera.origin[2]}}"/-->
+        <lookat 
+        origin="{{ scenejson.pcam.origin  }}" 
+        target="{{ scenejson.pcam.target  }}"
+        up=    "{{ scenejson.pcam.up }}"/>
+    </transform>
+    <!--float name="fov" value="{{ scenejson.PerspectiveCamera.fov }}"/-->
+    <float name="fov" value="100"/>
+    <film type="hdrfilm">
+        <integer name="width" value="{{ scenejson.canvas.width }}"/>
+        <integer name="height" value="{{ scenejson.canvas.height }}"/>
+        <rfilter type="gaussian"/>
+    </film>
+</sensor>
+
+<emitter type="constant">
+<spectrum name="radiance" value="1.6"/>
+<float name="samplingWeight" value="5"/>
+</emitter>
+
+<integrator type="path">
+    <!--integer name="maxDepth" value="10"/-->
+</integrator>
+<!-- Some geometry to be rendered -->
+{% for obj in scenejson.renderroomobjlist %}
+<shape type="obj">
+    <transform name="toWorld">
+        <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
+        <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
+        <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
+        <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
+    </transform>
+    <!--string name="filename" value="{{ '../../object/{}/{}.obj'.format(obj.modelId, obj.modelId) }}"/-->
+    <string name="filename" value="{{ obj.modelPath }}"/>
+    <bsdf type="twosided">
+        <bsdf type="roughdiffuse"></bsdf>
+    </bsdf>
+</shape>    
+{% endfor %}
+{% for obj in scenejson.renderobjlist %}
+<shape type="obj">
+    <transform name="toWorld">
+        <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
+        <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
+        <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
+        <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
+    </transform>
+    <!--string name="filename" value="{{ '../../object/{}/{}.obj'.format(obj.modelId, obj.modelId) }}"/-->
+    <string name="filename" value="{{ obj.modelPath }}"/>
+</shape>    
+{% endfor %}
+</scene>
