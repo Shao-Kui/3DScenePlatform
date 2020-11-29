@@ -1,7 +1,7 @@
 <scene version="0.5.0">
 <sensor type="perspective">
     <sampler type="ldsampler">
-        <integer name="sampleCount" value="64"/>
+        <integer name="sampleCount" value="{{ sampleCount }}"/>
     </sampler>
     <transform name="toWorld">
         <!-- lookat origin="4, 4, 4" target="0, 0, 0" up="0, 0, 1"-->
@@ -20,8 +20,11 @@
     <!--float name="fov" value="{{ scenejson.PerspectiveCamera.fov }}"/-->
     <float name="fov" value="100"/>
     <film type="hdrfilm">
-        <integer name="width" value="{{ scenejson.canvas.width }}"/>
-        <integer name="height" value="{{ scenejson.canvas.height }}"/>
+        <!--integer name="width" value="{{ scenejson.canvas.width }}"/>
+        <integer name="height" value="{{ scenejson.canvas.height }}"/-->
+        <!-- The following resolution is set w.r.t to Shao-Kui's dev-PC. /-->
+        <integer name="width" value="1309"/>
+        <integer name="height" value="809"/>
         <rfilter type="gaussian"/>
     </film>
 </sensor>
@@ -38,10 +41,10 @@
 {% for obj in scenejson.renderroomobjlist %}
 <shape type="obj">
     <transform name="toWorld">
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
         <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
         <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
         <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
-        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
         <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
     </transform>
     <!--string name="filename" value="{{ '../../object/{}/{}.obj'.format(obj.modelId, obj.modelId) }}"/-->
@@ -54,10 +57,10 @@
 {% for obj in scenejson.renderobjlist %}
 <shape type="obj">
     <transform name="toWorld">
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
         <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
         <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
         <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
-        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
         <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
     </transform>
     <!--string name="filename" value="{{ '../../object/{}/{}.obj'.format(obj.modelId, obj.modelId) }}"/-->

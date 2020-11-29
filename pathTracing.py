@@ -4,6 +4,7 @@ import os
 import numpy as np
 from datetime import datetime
 from subprocess import check_output
+import shutil
 
 sysROOT = 'F:/3DIndoorScenePlatform/dataset/PathTracing'
 ROOT = './dataset/PathTracing'
@@ -11,7 +12,7 @@ file_loader = FileSystemLoader('./')
 env = Environment(loader=file_loader)
 template = env.get_template('./assets/pathTracingTemplate.xml')
 
-def pathTracing(scenejson):
+def pathTracing(scenejson, sampleCount=64):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H-%M-%S")
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}'
@@ -37,15 +38,30 @@ def pathTracing(scenejson):
                     continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])
             scenejson['renderobjlist'].append(obj)
-    output = template.render(scenejson=scenejson, PI=np.pi)
+    output = template.render(scenejson=scenejson, PI=np.pi, sampleCount=sampleCount)
     if not os.path.exists(casename):
         os.makedirs(casename)
+    with open(casename + '/scenejson.json', 'w') as f:
+        json.dump(scenejson, f)
     with open(casename + '/renderconfig.xml', 'w') as f:
         f.write(output)
     check_output(f"mitsuba \"{casename + '/renderconfig.xml'}\"", shell=True)
     check_output(f"mtsutil tonemap -o \"{casename + '/render.png'}\" \"{casename + '/renderconfig.exr'}\" ", shell=True)
+    return casename
+
+def batch(rdir, sampleCount=64):
+    filenames = os.listdir(f'./dataset/PathTracing/{rdir}')
+    for filename in filenames:
+        print('start do :' + filename)
+        if '.json' not in filename:
+            continue
+        with open(f'./dataset/PathTracing/{rdir}/{filename}') as f:
+            casename = pathTracing(json.load(f), sampleCount=sampleCount)
+            # copy rendered imgs to the rdir: 
+            pngfilename = filename.replace('.json', '.png')
+            shutil.copy(casename + '/render.png', f'./dataset/PathTracing/{rdir}/{pngfilename}')
 
 if __name__ == "__main__":
-    with open('./dataset/PathTracing/bd4886b5-4323-42f9-8e1c-1e278ed88431-l7071-dl.json') as f:
-        pathTracing(json.load(f))
-    
+    batch('batch1', sampleCount=256)
+    # with open('./dataset/PathTracing/4cc6dba0-a26e-42cb-a964-06cb78d60bae-l2685-dl (8).json') as f:
+    #     pathTracing(json.load(f), sampleCount=4)
