@@ -884,6 +884,11 @@ _codexid = 0
 for cat in wallRelation:
     categoryCodec[cat] = _codexid
     _codexid += 1
+def getobjCat(modelId):
+    if modelId in objCatList:
+        return objCatList[modelId][0]
+    else:
+        return "Unknown Category"
 
 
 if __name__ == "__main__":
@@ -895,8 +900,10 @@ if __name__ == "__main__":
     # get_norm = True
     # file_search('/Users/ervinxie/Research/Fast3DISS/00a4ff0c-ec69-4202-9420-cc8536ffffe0')
 
-    wall_distance_orient()
-    # print(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj'))
+    # wall_distance_orient()
+    p = Polygon(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj'))
+    # print(Polygon(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj')))
+    print(p.area)
     # file_search('/Users/ervinxie/Desktop/suncg/room/3e60029ce929bf20fd66204028a72c1b')
     # process('.', 'fr_0rm_0f.obj')
 

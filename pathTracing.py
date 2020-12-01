@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime
 from subprocess import check_output
 import shutil
+import sys
 
 sysROOT = 'F:/3DIndoorScenePlatform/dataset/PathTracing'
 ROOT = './dataset/PathTracing'
@@ -52,9 +53,9 @@ def pathTracing(scenejson, sampleCount=64):
 def batch(rdir, sampleCount=64):
     filenames = os.listdir(f'./dataset/PathTracing/{rdir}')
     for filename in filenames:
-        print('start do :' + filename)
         if '.json' not in filename:
             continue
+        print('start do :' + filename)
         with open(f'./dataset/PathTracing/{rdir}/{filename}') as f:
             casename = pathTracing(json.load(f), sampleCount=sampleCount)
             # copy rendered imgs to the rdir: 
@@ -62,6 +63,6 @@ def batch(rdir, sampleCount=64):
             shutil.copy(casename + '/render.png', f'./dataset/PathTracing/{rdir}/{pngfilename}')
 
 if __name__ == "__main__":
-    batch('batch1', sampleCount=256)
+    batch(sys.argv[1], sampleCount=int(sys.argv[2]))
     # with open('./dataset/PathTracing/4cc6dba0-a26e-42cb-a964-06cb78d60bae-l2685-dl (8).json') as f:
     #     pathTracing(json.load(f), sampleCount=4)

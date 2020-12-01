@@ -40,3 +40,6 @@ static/js/SceneUIManager.js
 latentspace/pos-orient-3/75.json
 timecount.txt
 mitsuba.ShaoKui.log
+static/3rdparty/ammo.js
+static/3rdparty/tf.min2.js
+static/js/_deprecated.js

@@ -132,6 +132,8 @@ root
 **patternChain.py**: the code to dynamically check and generate hyper-relations;  
 **alutil.py** and **relayout.py**: geometric arranging;  
 **projection2d.py**: converting room meshes to polygons (room shape);  
+# MageAdd
+Coming soon... ... ...
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
@@ -161,7 +163,7 @@ This repo will also be continuously updated, with more functions, features and o
 * The navigation of mini-map (Bottom-Left) is defunct currently. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Tian-Xing Xu is involved for format conversion of 3D-Front. 
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 

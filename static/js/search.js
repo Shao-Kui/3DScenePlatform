@@ -29,7 +29,7 @@ var clickTextSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
-    var search_url = "/query?kw=" + document.getElementById("searchinput").value;
+    var search_url = "/query2nd?kw=" + document.getElementById("searchinput").value;
     $.getJSON(search_url, function (data) {
         searchResults = data;
         searchResults.forEach(function (item) {
@@ -38,7 +38,9 @@ var clickTextSearchButton = function () {
             iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
             iDiv.setAttribute('objectID', item.id);
             iDiv.setAttribute('objectName', item.name);
+            iDiv.setAttribute('modelId', item.name);
             iDiv.setAttribute('coarseSemantic', item.semantic);
+            iDiv.setAttribute('semantic', item.semantic);
             iDiv.addEventListener('click', clickCatalogItem)
             catalogItems.appendChild(iDiv);
         })
@@ -59,7 +61,7 @@ var clear_panel = function () {
 
 var searchPanelInitialization = function(){
     $("#searchbtn").click(clickTextSearchButton);
-    $("#sketchsearchbtn").click(clickSketchSearchButton);
+    /*$("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#rec_button").click(function () {
         clear_panel();
@@ -83,5 +85,5 @@ var searchPanelInitialization = function(){
         document.getElementById("drawing-canvas").style.display = "block";
         document.getElementById("sketchsearchdiv").style.display = "flex";
         document.getElementById("sketchsearchbtn").style.display = "block";
-    });
+    });*/
 }

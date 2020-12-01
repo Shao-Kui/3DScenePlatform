@@ -272,6 +272,7 @@ var synchronize_json_object = function (object) {
     inst.rotate[0] = object.rotation.x;
     inst.rotate[1] = object.rotation.y;
     inst.rotate[2] = object.rotation.z;
+    // the core code for calculating orientations of objects; 
     inst.orient = Math.atan2(Math.sin(object.rotation.y), Math.cos(object.rotation.x) * Math.cos(object.rotation.y));
     if(AUXILIARY_MODE){
         auxiliaryMode();
@@ -298,29 +299,16 @@ var updateMousePosition = function () {
 }
 
 var clickCatalogItem = function (e) {
-    if (!manager.renderManager.scene_json) {
-        return;
-    }
+    scene.remove(scene.getObjectByName(INSERT_NAME));
+    // avoid confictions between ordinary insertions and the auxiliary mode; 
+    if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
     On_ADD = true;
     scenecanvas.style.cursor = "crosshair";
+    loadObjectToCache($(e.target).attr("modelId")); 
     INSERT_OBJ = {
         "modelId": $(e.target).attr("objectName"),
         "coarseSemantic": $(e.target).attr("coarseSemantic"), 
-        "translate": [
-            0.0,
-            0.0,
-            0.0
-        ],
-        "scale": [
-            1.0,
-            1.0,
-            1.0
-        ],
-        "rotate": [
-            0.0,
-            0.0,
-            0.0
-        ]
+        "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
     };
 }
 
@@ -338,24 +326,6 @@ var findGroundTranslation = function () {
             - camera.position.y) / vec.y;
     pos.copy(camera.position).add(vec.multiplyScalar(distance));
     return pos;
-}
-
-var addCatalogItem = function () {
-    let vec = new THREE.Vector3();
-    let pos = new THREE.Vector3();
-    vec.set(mouse.x, mouse.y, 0.5);
-    vec.unproject(camera);
-    vec.sub(camera.position).normalize();
-    let distance =
-        (manager.renderManager.scene_json.rooms[currentRoomId].bbox.min[1]
-            - camera.position.y) / vec.y;
-    pos.copy(camera.position).add(vec.multiplyScalar(distance));
-    INSERT_OBJ.translate[0] = pos.x;
-    INSERT_OBJ.translate[1] = pos.y;
-    INSERT_OBJ.translate[2] = pos.z;
-    INSERT_OBJ.roomId = currentRoomId;
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.push(INSERT_OBJ);
-    manager.renderManager.refresh_instances();
 }
 
 var onClickObj = function (event) {
@@ -376,9 +346,18 @@ var onClickObj = function (event) {
     }
     if (On_ADD) {
         On_ADD = false;
-        if (currentRoomId != undefined) {
-            addCatalogItem();
-            return;
+        if(scene.getObjectByName(INSERT_NAME)){
+            let obj = scene.getObjectByName(INSERT_NAME);
+            addObjectFromCache(
+                modelId=INSERT_OBJ.modelId,
+                transform={
+                    'translate': [obj.position.x, obj.position.y, obj.position.z], 
+                    'rotate': [0,0,0],
+                    'scale': [1,1,1]
+                }
+            );
+            scene.remove(scene.getObjectByName(INSERT_NAME)); 
+            return; 
         }
     }
     if (On_MOVE) {
@@ -402,16 +381,6 @@ var onClickObj = function (event) {
         synchronize_json_object(INTERSECT_OBJ);
         return;
 
-    }
-    if (On_Magic_ADD) {
-        On_Magic_ADD = false;
-        if (!manager.renderManager.scene_json) {
-            return;
-        }
-        if (currentRoomId != undefined) {
-            mage_add_object();
-            return;
-        }
     }
 
     if(scene.getObjectByName(AUXILIARY_NAME)){
@@ -477,263 +446,24 @@ var onClickObj = function (event) {
     }
 };
 
-function realTimeObjCache(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
-    if(objectCache[objname] === undefined){
-        return;
-    }
-    objectCache[objname].name = AUXILIARY_NAME;
-    objectCache[objname].position.set(x, y, z);
-    objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
-    objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
-    // detecting collisions between the pending object and other objects of the same room: 
-    let olist = manager.renderManager.scene_json.rooms[currentRoomId].objList;
-    for(let i = 0; i < olist.length; i++){
-        let obj = olist[i];
-        if(obj === undefined || obj === null) continue;
-        if(!'key' in obj) continue;
-        if(mageAddDerive!==""){
-            let domName = mageAddDerive.split('-')[0]; 
-            if(domName === obj.modelId) continue; 
-        }
-        let objmesh = manager.renderManager.instanceKeyCache[obj.key];
-        if(detectCollisionGroups(objectCache[objname], objmesh)){
-            auxiliary_remove();
-            return;
-        }
-    }
-    // detecting collisions between the pending objects and buffered door meshes; 
-    for(let i = 0; i < door_mageAdd_set.length; i++){
-        let doorMesh = door_mageAdd_set[i];
-        if(detectCollisionGroups(doorMesh, objectCache[objname])){
-            auxiliary_remove();
-            return;
-        }
-    }
-    // detecting collisions between the pending objects and the wall: 
-    let wallMeta = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta; 
-    if(mageAddDerive.split(' ')[0] !== 'wall'){
-        if(detectCollisionWall(wallMeta, objectCache[objname])){
-            auxiliary_remove();
-            return; 
-        }
-    }
-    if(!scene.getObjectByName(AUXILIARY_NAME)){
-        scene.add(objectCache[objname]);
-    }
-    if(scene.getObjectByName(AUXILIARY_NAME).userData.modelId !== objname){
-        auxiliary_remove();
-        scene.add(objectCache[objname]);
-    }
-    $('#tab_auxobj').text(`${objname}: ${gatheringObjCat[objname]}`);
-    objectCache[objname].userData.mageAddDerive = mageAddDerive; 
-}
-
-const auxiliaryWall = function(theIntersect){
-    // find the nearest wall first; 
-    let awo = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryWallObj;
-    let ado = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj;
-    if(ado === undefined || awo === undefined)
-        return;
-    // if(awo === undefined)
-    //     return;
-    let ftnw = findTheNearestWall(theIntersect); 
-    let wallDistances = ftnw[1]; 
-    wallIndex = ftnw[0][0]; 
-    secWallIndex = ftnw[0][1]; 
-    // let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
-    let secMinDis = wallDistances.slice([secWallIndex], [1]).arraySync(); // the distance w.r.t the second nearest wall; 
-    // find object satisfying the beam distance; 
-    let beamObjList = []; 
-    let oList = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
-    let line = new THREE.Line3(); // create once and reuse
-    let B = theIntersect.point.clone().add(new THREE.Vector3(ado.room_oriNormal[wallIndex][0], 0, ado.room_oriNormal[wallIndex][1])); 
-    line.set(theIntersect.point, B);
-    let C = new THREE.Vector3();
-    for(let i = 0; i < oList.length; i++){
-        let obj = oList[i];
-        if(obj === undefined || obj === null) continue;
-        if(!'key' in obj) continue;
-        let objmesh = manager.renderManager.instanceKeyCache[obj.key];
-        if(objmesh === undefined) continue; 
-        let pos = objmesh.position.clone(); 
-        pos.y = theIntersect.point.y;
-        line.closestPointToPoint(pos, false, C); 
-        let clamp = line.closestPointToPointParameter(objmesh.position, true); 
-        let beamDis = pos.distanceTo(C);
-        if(beamDis <= 0.1 && clamp > 0.0) beamObjList.push(objmesh); 
-    }
-    // find the nearest object among the 'beamObjList'; 
-    let ascription; 
-    let minBeanEucDIs = Infinity;
-    let objname;
-    let _fromWhere;  
-    if(beamObjList.length === 0){
-        objname = awo.emptyChoice;
-        _fromWhere = 'empty'; 
-    }
-    else{
-        for(let i = 0; i < beamObjList.length; i++){
-            let objmesh = beamObjList[i]; 
-            let dis = objmesh.position.clone().sub(theIntersect.point).length(); 
-            if(dis < minBeanEucDIs){
-                minBeanEucDIs = dis; 
-                ascription = objmesh; 
-            }
-        }
-        objname = awo.mapping[ascription.userData.key]; 
-        _fromWhere = ascription.userData.key; 
-    }
-    if(objname === undefined || !objname in objectCache || objname === 'null'){scene.remove(scene.getObjectByName(AUXILIARY_NAME));return;}
-    if(objectCache[objname].coarseAABB.max.x > secMinDis){
-        scene.remove(scene.getObjectByName(AUXILIARY_NAME));
-        return; 
-    }; 
-    realTimeObjCache(objname, // object name
-        theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, // x, y, z
-        ado.room_orient[wallIndex], // theta
-        [1, 1, 1], // scale
-        `wall ${_fromWhere}`
-    );
-};
-
-const findTheNearestWall = function(theIntersect){
-    let wallPointStart = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor;
-    let wallPointEnd = tf.concat([wallPointStart.slice([1], [wallPointStart.shape[0]-1]), wallPointStart.slice([0], [1])])
-    let p3 = tf.tensor([theIntersect.point.x, theIntersect.point.z]);
-    let a_square = tf.sum(tf.square(wallPointEnd.sub(wallPointStart)), axis=1);
-    let b_square = tf.sum(tf.square(wallPointEnd.sub(p3)), axis=1);
-    let c_square = tf.sum(tf.square(wallPointStart.sub(p3)), axis=1);
-    let siafangbfang = a_square.mul(b_square).mul(4);
-    let apbmcfang = tf.square(a_square.add(b_square).sub(c_square));
-    let triangleArea = tf.sqrt(tf.relu(siafangbfang.sub(apbmcfang))).mul(0.5); // this is twice the area; 
-    let wallDistances = triangleArea.div(tf.norm(wallPointEnd.sub(wallPointStart), 'euclidean', 1));
-    let _indicesList = []; 
-    let innerProducts = tf.sum((wallPointStart.sub(p3)).mul(wallPointStart.sub(wallPointEnd)), axis=1).arraySync();
-    let wallIndices = tf.topk(wallDistances, wallDistances.shape[0], true).indices.arraySync().reverse();
-    a_square = a_square.arraySync();
-    for(let i = 0; i < wallIndices.length; i++){
-        let wi = wallIndices[i];
-        if( 0 <= innerProducts[wi] && innerProducts[wi] <= a_square[wi]){
-            _indicesList.push(wi);
-            // wallIndex = wi;
-            if (_indicesList.length >= 2) break;
-        }
-    }
-    return [_indicesList, wallDistances]; 
-}
-
-function auxiliaryCG(theIntersect){
-    // find the nearest distance to the nearest wall; ( np.abs(np.cross(p2-p1, p1-p3)) / norm(p2-p1) )
-    let ado = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj;
-    if(ado === undefined)
-        return;
-    let wallIndex;
-    let secWallIndex; // the second nearest wall index; 
-    let ftnw = findTheNearestWall(theIntersect); 
-    let wallDistances = ftnw[1];
-    wallIndex = ftnw[0][0];
-    secWallIndex = ftnw[0][1]; 
-    // let wallIndex = tf.argMin(wallDistances).arraySync();
-    let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
-    let secMinDis = wallDistances.slice([secWallIndex], [1]); // the distance w.r.t the second nearest wall; 
-    let vecSub;
-    let secVecSub; 
-    if(ado.tensor.shape[0] !== 0){
-        vecSub = tf.abs(tf.transpose(tf.transpose(ado.tensor).slice([2], [1])).sub(minDis)).reshape([-1]);
-        secVecSub = tf.transpose(tf.transpose(ado.tensor).slice([6], [1])).reshape([-1]); 
-    }else{
-        return;
-    }
-    // filter out priors exceed the second nearest wall; 
-    vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
-    // filter out object that the user does not interect in; 
-    if($('#tab_auxdom').text() !== 'ALL'){
-        vecSub = vecSub.where(ado.catMaskTensor.equal(categoryCodec[$('#tab_auxdom').text()]), Infinity); 
-    }
-    let index = tf.argMin(vecSub).arraySync();
-    // if the 'minimal distance sub' is still high, results in next level; 
-    let threshold; 
-    if($('#tab_auxdom').text() === 'ALL'){
-        threshold = 0.6; 
-    }else{
-        threshold = 1.5; 
-    }
-    if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
-        scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
-        return;
-    }
-    let objname = ado.index[index];
-    let theprior = ado.prior[index];
-    realTimeObjCache(objname, // object name
-        theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
-        ado.room_orient[wallIndex] + theprior[1], // theta
-        [theprior[3], theprior[4], theprior[5]], // scale
-        'dom'
-    );
-}
-
-function auxiliaryMove(){
-    updateMousePosition();
-    // first checking if the intersected point is shooted on the wall; 
-    let wallIntersects = raycaster.intersectObjects(manager.renderManager.wCache, true); 
-    if (wallIntersects.length > 0){
-        auxiliaryWall(wallIntersects[0]); 
-        return; 
-    }
-    // this may require a systematic optimization, since objList can be reduced to a single room;
-    let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
-    .concat(Object.values(manager.renderManager.fCache));
-    intersects = raycaster.intersectObjects(intersectObjList, true);
-    if (intersectObjList.length > 0 && intersects.length > 0) {
-        let aso = manager.renderManager.scene_json.rooms[currentRoomId].auxiliarySecObj; 
-        let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
-        let vecSub;
-        // if auxiliaryPiror.tensor.shape[0] equals to 0, then no context exists; 
-        if(aso.tensor.shape[0] !== 0){
-            vecSub = tf.transpose(tf.transpose(aso.tensor).slice([0], [3])).sub(intersectPoint);
-        }else{
-            auxiliaryCG(intersects[0]);
-            return;
-        }
-        // transform priors
-        let eucNorm = tf.norm(vecSub, 'euclidean', 1);
-        if($('#tab_auxdom').text() !== 'ALL'){
-            eucNorm = eucNorm.where(aso.catMaskTensor.equal(categoryCodec[$('#tab_auxdom').text()]), Infinity); 
-        }
-
-        let index = tf.argMin(eucNorm).arraySync();
-        let eucDis = eucNorm.slice([index], [1]).arraySync();
-        let objname = aso.index[index];
-        let theprior = aso.prior[index];
-        let threshold; 
-        if($('#tab_auxdom').text() === 'ALL'){
-            threshold = 0.6; 
-        }else{
-            threshold = 1.5; 
-        }
-        if(eucDis >= threshold){
-            scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
-            // if the intersection occurs at the floor, try suggest coherent groups; 
-            if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
-                auxiliaryCG(intersects[0]);
-            }
-            return;
-        }
-        let Y; 
-        if(['Rug'].includes(aso.coarseSemantic[objname])){
-            Y = 0; 
-        }else{
-            Y = intersects[0].point.y;
-        }
-        realTimeObjCache(
-            // objname, intersects[0].point.x, theprior[1], intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-            objname, intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-            mageAddDerive=`${aso.belonging[index]}-${objname}`);
-    }
-}
-
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    if(On_ADD && INSERT_OBJ.modelId in objectCache){
+        scene.remove(scene.getObjectByName(INSERT_NAME)); 
+        let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+        .concat(Object.values(manager.renderManager.wfCache));
+        intersects = raycaster.intersectObjects(intersectObjList, true);
+        if(intersectObjList.length > 0 && intersects.length > 0){
+            let ip = intersects[0].point
+            objectCache[INSERT_OBJ.modelId].name = INSERT_NAME;
+            objectCache[INSERT_OBJ.modelId].position.set(ip.x, ip.y, ip.z);
+            objectCache[INSERT_OBJ.modelId].rotation.set(0, 0, 0, 'XYZ');
+            objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+            scene.add(objectCache[INSERT_OBJ.modelId])
+        }else{
+            scene.remove(scene.getObjectByName(INSERT_NAME)); 
+        }
+    }
     if (On_ROTATE && INTERSECT_OBJ != null) {
         var rtt_pre = new THREE.Vector2();
         var rtt_nxt = new THREE.Vector2();
@@ -787,25 +517,6 @@ var onWindowResize = function(){
     renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight); 
 }
 
-var reshuffleRoom = function () {
-    if (currentRoomId === undefined) {
-        console.log("No room is specified. ");
-        return
-    }
-    $.ajax({
-        type: "POST",
-        contentType: "application/json; charset=utf-8",
-        url: "/reshuffle",
-        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
-        success: function (data) {
-            data = JSON.parse(data);
-            temp = data;
-            manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
-            manager.renderManager.refresh_instances();
-        }
-    });
-};
-
 var saveFile = function (strData, filename) {
     var link = document.createElement('a');
     if (typeof link.download === 'string') {
@@ -842,49 +553,22 @@ const removeIntersectObject = function(){
     }
 }
 
-const auxiliarySwap = function(){
+const onAddOff = function(){
+    scenecanvas.style.cursor = "auto";
+    scene.remove(scene.getObjectByName(INSERT_NAME)); 
+    On_ADD = false; 
+}; 
 
-}
 const onRightClickObj = function(event){
     event.preventDefault();
     // note that we only swap instances that are NOT placed yet; 
     if(AUXILIARY_MODE){
-        let aobj = scene.getObjectByName(AUXILIARY_NAME); 
-        if(!aobj || currentRoomId === undefined) return; 
-        let mageAddDerive = aobj.userData.mageAddDerive;
-        let insname = aobj.userData.modelId;
-        console.log(mageAddDerive);
-        let theroom = manager.renderManager.scene_json.rooms[currentRoomId]; 
-        $.ajax({
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            url: "/mageAddSwapInstance",
-            // note that this work highly bases on 'category' instead of 'instance'; 
-            data: JSON.stringify({'insname': insname, 'existList': Object.keys(objectCache)}),
-            success: function (data) {
-                let newinsname = data; 
-                if(mageAddDerive.includes('wall')){
-                    let mad = mageAddDerive.split(' '); 
-                    if(mad[1] === 'empty') {theroom.auxiliaryWallObj.emptyChoice = newinsname;}
-                    else{theroom.auxiliaryWallObj.mapping[mad[1]] = newinsname;}
-                    auxiliaryLoadWall();
-                }else if(mageAddDerive.includes('dom')){
-                    let index = theroom.auxiliaryDomObj.object.indexOf(insname);
-                    if (index !== -1) {
-                        theroom.auxiliaryDomObj.object[index] = newinsname;
-                    }
-                    // for(let i = 0; i < theroom.auxiliarySecObj.belonging.length; i++){
-                    //     if(theroom.auxiliarySecObj.belonging[i] === insname) theroom.auxiliarySecObj.belonging[i] = newinsname; 
-                    // }
-                    auxiliaryRoom(); 
-                }else{
-                    theroom.auxiliarySecObj.existPair
-                    [`${mageAddDerive.split('-')[0]}-${theroom.auxiliarySecObj.coarseSemantic[insname]}`] 
-                    = newinsname; 
-                    auxiliaryLoadSub(); 
-                }
-            }
-        });
+        auxiliaryRightClick();
+        return; 
+    }
+    if(On_ADD){
+        onAddOff();
+        return; 
     }
 }
 
@@ -896,8 +580,6 @@ const encodePerspectiveCamera = function(sceneJson){
     sceneJson.PerspectiveCamera = {}; 
     sceneJson.PerspectiveCamera.fov = camera.fov; 
     sceneJson.PerspectiveCamera.focalLength = camera.filmGauge; 
-    // let lookAtVector = new THREE.Vector3(0, 0, -1);
-    // lookAtVector.applyQuaternion(camera.quaternion);
     sceneJson.PerspectiveCamera.origin = [camera.position.x, camera.position.y, camera.position.z];
     sceneJson.PerspectiveCamera.rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
     sceneJson.PerspectiveCamera.target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
@@ -912,13 +594,14 @@ const encodePerspectiveCamera = function(sceneJson){
 
 var temp;
 var setting_up = function () {
-    clear_panel();  // clear panel first before use individual functions.
-    setUpCanvasDrawing();
+    // clear_panel();  // clear panel first before use individual functions.
+    // setUpCanvasDrawing();
     render_initialization();
     orth_initialization();
     searchPanelInitialization();
     radial_initialization();
 
+    // adding the `stats` panel for monitoring FPS; 
     stats = new Stats();
     stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
     stats.dom.style.top = '5%'
@@ -953,8 +636,7 @@ var setting_up = function () {
             room.objList = objlist.filter(o => o!==undefined&&o!==null); 
         });
     });
-    $("#mage_button").click(mage_add_control);
-    $("#auxiliary_button").click(auxiliary_control);
+    if(auxiliary_control) $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
         let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
         // delete unnecessary keys; 
