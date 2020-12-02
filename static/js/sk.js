@@ -80,6 +80,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     //manager.renderManager.refresh_instances();
     scene.add(object3d)
     renderer.render(scene, camera);
+    return object3d; 
 };
 
 const door_mageAdd_set = []; 
@@ -422,8 +423,11 @@ var onClickObj = function (event) {
             radial.toggle();
             isToggle = !isToggle;
         }
+        datguiObjectFolder(INTERSECT_OBJ);
         return;
     }else{
+        // synchronize data to scene json; 
+        datguiObjectFolderRemove(INTERSECT_OBJ); 
         console.log("object not intersected! ");
         $('#tab_modelid').text(" ");
         $('#tab_category').text(" ");  
@@ -544,6 +548,7 @@ const render_function = function(){
 }
 
 const removeIntersectObject = function(){
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
     let roomId = INTERSECT_OBJ.userData.roomId;
     delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(INTERSECT_OBJ)];
     delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
@@ -592,6 +597,45 @@ const encodePerspectiveCamera = function(sceneJson){
     sceneJson.canvas.height = scenecanvas.height;
 }
 
+const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; 
+const datguiObjectFolder = function(objmesh){
+    // activating dat.gui:
+    if(datgui_intersectfolder){
+        datgui.removeFolder(datgui_intersectfolder); 
+        datgui_intersectfolder = undefined;
+    } 
+    datgui_intersectfolder = datgui.addFolder(objmesh.userData.modelId);
+    datgui_intersectfolder.open();
+    let ctrlScaleX = datgui_intersectfolder.add(objmesh.scale, 'x', 0.05, 3.0); 
+    ctrlScaleX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-X';
+    let ctrlScaleY = datgui_intersectfolder.add(objmesh.scale, 'y', 0.05, 3.0); 
+    ctrlScaleY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Y';
+    let ctrlScaleZ = datgui_intersectfolder.add(objmesh.scale, 'z', 0.05, 3.0); 
+    ctrlScaleZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Z';
+    
+    let ctrlOrient = datgui_intersectfolder.add(objmesh.rotation, 'y', -3.15, 3.15); 
+    ctrlOrient.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Orient';
+
+    let rbb = manager.renderManager.scene_json.rooms[objmesh.userData.roomId].bbox; 
+    let ctrlPosX = datgui_intersectfolder.add(objmesh.position, 'x', 
+    rbb.min[0], rbb.max[0]); 
+    ctrlPosX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-X';
+    let ctrlPosY = datgui_intersectfolder.add(objmesh.position, 'y', 
+    rbb.min[1], rbb.max[1]); 
+    ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y'
+    let ctrlPosZ = datgui_intersectfolder.add(objmesh.position, 'z', 
+    rbb.min[2], rbb.max[2]); 
+    ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z'
+};
+
+const datguiObjectFolderRemove = function(objmesh){
+    if(datgui_intersectfolder){
+        datgui.removeFolder(datgui_intersectfolder); 
+        datgui_intersectfolder = undefined; 
+        synchronize_json_object(objmesh);
+    }
+}
+
 var temp;
 var setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
@@ -607,6 +651,12 @@ var setting_up = function () {
     stats.dom.style.top = '5%'
     stats.dom.style.left = '25%'
     document.getElementById('scene').appendChild(stats.dom);
+
+    // adding the `dat.gui` panel for modifying objects; 
+    datgui = new dat.GUI(); // this initialization only conducts once; 
+    datgui.domElement.style.marginRight = "0px"
+    datgui.domElement.parentElement.style.top = "5%"; 
+    datgui.domElement.parentElement.style.right = "0%"; 
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);

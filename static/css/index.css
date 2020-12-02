@@ -41,25 +41,25 @@ html, body{
   bottom: 0px;
 }
 
-#menu2 {
+.radialMenu {
   position: absolute;
   top: 0%;
   left: 0%;
   font-size: 19px;
 }
 
-#menu2 .radial__item, #menu2 .radial__button {
+.radialMenu .radial__item, .radialMenu .radial__button {
   background: #2a7ae5;
   color: white;
   padding: 10px;
   border-radius: 50%;
 }
 
-#menu2 .radial__button {
+.radialMenu .radial__button {
   cursor: pointer;
 }
 
-#menu2 .radial__item {
+.radialMenu .radial__item {
   z-index: -1;
   -webkit-transform: scale(0);
   -moz-transform: scale(0);
@@ -71,7 +71,7 @@ html, body{
   transition:  all 0.5s;
 }
 
-#menu2 .radial__item.show {
+.radialMenu .radial__item.show {
   -webkit-transform: scale(1);
   -moz-transform: scale(1);
   -ms-transform: scale(1);

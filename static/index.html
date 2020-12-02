@@ -7,6 +7,7 @@
     <script src="/static/3rdparty/moment.min.js"></script>
     <script src="/static/3rdparty/popper.min.js"></script>
     <script src="/static/3rdparty/stats.min.js"></script>
+    <script src="/static/3rdparty/dat.gui.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
@@ -42,6 +43,9 @@
         var On_LIFT = false;
         var On_ADD = false;
         var On_SCALE = false;
+        var On_xSCALE = false;
+        var On_ySCALE = false;
+        var On_zSCALE = false;
         var On_Orth_MOVE = false;
         var isToggle = false;
         var Auto_Insert_Mode = false;
@@ -56,6 +60,7 @@
         var manager;
         var menu;
         var radial;
+        var radial_scale; 
         var renderer;
         var camera;
         var scene;
@@ -83,6 +88,8 @@
         var latent_space_mode;
 
         var stats;
+        var datgui; 
+        var datgui_intersectfolder; 
 
         $(document).ready(function () {
             latent_space_mode = false;
@@ -93,9 +100,6 @@
 
             scenecanvas = document.getElementById('scenecanvas');
             orthcanvas = document.getElementById('orthcanvas');
-            radial = new Radial(rad_items, rad_options);
-            menu = document.getElementById('menu2');
-            menu.appendChild(radial.render());
             catalogItems = document.getElementById("catalogItems");
             drawingCanvas = document.getElementById('drawing-canvas');
             setting_up();
@@ -241,7 +245,8 @@
     </div>
 
 
-    <div id="menu2"></div>
+    <div id="menu2" class="radialMenu"></div>
+    <div id="menu_scale" class="radialMenu"></div>
 </div>
 </body>
 </html>

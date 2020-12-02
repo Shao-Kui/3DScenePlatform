@@ -1,10 +1,16 @@
 var rad_items = [
     {className: 'glyphicon glyphicon-star', html: ''},
     {className: 'glyphicon glyphicon-move', html: ''},
-    {className: 'glyphicon glyphicon-fullscreen', html: ''},
+    {className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
     {className: 'glyphicon glyphicon-resize-vertical', html: ''},
     {className: 'glyphicon glyphicon-repeat', html: ''},
     {className: 'glyphicon glyphicon-remove', html: ''}
+];
+
+var rad_scale_items = [
+    {className: 'glyphicon glyphicon-xScale', html: 'X'},
+    {className: 'glyphicon glyphicon-yScale', html: 'Y'},
+    {className: 'glyphicon glyphicon-zScale', html: 'Z'}, 
 ];
 
 var rad_options = {
@@ -23,11 +29,13 @@ var toggles = function () {
 };
 
 var radial_move_control = function (event) {
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_MOVE = true;
     toggles();
 };
 
 var radial_rotate_control = function (event) {
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
     mouse.rotateBase = new THREE.Vector2();
     mouse.rotateBase.set(mouse.x, mouse.y);
     On_ROTATE = true;
@@ -35,34 +43,34 @@ var radial_rotate_control = function (event) {
 };
 
 var radial_lift_control = function(event){
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_LIFT = true;
     toggles();
 };
 
 var radial_scale_control = function(event){
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_SCALE = true;
     toggles();
 };
 
 var radial_remove_control = function (event) {
-    // var roomId = INTERSECT_OBJ.userData.roomId;
-    // delete manager.renderManager.scene_json.rooms[roomId].objList
-    //     [find_object_json(INTERSECT_OBJ)];
-    // delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
-    // manager.renderManager.scene_remove(userData => {
-    //     return INTERSECT_OBJ.userData.key === userData.key;
-    // });
-    // if(AUXILIARY_MODE){
-    //     auxiliaryMode();
-    // }
     removeIntersectObject();
     toggles();
 };
 
 var radial_initialization = function(){
-    r = document.getElementsByClassName('radial__container')[0];
-    r.style.width = "0px";
-    r.style.height = "0px";
+    radial = new Radial(rad_items, rad_options);
+    menu = document.getElementById('menu2');
+    menu.appendChild(radial.render());
+
+    radial_scale = new Radial(rad_scale_items, rad_options);
+    document.getElementById('menu_scale').appendChild(radial_scale.render())
+
+    document.getElementsByClassName('radial__container').forEach(r => {
+        r.style.width = "0px";
+        r.style.height = "0px";
+    }); 
     
     //Config radial logic
     var radial_move_button = document.getElementsByClassName("glyphicon-move")[0];

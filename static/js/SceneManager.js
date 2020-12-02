@@ -1,13 +1,4 @@
-function pausecomp(millis) {
-    var date = new Date();
-    var curDate = null;
-    do {
-        curDate = new Date();
-    }
-    while (curDate - date < millis);
-}
-
-var traverseObjSetting = function (object) {
+const traverseObjSetting = function (object) {
     if(object instanceof THREE.Mesh){
         object.castShadow = true;
         object.receiveShadow = true;
@@ -29,7 +20,7 @@ var traverseObjSetting = function (object) {
     }
     object.children.forEach(function(child){
         traverseObjSetting(child);
-    })
+    });
 };
 
 class SceneManager {
@@ -51,6 +42,8 @@ class SceneManager {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, $(this.canvas).width() / $(this.canvas).height(), 0.01, 1000);
         this.camera.userData = {"type": "camera"};
+        this.camera.rotation.order = 'YXZ';
+        this.camera.position.set(0, 6, 0);
         this.scene.add(this.camera);
         // const renderer = new THREE.RayTracingRenderer();
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, 
@@ -82,7 +75,10 @@ class SceneManager {
         this.scene.add(this.orthcamera);
         this.on_resize();
         orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-
+        
+        this.camera.position.set(0, 6, 0);
+        this.camera.lookAt(9, 6, 12);
+        orbitControls.target.set(9, 6, 12);
     };
 
     scene_remove = datafilter => {
@@ -396,7 +392,6 @@ class SceneManager {
 
 
     load_instance = (inst, object_type = 'object') => {
-        //pausecomp(300);
         var self = this;
         var meta = this.objectInfoCache[inst.modelId];
         var objLoader = new THREE.OBJLoader2();
@@ -534,5 +529,4 @@ class SceneController {
         this.renderManager.refresh_scene(json, true); 
         _refresh_mageAdd_wall(json); 
     }
-
 }
