@@ -146,6 +146,12 @@ const _refresh_mageAdd_wall = (json) => {
         })
     })
 }
+const showHide_door_mageAdd_set = function(){
+    door_mageAdd_set.forEach(wd => {
+        if(wd.material.opacity === 0.0) wd.material.opacity = 0.5;
+        else wd.material.opacity = 0.0;
+    })
+}
 
 // the following function is modified from: https://discourse.threejs.org/t/collisions-two-objects/4125/3
 function detectCollisionCubes(object1, object2){
@@ -686,6 +692,7 @@ var setting_up = function () {
             room.objList = objlist.filter(o => o!==undefined&&o!==null); 
         });
     });
+    $("#windoor_button").click(showHide_door_mageAdd_set);
     if(auxiliary_control) $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
         let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));

@@ -11,7 +11,7 @@ import datetime
 from io import BytesIO
 from PIL import Image
 from rec_release import fa_reshuffle
-from autolayout import sceneSynthesis
+from autolayoutv2 import sceneSynthesis
 from flask import Flask, render_template, send_file, request
 # from generate_descriptor import sketch_search
 # import blueprints for app to register; 
@@ -41,7 +41,9 @@ def set_response_headers(response):
 
 @app.route("/")
 def main():
-    print(request.remote_addr)
+    now = datetime.datetime.now()
+    dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    print(request.remote_addr, dt_string)
     return flask.send_from_directory("static", "index.html")
 
 @app.route("/static/<fname>")
