@@ -60,7 +60,6 @@ def heuristic_assign(dominator, o, pindex=None, usechain=True):
         pindex = np.random.randint(len(pos_prior))
     # if pattern chains exist between two pending objects, we sample a pattern chain for relative transformations; 
     # if priorid in priors['chain'] and usechain:
-    #     print('use a pattern chain')
     #     if len(priors['nextchain'][priorid]) == 0: 
     #         # warning: we should delete objects beyond the pattern chain; 
     #         priors['nextchain'][priorid] = priors['chain'][priorid][np.random.randint(len(priors['chain'][priorid]))].copy()
@@ -149,7 +148,7 @@ def heuristic(cg):
         # pend_group[cg['leaderID']]['orient'] += cg['orient_offset']
     else:
         cg['orient_offset'] = 0.
-    print('dominant obj: {} ({}). '.format(dominator['modelId'], dominator['coarseSemantic']))
+    # print('dominant obj: {} ({}). '.format(dominator['modelId'], dominator['coarseSemantic']))
     # initially, all objects are not arranged; 
     for o in pend_group:
         o['isHeu'] = False
@@ -180,35 +179,11 @@ def transform_a_point(point, translate, angle, scale):
     return result + translate
 
 def windoorblock_f(o):
-    currentwindoor = windoorblock[o['modelId']]
     block = {}
     block['modelId'] = o['modelId']
     block['coarseSemantic'] = o['coarseSemantic']
-    block['max'] = currentwindoor['max'].copy()
-    block['min'] = currentwindoor['min'].copy()
-    block['max'][0] = block['max'][0] * o['scale'][0]
-    block['max'][1] = block['max'][1] * o['scale'][1]
-    block['max'][2] = block['max'][2] * o['scale'][2]
-    block['min'][0] = block['min'][0] * o['scale'][0]
-    block['min'][1] = block['min'][1] * o['scale'][1]
-    block['min'][2] = block['min'][2] * o['scale'][2]
-    block['max'][0], block['max'][2] = rotate([0,0], [block['max'][0], block['max'][2]], o['orient'])
-    block['min'][0], block['min'][2] = rotate([0,0], [block['min'][0], block['min'][2]], o['orient'])
-    block['max'][0] = block['max'][0] + o['translate'][0]
-    block['max'][1] = block['max'][1] + o['translate'][1]
-    block['max'][2] = block['max'][2] + o['translate'][2]
-    block['min'][0] = block['min'][0] + o['translate'][0]
-    block['min'][1] = block['min'][1] + o['translate'][1]
-    block['min'][2] = block['min'][2] + o['translate'][2]
-    for i in range(0, 3):
-        new_max = max(block['max'][i], block['min'][i])
-        new_min = min(block['max'][i], block['min'][i])
-        block['max'][i] = new_max
-        block['min'][i] = new_min
-    windoorbb = np.array(currentwindoor['four_points_xz'], dtype=np.float)
-    block['windoorbb'] = rotate_bb_local_np(windoorbb, o['orient'], np.array([o['scale'][0], o['scale'][2]], dtype=np.float))
-    block['windoorbb'][:, 0] += o['translate'][0]
-    block['windoorbb'][:, 1] += o['translate'][2]
+    block['max'] = o['bbox']['max'].copy()
+    block['min'] = o['bbox']['min'].copy()
     return block
 
 # code is from https://github.com/mikedh/trimesh/issues/507
@@ -294,15 +269,15 @@ def sceneSynthesis(rj):
     # identifying objects to arrange; 
     for o in rj['objList']:
         if o is None:
-            print('this is a None object; ')
+            # print('this is a None object; ')
             continue
         if 'coarseSemantic' not in o:
-            print('a given object does not have coarseSemantic; ')
+            # print('a given object does not have coarseSemantic; ')
             continue
         if o['coarseSemantic'] in BANNED:
-            print('a given object is not a furniture;' )
+            # print('a given object is not a furniture;' )
             continue
-        if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window':
+        if o['coarseSemantic'] == 'door' or o['coarseSemantic'] == 'window' or o['coarseSemantic'] == 'Door' or o['coarseSemantic'] == 'Window':
             blocks.append(windoorblock_f(o))
             continue
         try:
@@ -423,14 +398,15 @@ def sceneSynthesis(rj):
         o = pend_obj_list[i]
         if 'coarseSemantic' not in o:
             break
-        print(o['modelId'], o['coarseSemantic'])
-        for j in range(len(pend_obj_list)):
-            if csrrelation[i][j] == 1.0:
-                print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
+        # (o['modelId'], o['coarseSemantic'])
+        # for j in range(len(pend_obj_list)):
+        #     if csrrelation[i][j] == 1.0:
+        #         print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     return rj
 
 if __name__ == "__main__":
     with open('./examples/{}.json'.format("4cc6dba0-a26e-42cb-a964-06cb78d60bae-l2685-dl (20)")) as f:
         ex = json.load(f)
-    print(sceneSynthesis(ex['rooms'][3]))
+    sceneSynthesis(ex['rooms'][3])
+    # print()

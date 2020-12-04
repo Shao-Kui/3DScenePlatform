@@ -85,6 +85,9 @@ var onKeyUp = function (event) {
             reco.stop();
             audioToText();
             break;
+        case 13: // ENTER
+            clickTextSearchButton();
+            break;
           
   }
 };

@@ -38,7 +38,8 @@ def pathTracing(scenejson, sampleCount=64):
                 if not obj['inDatabase']:
                     continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])
-            scenejson['renderobjlist'].append(obj)
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
+                scenejson['renderobjlist'].append(obj)
     output = template.render(scenejson=scenejson, PI=np.pi, sampleCount=sampleCount)
     if not os.path.exists(casename):
         os.makedirs(casename)

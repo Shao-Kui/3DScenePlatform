@@ -107,7 +107,7 @@ const _addDoor_mageAdd = (doorMeta) => {
     if(doorMeta.coarseSemantic === 'Door' || doorMeta.coarseSemantic === 'door')
         {material = new THREE.MeshBasicMaterial({color: 0x00ff00});}
     else if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window')
-        {material = new THREE.MeshBasicMaterial({color: 0x87ceeb});}
+        {material = new THREE.MeshBasicMaterial({color: 0x424bf5});}
     else{material = new THREE.MeshBasicMaterial({color: 0xeeeeee});}
     material.transparent = true;
     material.opacity = 0.0
@@ -727,7 +727,10 @@ var setting_up = function () {
     })
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
-    scenecanvas.addEventListener('mousedown', () => document.getElementById("searchinput").blur());
+    scenecanvas.addEventListener('mousedown', () => {
+        document.getElementById("searchinput").blur();
+        document.getElementById("utils_button").blur();
+    });
     window.addEventListener('resize', onWindowResize, false);
     // scenecanvas.addEventListener('click', onClickObj);
     scenecanvas.addEventListener('wheel', onWheel);
