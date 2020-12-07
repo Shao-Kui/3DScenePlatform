@@ -619,7 +619,7 @@ const datguiObjectFolder = function(objmesh){
     let ctrlScaleZ = datgui_intersectfolder.add(objmesh.scale, 'z', 0.05, 3.0); 
     ctrlScaleZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Z';
     
-    let ctrlOrient = datgui_intersectfolder.add(objmesh.rotation, 'y', -3.15, 3.15); 
+    let ctrlOrient = datgui_intersectfolder.add(objmesh.rotation, 'y', -3.15, 3.15, 0.01); 
     ctrlOrient.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Orient';
 
     let rbb = manager.renderManager.scene_json.rooms[objmesh.userData.roomId].bbox; 
@@ -666,7 +666,7 @@ var setting_up = function () {
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
-    $("#layout_button").click(auto_layout);
+    $("#layout2_button").click(mageAddSample);
     $("#clear_button").click(() => {
         if(currentRoomId === undefined) return;
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
