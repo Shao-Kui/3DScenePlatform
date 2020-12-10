@@ -453,7 +453,7 @@ def sceneSynthesis(rj):
         for j in range(len(pend_obj_list)):
             if csrrelation[i][j] == 1.0:
                 print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
-    print("\r\n------- %s secondes --- \r\n" % (time.time() - start_time))
+    print("\r\n--- %s secondes ---" % (time.time() - start_time))
     return rj
 
 if __name__ == "__main__":

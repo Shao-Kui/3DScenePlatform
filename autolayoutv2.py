@@ -25,7 +25,7 @@ with open('./latentspace/windoorblock.json') as f:
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 
 'Pendant Lamp', 'Ceiling Lamp']
 leaderlist = ['double_bed', 'desk', 'coffee_table', 'King-size Bed', 'Coffee Table']
-hyperleaders = ['coffee_table', 'dining_table', 'Coffee Table', 'Dining Table', 'King-size Bed']
+hyperleaders = ['coffee_table', 'dining_table', 'Coffee Table', 'Dining Table', 'King-size Bed', 'Corner/Side Table']
 NaiveChainList = ['kitchen_cabinet', 'shelving']
 PRIORS = "./latentspace/pos-orient-4/{}.json"
 with open('./latentspace/nwdo-represent.json') as f:
@@ -79,9 +79,9 @@ def heuristic_recur(pend_group, did, adj):
         relatednames.append(pend_group[i]['modelId'])
     relatednames.sort()
     rnms = '_'.join(relatednames)
+    print(rnms)
     pth = HYPER.format(pend_group[did]['modelId'], rnms)
     if os.path.exists(pth):
-        print('Assembling hyper priors...')
         with open(pth) as f:
             hyperps = json.load(f)
         hyperp = hyperps[np.random.randint(len(hyperps))].copy()
@@ -97,11 +97,10 @@ def heuristic_recur(pend_group, did, adj):
             heuristic_assign(dominator, o, pindex, False)
     else:
         # 3D-sized of subordinate objects are different, so individual hyper-relations are still needed; 
-        if len(set(relatednames)) > 1 and rnms not in patternChain.pendingList:
-            if pend_group[did]['coarseSemantic'] in hyperleaders: # or pend_group[did]['modelId'] in ['1093']
-                patternChain.pendingList.append(rnms)
-                print(f'Start to generating hyper relations for {pend_group[did]["modelId"]} ...')
-                threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
+        if rnms not in patternChain.pendingList and pend_group[did]['coarseSemantic'] in hyperleaders: # len(set(relatednames)) > 1 and
+            patternChain.pendingList.append(rnms)
+            print(f'Start to generating hyper relations for {pend_group[did]["modelId"]} ...')
+            threading.Thread(target=patternChain.patternChain, args=(pend_group[did]['modelId'], relatednames)).start()
     for oid in range(len(pend_group)):
         o = pend_group[oid]
         if o['isHeu']:

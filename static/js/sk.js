@@ -742,5 +742,14 @@ var setting_up = function () {
     orthcanvas.addEventListener('mousemove', orth_mousemove);
     orthcanvas.addEventListener('click', orth_mouseclick);
 
+    var rapidSearches = document.getElementsByClassName("rapidSearch");
+    const rapidSFunc = function() {
+        document.getElementById('searchinput').value = this.textContent;
+        $('#searchbtn').click();
+    };
+    for (let i = 0; i < rapidSearches.length; i++) {
+        rapidSearches[i].addEventListener('click', rapidSFunc, false);
+    }
+
     gameLoop();
 };
