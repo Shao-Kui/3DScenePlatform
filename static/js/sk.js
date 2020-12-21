@@ -642,6 +642,25 @@ const datguiObjectFolderRemove = function(objmesh){
     }
 }
 
+let fpsCountMode = false;
+let fpsAccumulate = 0;
+let fpsInterval = 0;
+let fpsCountMin = Infinity;
+let fpsCountMax = 0;
+const fpsCount = function(){
+    if(fpsCountMode){
+        fpsCountMode = !fpsCountMode;
+        $('#tab_FPSavg').text((fpsAccumulate / fpsInterval).toFixed(2));
+        $('#tab_minmax').text(`${fpsCountMin.toFixed(2)}-${fpsCountMax.toFixed(2)}`);  
+        fpsAccumulate = 0
+        fpsInterval = 0;
+        fpsCountMin = Infinity;
+        fpsCountMax = 0;
+    }else{
+        fpsCountMode = !fpsCountMode;
+    }
+}
+
 var temp;
 var setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.

@@ -1,5 +1,6 @@
 /static/*.ico
 /latentspace
+/deprecated
 /examples
 /rooms
 /assets

@@ -76,7 +76,6 @@ def naive_heuristic(cgs, room_meta, block=None):
 
 def attempt_heuristic(cgs, room_polygon, blocks=None):
     # coded by Weiyu
-    print('attempt_heuristic')
     function_areas = []
     block_bb = []
     windows_bb = []

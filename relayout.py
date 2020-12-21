@@ -141,7 +141,7 @@ def insert_objects(function_areas, room_polygon: Polygon, blocks, windows):
             # if not succeed
             print('Failed')
             rotations[i] = 0
-            translations[i] = [0, 0, 0]
+            translations[i] = [999, 999, 999]
     draw({
         'b': [room_polygon],
         'r': [b[0] for b in blocks] + [w[0] for w in windows],

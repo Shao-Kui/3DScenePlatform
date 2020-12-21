@@ -270,9 +270,10 @@ def sceneSynthesis(rj):
         if o is None:
             # print('this is a None object; ')
             continue
-        if 'coarseSemantic' not in o:
-            # print('a given object does not have coarseSemantic; ')
+        if 'modelId' not in o:
             continue
+        if 'coarseSemantic' not in o:
+            o['coarseSemantic'] = getobjCat(o['modelId'])
         if o['coarseSemantic'] in BANNED:
             # print('a given object is not a furniture;' )
             continue

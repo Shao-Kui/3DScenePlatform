@@ -6,7 +6,7 @@
     <script src="/static/3rdparty/tf.min27.js"></script>
     <script src="/static/3rdparty/moment.min.js"></script>
     <script src="/static/3rdparty/popper.min.js"></script>
-    <script src="/static/3rdparty/stats.min.js"></script>
+    <script src="/static/3rdparty/stats.js"></script>
     <script src="/static/3rdparty/dat.gui.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
@@ -176,6 +176,12 @@
                         <th scope="row">AuxDom</th>
                         <td colspan="3" id="tab_auxdom">ALL</td>
                     </tr>
+                    <tr>
+                        <th scope="row">FPSavg</th>
+                        <td id="tab_FPSavg"> </td>
+                        <th>Min-Max</th>
+                        <td id="tab_minmax"> </td>
+                    </tr>
                 </tbody>
             </table>
             <!--div class="card-body">
@@ -209,6 +215,18 @@
                     Collaborative Search
                 </button>
             </div-->
+            <div>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">双人床</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">茶几</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">餐桌</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">小圆桌</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">梳妆台</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">衣柜</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">电视柜</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">沙发</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">椅子</button>
+                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">储物柜</button>
+            </div>
             <div id="collaborative_container">
                 <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
                 <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
