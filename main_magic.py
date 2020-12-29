@@ -104,6 +104,8 @@ def priors_of_roomShape():
     for obj in rj['objList']:
         if obj is None:
             continue
+        if 'modelId' not in obj:
+            continue
         if obj['modelId'] not in objCatList:
             continue
         if len(objCatList[obj['modelId']]) == 0:
@@ -111,13 +113,15 @@ def priors_of_roomShape():
         if objCatList[obj['modelId']][0] not in existingCatList:
             existingCatList.append(objCatList[obj['modelId']][0])
     existingPendingCatList = existingCatList.copy()
+    res = {'object': [], 'prior': [], 'index': [], 'coarseSemantic': {}, 'catMask': []}
     if 'auxiliaryDomObj' in rj:
+        if 'heyuindex' in rj['auxiliaryDomObj']:
+            res['heyuindex'] = rj['auxiliaryDomObj']['heyuindex']
         for objname in rj['auxiliaryDomObj']['object']:
             if objCatList[objname][0] not in existingPendingCatList:
                 existingPendingCatList.append(objCatList[objname][0])
     # print(existingCatList)
     # print(existingPendingCatList)
-    res = {'object': [], 'prior': [], 'index': [], 'coarseSemantic': {}, 'catMask': []}
     # load and process room shapes; 
     room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
     wallSecIndices = np.arange(1, len(room_meta)).tolist() + [0]
@@ -132,7 +136,10 @@ def priors_of_roomShape():
     roomTypeSuggestedList = []
     categoryList = []
     for rt in rj['roomTypes']:
-        categoryList += roomTypeDemo[rt]
+        if 'heyuindex' not in res:
+            res['heyuindex'] = np.random.randint(len(roomTypeDemo[rt]))
+        categoryList += roomTypeDemo[rt][res['heyuindex']]
+        break
     for cat in categoryList:
         if cat in existingCatList:
             continue
@@ -150,8 +157,9 @@ def priors_of_roomShape():
             # if the specific instance is already in the room;
             if objCatList[objname][0] in existingCatList: 
                 res['object'].remove(objname)
-    # if('MasterBedroom' in rj['roomTypes']):
-    #     res['object'] += ['5650', '5010', '8547', '6568', '8127']
+
+    if len(res['object']) == 0: # if a recommendation list is full: 
+        pass
 
     # load wall priors; 
     for obj in res['object']:
@@ -326,3 +334,27 @@ def magic_category():
         return json.dumps(d)
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
+
+# code is from: https://stackoverflow.com/questions/55392019/get-random-points-within-polygon-corners
+def random_points_within(poly, num_points):
+    min_x, min_y, max_x, max_y = poly.bounds
+    points = []
+    while len(points) < num_points:
+        random_point = Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)])
+        if (random_point.within(poly)):
+            points.append(random_point)
+    res = []
+    for point in points:
+        res.append([point.x, point.y])
+    return res
+
+@app_magic.route("/magic_samplepoints", methods=['POST', 'GET'])
+def mageAddAuto():
+    rj = request.json
+    if 'auxiliaryDomObj' in rj:
+        room_meta = rj['auxiliaryDomObj']['room_meta']
+    else:
+        room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    samples = random_points_within(Polygon(room_meta), 1000)
+    print(samples[0])
+    return json.dumps(samples)

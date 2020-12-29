@@ -167,7 +167,7 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
-Please cite our paper if the repository helps! 
+Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and will be recommended to [Graphical Models][gmod] after several revisions. Please cite our paper if the repository helps! 
 ```
 @article{shaokui2021geometrybased,
   title={Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
@@ -184,3 +184,5 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
 [shaokui]:https://github.com/Shao-Kui
 [GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html
+[cvm2021]:http://iccvm.org/2021/
+[gmod]:https://www.journals.elsevier.com/graphical-models

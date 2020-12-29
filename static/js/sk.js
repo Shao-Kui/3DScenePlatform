@@ -423,6 +423,8 @@ var onClickObj = function (event) {
         console.log(INTERSECT_OBJ);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
+        $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
+        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
         if (!isToggle) {
@@ -514,7 +516,9 @@ function onDocumentMouseMove(event) {
             INTERSECT_OBJ.scale.z + s * (this_x - last_x));
     }
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
+        tf.engine().startScope();
         auxiliaryMove();
+        tf.engine().endScope();
     }
     updateMousePosition();
 };

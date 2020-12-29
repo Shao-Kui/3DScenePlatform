@@ -1,5 +1,5 @@
 <scene version="0.5.0">
-<sensor type="perspective">
+<sensor type="{{ cameraType }}">
     <sampler type="ldsampler">
         <integer name="sampleCount" value="{{ sampleCount }}"/>
     </sampler>

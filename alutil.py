@@ -87,9 +87,9 @@ def attempt_heuristic(cgs, room_polygon, blocks=None):
             [np.min(t[:, 0]), cg['ground'], np.min(t[:, 1]), np.max(t[:, 0]), cg['height'], np.max(t[:, 1])])
 
     for b in blocks:
-        if b['coarseSemantic'] == 'door':
+        if b['coarseSemantic'] in ['door', 'Door']:
             block_bb.append(b['min'] + b['max'])
-        else:
+        elif b['coarseSemantic'] in ['Window', 'window']:
             windows_bb.append(b['min'] + b['max'])
         # print(b)
 
