@@ -49,9 +49,11 @@
     </transform>
     <!--string name="filename" value="{{ '../../object/{}/{}.obj'.format(obj.modelId, obj.modelId) }}"/-->
     <string name="filename" value="{{ obj.modelPath }}"/>
+    {%- if wallMaterial %}
     <bsdf type="twosided">
         <bsdf type="roughdiffuse"></bsdf>
     </bsdf>
+    {%- endif %}
 </shape>    
 {% endfor %}
 {% for obj in scenejson.renderobjlist %}
