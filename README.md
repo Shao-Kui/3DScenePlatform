@@ -34,7 +34,8 @@ scikit_learn==0.23.2
 This platform is under cooperations with other organizations, so other packages may be required, e.g., ```baidu_aip```, ```librosa```, etc. Such features are not mandatory. Thus, you can simply `comment` the unnecessary packages. Note that for running the server, especially the algorithm, some packages are mandatory such as ```torch```, ```flask```, etc. We still recommend you installing the entire 'requirements.txt' on the safe side. To install packages, you needn't strictly match the versions above. We attached those versions simply because they work for our deployment. Please issue us if you have troubles of deploying. 
 
 # Datasets
-This section discuss how we organize datasets. Note that we have no copyright to distribute datasets, especially SUNCG. 3D-Front is available, please refer to their [website][3dfront] for downloading. Our platform has its own rules of organizing datasets, so downloaded datasets should be re-organized to 'root/dataset'. We are investigating whether we can release the re-organized dataset or whether we can release the script for processing the existing datasets.  
+This section discusses how we organize datasets. This platform follows **S**hao**K**ui-Format, the Scalable and Kross-Platform Format. Note that we have no copyright to distribute datasets, especially SUNCG. 3D-Front is available, please refer to their [website][3dfront] for downloading. Our platform has its own organizations of datasets, so the downloaded datasets should be re-organized to 'root/dataset'. A [script][3dfront2suncg] exists for converting 3D-Front to SK-Format. The below paragraphs also illustrate our format in detail. 
+
 ## Models
 Since models are reuseble in multiple scenes. The repository of models be separated from the repo of scenes. Please organize models in the ```object``` folder of the ```dataset``` folder:  
 <pre>
@@ -133,7 +134,9 @@ root
 **autolayout.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
 **patternChain.py**: the code to dynamically check and generate hyper-relations;  
 **alutil.py** and **relayout.py**: geometric arranging;  
-**projection2d.py**: converting room meshes to polygons (room shape);  
+**projection2d.py**: converting room meshes to polygons (room shape); 
+
+If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. 
 # MageAdd
 Coming soon... ... ...
 # Manuals  
@@ -169,7 +172,7 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
-Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and will be recommended to [Graphical Models][gmod] after several revisions. Please cite our paper if the repository helps! 
+Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and will be recommended to [Graphical Models][gmod] after several revisions. A preprint is available on arXiv. Please cite our paper if this repository helps! 
 ```
 @article{shaokui2021geometrybased,
   title={Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
@@ -190,3 +193,4 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [gmod]:https://www.journals.elsevier.com/graphical-models
 [thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
+[3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/ai_depre.js
