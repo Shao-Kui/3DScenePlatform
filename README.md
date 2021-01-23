@@ -70,6 +70,8 @@ Priors are organized in 'root/latentspace/pos-orient-3/'. In this directory, eac
 
 In the same directory, each .json file with two object names is a prior set of a pattern chain. Each pattern chain file is a list of another list. The 'outer' list has a number of chains and the 'inner' list includes indices to the source pairwise relations. Hpyer-Priors are organized in 'root/latentspace/pos-orient-3/hyper'. Similaly, the 'outer' list has a number of hyper-priors, but the 'inner' one is a dict object indexing to different source pairwise relations. Note that hyper-relations are generated online when our framework requires. 
 
+The pre-learnt priors can be downloaded in [Tsinghua-Cloud][thucpriorlink] or [Google-Drive][googlepriorlink]. 
+
 ## Layout Configuration
 A 'layout-config' file is a json including essential attributes of a scene. The stucture of a config file is presented below: 
 ```
@@ -172,7 +174,7 @@ Our paper is accept as an oral presentation in [Computational Visual Media 2021]
 @article{shaokui2021geometrybased,
   title={Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
   author={Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang},
-  journal={},
+  journal={arXiv preprint arXiv:2101.02903},
   year={2021}
 }
 ```
@@ -186,3 +188,5 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html
 [cvm2021]:http://iccvm.org/2021/
 [gmod]:https://www.journals.elsevier.com/graphical-models
+[thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
+[googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing

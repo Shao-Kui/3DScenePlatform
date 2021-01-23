@@ -287,99 +287,6 @@ class SceneManager {
 		this.instanceKeyCache=newkeycache;
 	}
 
-    add_latent_obj = () => {
-        var self = this;
-        if (!this.latentNameCache[INTERSECT_OBJ.userData.name]) {
-            self.latentNameCache[INTERSECT_OBJ.userData.name] = self.instanceKeyCache[INTERSECT_OBJ.userData.key];
-        }
-        fetch("/latent_space/" + INTERSECT_OBJ.userData.name + "/"
-            + INTERSECT_OBJ.position.x + "/"
-            + INTERSECT_OBJ.position.y + "/"
-            + INTERSECT_OBJ.position.z + "/").then(re => {
-            return re.json()
-        }).then(list => {
-            list.forEach(inst => {
-                if (inst === null || inst === undefined) {
-                    return;
-                }
-                if (this.latentNameCache[inst.modelId]) {
-                    return;
-                }
-                inst.key = THREE.Math.generateUUID();
-                if (self.objectInfoCache[inst.modelId]) {
-                    self.load_instance(inst, "latent");
-                } else {
-                    fetch("/objmeta/" + inst.modelId)
-                        .then(function (response) {
-                            return response.json();
-                        }).then(function (meta) {
-                        if (meta.id === undefined || meta.name === undefined) {
-                            return;
-                        }
-                        self.objectInfoCache[inst.modelId] = meta;
-                        self.load_instance(inst, "latent");
-                    });
-                }
-                self.renderer.render(self.scene, self.camera);
-            });
-        });
-    };
-    refresh_latent = () => {
-        var hidetype = "";
-        if (INTERSECT_OBJ)
-            hidetype = INTERSECT_OBJ.userData.coarseSemantic;
-        self.scene.children.forEach(inst => {
-            if (inst.userData.type === "latent") {
-                inst.visible = inst.userData.coarseSemantic !== hidetype;
-            }
-            if (INTERSECT_OBJ)
-                INTERSECT_OBJ.visible = true;
-        });
-
-    };
-
-    enter_latent = () => {
-        var self = this;
-        var iid = INTERSECT_OBJ.uuid;
-        self.add_latent_obj();
-        scene.children.forEach(inst => {
-            if (inst.userData.type === "object" ||
-                inst.userData.type === "w" ||
-                inst.userData.type === "f" ||
-                inst.userData.type === "c") {
-                if (inst.uuid !== iid) {
-                    inst.visible = false;
-                }
-            }
-        });
-    };
-
-    quit_latent = () => {
-        var self = this;
-        if (INTERSECT_OBJ) {
-            INTERSECT_OBJ.userData.type = 'object';
-            INTERSECT_OBJ.userData.roomId = 0;
-            self.scene_json.rooms[0]['objList'].push(object_to_listobject(INTERSECT_OBJ));
-            for (let name in self.latentNameCache) {
-                if(self.latentNameCache[name].userData.type==="latent")
-                    delete self.instanceKeyCache[self.latentNameCache[name].userData.key];
-            }
-            self.instanceKeyCache[INTERSECT_OBJ.userData.key] = INTERSECT_OBJ;
-            self.latentNameCache = {};
-        }
-        scene.children.forEach(inst => {
-            if (inst.userData.type === "object" ||
-                inst.userData.type === "w" ||
-                inst.userData.type === "f" ||
-                inst.userData.type === "c") {
-                inst.visible = true;
-            }
-        });
-        self.scene_remove(userData => {
-            return userData.type === "latent";
-        })
-    };
-
     latent_space_click = () => {
         var self = this;
         if (latent_space_mode === false) {
@@ -389,7 +296,6 @@ class SceneManager {
         }
         latent_space_mode = !latent_space_mode;
     };
-
 
     load_instance = (inst, object_type = 'object') => {
         var self = this;
@@ -460,24 +366,6 @@ class SceneManager {
         this.renderer.setSize(this.canvas.width, this.canvas.height);
     };
 }
-
-var object_to_listobject = (obj) => {
-    re = {
-        id: "to-do",
-        type: obj.userData.type,
-        modelId: obj.userData.name,
-        bbox: {min: Array(3), max: Array(3)},
-        translate: [obj.position.x, obj.position.y, obj.position.z],
-        scale: [obj.scale.x, obj.scale.y, obj.scale.z],
-        rotate: [obj.rotation._x, obj.rotation._y, obj.rotation._z],
-        rotateOrder: obj.rotation._order,
-        orient: "to-do",
-        coarseSemantic: obj.userData.coarseSemantic,
-        roomId: 0,
-        key: obj.userData.key
-    };
-    return re;
-};
 
 class SceneController {
     constructor(uiDOM) {
