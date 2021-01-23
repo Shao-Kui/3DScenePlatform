@@ -19,6 +19,7 @@
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
+    <script src="/static/3rdparty/socket.io.min.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
@@ -91,6 +92,43 @@
         var datgui; 
         var datgui_intersectfolder; 
 
+        var instanceKeyCache = {};
+
+        // global variables for online mode; 
+        const onlineGroup = "{{ onlineGroup }}";
+        const socket = io();
+
+        const loadOnlineSceneJson = function(){
+            if(onlineGroup === 'OFFLINE') return;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: `/online/${onlineGroup}`,
+                // data: JSON.stringify( ... ),
+                success: function (data) {
+                    manager.load_scene(JSON.parse(data));
+                }
+            });
+        }
+
+        const socketInit = function(){
+            // client-side
+            socket.on("onlineSceneUpdate", sceneJson => {
+                manager.load_scene(sceneJson);
+            });
+            socket.on("message", (arg) => {
+                console.log(arg);
+            });
+            socket.on("join", data => {
+                console.log(data);
+            });
+            socket.emit('join', onlineGroup);
+        }
+
+        const onlineSceneUpdate = function(){
+            socket.emit('onlineSceneUpdate', manager.renderManager.scene_json, onlineGroup);
+        }
+
         $(document).ready(function () {
             latent_space_mode = false;
             manager = new SceneController($("#ui")[0]);
@@ -103,6 +141,10 @@
             catalogItems = document.getElementById("catalogItems");
             drawingCanvas = document.getElementById('drawing-canvas');
             setting_up();
+
+            // try loading the online scene: 
+            loadOnlineSceneJson();
+            socketInit();
         })
 
     </script>

@@ -1,7 +1,8 @@
 const objectCache = {}; 
 const gatheringObjCat = {}; 
-let loadObjectToCache = async function(modelId){
+let loadObjectToCache = function(modelId, anchor=()=>{}){
     if(modelId in objectCache){
+        anchor();
         return;
     }
     let mtlurl = `/mtl/${modelId}`;
@@ -43,9 +44,33 @@ let loadObjectToCache = async function(modelId){
                 }
             });
             objectCache[modelId] = instance;
+            anchor();
         }, null, null, null, false);
     });
 };
+
+let refreshObjectFromCache = function(objToInsert){
+    if(!objToInsert.modelId in objectCache) return;
+    let object3d = objectCache[objToInsert.modelId].clone();
+    object3d.name = undefined;
+    object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
+    object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
+    object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
+    object3d.userData = {
+        "type": 'object',
+        "key": objToInsert.key,
+        "roomId": objToInsert.roomId,
+        "modelId": objToInsert.modelId,
+        "coarseSemantic": objToInsert.coarseSemantic
+    };
+    object3d.children.forEach(child => {
+        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+    });
+    manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
+    scene.add(object3d)
+    renderer.render(scene, camera);
+    return object3d; 
+}
 
 let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}){
     if(!modelId in objectCache) return;

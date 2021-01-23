@@ -12,7 +12,8 @@ from io import BytesIO
 from PIL import Image
 from rec_release import fa_reshuffle
 from autolayoutv2 import sceneSynthesis
-from flask import Flask, render_template, send_file, request
+from flask import Flask, render_template, send_file, request, render_template
+from flask_socketio import SocketIO, emit, send, join_room, leave_room
 # from generate_descriptor import sketch_search
 # import blueprints for app to register; 
 from main_audio import app_audio
@@ -22,12 +23,13 @@ from projection2d import processGeo as objCatList, objListCat, categoryRelation,
 import random
 import difflib
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_ls)
 app.register_blueprint(app_magic)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app)
+socketio = SocketIO(app)
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -44,7 +46,7 @@ def main():
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     print(request.remote_addr, dt_string)
-    return flask.send_from_directory("static", "index.html")
+    return flask.render_template("index.html", onlineGroup="OFFLINE")
 
 @app.route("/static/<fname>")
 def send(fname):
@@ -231,7 +233,44 @@ def semantic(obj_id):
 def favicon(): 
     return flask.send_from_directory('static', 'iconfinder-stagingsite-4263528_117848.ico', mimetype='image/vnd.microsoft.icon')
 
+onlineScenes = {}
+
+@app.route("/online/<groupName>", methods=['GET', 'POST'])
+def onlineMain(groupName):
+    if request.method == 'POST':
+        if groupName not in onlineScenes:
+            with open('./assets/demo.json') as f:
+                onlineScenes[groupName] = json.load(f)
+        return json.dumps(onlineScenes[groupName])
+    now = datetime.datetime.now()
+    dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    print(request.remote_addr, dt_string, groupName)
+    return flask.render_template("index.html", onlineGroup=groupName)
+
+@socketio.on('join')
+def on_join(groupName):
+    join_room(groupName)
+    emit('join', 'A person has entered the room. ', room=groupName)
+
+@socketio.on('message')
+def message(data):
+    print('Received a sent message: ', data)
+@socketio.on('connect')
+def connect():
+    print('Connected with ', request.remote_addr)
+@socketio.on('disconnect')
+def disconnect():
+    print('Disconnected with ', request.remote_addr)
+
+@socketio.on('onlineSceneUpdate')
+def onlineSceneUpdate(sceneJson, groupName): 
+    if groupName not in onlineScenes:
+        emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
+        return
+    onlineScenes[groupName] = sceneJson
+    emit('onlineSceneUpdate', sceneJson, room=groupName, include_self=False) 
+
 if __name__ == '__main__':
     from waitress import serve
-    serve(app, host="0.0.0.0", port=11425, threads=6)
+    serve(app, host="0.0.0.0", port=11425, threads=16)
     # app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)
