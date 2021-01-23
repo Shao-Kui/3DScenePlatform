@@ -79,7 +79,8 @@ def heuristic_recur(pend_group, did, adj):
         relatednames.append(pend_group[i]['modelId'])
     relatednames.sort()
     rnms = '_'.join(relatednames)
-    print(rnms)
+    if len(relatednames) >= 1:
+        print(rnms)
     pth = HYPER.format(pend_group[did]['modelId'], rnms)
     if os.path.exists(pth):
         with open(pth) as f:
@@ -183,6 +184,30 @@ def windoorblock_f(o):
     block['coarseSemantic'] = o['coarseSemantic']
     block['max'] = o['bbox']['max'].copy()
     block['min'] = o['bbox']['min'].copy()
+    pos = np.array([
+        (block['max'][0] + block['min'][0])/2, 
+        (block['max'][1] + block['min'][1])/2, 
+        (block['max'][2] + block['min'][2])/2
+    ])
+    _minIndex = np.argmin([
+        block['max'][0] - block['min'][0], 
+        block['max'][1] - block['min'][1], 
+        block['max'][2] - block['min'][2]
+    ])
+    length = np.array([
+        block['max'][0] - block['min'][0], 
+        block['max'][1] - block['min'][1], 
+        block['max'][2] - block['min'][2]
+    ])
+    scale = np.array([1,1,1])
+    scale[_minIndex] = 6.6
+    length *= scale
+    block['max'][0] = pos[0] + (length[0]) / 2
+    block['min'][0] = pos[0] - (length[0]) / 2
+    block['max'][1] = pos[1] + (length[1]) / 2
+    block['min'][1] = pos[1] - (length[1]) / 2
+    block['max'][2] = pos[2] + (length[2]) / 2
+    block['min'][2] = pos[2] - (length[2]) / 2
     return block
 
 # code is from https://github.com/mikedh/trimesh/issues/507
@@ -255,7 +280,8 @@ def load_AABB(i):
     return AABBcache[i]
 
 def sceneSynthesis(rj):
-    print(rj['origin'])
+    if 'origin' in rj:
+        print(rj['origin'])
     start_time = time.time()
     pend_obj_list = []
     bbindex = []
