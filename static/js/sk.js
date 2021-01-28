@@ -1,8 +1,8 @@
 const objectCache = {}; 
 const gatheringObjCat = {}; 
-let loadObjectToCache = function(modelId, anchor=()=>{}){
+let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
     if(modelId in objectCache){
-        anchor();
+        anchor.apply(null, anchorArgs);
         return;
     }
     let mtlurl = `/mtl/${modelId}`;
@@ -44,13 +44,13 @@ let loadObjectToCache = function(modelId, anchor=()=>{}){
                 }
             });
             objectCache[modelId] = instance;
-            anchor();
+            anchor.apply(null, anchorArgs);;
         }, null, null, null, false);
     });
 };
 
 let refreshObjectFromCache = function(objToInsert){
-    if(!objToInsert.modelId in objectCache) return;
+    if(!(objToInsert.modelId in objectCache)) return;
     let object3d = objectCache[objToInsert.modelId].clone();
     object3d.name = undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
@@ -72,17 +72,37 @@ let refreshObjectFromCache = function(objToInsert){
     return object3d; 
 }
 
-let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}){
-    if(!modelId in objectCache) return;
+const roomIDCaster = new THREE.Raycaster();
+const calculateRoomID = function(translate){
+    roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
+    let intersects = roomIDCaster.intersectObjects(manager.renderManager.fCache, true);
+    if (manager.renderManager.fCache.length > 0 && intersects.length > 0) { 
+        return intersects[0].object.parent.userData.roomId;
+    }
+    else{
+        return 0; 
+    }
+}
+
+let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!(modelId in objectCache)){
+        loadObjectToCache(modelId, anchor=addObjectFromCache, anchorArgs=[modelId, transform, uuid, origin]);
+        return; 
+    }
+    // check room ID: 
+    let roomID = calculateRoomID(transform.translate); 
     let objToInsert = {
         "modelId": modelId,
         "coarseSemantic": gatheringObjCat[modelId], 
         "translate": transform.translate,
         "scale": transform.scale,
-        "roomId": currentRoomId,
+        "roomId": roomID,
         "rotate": transform.rotate,
         "orient": transform.rotate[1], 
-        "key": THREE.Math.generateUUID(),
+        // "key": serverUUIDs.pop(),
+        "key": uuid,
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
     let object3d = objectCache[modelId].clone();
@@ -93,18 +113,19 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     object3d.userData = {
         "type": 'object',
         "key": objToInsert.key,
-        "roomId": currentRoomId,
+        "roomId": roomID,
         "modelId": modelId,
         "coarseSemantic": gatheringObjCat[modelId]
     };
     object3d.children.forEach(child => {
         if(child.material.origin_mtr) child.material = child.material.origin_mtr;
     });
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.push(objToInsert);
+    manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     //manager.renderManager.refresh_instances();
     scene.add(object3d)
     renderer.render(scene, camera);
+    if(origin && onlineGroup !== 'OFFLINE'){socket.emit('functionCall', 'addObjectFromCache', [modelId, transform, uuid, false], onlineGroup);}
     return object3d; 
 };
 
@@ -162,7 +183,7 @@ const _refresh_mageAdd_wall = (json) => {
     json.rooms.forEach(room => {
         room.objList.forEach(meta => {
             if(meta === undefined || meta === null) return; 
-            if(!'coarseSemantic' in meta) return; 
+            if(!('coarseSemantic' in meta)) return; 
             if(meta.coarseSemantic === 'Door' || meta.coarseSemantic === 'door'){
                 _addDoor_mageAdd(meta); 
             }else if(meta.coarseSemantic === 'Window' || meta.coarseSemantic === 'widow'){
@@ -309,6 +330,7 @@ var synchronize_json_object = function (object) {
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
+    // onlineSceneUpdate();
 };
 
 var synchronize_roomId = function (object) {
@@ -582,6 +604,15 @@ const render_function = function(){
     }
 }
 
+const removeObjectByUUID = function(uuid){
+    let objectToDelete = manager.renderManager.instanceKeyCache[uuid];
+    if(objectToDelete === undefined) return; 
+    scene.remove(objectToDelete); // remove the object from the scene; 
+    let roomId = objectToDelete.userData.roomId;
+    delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(objectToDelete)];
+    delete manager.renderManager.instanceKeyCache[uuid];
+}
+
 const removeIntersectObject = function(){
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     let roomId = INTERSECT_OBJ.userData.roomId;
@@ -591,6 +622,7 @@ const removeIntersectObject = function(){
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
+    if(onlineGroup !== 'OFFLINE'){socket.emit('functionCall', 'removeObjectByUUID', [INTERSECT_OBJ.userData.key], onlineGroup);}
 }
 
 const onAddOff = function(){

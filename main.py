@@ -13,7 +13,8 @@ from PIL import Image
 from rec_release import fa_reshuffle
 from autolayoutv2 import sceneSynthesis
 from flask import Flask, render_template, send_file, request, render_template
-from flask_socketio import SocketIO, emit, send, join_room, leave_room
+from flask_socketio import SocketIO, emit, send, join_room, leave_room, rooms
+import uuid
 # from generate_descriptor import sketch_search
 # import blueprints for app to register; 
 from main_audio import app_audio
@@ -235,12 +236,22 @@ def favicon():
 
 onlineScenes = {}
 
+@app.route("/applyuuid")
+def applyuuid():
+    return str(uuid.uuid4())
+
 @app.route("/online/<groupName>", methods=['GET', 'POST'])
 def onlineMain(groupName):
     if request.method == 'POST':
         if groupName not in onlineScenes:
             with open('./assets/demo.json') as f:
                 onlineScenes[groupName] = json.load(f)
+            # generate uuid for each object: 
+            for room in onlineScenes[groupName]['rooms']:
+                for obj in room['objList']:
+                    if obj is None:
+                        continue
+                    obj['key'] = str(uuid.uuid4())
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
@@ -270,7 +281,17 @@ def onlineSceneUpdate(sceneJson, groupName):
     onlineScenes[groupName] = sceneJson
     emit('onlineSceneUpdate', sceneJson, room=groupName, include_self=False) 
 
+@socketio.on('functionCall')
+def functionCall(fname, arguments, groupName): 
+# def functionCall(fname, arguments): 
+    # currently, we only allow a user exists in a single room; 
+    if groupName not in onlineScenes:
+        emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
+        return
+    # onlineScenes[groupName] = sceneJson
+    emit('functionCall', (fname, arguments), room=groupName, include_self=False) 
+
 if __name__ == '__main__':
     from waitress import serve
-    serve(app, host="0.0.0.0", port=11425, threads=16)
+    serve(app, host="0.0.0.0", port=11425, threads=8)
     # app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)

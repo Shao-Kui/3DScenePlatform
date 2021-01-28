@@ -97,6 +97,8 @@
         // global variables for online mode; 
         const onlineGroup = "{{ onlineGroup }}";
         const socket = io();
+        const onlineFuncList = {};
+        const serverUUIDs = [];
 
         const loadOnlineSceneJson = function(){
             if(onlineGroup === 'OFFLINE') return;
@@ -111,10 +113,25 @@
             });
         }
 
+        const loadMoreServerUUIDs = function(num=5){
+            // populate UUIDs from the server:
+            for(let i = 0; i < num; i++){$.ajax({
+                url: '/applyuuid',
+                type: 'GET',
+                success: data => { serverUUIDs.push(data); }
+            });}  
+        }
+
         const socketInit = function(){
             // client-side
             socket.on("onlineSceneUpdate", sceneJson => {
                 manager.load_scene(sceneJson);
+            });
+            socket.on("functionCall", (fname, arguments) => {
+                console.log(fname, arguments);
+                let args = [], i = 0;
+                while(arguments[i]!== undefined){args.push(arguments[i]); i++; }                
+                onlineFuncList[fname].apply(null, args);
             });
             socket.on("message", (arg) => {
                 console.log(arg);
@@ -123,6 +140,7 @@
                 console.log(data);
             });
             socket.emit('join', onlineGroup);
+            loadMoreServerUUIDs(10);
         }
 
         const onlineSceneUpdate = function(){
@@ -145,6 +163,8 @@
             // try loading the online scene: 
             loadOnlineSceneJson();
             socketInit();
+            onlineFuncList['addObjectFromCache'] = addObjectFromCache;
+            onlineFuncList['removeObjectByUUID'] = removeObjectByUUID;
         })
 
     </script>

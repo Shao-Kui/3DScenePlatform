@@ -244,7 +244,7 @@ class SceneManager {
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
                         return;
-                inst.key=THREE.Math.generateUUID();
+                if(inst.key === undefined) inst.key=THREE.Math.generateUUID();
                 loadObjectToCache(inst.modelId, function(){
                     refreshObjectFromCache(inst);
                 });
