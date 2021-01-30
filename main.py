@@ -279,7 +279,7 @@ def onlineSceneUpdate(sceneJson, groupName):
         emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
         return
     onlineScenes[groupName] = sceneJson
-    emit('onlineSceneUpdate', sceneJson, room=groupName, include_self=False) 
+    # emit('onlineSceneUpdate', sceneJson, room=groupName, include_self=False) 
 
 @socketio.on('functionCall')
 def functionCall(fname, arguments, groupName): 
@@ -288,7 +288,6 @@ def functionCall(fname, arguments, groupName):
     if groupName not in onlineScenes:
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
-    # onlineScenes[groupName] = sceneJson
     emit('functionCall', (fname, arguments), room=groupName, include_self=False) 
 
 if __name__ == '__main__':

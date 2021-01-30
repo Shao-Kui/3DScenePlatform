@@ -125,10 +125,9 @@
         const socketInit = function(){
             // client-side
             socket.on("onlineSceneUpdate", sceneJson => {
-                manager.load_scene(sceneJson);
+                // manager.load_scene(sceneJson);
             });
             socket.on("functionCall", (fname, arguments) => {
-                console.log(fname, arguments);
                 let args = [], i = 0;
                 while(arguments[i]!== undefined){args.push(arguments[i]); i++; }                
                 onlineFuncList[fname].apply(null, args);
@@ -143,7 +142,8 @@
             loadMoreServerUUIDs(10);
         }
 
-        const onlineSceneUpdate = function(){
+        const emitFunctionCall = function(funcName, arguments){
+            socket.emit('functionCall', funcName, arguments, onlineGroup);
             socket.emit('onlineSceneUpdate', manager.renderManager.scene_json, onlineGroup);
         }
 
@@ -165,6 +165,7 @@
             socketInit();
             onlineFuncList['addObjectFromCache'] = addObjectFromCache;
             onlineFuncList['removeObjectByUUID'] = removeObjectByUUID;
+            onlineFuncList['transformObjectByUUID'] = transformObjectByUUID;
         })
 
     </script>

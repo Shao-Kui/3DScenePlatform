@@ -67,6 +67,8 @@ let refreshObjectFromCache = function(objToInsert){
         if(child.material.origin_mtr) child.material = child.material.origin_mtr;
     });
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
+    // add reference from object3d to objectjson: 
+    object3d.userData.json = objToInsert;
     scene.add(object3d)
     renderer.render(scene, camera);
     return object3d; 
@@ -122,10 +124,11 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     });
     manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
-    //manager.renderManager.refresh_instances();
+    // manager.renderManager.refresh_instances();
+    object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
     scene.add(object3d)
     renderer.render(scene, camera);
-    if(origin && onlineGroup !== 'OFFLINE'){socket.emit('functionCall', 'addObjectFromCache', [modelId, transform, uuid, false], onlineGroup);}
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}
     return object3d; 
 };
 
@@ -313,6 +316,33 @@ var find_object_json = function (obj) {
     return null;
 };
 
+const synchronizeObjectJsonByObject3D = function(object3d){
+    let objectjson = object3d.userData.json;
+    objectjson.scale[0] = object3d.scale.x;
+    objectjson.scale[1] = object3d.scale.y;
+    objectjson.scale[2] = object3d.scale.z;
+    objectjson.translate[0] = object3d.position.x;
+    objectjson.translate[1] = object3d.position.y;
+    objectjson.translate[2] = object3d.position.z;
+    objectjson.rotate[0] = object3d.rotation.x;
+    objectjson.rotate[1] = object3d.rotation.y;
+    objectjson.rotate[2] = object3d.rotation.z;
+    objectjson.orient = Math.atan2(Math.sin(object3d.rotation.y), Math.cos(object3d.rotation.x) * Math.cos(object3d.rotation.y));
+}
+
+const transformObjectByUUID = function(uuid, transform, origin=true){
+    console.log(uuid, transform);
+    let object3d = manager.renderManager.instanceKeyCache[uuid]; 
+    // set object3d first: 
+    object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
+    object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
+    object3d.rotation.set(transform.rotate[0], transform.rotate[1], transform.rotate[2]);
+    synchronizeObjectJsonByObject3D(object3d);
+    // the core code for calculating orientations of objects; 
+    if(AUXILIARY_MODE){auxiliaryMode();}
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);}
+};
+
 var synchronize_json_object = function (object) {
     var i = find_object_json(object);
     var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
@@ -330,7 +360,14 @@ var synchronize_json_object = function (object) {
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
-    // onlineSceneUpdate();
+    if(origin && onlineGroup !== 'OFFLINE'){
+        let transform = {
+            'translate': inst.translate,
+            'scale': inst.scale,
+            'rotate': inst.rotate
+        }
+        emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, false]);
+    }
 };
 
 var synchronize_roomId = function (object) {
@@ -622,7 +659,7 @@ const removeIntersectObject = function(){
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
-    if(onlineGroup !== 'OFFLINE'){socket.emit('functionCall', 'removeObjectByUUID', [INTERSECT_OBJ.userData.key], onlineGroup);}
+    if(onlineGroup !== 'OFFLINE'){emitFunctionCall('removeObjectByUUID', [INTERSECT_OBJ.userData.key]);}
 }
 
 const onAddOff = function(){
