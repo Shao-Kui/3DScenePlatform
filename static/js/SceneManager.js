@@ -92,7 +92,6 @@ class SceneManager {
                 }
             }
         });
-        console.log(instances_to_remove);
         instances_to_remove.forEach(function (inst) {
             self.scene.remove(inst);
         });
@@ -135,7 +134,6 @@ class SceneManager {
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
         }
-
     };
 
     load_cwf_room_meta = room => {
@@ -253,7 +251,6 @@ class SceneManager {
 	}
 
     refresh_camera = () => {
-        console.log("start to refresh camera! ");
         var bbox = this.scene_json.bbox;
         var lx = (bbox.max[0] + bbox.min[0]) / 2;
         var lz = (bbox.max[2] + bbox.min[2]) / 2;

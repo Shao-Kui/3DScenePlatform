@@ -331,7 +331,6 @@ const synchronizeObjectJsonByObject3D = function(object3d){
 }
 
 const transformObjectByUUID = function(uuid, transform, origin=true){
-    console.log(uuid, transform);
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
     // set object3d first: 
     object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
@@ -343,7 +342,61 @@ const transformObjectByUUID = function(uuid, transform, origin=true){
     if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);}
 };
 
+const tCache = []; 
+var fastTimeLine = gsap.timeline({repeat: 0});
+var lastMovedTimeStamp = moment();
+var currentMovedTimeStamp = moment();
+const transformObject3DOnly = function(uuid, xyz, mode='position'){
+    currentMovedTimeStamp = moment();
+    let object3d = manager.renderManager.instanceKeyCache[uuid]; 
+    fastTimeLine.to(object3d[mode], {
+        // duration: moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
+        duration: 0.005,
+        x: xyz[0],
+        y: xyz[1],
+        z: xyz[2]
+    });
+    tCache.push({
+        'uuid': uuid, 
+        'xyz': xyz, 
+        'duration': moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
+        'mode': mode
+    }); 
+    // if(tCache.length >= 100) emitAnimationObject3DOnly(); 
+    lastMovedTimeStamp = currentMovedTimeStamp; 
+};
+
+const emitAnimationObject3DOnly = function(){
+    if(tCache.length === 0) return; 
+    if(origin && onlineGroup !== 'OFFLINE'){
+        socket.emit('functionCall', 'animateObject3DOnly', [tCache], onlineGroup);
+    }
+    tCache.length = 0; 
+}
+
+var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+const animateObject3DOnly = function(transformations){
+    onlineAnimationTimeLine.kill()
+    onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+    for(let i = 0; i < transformations.length; i++){
+        let t = transformations[i];
+        let object3d = manager.renderManager.instanceKeyCache[t.uuid]; 
+        onlineAnimationTimeLine.to(object3d[t.mode], {
+            duration: t.duration,
+            x: t.xyz[0],
+            y: t.xyz[1],
+            z: t.xyz[2]
+        });
+    }
+}
+
 var synchronize_json_object = function (object) {
+    if(fastTimeLine.isActive()){
+        fastTimeLine.seek(fastTimeLine.endTime());
+        fastTimeLine.kill();
+    }
+    fastTimeLine = gsap.timeline({repeat: 0}); 
+    tCache.length = 0; 
     var i = find_object_json(object);
     var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
     inst.scale[0] = object.scale.x;
@@ -365,7 +418,7 @@ var synchronize_json_object = function (object) {
             'translate': inst.translate,
             'scale': inst.scale,
             'rotate': inst.rotate
-        }
+        };
         emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, false]);
     }
 };
@@ -417,6 +470,20 @@ var findGroundTranslation = function () {
             - camera.position.y) / vec.y;
     pos.copy(camera.position).add(vec.multiplyScalar(distance));
     return pos;
+}
+
+const cancelClickingObject3D = function(){
+    // synchronize data to scene json; 
+    if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true); 
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
+    console.log("object not intersected! ");
+    $('#tab_modelid').text(" ");
+    $('#tab_category').text(" ");  
+    INTERSECT_OBJ = undefined; //currentRoomId = undefined;
+    if (isToggle) {
+        radial.toggle();
+        isToggle = !isToggle;
+    }
 }
 
 var onClickObj = function (event) {
@@ -503,7 +570,20 @@ var onClickObj = function (event) {
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(INTERSECT_OBJ){
+            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key)
+            {claimControlObject3D(INTERSECT_OBJ.userData.key, true); }
+        }
+        // if this is the online mode and the object is already controlled by other users...
+        if(onlineGroup !== 'OFFLINE' && 
+            intersects[0].object.parent.userData.controlledByID !== undefined && 
+            intersects[0].object.parent.userData.controlledByID !== onlineUser.id
+        ){
+            console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
+            cancelClickingObject3D();return; 
+        }
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
         console.log(INTERSECT_OBJ);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
@@ -518,32 +598,25 @@ var onClickObj = function (event) {
         datguiObjectFolder(INTERSECT_OBJ);
         return;
     }else{
-        // synchronize data to scene json; 
-        datguiObjectFolderRemove(INTERSECT_OBJ); 
-        console.log("object not intersected! ");
-        $('#tab_modelid').text(" ");
-        $('#tab_category').text(" ");  
-        INTERSECT_OBJ = undefined; //currentRoomId = undefined;
-        if (isToggle) {
-            radial.toggle();
-            isToggle = !isToggle;
-        }
-    }
-
-    if (latent_space_mode == true && INTERSECT_OBJ) {
-        manager.renderManager.add_latent_obj();
-    }
-    if (latent_space_mode == true) {
-        manager.renderManager.refresh_latent();
-    }
-
-    if (Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined) {
-        palette_recommendation();
+        cancelClickingObject3D();
     }
 };
 
+const castMousePosition = function(){
+    let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+    .filter(d => d.userData.key !== INTERSECT_OBJ.userData.key)
+    .concat(Object.values(manager.renderManager.wfCache));
+    intersects = raycaster.intersectObjects(intersectObjList, true);
+    if(intersectObjList.length > 0 && intersects.length > 0){
+        return intersects[0].point; 
+    }else{
+        return undefined; 
+    }
+}
+
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    // currentMovedTimeStamp = moment();
     if(On_ADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
@@ -568,17 +641,18 @@ function onDocumentMouseMove(event) {
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
         rtt_nxt.sub(mouse.rotateBase);
-        INTERSECT_OBJ.rotateY(rtt_nxt.angle() - rtt_pre.angle());
+        // INTERSECT_OBJ.rotateY(rtt_nxt.angle() - rtt_pre.angle());
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.rotation.x, 
+            INTERSECT_OBJ.rotation.y + (rtt_nxt.angle() - rtt_pre.angle()), 
+            INTERSECT_OBJ.rotation.z
+        ], 'rotation')
     }
     if (On_MOVE && INTERSECT_OBJ != null) {
-        var last_pos = radial_move_method(mouse.x, mouse.y);
-        updateMousePosition();
-        var pos = radial_move_method(mouse.x, mouse.y);
-        pos.sub(last_pos);
-        INTERSECT_OBJ.position.set(
-            INTERSECT_OBJ.position.x + pos.x,
-            INTERSECT_OBJ.position.y + pos.y,
-            INTERSECT_OBJ.position.z + pos.z);
+        let ip = castMousePosition();
+        if(ip){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, [ip.x, ip.y, ip.z]); 
+        }
     }
     if (On_LIFT && INTERSECT_OBJ != null) {
         var last_y = mouse.y;
@@ -594,16 +668,17 @@ function onDocumentMouseMove(event) {
         updateMousePosition();
         var this_x = mouse.x;
         s = 0.3;
-        INTERSECT_OBJ.scale.set(
-            INTERSECT_OBJ.scale.x + s * (this_x - last_x),
-            INTERSECT_OBJ.scale.y + s * (this_x - last_x),
-            INTERSECT_OBJ.scale.z + s * (this_x - last_x));
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.scale.x + s * (this_x - last_x), 
+            INTERSECT_OBJ.scale.y + s * (this_x - last_x), 
+            INTERSECT_OBJ.scale.z + s * (this_x - last_x)
+        ], 'scale'); 
     }
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         tf.engine().startScope();
         auxiliaryMove();
         tf.engine().endScope();
-    }
+    }   
     updateMousePosition();
 };
 
@@ -701,7 +776,7 @@ const encodePerspectiveCamera = function(sceneJson){
     sceneJson.canvas.height = scenecanvas.height;
 }
 
-const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; 
+const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; dat.gui in the online mode; 
 const datguiObjectFolder = function(objmesh){
     // activating dat.gui:
     if(datgui_intersectfolder){
@@ -726,10 +801,18 @@ const datguiObjectFolder = function(objmesh){
     ctrlPosX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-X';
     let ctrlPosY = datgui_intersectfolder.add(objmesh.position, 'y', 
     rbb.min[1], rbb.max[1]); 
-    ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y'
+    ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y';
     let ctrlPosZ = datgui_intersectfolder.add(objmesh.position, 'z', 
     rbb.min[2], rbb.max[2]); 
-    ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z'
+    ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z';
+
+    // ctrlPosX.onChange(v => {
+    //     transformObject3DOnly(uuid, [
+    //         objmesh.position.x,
+    //         objmesh.position.y,
+    //         objmesh.position.z
+    //     ], 'position'); 
+    // }); 
 };
 
 const datguiObjectFolderRemove = function(objmesh){

@@ -8,6 +8,7 @@
     <script src="/static/3rdparty/popper.min.js"></script>
     <script src="/static/3rdparty/stats.js"></script>
     <script src="/static/3rdparty/dat.gui.min.js"></script>
+    <script src="/static/3rdparty/gsap.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
@@ -92,13 +93,14 @@
         var datgui; 
         var datgui_intersectfolder; 
 
-        var instanceKeyCache = {};
-
         // global variables for online mode; 
         const onlineGroup = "{{ onlineGroup }}";
         const socket = io();
         const onlineFuncList = {};
         const serverUUIDs = [];
+        const onlineUserID = "{{ serverGivenUserID }}";
+        const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
+        gsap.ticker.lagSmoothing();
 
         const loadOnlineSceneJson = function(){
             if(onlineGroup === 'OFFLINE') return;
@@ -135,8 +137,8 @@
             socket.on("message", (arg) => {
                 console.log(arg);
             });
-            socket.on("join", data => {
-                console.log(data);
+            socket.on("join", (msg, userid) => {
+                console.log(msg, userid);
             });
             socket.emit('join', onlineGroup);
             loadMoreServerUUIDs(10);
@@ -146,6 +148,19 @@
             socket.emit('functionCall', funcName, arguments, onlineGroup);
             socket.emit('onlineSceneUpdate', manager.renderManager.scene_json, onlineGroup);
         }
+
+        const claimControlObject3D = function(uuid, isRelease){
+            socket.emit('claimControlObject3D', onlineUserID, uuid, isRelease, onlineGroup); 
+        };
+
+        socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
+            // console.log('claimControlObject3D', objKey, isRelease, userID);
+            if(!(objKey in manager.renderManager.instanceKeyCache)){
+                return; 
+            }
+            if(isRelease) manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
+            else manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;  
+        });
 
         $(document).ready(function () {
             latent_space_mode = false;
@@ -166,6 +181,8 @@
             onlineFuncList['addObjectFromCache'] = addObjectFromCache;
             onlineFuncList['removeObjectByUUID'] = removeObjectByUUID;
             onlineFuncList['transformObjectByUUID'] = transformObjectByUUID;
+            onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
+            const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
         })
 
     </script>

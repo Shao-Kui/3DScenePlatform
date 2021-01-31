@@ -12,8 +12,8 @@ from io import BytesIO
 from PIL import Image
 from rec_release import fa_reshuffle
 from autolayoutv2 import sceneSynthesis
-from flask import Flask, render_template, send_file, request, render_template
-from flask_socketio import SocketIO, emit, send, join_room, leave_room, rooms
+from flask import Flask, render_template, send_file, request, render_template, session
+from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 import uuid
 # from generate_descriptor import sketch_search
 # import blueprints for app to register; 
@@ -29,8 +29,9 @@ app.register_blueprint(app_audio)
 app.register_blueprint(app_ls)
 app.register_blueprint(app_magic)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.secret_key = 'GHOST of Tsushima. '
 CORS(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, manage_session=False)
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -217,7 +218,6 @@ def sklayout():
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 
-
 @app.route("/reshuffle", methods=['POST', 'GET'])
 def reshuffle():
     if request.method == 'POST':
@@ -255,20 +255,24 @@ def onlineMain(groupName):
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    if 'userID' not in session:
+        session['userID'] = str(uuid.uuid4())
     print(request.remote_addr, dt_string, groupName)
-    return flask.render_template("index.html", onlineGroup=groupName)
+    print('UserID: ', session['userID'])
+    return flask.render_template("index.html", onlineGroup=groupName, serverGivenUserID=session['userID'])
 
 @socketio.on('join')
 def on_join(groupName):
     join_room(groupName)
-    emit('join', 'A person has entered the room. ', room=groupName)
+    session['groupName'] = groupName
+    emit('join', ('A person has entered the room. ', session['userID']), room=groupName)
 
 @socketio.on('message')
 def message(data):
     print('Received a sent message: ', data)
 @socketio.on('connect')
 def connect():
-    print('Connected with ', request.remote_addr)
+    print('Connected with ', request.remote_addr) # , 'UserID: ', session['userID']
 @socketio.on('disconnect')
 def disconnect():
     print('Disconnected with ', request.remote_addr)
@@ -289,6 +293,20 @@ def functionCall(fname, arguments, groupName):
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
     emit('functionCall', (fname, arguments), room=groupName, include_self=False) 
+
+object3DControlledByList = {}
+@socketio.on('claimControlObject3D')
+def claimControlObject3D(userID, objKey, isRelease, groupName):
+    # print(userID, objKey, isRelease, groupName)
+    if not isRelease:
+        if objKey in object3DControlledByList:
+            return
+        object3DControlledByList[objKey] = userID
+        emit('claimControlObject3D', (objKey, isRelease, session['userID']), room=groupName, include_self=True)
+    else:
+        if objKey in object3DControlledByList:
+            del object3DControlledByList[objKey]
+        emit('claimControlObject3D', (objKey, isRelease, None), room=groupName, include_self=True)
 
 if __name__ == '__main__':
     from waitress import serve
