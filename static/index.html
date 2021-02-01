@@ -126,8 +126,8 @@
 
         const socketInit = function(){
             // client-side
-            socket.on("onlineSceneUpdate", sceneJson => {
-                // manager.load_scene(sceneJson);
+            socket.on("sceneRefresh", sceneJson => {
+                manager.load_scene(sceneJson);
             });
             socket.on("functionCall", (fname, arguments) => {
                 let args = [], i = 0;
@@ -183,6 +183,12 @@
             onlineFuncList['transformObjectByUUID'] = transformObjectByUUID;
             onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
             const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
+
+            function closingCode(){
+                if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+                return null;
+            }
+            window.onbeforeunload = closingCode;
         })
 
     </script>

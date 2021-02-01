@@ -240,18 +240,22 @@ onlineScenes = {}
 def applyuuid():
     return str(uuid.uuid4())
 
+def generateObjectsUUIDs(sceneJson):
+    # generate uuid for each object: 
+    for room in sceneJson['rooms']:
+        for obj in room['objList']:
+            if obj is None:
+                continue
+            obj['key'] = str(uuid.uuid4())
+    return sceneJson
+
 @app.route("/online/<groupName>", methods=['GET', 'POST'])
 def onlineMain(groupName):
     if request.method == 'POST':
         if groupName not in onlineScenes:
             with open('./assets/demo.json') as f:
                 onlineScenes[groupName] = json.load(f)
-            # generate uuid for each object: 
-            for room in onlineScenes[groupName]['rooms']:
-                for obj in room['objList']:
-                    if obj is None:
-                        continue
-                    obj['key'] = str(uuid.uuid4())
+            onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
@@ -283,7 +287,11 @@ def onlineSceneUpdate(sceneJson, groupName):
         emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
         return
     onlineScenes[groupName] = sceneJson
-    # emit('onlineSceneUpdate', sceneJson, room=groupName, include_self=False) 
+
+@socketio.on('sceneRefresh')
+def sceneRefresh(sceneJson, groupName): 
+    onlineScenes[groupName] = generateObjectsUUIDs(sceneJson)
+    emit('sceneRefresh', onlineScenes[groupName], room=groupName, include_self=True)
 
 @socketio.on('functionCall')
 def functionCall(fname, arguments, groupName): 

@@ -658,10 +658,11 @@ function onDocumentMouseMove(event) {
         var last_y = mouse.y;
         updateMousePosition();
         var this_y = mouse.y;
-        INTERSECT_OBJ.position.set(
-            INTERSECT_OBJ.position.x,
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.position.x, 
             INTERSECT_OBJ.position.y + 2 * (this_y - last_y),
-            INTERSECT_OBJ.position.z);
+            INTERSECT_OBJ.position.z                          
+        ], 'position'); 
     }
     if (On_SCALE && INTERSECT_OBJ != null){
         var last_x = mouse.x;
@@ -777,6 +778,15 @@ const encodePerspectiveCamera = function(sceneJson){
 }
 
 const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; dat.gui in the online mode; 
+const controllerOnChangeGen = function(mode, axis, objmesh){
+    return v => {
+        transformObject3DOnly(objmesh.userData.key, [
+            (axis === 'x') ? v : objmesh[mode].x,
+            (axis === 'y') ? v : objmesh[mode].y,
+            (axis === 'z') ? v : objmesh[mode].z
+        ], mode); 
+    }; 
+}; 
 const datguiObjectFolder = function(objmesh){
     // activating dat.gui:
     if(datgui_intersectfolder){
@@ -785,34 +795,39 @@ const datguiObjectFolder = function(objmesh){
     } 
     datgui_intersectfolder = datgui.addFolder(objmesh.userData.modelId);
     datgui_intersectfolder.open();
-    let ctrlScaleX = datgui_intersectfolder.add(objmesh.scale, 'x', 0.05, 3.0); 
+    let t = {
+        'scale': {'x': objmesh.scale.x, 'y': objmesh.scale.y, 'z': objmesh.scale.z},
+        'rotation': {'y': objmesh.rotation.y},
+        'position': {'x': objmesh.position.x, 'y': objmesh.position.y, 'z': objmesh.position.z}
+    };
+    let ctrlScaleX = datgui_intersectfolder.add(t.scale, 'x', 0.05, 3.0); 
     ctrlScaleX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-X';
-    let ctrlScaleY = datgui_intersectfolder.add(objmesh.scale, 'y', 0.05, 3.0); 
+    let ctrlScaleY = datgui_intersectfolder.add(t.scale, 'y', 0.05, 3.0); 
     ctrlScaleY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Y';
-    let ctrlScaleZ = datgui_intersectfolder.add(objmesh.scale, 'z', 0.05, 3.0); 
+    let ctrlScaleZ = datgui_intersectfolder.add(t.scale, 'z', 0.05, 3.0); 
     ctrlScaleZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Z';
     
-    let ctrlOrient = datgui_intersectfolder.add(objmesh.rotation, 'y', -3.15, 3.15, 0.01); 
+    let ctrlOrient = datgui_intersectfolder.add(t.rotation, 'y', -3.15, 3.15, 0.01); 
     ctrlOrient.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Orient';
 
     let rbb = manager.renderManager.scene_json.rooms[objmesh.userData.roomId].bbox; 
-    let ctrlPosX = datgui_intersectfolder.add(objmesh.position, 'x', 
+    let ctrlPosX = datgui_intersectfolder.add(t.position, 'x', 
     rbb.min[0], rbb.max[0]); 
     ctrlPosX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-X';
-    let ctrlPosY = datgui_intersectfolder.add(objmesh.position, 'y', 
+    let ctrlPosY = datgui_intersectfolder.add(t.position, 'y', 
     rbb.min[1], rbb.max[1]); 
     ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y';
-    let ctrlPosZ = datgui_intersectfolder.add(objmesh.position, 'z', 
+    let ctrlPosZ = datgui_intersectfolder.add(t.position, 'z', 
     rbb.min[2], rbb.max[2]); 
     ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z';
 
-    // ctrlPosX.onChange(v => {
-    //     transformObject3DOnly(uuid, [
-    //         objmesh.position.x,
-    //         objmesh.position.y,
-    //         objmesh.position.z
-    //     ], 'position'); 
-    // }); 
+    ctrlPosX.onChange(controllerOnChangeGen('position', 'x', objmesh)); 
+    ctrlPosY.onChange(controllerOnChangeGen('position', 'y', objmesh)); 
+    ctrlPosZ.onChange(controllerOnChangeGen('position', 'z', objmesh)); 
+    ctrlOrient.onChange(controllerOnChangeGen('rotation', 'y', objmesh)); 
+    ctrlScaleX.onChange(controllerOnChangeGen('scale', 'x', objmesh)); 
+    ctrlScaleY.onChange(controllerOnChangeGen('scale', 'y', objmesh)); 
+    ctrlScaleZ.onChange(controllerOnChangeGen('scale', 'z', objmesh)); 
 };
 
 const datguiObjectFolderRemove = function(objmesh){

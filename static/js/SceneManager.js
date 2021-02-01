@@ -317,7 +317,8 @@ class SceneController {
             var fr = new FileReader();
             fr.onload = function (e) {
                 var result = JSON.parse(e.target.result);
-                self.load_scene(result);
+                socket.emit('sceneRefresh', result, onlineGroup);
+                // self.load_scene(result);
             };
             fr.readAsText(files.item(0));
             $(self.load_dialog).dialog("close");
