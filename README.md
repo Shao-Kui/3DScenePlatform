@@ -193,4 +193,4 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [gmod]:https://www.journals.elsevier.com/graphical-models
 [thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
-[3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/ai_depre.js
+[3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
