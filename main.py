@@ -269,7 +269,10 @@ def onlineMain(groupName):
 def on_join(groupName):
     join_room(groupName)
     session['groupName'] = groupName
-    emit('join', ('A person has entered the room. ', session['userID']), room=groupName)
+    if 'userID' in session:
+        emit('join', ('A person has entered the room. ', session['userID']), room=groupName)
+    else:
+        emit('join', ('A person has entered the room. ', 'An unknown User'), room=groupName)
 
 @socketio.on('message')
 def message(data):
@@ -310,7 +313,7 @@ def claimControlObject3D(userID, objKey, isRelease, groupName):
         if objKey in object3DControlledByList:
             return
         object3DControlledByList[objKey] = userID
-        emit('claimControlObject3D', (objKey, isRelease, session['userID']), room=groupName, include_self=True)
+        emit('claimControlObject3D', (objKey, isRelease, userID), room=groupName, include_self=True)
     else:
         if objKey in object3DControlledByList:
             del object3DControlledByList[objKey]
