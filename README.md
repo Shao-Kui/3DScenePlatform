@@ -125,18 +125,18 @@ Each object must has a ```modelId``` indexing its mesh in directory 'root/datase
 Our layout framework in the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects" is included in the following files: 
 ```
 root
-  autolayout.py
-  patternChain.py
+  autolayoutv2.py
+  patternChainv2.py
   alutil.py
   relayout.py
   projection2d.py
 ```
-**autolayout.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
-**patternChain.py**: the code to dynamically check and generate hyper-relations;  
+**autolayoutv2.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
+**patternChainv2.py**: the code to dynamically check and generate hyper-relations;  
 **alutil.py** and **relayout.py**: geometric arranging;  
 **projection2d.py**: converting room meshes to polygons (room shape); 
 
-If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. 
+If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. The 'autolayout.py' and 'patternChain.py' are also usable, but only for SUNCG dataset. The 'v2' version of our method is specifically for 3D-Front. 
 # MageAdd
 Coming soon... ... ...
 # Manuals  

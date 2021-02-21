@@ -18,7 +18,7 @@ from flask import Flask, render_template, send_file, request
 from main_audio import app_audio
 from main_ls import app_ls
 from main_magic import app_magic
-from projection2d import processGeo as objCatList, objListCat, categoryRelation, getobjCat
+from projection2d import objListCat, getobjCat
 import random
 import difflib
 
