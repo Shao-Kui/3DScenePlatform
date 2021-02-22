@@ -1,24 +1,23 @@
 """
-用来将3DFUTURE格式的数据集转化为SUNCG格式的数据集
+This is used to transform 3d-furture format data to suncg format data
 Author : slothfulxtx
 Date : 2020/08/06
 Details : 
-    3D-FUTURE中的模型可以看作由两部分组成，分别是家具和场景中的一些组件
-    其中家具的模型直接链接到3D-FUTURE-MODEL/jid/，场景的模型并不是obj文件给出
-    而是在json文件中给出的某种需要转换的数据格式，因此首先需要将json中场景数据提取出来
-    然后处理成obj文件，之后再生成对应的SUNCG格式的json文件表示布局，json的Object List
-    中，一部分需要在3D-FUTURE-MODEL/jid/路径下寻找，一部分需要在生成的文件夹下寻找
-    生成的文件夹结构如下
-
+    The mesh objects in 3d-future dataset compose of two parts, including furniture and components of the sence.
+    The furniture models can be found in the directory 3D-FUTURE-MODEL/jid/, while the components of the scene 
+    are given in the form of .json files instead of .obj files. Thus we need to extract the components from json 
+    first, and then convert them to the form of .obj. In the process of converting data, we generate the scene 
+    folder whose structure are shown as follow 
+    
     |- house
-    |   |- 0b508d29-c18c-471b-8711-3f114819ea74.json 表示该布局文件是由3D-FRONT中0b508d29-c18c-471b-8711-3f114819ea74.json 文件转化来的
+    |   |- 0b508d29-c18c-471b-8711-3f114819ea74.json
     |- backgroundobj
-        |- 0b508d29-c18c-471b-8711-3f114819ea74 3D-FRONT下 0b508d29-c18c-471b-8711-3f114819ea74.json 对应的布局
-            |- 5031ce7f-343a-41c8-b8ce-e2e943398df5X53357662.obj 该布局中某个3D-FUTURE认为属于背景而不是家具，没有渲染出来的部件的obj模型 
+        |- 0b508d29-c18c-471b-8711-3f114819ea74
+            |- 5031ce7f-343a-41c8-b8ce-e2e943398df5X53357662.obj
     |- background
-        |- 0b508d29-c18c-471b-8711-3f114819ea74 3D-FRONT下 0b508d29-c18c-471b-8711-3f114819ea74.json 对应的布局
-            |- DiningRoom-13252 0b508d29-c18c-471b-8711-3f114819ea74.json 中的房间编号
-                |- wall.obj 房间的背景信息
+        |- 0b508d29-c18c-471b-8711-3f114819ea74 
+            |- DiningRoom-13252
+                |- wall.obj
                 |- floor.obj
                 |- ceil.obj
 """
@@ -153,32 +152,33 @@ def main(args):
     if not os.path.exists(os.path.join(args.save_path,"background")):
         os.mkdir(os.path.join(args.save_path,"background"))
     filenames = os.listdir('../../3D-FRONT')
-    filenames = [
-        '00f2a7e7-a994-4734-8104-8cb81560beb0.json',
-        # '0e02ee68-5940-49dd-bbdc-0e3667ec9e49.json',
-        # '4b663d06-fc0a-44ca-887a-d0bfc584a3ee.json',
-        # '1aab0a4b-760c-4489-b012-da6cefdca8a4.json',
-        # '129c9a2a-f789-4cd0-82c0-2b6d5293c45f.json',
-        # '5a4c9099-cf8f-4439-96ee-43736096617a.json',
-        # '5c0a1757-e14e-4901-a3a3-498537689821.json',
-        # '4c1b75c2-351b-4b6b-a7df-c867a2d9b3d6.json',
-        # '274ef293-2cf8-4c9a-8125-814f91d0bc83.json',
-        # '641eaf99-ec77-40a6-bef8-2ff72ef2b1d1.json',
-        # '7b2fae3d-5455-4dae-b174-7643ca83b1dc.json',
-        # '06a3196e-a2a2-4952-a5c6-034afcc18e15.json',
-        # '7e07a2a4-fead-40b8-8172-a430c150b733.json',
-        # 'be5538a6-455b-486f-a46a-fd03d864587e.json'
-        ]
-    # filenames = os.listdir('../../3D-FRONT')
+    # # DEBUG 
+    # filenames = [
+    #     '00f2a7e7-a994-4734-8104-8cb81560beb0.json',
+    #     '0e02ee68-5940-49dd-bbdc-0e3667ec9e49.json',
+    #     '4b663d06-fc0a-44ca-887a-d0bfc584a3ee.json',
+    #     '1aab0a4b-760c-4489-b012-da6cefdca8a4.json',
+    #     '129c9a2a-f789-4cd0-82c0-2b6d5293c45f.json',
+    #     '5a4c9099-cf8f-4439-96ee-43736096617a.json',
+    #     '5c0a1757-e14e-4901-a3a3-498537689821.json',
+    #     '4c1b75c2-351b-4b6b-a7df-c867a2d9b3d6.json',
+    #     '274ef293-2cf8-4c9a-8125-814f91d0bc83.json',
+    #     '641eaf99-ec77-40a6-bef8-2ff72ef2b1d1.json',
+    #     '7b2fae3d-5455-4dae-b174-7643ca83b1dc.json',
+    #     '06a3196e-a2a2-4952-a5c6-034afcc18e15.json',
+    #     '7e07a2a4-fead-40b8-8172-a430c150b733.json',
+    #     'be5538a6-455b-486f-a46a-fd03d864587e.json'
+    #     ]
+    
     
     for sceneIdx,filename in tqdm(enumerate(filenames)):
         
+        # create path to save generated models of the scene
         if not os.path.exists(os.path.join(args.save_path,"backgroundobj",filename[:-5])):
             os.mkdir(os.path.join(args.save_path,"backgroundobj",filename[:-5]))
         if not os.path.exists(os.path.join(args.save_path,"room",filename[:-5])):
             os.mkdir(os.path.join(args.save_path,"room",filename[:-5]))
         with open(os.path.join(args.FRONT_path, filename), 'r', encoding='utf-8') as f:
-            # 打开3D-FRONT每个json文件
             frontJson = json.load(f)
 
         suncgJson = {}    
@@ -204,6 +204,8 @@ def main(args):
             uv = np.reshape(mesh['uv'],(-1,2))
             # if future2suncg_cat[mesh["type"]] == "Object":
             if mesh["type"] in ["Window", "Door"]:
+                # With respect to components of the scene, we extract windows and doors and consider them as isolate objects 
+                # like other furnitures, which follows the rule of SunCG dataset. 
                 bgopath = os.path.join(args.save_path,"backgroundobj",filename[:-5],mesh["uid"].replace('/','X')+".obj")
                 trimesh.Trimesh(vertices=xyz,faces=face,vertex_normals=normal,vertex_colors=uv).export(bgopath)
                 add_new_line(bgopath)           
@@ -211,6 +213,7 @@ def main(args):
         furnitureList = frontJson["furniture"]
         furnitures = {}
         for furniture in furnitureList:
+            # We add each valid furniture models to the result and ignore others.
             if "valid" in furniture and furniture["valid"]:
                 furnitures[furniture["uid"]] = furniture
 
@@ -239,6 +242,11 @@ def main(args):
             ceilObjs = []
             floorObjs = []
             room_obj_cnt += 1
+
+            # For each meshes in the room, we roughly split them into two category, scene and objects.
+            # Each furniture in the room of 3d-future dataset is categorized as objects of SunCG dataset,
+            # as well as windows and doors of 3d-future dataset. The other models of the same category
+            # is merged into one model and considered as the scene of SunCG dataset. 
             for childIdx, child in enumerate(front_room["children"]):
                 if child["ref"] not in meshes and child["ref"] not in furnitures:
                     continue
@@ -274,7 +282,9 @@ def main(args):
                     Objs.append(trimesh.Trimesh(vertices=vs,faces=face,vertex_normals=normal,vertex_colors=uv))
                     
                     if meshes[child["ref"]]["type"] not in ['Window', "Door"]:
+                        # If this mesh is a window or door, we collect it and process later.
                         continue
+                # We create a object in the form of SunCG dataset.
                 suncg_obj = {
                     "id": "%d_%d" % (sceneIdx,room_obj_cnt),
                     "type": "Object",
@@ -306,10 +316,6 @@ def main(args):
                 assert obj_path is not None
                 assert os.path.exists(obj_path)
 
-                # 屏蔽warning信息，下面的方法好像屏蔽不了，日
-                # stdout,stderr= sys.stdout,sys.stderr
-                # with open('/dev/null',"w+") as null:
-                #     sys.stdout,sys.stderr = null,null
                 # some .obj files are not provided by ali, so here we need to skip them; 
                 try:
                     v, vt, _, faces, ftc, _ = igl.read_obj(obj_path)
@@ -319,6 +325,8 @@ def main(args):
                 # print("???")
                 # sys.stdout,sys.stderr = stdout,stderr
 
+
+                # We convert the coordinate representation of 3d-future models to the form of suncg coordinate.
                 pos,rot,scale = child["pos"],child["rot"],child["scale"]
                 v = v.astype(np.float64) * scale
                 ref = [0,0,1]
@@ -341,7 +349,8 @@ def main(args):
                 suncg_room["bbox"]["max"] = Max3d(suncg_room["bbox"]["max"],suncg_obj["bbox"]["max"])
                 
             # adding a new line is because of a bug of three.js library...
-            wfcroot = os.path.join(args.save_path,"room",filename[:-5],front_room["instanceid"])
+            wfcroot = os.path.join(args.save_path, "room", filename[:-5], front_room["instanceid"])
+            # We merge the components of the scene into three models, including wall, floor and ceil. 
             if len(wallObjs) >0:
                 tmp = trimesh.util.concatenate(wallObjs)
                 tmp.vertex_normals
