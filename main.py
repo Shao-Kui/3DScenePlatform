@@ -11,12 +11,11 @@ import datetime
 from io import BytesIO
 from PIL import Image
 from rec_release import fa_reshuffle
-from autolayoutv2 import sceneSynthesis
+from autolayoutv3 import sceneSynthesis
 from flask import Flask, render_template, send_file, request
 # from generate_descriptor import sketch_search
 # import blueprints for app to register; 
 from main_audio import app_audio
-from main_ls import app_ls
 from main_magic import app_magic
 from projection2d import objListCat, getobjCat
 import random
@@ -24,7 +23,6 @@ import difflib
 
 app = Flask(__name__)
 app.register_blueprint(app_audio)
-app.register_blueprint(app_ls)
 app.register_blueprint(app_magic)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app)
@@ -126,20 +124,20 @@ with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
 @app.route("/query2nd")
 def query2nd():
-    kw=flask.request.args.get('kw', default = "", type = str) # keyword
-    catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
-    if len(catMatches) == 0:
-        return json.dumps([])
-    cat = ChineseMapping[catMatches[0]]
-    print(f'get query: {cat}. ')
-    random.shuffle(objListCat[cat])
-    if len(objListCat[cat]) >= 20:
-        modelIds = objListCat[cat][0:20]
-    else:
-        modelIds = objListCat[cat]
-    ret=[{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
+    ret = []
+    kw = flask.request.args.get('kw', default = "", type = str) # keyword
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
         ret.append({"name": kw, "semantic": getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
+    catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
+    if len(catMatches) != 0:
+        cat = ChineseMapping[catMatches[0]]
+        print(f'get query: {cat}. ')
+        random.shuffle(objListCat[cat])
+        if len(objListCat[cat]) >= 20:
+            modelIds = objListCat[cat][0:20]
+        else:
+            modelIds = objListCat[cat]
+        # ret += [{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
     return json.dumps(ret)
 
 @app.route("/room/<houseid>/<roomid>")

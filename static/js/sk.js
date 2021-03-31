@@ -689,7 +689,6 @@ var setting_up = function () {
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
-    $("#layout2_button").click(mageAddSample);
     $("#clear_button").click(() => {
         if(currentRoomId === undefined) return;
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
@@ -716,7 +715,6 @@ var setting_up = function () {
         });
     });
     $("#windoor_button").click(showHide_door_mageAdd_set);
-    if(auxiliary_control) $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
         let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
         // delete unnecessary keys; 
