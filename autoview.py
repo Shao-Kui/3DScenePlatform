@@ -1,3 +1,4 @@
+from re import L
 import numpy as np
 import json
 import projection2d
@@ -21,42 +22,10 @@ TARDIS = 3.397448931651581
 CAMHEI = 1.
 pt.REMOVELAMP = False
 
-# https://stackoverflow.com/questions/21037241/how-to-determine-a-point-is-inside-or-outside-a-cube
-def inside_test(points , cube3d):
-    """
-    cube3d  =  numpy array of the shape (8,3) with coordinates in the clockwise order. first the bottom plane is considered then the top one.
-    points = array of points with shape (N, 3).
-
-    Returns the indices of the points array which are outside the cube3d
-    """
-    b1,b2,b3,b4,t1,t2,t3,t4 = cube3d
-
-    dir1 = (t1-b1)
-    size1 = np.linalg.norm(dir1)
-    dir1 = dir1 / size1
-
-    dir2 = (b2-b1)
-    size2 = np.linalg.norm(dir2)
-    dir2 = dir2 / size2
-
-    dir3 = (b4-b1)
-    size3 = np.linalg.norm(dir3)
-    dir3 = dir3 / size3
-
-    cube3d_center = (b1 + t3)/2.0
-
-    dir_vec = points - cube3d_center
-
-    res1 = np.where( (np.absolute(np.dot(dir_vec, dir1)) * 2) > size1 )[0]
-    res2 = np.where( (np.absolute(np.dot(dir_vec, dir2)) * 2) > size2 )[0]
-    res3 = np.where( (np.absolute(np.dot(dir_vec, dir3)) * 2) > size3 )[0]
-
-    return list( set().union(res1, res2, res3) )
-
 def preloadAABBs(scene):
     for room in scene['rooms']:
         for obj in room['objList']:
-            if not os.path.exists(f'./dataset/object/{obj["modelId"]}'):
+            if not sk.objectInDataset(obj['modelId']):
                 continue
             AABB = sk.load_AABB(obj['modelId'])
             eightPoints = np.array([
@@ -85,9 +54,6 @@ def preloadAABBs(scene):
                 'center': center
             }
 
-def autoview(scenejson):
-    pass
-
 def keyObjectKeyFunction(obj):
     if obj is None:
         return -1
@@ -97,20 +63,6 @@ def keyObjectKeyFunction(obj):
     if cat == "Unknown Category" or cat not in res_ratio_dom:
         return -1
     return res_ratio_dom[cat][obj['roomType']]
-
-'''
-:param point: the given point in a 3D space
-:param translate: the translation in 3D
-:param angle: the rotation angle on XOZ plain
-:param scale: the scale in 3D
-'''
-def transform_a_point(point, translate, angle, scale):
-    result = point.copy()
-    scaled = point.copy()
-    scaled = point * scale
-    result[0] =  np.cos(angle) * scaled[0] + np.sin(angle) * scaled[2]
-    result[2] = -np.sin(angle) * scaled[0] + np.cos(angle) * scaled[2]
-    return result + translate
 
 def calCamUpVec(origin, target):
     # calculate the 'up' vector via the normal of plane;    
@@ -156,7 +108,7 @@ def autoViewFromPatterns(room):
         print(e)
         return None
     # rotate & scale the prior; 
-    pattern['translate'] = transform_a_point(np.array(pattern['translate']), theDom['translate'], theDom['orient'], theDom['scale'])
+    pattern['translate'] = sk.transform_a_point(np.array(pattern['translate']), theDom['translate'], theDom['orient'], theDom['scale'])
     # camTranslate = np.array(theDom['translate']) + pattern['translate']
     camTranslate = pattern['translate'].copy()
     pcam["origin"] = (camTranslate.copy()).tolist()
@@ -191,15 +143,26 @@ def autoViewOnePoint(room):
     pcam["up"] = calCamUpVec(np.array(pcam["origin"]), np.array(pcam["target"])).tolist()
     return pcam
 
-def isLineIntersectsWithEdges(line, floorMeta):
-    for i in range(floorMeta.shape[0]):
-        l = LineString((floorMeta[i][0:2], floorMeta[(i+1)%floorMeta.shape[0]][0:2]))
-        if line.crosses(l):
-            return True
-    return False
-
-def pointToLineDistance(point, p1, p2):
-    return np.linalg.norm(np.cross(p2-p1, p1-point)) / np.linalg.norm(p2-p1)
+def findTheFrontFarestCorner(probe, floorMeta, floorPoly, pd):
+    MAXLEN = -1
+    wallDiagIndex = -1
+    for wallJndex in range(floorMeta.shape[0]):
+        trobe = floorMeta[wallJndex][0:2]
+        # check if the diagonal lies inside the edges of the polygon. 
+        line = LineString((probe, trobe))
+        if sk.isLineIntersectsWithEdges(line, floorMeta):
+            continue
+        # check if some point on the diagonal is inside the polygon. 
+        mPoint = Point((probe + trobe) / 2)
+        if not floorPoly.contains(mPoint):
+            continue
+        if np.dot(trobe - probe, pd) < 0:
+            continue
+        LEN = np.linalg.norm(probe - trobe, ord=2)
+        if LEN > MAXLEN:
+            MAXLEN = LEN
+            wallDiagIndex = wallJndex
+    return wallDiagIndex
 
 def findTheLongestDiagonal(wallIndex, floorMeta, floorPoly):
     probe = floorMeta[wallIndex][0:2]
@@ -212,7 +175,7 @@ def findTheLongestDiagonal(wallIndex, floorMeta, floorPoly):
         trobe = floorMeta[wallJndex][0:2]
         # check if the diagonal lies inside the edges of the polygon. 
         line = LineString((probe, trobe))
-        if isLineIntersectsWithEdges(line, floorMeta):
+        if sk.isLineIntersectsWithEdges(line, floorMeta):
             continue
         # check if some point on the diagonal is inside the polygon. 
         mPoint = Point((probe + trobe) / 2)
@@ -346,7 +309,7 @@ def autoViewTwoPoint(room):
     pcam["up"] = calCamUpVec(np.array(pcam["origin"]), np.array(pcam["target"])).tolist()
     return pcam
 
-def twoInfLineIntersection(p1, p2, p3, p4):
+def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
     x1 = p1[0]
     y1 = p1[1]
     x2 = p2[0]
@@ -356,36 +319,92 @@ def twoInfLineIntersection(p1, p2, p3, p4):
     x4 = p4[0]
     y4 = p4[1]
     D = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
-    if D < 0.05:
+    if isDebug:
+        print(D)
+    if np.abs(D) < 0.0001:
         return None
     px= ( (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4) ) / D
     py= ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / D
     return [px, py]
 
-def isObjectInSight(obj, probe, direction, floorMeta):
-    if not sk.objectInDataset(obj['modelId']):
-        return False
-    sinAlpha = np.sin(np.pi/4)
-    t = np.array([obj['translate'][0], obj['translate'][2]])
+def isPointOnVisualPlanes(t, probe, direction, theta, aspect=1.0, isDebug=False):
+    """
+    aspect: width / height. 
+    """
+    cosTheta = np.cos(theta)
+    # cosPhi = np.cos( np.arctan(aspect / (1 / np.tan(theta))) )
+    temp = 1 / np.tan(theta)
+    cosPhi = temp / np.sqrt(aspect * aspect + temp * temp)
     probeTOt = t - probe
-    if np.dot(direction, probeTOt) < sinAlpha:
+    # the normal of the VP vertical. 
+    nVPv = np.cross(direction, np.array([0, 1, 0]))
+    nVPv /= np.linalg.norm(nVPv, ord=2)
+    # the normal of the VP horizontal. 
+    nVPh = np.cross(direction, nVPv)
+    nVPh /= np.linalg.norm(nVPh, ord=2)
+    # the projected vector w.r.t vertical and horizontal VPs. 
+    projVPv = -np.dot(nVPv, probeTOt) * nVPv + probeTOt
+    projVPh = -np.dot(nVPh, probeTOt) * nVPh + probeTOt
+    if isDebug:
+        print('angles: ')
+        print(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv))
+        print(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh))
+        print(np.arccos(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv)))
+        print(np.arccos(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh)))
+    if np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv) < cosTheta:
         return False
-    line = LineString((probe, t))
-    if isLineIntersectsWithEdges(line, floorMeta):
-        return False           
+    if np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh) < cosPhi:
+        return False
     return True
 
-def isPointBetweenLineSeg(point, p1, p2):
-    s = np.dot(p2 - p1, point - p1) / np.linalg.norm(p2 - p1)
-    if 0 < s and s < np.linalg.norm(p2 - p1):
-        return True
-    else:
+def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=False):
+    if isDebug:
+        print('Checking: ', obj['modelId'])
+    if not sk.objectInDataset(obj['modelId']):
         return False
+    t = np.array(obj['translate'])
+    # project the 't' to the two visual planes (VP). 
+    probeTOt = t - probe
+    seenVertices = 0
+    for vertex in obj['AABB']['eightPoints']:
+        if isPointOnVisualPlanes(vertex, probe, direction, theta, 1.0, isDebug):
+            seenVertices += 1
+    # if all vertices are not seen. 
+    if seenVertices == 0:
+        return False
+    """
+    if np.dot(direction, probeTOt) <= 0:
+        return False
+    if np.dot(direction, probeTOt) / np.linalg.norm(direction) / np.linalg.norm(probeTOt) < cosAlpha:
+        return False
+    """
+    line = LineString((probe[[0, 2]], t[[0, 2]]))
+    if sk.isLineIntersectsWithEdges(line, floorMeta):
+        return False           
+    for o in objList:
+        if 'AABB' not in o or o['id'] == obj['id']:
+            continue
+        
+        # calculate the nearest point from center to 'probeTot'. 
+        """
+        magnitute = np.dot(o['AABB']['center'] - probe, probeTOt) / np.linalg.norm(probeTOt)
+        nP = probe + magnitute * (probeTOt / np.linalg.norm(probeTOt))
+        if len(sk.inside_test(nP.reshape(1, 3), o['AABB']['eightPoints'])) == 0:
+            return False
+        """
+        probeToO = np.array(o['AABB']['center']) - probe
+        probeToObj = obj['AABB']['eightPoints'] - probe
+        distanceToObj = np.linalg.norm(probeToObj, ord=2, axis=1)
+        magnitute = np.sum(probeToObj * probeToO, axis=1) / distanceToObj
+        nPs = probe + magnitute.reshape(8, 1) * (probeToObj / distanceToObj.reshape(8, 1))
+        if len(sk.inside_test(nPs, o['AABB']['eightPoints'])) == 0:
+            return False
+    return True
 
 def isObjectOnWall(obj, p1, p2):
     p = np.array([obj['translate_frombb'][0], obj['translate_frombb'][2]])
-    d = pointToLineDistance(p, p1, p2)
-    if d < 0.5 and isPointBetweenLineSeg(p, p1, p2):
+    d = sk.pointToLineDistance(p, p1, p2)
+    if d < 0.5 and sk.isPointBetweenLineSeg(p, p1, p2):
         return True
     else:
         return False
@@ -421,23 +440,90 @@ def calWindoorArea(obj, p1, p2):
         l = obj['bbox']['max'][2] - obj['bbox']['min'][2]
     return l * y
 
-def wallArea(p1, p2, H):
-    return H * np.linalg.norm(p1 - p2)
-
 def probabilityOPP(h):
     # return h['numObjBeSeen'] + h['targetWallNumWindows']
-    return h['targetWallWindoorArea']
+    # return h['numObjBeSeen'] + h['targetWallWindoorArea'] + h['viewLength']
+    return h['numObjBeSeen'] + h['targetWallWindoorArea']
+
+def numSeenObjs(room, h, probe, direction, floorMeta, theta, isDebug=False):
+    h['numObjBeSeen'] = 0
+    h['objBeSeen'] = []
+    for obj in room['objList']:
+        if isObjectInSight(obj, probe, direction, floorMeta, theta, room['objList'], isDebug):
+            h['numObjBeSeen'] += 1
+            h['objBeSeen'].append(obj['modelId'])
+
+def theLawOfTheThird(h, room, theta, aspect=1):
+    """
+    'theta' is half the fov that vertically spand from the top -> bottom. 
+    """
+    h['direction'] = h['direction'] / np.linalg.norm(h['direction'])
+    # first we calculate the direction of four respective 'intersections of the third'. 
+    lengthHeight = 2 * np.tan(theta)
+    lengthWidth  = aspect * lengthHeight
+    anchor = h['probe'] + h['direction']
+    stepHeight = lengthHeight / 2 - lengthHeight / 3
+    stepWidth = lengthWidth / 2 - lengthWidth / 3
+    stepUp    = calCamUpVec(h['probe'], anchor)
+    stepRight = np.cross(h['direction'], stepUp)
+    stepUp /= np.linalg.norm(stepUp, ord=2)
+    stepRight /= np.linalg.norm(stepRight)
+
+    # the right-bottom:
+    rb = anchor - stepHeight * stepUp + stepWidth * stepRight - h['probe']
+    rb /= np.linalg.norm(rb)
+    res = sk.rayCastsAABBs(h['probe'], rb, room['objList'])
+    h['thirdObjList'] = [o['obj']['modelId'] for o in res]
+    if len(res) == 0:
+        h['thirdHasObj'] = False
+        h['thirdFirstObj'] = '-1'
+    else:
+        h['thirdHasObj'] = True
+        h['thirdFirstObj'] = res[0]['obj']['modelId']
+        
+def groundShifting(probe, floorMeta, floorPoly, direction, theta, H):
+    p = np.array([probe[0], probe[2]])
+    direction2D = np.array([direction[0], direction[2]])
+    # find the wall corner with the longest diagonal in front of the probe point. 
+    wallDiagIndex = findTheFrontFarestCorner(p, floorMeta, floorPoly, direction2D)
+    # calculate the direction from the probe point to 'wallDiagIndex'. 
+    wallDiagTop = np.array([floorMeta[wallDiagIndex][0], H, floorMeta[wallDiagIndex][1]])
+    # calculate the projected vector on the vertical visual plane. 
+    projectedP = sk.pointProjectedToPlane(wallDiagTop, np.cross(np.array([0, 1, 0]), direction), np.array([p[0], H/2, p[1]]))
+    projectedVec = projectedP - probe
+    # apply Rogrigues Formula. 
+    return sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), -direction), -theta)
+
+def toOriginAndTarget(bestView):
+    """
+    print(floorMeta[bestView['wallIndex']][0:2], floorMeta[(bestView['wallIndex']+1) % floorMeta.shape[0]][0:2])
+    print(floorMeta[bestView['wallJndex']][0:2], floorMeta[(bestView['wallJndex']+1) % floorMeta.shape[0]][0:2])
+    """
+    origin = bestView['probe'].tolist()
+    target = (bestView['probe'] + 0.5 * bestView['direction']).tolist()
+    bestView["origin"] = origin
+    bestView["target"] = target
+    bestView["up"] = calCamUpVec(np.array(bestView["origin"]), np.array(bestView["target"])).tolist()
+    return bestView
 
 def autoViewOnePointPerspective(room, scene):
+    """
+    This function tries generate all potential views w.r.t the One-Point Perspective Rule (OPP Rule). 
+    Note that several variants exist w.r.t different rules. 
+    """
+    theta = (np.pi * scene['PerspectiveCamera']['fov'] / 180) / 2
     floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    floorPoly = Polygon(floorMeta[:, 0:2])
     H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+    MAXDIAMETER = sk.roomDiameter(floorMeta)
     # find the anchor point and the anchor wall. 
     hypotheses = []
     for wallIndex in range(floorMeta.shape[0]):
+        # first get the meta from the target wall. 
         wallIndexNext = ( wallIndex + 1 ) % floorMeta.shape[0]
         middlePoint = (floorMeta[wallIndex][0:2] + floorMeta[wallIndexNext][0:2]) / 2
-        # the normal of the probe wall. 
         normal = floorMeta[wallIndex][2:4]
+        normal3D = np.array([normal[0], 0, normal[1]])
         # construct the probe lineString. 
         p1 = middlePoint
         p2 = middlePoint + normal
@@ -459,36 +545,91 @@ def autoViewOnePointPerspective(room, scene):
             p = twoInfLineIntersection(p1, p2, p3, p4)
             if p is None:
                 continue
-            h = {}
+            # 'probe point' is the most important point which is eventually the camera position (origin). 
             p = np.array(p)
-            h['probe'] = p
+            probe = np.array([p[0], H/2, p[1]])
+            
+            # first generate the well-aligned hypothesis. 
+            h = {}
+            h['type'] = 'wellAligned'
+            h['probe'] = probe
+            h['direction'] = -normal3D
             h['viewLength'] = np.linalg.norm(middlePoint - p, ord=2)
             h['normal'] = normal.copy()
             h['wallIndex'] = wallIndex
             h['wallJndex'] = wallJndex
-            # count the number of involved objects. 
-            h['numObjBeSeen'] = 0
-            for obj in room['objList']:
-                if isObjectInSight(obj, p, -normal, floorMeta):
-                    h['numObjBeSeen'] += 1
+            numSeenObjs(room, h, probe, -normal3D, floorMeta, theta)
             h['targetWallArea'] = H * np.linalg.norm(floorMeta[wallIndex][0:2] - floorMeta[wallIndexNext][0:2], ord=2)
             h['targetWallNumWindows'] = targetWallNumWindows
             h['targetWallWindoorArea'] = targetWallWindoorArea
-            hypotheses.append(h)
-    bestView = max(hypotheses, key=probabilityOPP)
-    """
-    print(floorMeta[bestView['wallIndex']][0:2], floorMeta[(bestView['wallIndex']+1) % floorMeta.shape[0]][0:2])
-    print(floorMeta[bestView['wallJndex']][0:2], floorMeta[(bestView['wallJndex']+1) % floorMeta.shape[0]][0:2])
-    """
-    origin = bestView['probe'].tolist()
-    origin.insert(1, H/2)
-    target = (bestView['probe'] - bestView['normal']).tolist()
-    target.insert(1, H/2)
-    pcam = {}
-    pcam["origin"] = origin
-    pcam["target"] = target
-    pcam["up"] = calCamUpVec(np.array(pcam["origin"]), np.array(pcam["target"])).tolist()
-    return pcam
+            theLawOfTheThird(h, room, theta, 1)
+            # hypotheses.append(h)
+
+            # then we try following the 'Three-Wall' rule. (Left Side) 
+            thw = h.copy()
+            thw['type'] = 'threeWall'
+            # the prefix wall and the suffix wall
+            pThW1 = twoInfLineIntersection(floorMeta[(wallIndex+floorMeta.shape[0]-1)%floorMeta.shape[0]][0:2], floorMeta[wallIndex][0:2], p3, p4)
+            pThW2 = twoInfLineIntersection(floorMeta[wallIndexNext][0:2], floorMeta[(wallIndexNext+1)%floorMeta.shape[0]][0:2], p3, p4)
+            if pThW1 is not None and pThW2 is not None:
+                pThW1, pThW2 = np.array(pThW1), np.array(pThW2)
+                thw['probe'] = pThW1 + (pThW2 - pThW1)/3
+                thw['probe'] = np.array([thw['probe'][0], H/2, thw['probe'][1]])
+                thw['direction'] = np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thw['probe']
+                thw['direction'] /= np.linalg.norm(thw['direction'])
+                thw['direction'] = groundShifting(thw['probe'], floorMeta, floorPoly, thw['direction'], theta, H)
+                thw['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thw['probe'], ord=2)
+                numSeenObjs(room, thw, thw['probe'], thw['direction'], floorMeta, theta)
+                theLawOfTheThird(thw, room, theta, 1)
+                hypotheses.append(thw)
+
+                # then we try following the 'Three-Wall' rule. (Right Side)
+                thwR = thw.copy()
+                thwR['probe'] = pThW2 + (pThW1 - pThW2)/3
+                thw['type'] = 'threeWall_R'
+                thwR['probe'] = np.array([thwR['probe'][0], H/2, thwR['probe'][1]])
+                thwR['direction'] = np.array([floorMeta[wallIndex][0], H/2, floorMeta[wallIndex][1]]) - thwR['probe']
+                thwR['direction'] /= np.linalg.norm(thwR['direction'])
+                thwR['direction'] = groundShifting(thwR['probe'], floorMeta, floorPoly, thwR['direction'], theta, H)
+                thwR['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thwR['probe'], ord=2)
+                numSeenObjs(room, thwR, thwR['probe'], thwR['direction'], floorMeta, theta)
+                theLawOfTheThird(thwR, room, theta, 1)
+                hypotheses.append(thwR)
+
+            # next we try generate the ground-shifted hypothesis. 
+            hgs = h.copy()
+            hgs['type'] = 'wellAlignedShifted'
+            # find the wall corner with the longest diagonal in front of the probe point. 
+            wallDiagIndex = findTheFrontFarestCorner(p, floorMeta, floorPoly, -normal)
+            # calculate the direction from the probe point to 'wallDiagIndex'. 
+            wallDiagTop = np.array([floorMeta[wallDiagIndex][0], H, floorMeta[wallDiagIndex][1]])
+            # calculate the projected vector on the vertical visual plane. 
+            projectedP = sk.pointProjectedToPlane(wallDiagTop, np.cross(np.array([0, 1, 0]), -normal3D), np.array([p[0], H/2, p[1]]))
+            projectedVec = projectedP - probe
+            # apply Rogrigues Formula. 
+            direction = sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), normal3D), -theta)
+            hgs['direction'] = direction
+            numSeenObjs(room, hgs, probe, direction, floorMeta, theta)
+            theLawOfTheThird(hgs, room, theta, 1)
+            hypotheses.append(hgs)
+
+    hypotheses.sort(key=probabilityOPP, reverse=True)
+    exsitingProbes = []
+    bestViews = {
+        'wellAlignedShifted': None,
+        'threeWall_R': None,
+        'threeWall': None
+    }
+    for h in hypotheses:
+        for viewTps in bestViews:
+            if viewTps != h['type']:
+                continue
+            if bestViews[viewTps] is None:
+                bestViews[viewTps] = toOriginAndTarget(h)
+    return bestViews
+
+def autoViewThird(room, scene):
+    pass
 
 def renderGivenPcam(pcam, scenejson):
     scenejson["PerspectiveCamera"]['origin'] = pcam['origin']
@@ -503,7 +644,7 @@ def renderGivenPcam(pcam, scenejson):
     shutil.copy(casename + '/render.png', f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
     pcam['identifier'] = str(identifier)
     with open(f"./latentspace/autoview/{scenejson['origin']}/{identifier}.json", 'w') as f:
-        json.dump(pcam, f)
+        json.dump(pcam, f, default=sk.jsonDumpsDefault)
 
 def autoViewRooms(scenejson):
     for room in scenejson['rooms']:
@@ -515,8 +656,11 @@ def autoViewRooms(scenejson):
         # pcam = autoViewOnePoint(room)
         # renderGivenPcam(pcam, test_file)
 
-        pcam = autoViewOnePointPerspective(room, scenejson)
-        renderGivenPcam(pcam, test_file)
+        pcams = autoViewOnePointPerspective(room, scenejson)
+        for tp in pcams:
+            if pcams[tp] is None:
+                continue
+            renderGivenPcam(pcams[tp], test_file)
 
         # auto-views w.r.t one-point perspective. 
         # pcams = autoViewsRodrigues(room, test_file['PerspectiveCamera']['fov'])
@@ -525,17 +669,17 @@ def autoViewRooms(scenejson):
 
 if __name__ == "__main__":
     start_time = time.time()
-    with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6453-dl (1).json') as f:
+    # with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6453-dl (1).json') as f:
+    with open('./examples/autoviewtest1.json') as f:
         test_file = json.load(f)
     preloadAABBs(test_file)
 
     # pcam = autoViewOnePointPerspective(test_file['rooms'][4], test_file)
-    # print(pcam)
     # renderGivenPcam(pcam, test_file)
 
     # pcams = autoViewsOnePoint(test_file['rooms'][4], test_file['PerspectiveCamera']['fov'])
     # for pcam in pcams:
     #     renderGivenPcam(pcam, test_file)
     
-    # autoViewRooms(test_file)
+    autoViewRooms(test_file)
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
