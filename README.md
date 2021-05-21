@@ -172,13 +172,16 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
-Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and will be recommended to [Graphical Models][gmod] after several revisions. A preprint is available on arXiv. Please cite our paper if this repository helps! 
+Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Full text can be found [here][graphicalmodels]. Please cite our paper if this repository helps! 
 ```
-@article{shaokui2021geometrybased,
-  title={Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
-  author={Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang},
-  journal={arXiv preprint arXiv:2101.02903},
-  year={2021}
+@article{ZHANG2021101104,
+  title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
+  journal = {Graphical Models},
+  pages = {101104},
+  year = {2021},
+  issn = {1524-0703},
+  doi = {https://doi.org/10.1016/j.gmod.2021.101104},
+  author = {Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang},
 }
 ```
 # Copyright
@@ -194,3 +197,4 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
 [3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
+[graphicalmodels]:https://www.researchgate.net/publication/351745309_Geometry-Based_Layout_Generation_with_Hyper-Relations_AMONG_Objects
