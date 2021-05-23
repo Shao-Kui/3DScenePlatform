@@ -47,6 +47,70 @@ var clickTextSearchButton = function () {
     });
 };
 
+const clickAutoViewItem = function(e){
+    let pcam = $(e.target).data("pcam");
+    gsap.to(camera.position, {
+        duration: 1,
+        x: pcam.origin[0],
+        y: pcam.origin[1],
+        z: pcam.origin[2]
+    });
+    gsap.to(orbitControls.target, {
+        duration: 1,
+        x: pcam.target[0],
+        y: pcam.target[1],
+        z: pcam.target[2]
+    });
+    gsap.to(camera.up, {
+        duration: 1,
+        x: 0,
+        y: 1,
+        z: 0
+    });
+}
+
+const clickAutoViewButton = function () {
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    let search_url = "/autoviewByID?origin=" + manager.renderManager.scene_json.origin;
+    $.getJSON(search_url, function (data) {
+        searchResults = data;
+        searchResults.forEach(function (item) {
+            let iDiv = document.createElement('div');
+            iDiv.className = "catalogItem";
+            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img})`;
+            iDiv.addEventListener('click', clickAutoViewItem)
+            catalogItems.appendChild(iDiv);
+            $(iDiv).data('pcam', item);
+        });
+    });
+};
+
+const clickAutoViewPath = function(){
+    let search_url = "/autoViewPath?origin=" + manager.renderManager.scene_json.origin;
+    $.getJSON(search_url, function (data) {
+        let autoViewPathPos = gsap.timeline({repeat: 0});
+        let autoViewPathTar = gsap.timeline({repeat: 0});
+        data.forEach(function (datum) {
+            autoViewPathPos.to(camera.position, {
+                duration: 1,
+                x: datum.origin[0],
+                y: datum.origin[1],
+                z: datum.origin[2],
+                ease: "none"
+            });
+            autoViewPathTar.to(orbitControls.target, {
+                duration: 1,
+                x: datum.target[0],
+                y: datum.target[1],
+                z: datum.target[2],
+                ease: "none"
+            });
+        });
+    });
+}
+
 var clear_panel = function () {
     Auto_Rec_Mode = false;
     document.getElementById("rec_container").style.display = "none";
@@ -61,6 +125,8 @@ var clear_panel = function () {
 
 var searchPanelInitialization = function(){
     $("#searchbtn").click(clickTextSearchButton);
+    $("#autoView").click(clickAutoViewButton);
+    $("#autoViewPath").click(clickAutoViewPath);
     /*$("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#rec_button").click(function () {

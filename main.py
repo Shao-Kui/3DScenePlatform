@@ -20,6 +20,7 @@ import uuid
 from main_audio import app_audio
 from main_ls import app_ls
 from main_magic import app_magic
+from autoview import app_autoView
 from projection2d import processGeo as objCatList, objListCat, categoryRelation, getobjCat
 import random
 import difflib
@@ -28,6 +29,7 @@ app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_ls)
 app.register_blueprint(app_magic)
+app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'GHOST of Tsushima. '
 CORS(app)
@@ -130,20 +132,32 @@ with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
 @app.route("/query2nd")
 def query2nd():
-    kw=flask.request.args.get('kw', default = "", type = str) # keyword
-    catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
-    if len(catMatches) == 0:
-        return json.dumps([])
-    cat = ChineseMapping[catMatches[0]]
-    print(f'get query: {cat}. ')
-    random.shuffle(objListCat[cat])
-    if len(objListCat[cat]) >= 20:
-        modelIds = objListCat[cat][0:20]
-    else:
-        modelIds = objListCat[cat]
-    ret=[{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
+    ret = []
+    kw = flask.request.args.get('kw', default = "", type = str) # keyword
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
         ret.append({"name": kw, "semantic": getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
+    catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
+    if len(catMatches) != 0:
+        cat = ChineseMapping[catMatches[0]]
+        print(f'get query: {cat}. ')
+        random.shuffle(objListCat[cat])
+        if len(objListCat[cat]) >= 20:
+            modelIds = objListCat[cat][0:20]
+        else:
+            modelIds = objListCat[cat]
+        ret += [{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
+    modelIdlist = kw.split(';')
+    for modelId in modelIdlist:
+        if os.path.exists(f'./dataset/object/{modelId}/{modelId}.obj'):
+            ret.append({"name": modelId, "semantic": getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"})
+    if kw == '骁逸':
+        xiaoyiids1 = ['bed', 'cabinet', 'cabinet1', 'chair', 'Chest of drawer', 'ClassicKitchenChair2', 
+        'ClassicRoundTable1', 'CoffeeMaker', 'Cutlery Prefab', 'diining_furnitures_29__vray', 'DiningTable', 'DiningTable_006', 
+        'DiningTable_007', 'FanV2', 'FridgeSBS', 'kitchen_shelf', 'lamp', 'lamp1', 'Lamp_ON', 'laptop', 'MicrowaveOven', 'mirror', 
+        'Mixer', 'modular_kitchen_table', 'PlateWithFruit', 'projector', 'rack', 'RTChair_low', 'shower', 'sofa', 'sofa_large', 
+        'sofa_small', 'speaker', 'Stove', 'Stovetop', 'table', 'table1', 'TableAngular', 'Table_Black', 'Table_original', 
+        'Table_White', 'toilet', 'Trash', 'tv', 'tv_table', 'wall_lighter', 'washbasin', 'Washer', 'word_table', 'work_chair']
+        ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in xiaoyiids1]
     return json.dumps(ret)
 
 @app.route("/room/<houseid>/<roomid>")
@@ -236,6 +250,15 @@ def favicon():
 
 onlineScenes = {}
 
+import atexit
+# defining function to run on shutdown
+def save_online_scenes():
+    for groupName in onlineScenes:
+        with open(f'./examples/onlineScenes/{groupName}.json', 'w') as f:
+            json.dump(onlineScenes[groupName], f)
+# Register the function to be called on exit
+atexit.register(save_online_scenes)
+
 @app.route("/applyuuid")
 def applyuuid():
     return str(uuid.uuid4())
@@ -253,9 +276,15 @@ def generateObjectsUUIDs(sceneJson):
 def onlineMain(groupName):
     if request.method == 'POST':
         if groupName not in onlineScenes:
-            with open('./assets/demo.json') as f:
-                onlineScenes[groupName] = json.load(f)
-            onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
+            # if the server has already saved the cached scenes:  
+            if os.path.exists(f'./examples/onlineScenes/{groupName}.json'):
+                with open(f'./examples/onlineScenes/{groupName}.json') as f:
+                    onlineScenes[groupName] = json.load(f)
+                onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName]) 
+            else:
+                with open('./assets/demo.json') as f:
+                    onlineScenes[groupName] = json.load(f)
+                onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")

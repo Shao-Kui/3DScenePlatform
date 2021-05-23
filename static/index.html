@@ -36,6 +36,7 @@
     <script src="/static/js/search.js"></script>
     <script src="/static/js/MageAdd.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script>
         //Global state & variables! Careful!
@@ -93,74 +94,8 @@
         var datgui; 
         var datgui_intersectfolder; 
 
-        // global variables for online mode; 
+        // this variable is used for determining the collaborative group a user belonging to; 
         const onlineGroup = "{{ onlineGroup }}";
-        const socket = io();
-        const onlineFuncList = {};
-        const serverUUIDs = [];
-        const onlineUserID = "{{ serverGivenUserID }}";
-        const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
-        gsap.ticker.lagSmoothing();
-
-        const loadOnlineSceneJson = function(){
-            if(onlineGroup === 'OFFLINE') return;
-            $.ajax({
-                type: "POST",
-                contentType: "application/json; charset=utf-8",
-                url: `/online/${onlineGroup}`,
-                // data: JSON.stringify( ... ),
-                success: function (data) {
-                    manager.load_scene(JSON.parse(data));
-                }
-            });
-        }
-
-        const loadMoreServerUUIDs = function(num=5){
-            // populate UUIDs from the server:
-            for(let i = 0; i < num; i++){$.ajax({
-                url: '/applyuuid',
-                type: 'GET',
-                success: data => { serverUUIDs.push(data); }
-            });}  
-        }
-
-        const socketInit = function(){
-            // client-side
-            socket.on("sceneRefresh", sceneJson => {
-                manager.load_scene(sceneJson);
-            });
-            socket.on("functionCall", (fname, arguments) => {
-                let args = [], i = 0;
-                while(arguments[i]!== undefined){args.push(arguments[i]); i++; }                
-                onlineFuncList[fname].apply(null, args);
-            });
-            socket.on("message", (arg) => {
-                console.log(arg);
-            });
-            socket.on("join", (msg, userid) => {
-                console.log(msg, userid);
-            });
-            socket.emit('join', onlineGroup);
-            loadMoreServerUUIDs(10);
-        }
-
-        const emitFunctionCall = function(funcName, arguments){
-            socket.emit('functionCall', funcName, arguments, onlineGroup);
-            socket.emit('onlineSceneUpdate', manager.renderManager.scene_json, onlineGroup);
-        }
-
-        const claimControlObject3D = function(uuid, isRelease){
-            socket.emit('claimControlObject3D', onlineUserID, uuid, isRelease, onlineGroup); 
-        };
-
-        socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
-            // console.log('claimControlObject3D', objKey, isRelease, userID);
-            if(!(objKey in manager.renderManager.instanceKeyCache)){
-                return; 
-            }
-            if(isRelease) manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
-            else manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;  
-        });
 
         $(document).ready(function () {
             latent_space_mode = false;
@@ -174,21 +109,6 @@
             catalogItems = document.getElementById("catalogItems");
             drawingCanvas = document.getElementById('drawing-canvas');
             setting_up();
-
-            // try loading the online scene: 
-            loadOnlineSceneJson();
-            socketInit();
-            onlineFuncList['addObjectFromCache'] = addObjectFromCache;
-            onlineFuncList['removeObjectByUUID'] = removeObjectByUUID;
-            onlineFuncList['transformObjectByUUID'] = transformObjectByUUID;
-            onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
-            const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
-
-            function closingCode(){
-                if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-                return null;
-            }
-            window.onbeforeunload = closingCode;
         })
 
     </script>
@@ -202,8 +122,7 @@
             </div>
             <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-                <button id="tbd_button_1" type="button" class="btn btn-lg btn-primary nav_sk_button" 
-                style="">(TBD)</button>
+                <button id="autoview" type="button" class="btn btn-lg btn-primary nav_sk_button">AutoView</button>
                 <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
                 style="width: 9%">AuxiliaryMode
                 </button>
@@ -301,6 +220,11 @@
                     Collaborative Search
                 </button>
             </div-->
+            <div class="card-body">
+                <button id="autoView" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">SceneViewer</button>
+                <button id="autoViewPath" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">AutoPath</button>
+                <button id="_unknownButton2" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">Unknown</button>
+            </div>
             <div>
                 <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">双人床</button>
                 <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">茶几</button>

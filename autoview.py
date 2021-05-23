@@ -1,4 +1,6 @@
 from re import L
+from flask import Blueprint
+import flask
 import numpy as np
 import json
 import projection2d
@@ -16,6 +18,7 @@ import os
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
     res_ratio_dom = json.load(f)
 
+app_autoView = Blueprint('app_autoView', __name__)
 pt.r_dir = 'AutoView'
 projection2d.get_norm = True
 TARDIS = 3.397448931651581
@@ -89,6 +92,27 @@ def autoViewRoom(room):
 
     # return autoViewOnePoint(floorMeta)
     # return autoViewFromPatterns(room)
+
+def balancing(h, room, theta):
+    """
+    'h' is a generated probe view. 
+    """
+    h['direction'] /= np.linalg.norm(h['direction'])
+    floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    print(floorMeta)
+    onePlanePointList = []
+    for obj in room['objList']:
+        if not isObjectInSight(obj, h['probe'], h['direction'], floorMeta, theta, room['objList'], False):
+            continue
+        probeTot = np.array(obj['translate']) - h['probe']
+        cosToDirection = np.dot(probeTot, h['direction']) / np.linalg.norm(probeTot)
+        DIS = 1 / cosToDirection
+        DRC = probeTot / np.linalg.norm(probeTot)
+        onePlanePointList.append(h['probe'] + DIS * DRC)
+    centroid = sum(onePlanePointList) / len(onePlanePointList)
+    newDirection = centroid - h['probe']
+    newDirection /= np.linalg.norm(newDirection, ord=2)
+    return newDirection
 
 def autoViewFromPatterns(room):
     pcam = {}
@@ -187,10 +211,38 @@ def findTheLongestDiagonal(wallIndex, floorMeta, floorPoly):
             wallDiagIndex = wallJndex
     return wallDiagIndex
 
-def autoViewDiag(room):
-    pass
+def longestDiagonalSimple(wallIndex, floorMeta, floorPoly):
+    probe = floorMeta[wallIndex][0:2]
+    MAXLEN = -1
+    wallDiagIndex = -1
+    for wallJndex in range(floorMeta.shape[0]):
+        # a diagonal can not be formed using adjacent vertices or 'wallIndex' itself.
+        if wallJndex == wallIndex or wallJndex == ( wallIndex + 1 ) % floorMeta.shape[0] or wallIndex == ( wallJndex + 1 ) % floorMeta.shape[0]:
+            continue
+        trobe = floorMeta[wallJndex][0:2]
+        LEN = np.linalg.norm(probe - trobe, ord=2)
+        if LEN > MAXLEN:
+            MAXLEN = LEN
+            wallDiagIndex = wallJndex
+    return wallDiagIndex
 
-def autoViewsOnePoint(room, fov):
+def probabilityTPP(h):
+    return h['numObjBeSeen'] + h['viewLength'] # + h['targetWallWindoorArea']
+
+def toOriginAndTarget(bestView):
+    """
+    print(floorMeta[bestView['wallIndex']][0:2], floorMeta[(bestView['wallIndex']+1) % floorMeta.shape[0]][0:2])
+    print(floorMeta[bestView['wallJndex']][0:2], floorMeta[(bestView['wallJndex']+1) % floorMeta.shape[0]][0:2])
+    """
+    origin = bestView['probe'].tolist()
+    target = (bestView['probe'] + 0.5 * bestView['direction']).tolist()
+    bestView["origin"] = origin
+    bestView["target"] = target
+    bestView["up"] = calCamUpVec(np.array(bestView["origin"]), np.array(bestView["target"])).tolist()
+    return bestView
+
+def autoViewTwoPointPerspective(room, scene):
+    fov = scene['PerspectiveCamera']['fov']
     # change the fov/2 to Radian. 
     theta = (np.pi * fov / 180) / 2
     floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
@@ -198,9 +250,17 @@ def autoViewsOnePoint(room, fov):
     H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
     pcams = []
     for wallIndex in range(floorMeta.shape[0]):
+        pcam = {}
         # find the longest diagonal w.r.t 'floorMeta[wallIndex][0:2]'. 
         wallDiagIndex = findTheLongestDiagonal(wallIndex, floorMeta, floorPoly)
-        print(f' - the longest wallDiagIndex is {wallDiagIndex}.')
+        # wallDiagIndex = longestDiagonalSimple(wallIndex, floorMeta, floorPoly)
+        targetWallWindoorArea = 0.
+        for r in scene['rooms']:
+            for obj in r['objList']:
+                targetWallWindoorArea += calWindoorArea(obj, floorMeta[(wallDiagIndex+floorMeta.shape[0]-1)%floorMeta.shape[0]][0:2], floorMeta[wallDiagIndex][0:2])
+        for r in scene['rooms']:
+            for obj in r['objList']:
+                targetWallWindoorArea += calWindoorArea(obj, floorMeta[wallDiagIndex][0:2], floorMeta[(wallDiagIndex+1)%floorMeta.shape[0]][0:2])
         # calculate the direction of the diagonal. 
         v = (floorMeta[wallDiagIndex][0:2] - floorMeta[wallIndex][0:2]).tolist()
         v.insert(1, 0.)
@@ -208,15 +268,18 @@ def autoViewsOnePoint(room, fov):
         k = np.cross(v, np.array([0, 1, 0]))
         k /= np.linalg.norm(k, ord=2)
         # apply Rogrigues Formula. 
-        target = v * np.cos(-theta) + np.cross(k, v) * np.sin(-theta)
-        pcam = {}
-        pcam["origin"] = floorMeta[wallIndex][0:2].tolist()
-        pcam["origin"].insert(1, H)
-        pcam["target"] = (np.array(pcam["origin"]) + target).tolist()
-        pcam["origin"] = (np.array(pcam["origin"]) + target * 0.05).tolist()
-        pcam["up"] = calCamUpVec(np.array(pcam["origin"]), np.array(pcam["target"])).tolist()
+        direction = v * np.cos(-theta) + np.cross(k, v) * np.sin(-theta)
+        direction /= np.linalg.norm(direction)
+        probe = np.array([floorMeta[wallIndex][0], H, floorMeta[wallIndex][1]])
+        numSeenObjs(room, pcam, probe, direction, floorMeta, theta)
+        pcam['probe'] = probe + direction * 1
+        pcam['direction'] = direction
+        pcam['viewLength'] = np.linalg.norm(v, ord=2)
+        pcam['targetWallWindoorArea'] = targetWallWindoorArea
+        pcam['theta'] = theta
         pcams.append(pcam)
-    return pcams
+    pcams.sort(key=probabilityTPP, reverse=True)
+    return toOriginAndTarget(pcams[0])
 
 def autoViewRodrigues(room, fov):
     # change the fov/2 to Radian. 
@@ -656,30 +719,89 @@ def autoViewRooms(scenejson):
         # pcam = autoViewOnePoint(room)
         # renderGivenPcam(pcam, test_file)
 
+        pcam = autoViewTwoPointPerspective(room, scenejson)
+        renderGivenPcam(pcam, scenejson)
+
         pcams = autoViewOnePointPerspective(room, scenejson)
         for tp in pcams:
             if pcams[tp] is None:
                 continue
-            renderGivenPcam(pcams[tp], test_file)
+            renderGivenPcam(pcams[tp], scenejson)
 
         # auto-views w.r.t one-point perspective. 
         # pcams = autoViewsRodrigues(room, test_file['PerspectiveCamera']['fov'])
         # for pcam in pcams:
         #     renderGivenPcam(pcam, test_file)
 
+def hamilton(scene):
+    views = []
+    # load existing views. 
+    for fn in os.listdir(f'./latentspace/autoview/{scene["origin"]}'):
+        if '.json' not in fn:
+            continue
+        with open(f'./latentspace/autoview/{scene["origin"]}/{fn}') as f:
+            views.append(json.load(f))
+
+    # decide the s and t which are the start point and end point respectively. 
+
+    # construct the graph, including vertices and edges. 
+
+    # perform the algorithm of Angluin and Valiant. 
+
+    res = []
+    for view in views:
+        res.append({
+            'origin': view['origin'],
+            'target': view['target']
+        })
+    with open(f'./latentspace/autoview/{scene["origin"]}/path', 'w') as f:
+        json.dump(res, f)
+    return res
+
 if __name__ == "__main__":
     start_time = time.time()
-    # with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6453-dl (1).json') as f:
-    with open('./examples/autoviewtest1.json') as f:
+    with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6453-dl (1).json') as f:
+    # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
         test_file = json.load(f)
     preloadAABBs(test_file)
 
     # pcam = autoViewOnePointPerspective(test_file['rooms'][4], test_file)
     # renderGivenPcam(pcam, test_file)
 
-    # pcams = autoViewsOnePoint(test_file['rooms'][4], test_file['PerspectiveCamera']['fov'])
-    # for pcam in pcams:
-    #     renderGivenPcam(pcam, test_file)
+    # pcam = autoViewTwoPointPerspective(test_file['rooms'][1], test_file)
+    # newDirection = balancing(pcam, test_file['rooms'][1], pcam['theta'])
+    # print(pcam['direction'], newDirection)
+    # pcam['direction'] = newDirection
+    # pcam = toOriginAndTarget(pcam)
+    # renderGivenPcam(pcam, test_file)
     
-    autoViewRooms(test_file)
+    # autoViewRooms(test_file)
+    hamilton(test_file)
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
+
+@app_autoView.route("/autoviewByID")
+def autoviewByID():
+    ret = []
+    origin = flask.request.args.get('origin', default = "", type = str)
+    if not os.path.exists(f'./latentspace/autoview/{origin}'):
+        return []
+    filenames = os.listdir(f'./latentspace/autoview/{origin}')
+    for filename in filenames:
+        if '.json' not in filename:
+            continue
+        with open(f'./latentspace/autoview/{origin}/{filename}') as f:
+            pcam = json.load(f)
+        pcam['img'] = pcam['identifier'] + '.png'
+        ret.append(pcam)
+    return json.dumps(ret)
+
+@app_autoView.route("/autoviewimgs/<origin>/<img>")
+def autoviewimgs(origin, img):
+    return flask.send_from_directory(f'./latentspace/autoview/{origin}', img)
+
+@app_autoView.route("/autoViewPath")
+def autoViewPath():
+    origin = flask.request.args.get('origin', default = "", type = str)
+    with open(f'./latentspace/autoview/{origin}/path') as f:
+        res = json.load(f)
+    return json.dumps(res)
