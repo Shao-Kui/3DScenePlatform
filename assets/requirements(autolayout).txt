@@ -202,7 +202,7 @@ traitlets==4.3.2
 Twisted==18.7.0
 typing==3.6.4
 unicodecsv==0.14.1
-urllib3==1.22
+urllib3==1.26.5
 w3lib==1.20.0
 wcwidth==0.1.7
 webencodings==0.5.1
