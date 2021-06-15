@@ -54,6 +54,10 @@ def getWallHeight(meshPath):
     mesh = as_mesh(trimesh.load(meshPath))
     return np.max(mesh.vertices[:, 1]).tolist()
 
+def getMeshVertices(methPath):
+    mesh = as_mesh(trimesh.load(meshPath))
+    return mesh.vertices
+
 def objectInDataset(modelId):
     if os.path.exists(f'./dataset/object/{modelId}/'):
         return True

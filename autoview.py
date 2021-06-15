@@ -277,6 +277,7 @@ def autoViewTwoPointPerspective(room, scene):
         pcam['viewLength'] = np.linalg.norm(v, ord=2)
         pcam['targetWallWindoorArea'] = targetWallWindoorArea
         pcam['theta'] = theta
+        pcam['roomId'] = room['roomId']
         pcams.append(pcam)
     pcams.sort(key=probabilityTPP, reverse=True)
     return toOriginAndTarget(pcams[0])
@@ -614,6 +615,7 @@ def autoViewOnePointPerspective(room, scene):
             
             # first generate the well-aligned hypothesis. 
             h = {}
+            h['roomId'] = room['roomId']
             h['type'] = 'wellAligned'
             h['probe'] = probe
             h['direction'] = -normal3D
@@ -719,8 +721,8 @@ def autoViewRooms(scenejson):
         # pcam = autoViewOnePoint(room)
         # renderGivenPcam(pcam, test_file)
 
-        pcam = autoViewTwoPointPerspective(room, scenejson)
-        renderGivenPcam(pcam, scenejson)
+        # pcam = autoViewTwoPointPerspective(room, scenejson)
+        # renderGivenPcam(pcam, scenejson)
 
         pcams = autoViewOnePointPerspective(room, scenejson)
         for tp in pcams:
@@ -733,7 +735,33 @@ def autoViewRooms(scenejson):
         # for pcam in pcams:
         #     renderGivenPcam(pcam, test_file)
 
+def hamiltonNext(ndp, views, scene):
+    DIS = np.Inf
+    res = None
+    for view in views:
+        if not view['roomId'] == ndp['roomId'] or view['isVisited']:
+            continue
+        # if np.dot(np.array(view['direction']), np.array(ndp['direction'])) <= 0:
+        #     continue
+        dis = np.linalg.norm(np.array(view['probe']) - np.array(ndp['probe']), ord=2)
+        if dis < DIS:
+            DIS = dis
+            res = view
+    return res
+
+def hamiltonNextRoom(roomId, pre, suc, scene):
+    if roomId in suc:
+        for res in suc[roomId]:
+            if not scene['rooms'][res]['isVisited']:
+                return res
+    if roomId in pre:
+        return pre[roomId]
+    return -1
+
+
+import networkx as nx
 def hamilton(scene):
+    involvedRoomIds = []
     views = []
     # load existing views. 
     for fn in os.listdir(f'./latentspace/autoview/{scene["origin"]}'):
@@ -741,26 +769,124 @@ def hamilton(scene):
             continue
         with open(f'./latentspace/autoview/{scene["origin"]}/{fn}') as f:
             views.append(json.load(f))
-
-    # decide the s and t which are the start point and end point respectively. 
-
-    # construct the graph, including vertices and edges. 
-
-    # perform the algorithm of Angluin and Valiant. 
-
-    res = []
     for view in views:
-        res.append({
-            'origin': view['origin'],
-            'target': view['target']
-        })
+        view['isVisited'] = False
+        if view['roomId'] not in involvedRoomIds:
+            involvedRoomIds.append(view['roomId'])
+    res = []
+    # deciding connections of a floorplan. 
+    G = nx.Graph()
+    for room in scene['rooms']:
+        room['isVisited'] = False
+        floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+        H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+        for door in room['objList']:
+            if 'coarseSemantic' not in door:
+                continue
+            if door['coarseSemantic'] not in ['Door', 'door']:
+                continue
+            if len(door['roomIds']) < 2:
+                continue
+            if door['roomIds'][0] not in involvedRoomIds or door['roomIds'][1] not in involvedRoomIds:
+                continue
+            x = (door['bbox']['min'][0] + door['bbox']['max'][0]) / 2
+            z = (door['bbox']['min'][2] + door['bbox']['max'][2]) / 2
+            DIS = np.Inf
+            for wallIndex in range(floorMeta.shape[0]):
+                wallIndexNext = ( wallIndex + 1 ) % floorMeta.shape[0]
+                dis = sk.pointToLineDistance(np.array([x, z]), floorMeta[wallIndex, 0:2], floorMeta[wallIndexNext, 0:2])
+                if dis < DIS:
+                    DIS = dis
+                    direction = np.array([floorMeta[wallIndex, 2], 0, floorMeta[wallIndex, 3]])
+            translate = np.array([x, H/2, z])
+            G.add_edge(door['roomIds'][0], door['roomIds'][1], translate=translate, direction=direction)
+    # print(G.edges)
+    pre = nx.dfs_predecessors(G)
+    suc = nx.dfs_successors(G)
+    print(G[0][4], G[4][0])
+    # decide the s and t which are the start point and end point respectively. 
+    ndproom = list(nx.dfs_successors(G).keys())[0]
+    for view in views:
+        if view['roomId'] == ndproom:
+            ndpNext = view
+    # perform the algorithm of Angluin and Valiant. 
+    while not ndproom == -1:
+        while ndpNext is not None:
+            ndp = ndpNext
+            res.append(ndp)
+            ndp['isVisited'] = True
+            ndpNext = hamiltonNext(ndp, views, scene)
+        lastndproom = ndproom
+        ndproom = hamiltonNextRoom(ndproom, pre, suc, scene)
+        if ndproom == -1:
+            break
+        edge = G[lastndproom][ndproom]
+        if edge['direction'].dot(edge['translate'] - ndp['probe']) < 0:
+            edge['direction'] = -edge['direction']
+        scene['rooms'][ndproom]['isVisited'] = True
+        ndpNext = {
+            'roomId': ndproom,
+            'probe': edge['translate'],
+            'origin': edge['translate'].tolist(),
+            'target': (edge['translate'] + edge['direction']).tolist(),
+            'direction': edge['direction'].tolist()
+        }
+    
     with open(f'./latentspace/autoview/{scene["origin"]}/path', 'w') as f:
-        json.dump(res, f)
+        json.dump(res, f, default=sk.jsonDumpsDefault)
     return res
+
+def floorplanOrthes():
+    pt.cameraType = 'orthographic'
+    pt.SAVECONFIG = False
+    pt.REMOVELAMP = True
+    floorplanlist = os.listdir('./dataset/alilevel_door2021/')
+    for floorplanfile in floorplanlist:
+        if '.json' not in floorplanfile:
+            continue
+        with open(f'./dataset/alilevel_door2021/{floorplanfile}') as f:
+            scenejson = json.load(f)
+        if os.path.exists(f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png"):
+            continue
+        points = []
+        for room in scenejson['rooms']:
+            try:
+                floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+                points += floorMeta[:, 0:2].tolist()
+                wallMeta = sk.getMeshVertices('/dataset/room/{}/{}w.obj'.format(room['origin'], room['modelId']))
+                points += wallMeta[:, [0, 2]].tolist()
+            except:
+                continue
+        v = np.array(points)
+        l = np.min(v[:, 0])
+        r = np.max(v[:, 0])
+        u = np.min(v[:, 1])
+        d = np.max(v[:, 1])
+        # orthViewLen = max((r - l), (d - u)) + 0.45
+        orthViewLen = (r - l) + 0.45
+        scenejson["PerspectiveCamera"] = {}
+        scenejson["PerspectiveCamera"]['origin'] = [(r + l)/2, 50, (d + u)/2]
+        scenejson["PerspectiveCamera"]['target'] = [(r + l)/2, 0,  (d + u)/2]
+        scenejson["PerspectiveCamera"]['up'] = [0, 0, 1]
+        scenejson["OrthCamera"] = {}
+        scenejson["OrthCamera"]['x'] = orthViewLen / 2
+        scenejson["OrthCamera"]['y'] = orthViewLen / 2
+        scenejson["canvas"] = {}
+        scenejson['canvas']['width']  = int((r - l) * 100)
+        scenejson['canvas']['height'] = int((d - u) * 100)
+        print(f'Rendering {floorplanfile} ...')
+        try:
+            pt.pathTracing(scenejson, 64, f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png")
+        except Exception as e:
+            print(e)
+            continue
+    # swap the cameraType back to perspective cameras. 
+    pt.cameraType = 'perspective'
 
 if __name__ == "__main__":
     start_time = time.time()
-    with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6453-dl (1).json') as f:
+    # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
+    with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd-l6176-dl.json') as f:
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
         test_file = json.load(f)
     preloadAABBs(test_file)
@@ -776,7 +902,11 @@ if __name__ == "__main__":
     # renderGivenPcam(pcam, test_file)
     
     # autoViewRooms(test_file)
-    hamilton(test_file)
+
+    # hamilton(test_file)
+
+    floorplanOrthes()
+
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
 
 @app_autoView.route("/autoviewByID")

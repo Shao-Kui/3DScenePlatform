@@ -47,26 +47,89 @@ var clickTextSearchButton = function () {
     });
 };
 
+const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
+    let mid = {
+        x: (lastPos.x + pcam.origin[0]) / 2,
+        y: (lastPos.y + pcam.origin[1]) / 2,
+        z: (lastPos.z + pcam.origin[2]) / 2
+    };
+    let bisector = new THREE.Vector3(0,0,0).add(direction).add(tarDirection);
+    let midDirection;
+    if(bisector.length() === 0){
+        let theta = Math.PI / 2;
+        let k = new THREE.Vector3(pcam.up[0], pcam.up[1], pcam.up[2]);
+        let v = tarDirection.copy();
+        midDirection = v.multiplyScalar(Math.cos(theta)).add(k.cross(v).multiplyScalar(Math.sin(theta)));
+        midDirection = bisector.normalize();
+    }else{
+        midDirection = bisector.normalize();
+    }
+    let midLookat = {
+        x: mid.x + midDirection.x,
+        y: mid.y,
+        z: mid.z + midDirection.z
+    }
+    return [mid, midLookat]
+}
+
 const clickAutoViewItem = function(e){
+    clickAutoViewItemDuration = 1;
     let pcam = $(e.target).data("pcam");
-    gsap.to(camera.position, {
-        duration: 1,
-        x: pcam.origin[0],
-        y: pcam.origin[1],
-        z: pcam.origin[2]
-    });
-    gsap.to(orbitControls.target, {
-        duration: 1,
-        x: pcam.target[0],
-        y: pcam.target[1],
-        z: pcam.target[2]
-    });
+    let direction = new THREE.Vector3(
+        orbitControls.target.x - camera.position.x,
+        orbitControls.target.y - camera.position.y,
+        orbitControls.target.z - camera.position.z
+    ).normalize();
+    let tarDirection = new THREE.Vector3(pcam.direction[0], pcam.direction[1], pcam.direction[2]).normalize();
     gsap.to(camera.up, {
-        duration: 1,
+        duration: clickAutoViewItemDuration,
         x: 0,
         y: 1,
         z: 0
     });
+    if(direction.dot(tarDirection) > 0){
+        gsap.to(camera.position, {
+            duration: clickAutoViewItemDuration,
+            x: pcam.origin[0],
+            y: pcam.origin[1],
+            z: pcam.origin[2]
+        });
+        gsap.to(orbitControls.target, {
+            duration: clickAutoViewItemDuration,
+            x: pcam.target[0],
+            y: pcam.target[1],
+            z: pcam.target[2],
+        });
+    }else{
+        let camTween = gsap.timeline({repeat: 0});
+        let orbTween = gsap.timeline({repeat: 0});
+        let midres = autoViewGetMid(camera.position, pcam, direction, tarDirection);
+        let mid = midres[0], midLookat = midres[1];
+        camTween.to(camera.position, {
+            duration: clickAutoViewItemDuration/2,
+            x: mid.x,
+            y: mid.y,
+            z: mid.z
+        });
+        orbTween.to(orbitControls.target, {
+            duration: clickAutoViewItemDuration/2,
+            x: midLookat.x,
+            y: midLookat.y,
+            z: midLookat.z
+        });
+        camTween.to(camera.position, {
+            duration: clickAutoViewItemDuration/2,
+            x: pcam.origin[0],
+            y: pcam.origin[1],
+            z: pcam.origin[2]
+        });
+        orbTween.to(orbitControls.target, {
+            duration: clickAutoViewItemDuration/2,
+            x: pcam.target[0],
+            y: pcam.target[1],
+            z: pcam.target[2]
+        });
+    }
 }
 
 const clickAutoViewButton = function () {
@@ -87,26 +150,77 @@ const clickAutoViewButton = function () {
     });
 };
 
+const AUTOVIEWPATHSPEED = 1.;
 const clickAutoViewPath = function(){
     let search_url = "/autoViewPath?origin=" + manager.renderManager.scene_json.origin;
     $.getJSON(search_url, function (data) {
         let autoViewPathPos = gsap.timeline({repeat: 0});
         let autoViewPathTar = gsap.timeline({repeat: 0});
+        let lastPos = undefined
+        let direction = new THREE.Vector3(
+            orbitControls.target.x - camera.position.x,
+            orbitControls.target.y - camera.position.y,
+            orbitControls.target.z - camera.position.z
+        ).normalize(); 
         data.forEach(function (datum) {
-            autoViewPathPos.to(camera.position, {
-                duration: 1,
-                x: datum.origin[0],
-                y: datum.origin[1],
-                z: datum.origin[2],
-                ease: "none"
-            });
-            autoViewPathTar.to(orbitControls.target, {
-                duration: 1,
-                x: datum.target[0],
-                y: datum.target[1],
-                z: datum.target[2],
-                ease: "none"
-            });
+            let t;
+            let thisPos = new THREE.Vector3(datum.origin[0], datum.origin[1], datum.origin[2]); 
+            if(lastPos){
+                t = lastPos.distanceTo(thisPos) / AUTOVIEWPATHSPEED;
+            }else{
+                t = 0.6
+                lastPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z); 
+            }
+            let tarDirection = new THREE.Vector3(datum.direction[0], datum.direction[1], datum.direction[2]).normalize();
+            if(direction.dot(tarDirection) > 0){
+                autoViewPathPos.to(camera.position, {
+                    duration: t,
+                    x: datum.origin[0],
+                    y: datum.origin[1],
+                    z: datum.origin[2],
+                    ease: "none"
+                });
+                autoViewPathTar.to(orbitControls.target, {
+                    duration: t,
+                    x: datum.target[0],
+                    y: datum.target[1],
+                    z: datum.target[2],
+                    ease: "none"
+                });
+            }else{
+                let midres = autoViewGetMid(lastPos, datum, direction, tarDirection);
+                let mid = midres[0], midLookat = midres[1];
+                autoViewPathPos.to(camera.position, {
+                    duration: t/2,
+                    x: mid.x,
+                    y: mid.y,
+                    z: mid.z,
+                    ease: "none"
+                });
+                autoViewPathTar.to(orbitControls.target, {
+                    duration: t/2,
+                    x: midLookat.x,
+                    y: midLookat.y,
+                    z: midLookat.z,
+                    ease: "none"
+                });
+                autoViewPathPos.to(camera.position, {
+                    duration: t/2,
+                    x: datum.origin[0],
+                    y: datum.origin[1],
+                    z: datum.origin[2],
+                    ease: "none"
+                });
+                autoViewPathTar.to(orbitControls.target, {
+                    duration: t/2,
+                    x: datum.target[0],
+                    y: datum.target[1],
+                    z: datum.target[2],
+                    ease: "none"
+                });
+            }
+            direction = tarDirection;
+            lastPos = thisPos;
         });
     });
 }

@@ -4,6 +4,10 @@
         <integer name="sampleCount" value="{{ sampleCount }}"/>
     </sampler>
     <transform name="toWorld">
+        {%- if cameraType == 'orthographic' %}
+        <scale x="{{ scenejson.OrthCamera.x }}" y="{{ scenejson.OrthCamera.y }}"/>
+        {%- endif %}
+        {# 
         <!-- lookat origin="4, 4, 4" target="0, 0, 0" up="0, 0, 1"-->
         <!--rotate y="1" angle="{{ scenejson.PerspectiveCamera.rotate[1] * 180 / PI }}"/>
         <rotate x="1" angle="{{ scenejson.PerspectiveCamera.rotate[0] * 180 / PI }}"/>
@@ -12,19 +16,23 @@
         x="{{scenejson.PerspectiveCamera.origin[0]}}" 
         y="{{scenejson.PerspectiveCamera.origin[1]}}" 
         z="{{scenejson.PerspectiveCamera.origin[2]}}"/-->
+        #}
         <lookat 
-        origin="{{ scenejson.pcam.origin  }}" 
-        target="{{ scenejson.pcam.target  }}"
+        origin="{{ scenejson.pcam.origin }}" 
+        target="{{ scenejson.pcam.target }}"
         up=    "{{ scenejson.pcam.up }}"/>
     </transform>
-    <!--float name="fov" value="{{ scenejson.PerspectiveCamera.fov }}"/-->
-    <float name="fov" value="100"/>
+    {%- if cameraType != 'orthographic' %}
+    <float name="fov" value="{{ scenejson.PerspectiveCamera.fov }}"/>
+    {%- endif %}
+    
+    <!-- float name="fov" value="100"/ -->
     <film type="hdrfilm">
-        <!--integer name="width" value="{{ scenejson.canvas.width }}"/>
-        <integer name="height" value="{{ scenejson.canvas.height }}"/-->
-        <!-- The following resolution is set w.r.t to Shao-Kui's dev-PC. /-->
+        <integer name="width" value="{{ scenejson.canvas.width }}"/>
+        <integer name="height" value="{{ scenejson.canvas.height }}"/>
+        <!-- The following resolution is set w.r.t to Shao-Kui's dev-PC. 
         <integer name="width" value="1309"/>
-        <integer name="height" value="809"/>
+        <integer name="height" value="809"/> /-->
         <rfilter type="gaussian"/>
     </film>
 </sensor>
