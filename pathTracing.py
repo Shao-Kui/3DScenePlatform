@@ -10,6 +10,7 @@ import getopt
 import numpy as np
 from projection2d import getobjCat
 import sk
+import uuid
 
 sysROOT = 'F:/3DIndoorScenePlatform/dataset/PathTracing'
 ROOT = './dataset/PathTracing'
@@ -49,7 +50,8 @@ def autoPerspectiveCamera(scenejson):
 def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
-    casename = ROOT + f'/{scenejson["origin"]}-{dt_string}'
+    casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
+    # print(casename)
 
     if 'PerspectiveCamera' not in scenejson:
         autoPerspectiveCamera(scenejson)
@@ -57,6 +59,9 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         scenejson['canvas'] = {}
         scenejson['canvas']['width'] = "1309"
         scenejson['canvas']['height'] = "809"
+    if 'focalLength' not in scenejson['PerspectiveCamera']:
+        scenejson['PerspectiveCamera']['focalLength'] = 35
+    scenejson['PerspectiveCamera']['focalLength'] = f"{scenejson['PerspectiveCamera']['focalLength']}mm"
     # re-organize scene json into Mitsuba .xml file: 
     scenejson["pcam"] = {}
     scenejson["pcam"]["origin"] = ', '.join([str(i) for i in scenejson["PerspectiveCamera"]["origin"]])
@@ -99,7 +104,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     check_output(f"mitsuba \"{casename + '/renderconfig.xml'}\"", shell=True)
     check_output(f"mtsutil tonemap -o \"{casename + '/render.png'}\" \"{casename + '/renderconfig.exr'}\" ", shell=True)
     if dst is not None:
-        shutil.copy(casename + '/render.png', f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png")
+        shutil.copy(casename + '/render.png', dst)
     if not SAVECONFIG:
         shutil.rmtree(casename)
     return casename

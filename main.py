@@ -20,10 +20,11 @@ import uuid
 from main_audio import app_audio
 from main_ls import app_ls
 from main_magic import app_magic
-from autoview import app_autoView
 from projection2d import processGeo as objCatList, objListCat, categoryRelation, getobjCat
+from autoview import app_autoView, autoViewsRes, autoViewRooms
 import random
 import difflib
+import sk
 
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
@@ -288,11 +289,14 @@ def onlineMain(groupName):
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
-    if 'userID' not in session:
-        session['userID'] = str(uuid.uuid4())
+    if 'userID' in session:
+        serverGivenUserID = session['userID']
+    else:
+        serverGivenUserID = str(uuid.uuid4())
+        session['userID'] = serverGivenUserID
     print(request.remote_addr, dt_string, groupName)
     print('UserID: ', session['userID'])
-    return flask.render_template("index.html", onlineGroup=groupName, serverGivenUserID=session['userID'])
+    return flask.render_template("index.html", onlineGroup=groupName, serverGivenUserID=serverGivenUserID)
 
 @socketio.on('join')
 def on_join(groupName):
@@ -347,6 +351,26 @@ def claimControlObject3D(userID, objKey, isRelease, groupName):
         if objKey in object3DControlledByList:
             del object3DControlledByList[objKey]
         emit('claimControlObject3D', (objKey, isRelease, None), room=groupName, include_self=True)
+
+@socketio.on('autoView')
+def autoViewBySocket(scenejson, groupName):
+    print(f'received autoview request from {request.sid}')
+    autoViewAsync(scenejson, request.sid)
+
+def autoViewAsync(scenejson, to):
+    origin = scenejson['origin']
+    if os.path.exists(f'./latentspace/autoview/{origin}'):
+        socketio.emit('autoView', autoViewsRes(origin), to=to)
+        return
+    else:
+        thread = sk.BaseThread(
+            name='autoView',
+            target=autoViewRooms,
+            method_args=(scenejson,),
+            callback=autoViewAsync,
+            callback_args=(scenejson, to)
+        )
+        thread.start()
 
 if __name__ == '__main__':
     from waitress import serve

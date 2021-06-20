@@ -1,5 +1,6 @@
 from re import L
-from flask import Blueprint
+from flask import Blueprint, request, copy_current_request_context
+from flask_socketio import emit
 import flask
 import numpy as np
 import json
@@ -24,6 +25,8 @@ projection2d.get_norm = True
 TARDIS = 3.397448931651581
 CAMHEI = 1.
 pt.REMOVELAMP = False
+ASPECT = 16 / 9
+RENDERWIDTH = 600
 
 def preloadAABBs(scene):
     for room in scene['rooms']:
@@ -391,7 +394,7 @@ def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
     py= ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / D
     return [px, py]
 
-def isPointOnVisualPlanes(t, probe, direction, theta, aspect=1.0, isDebug=False):
+def isPointOnVisualPlanes(t, probe, direction, theta, aspect=ASPECT, isDebug=False):
     """
     aspect: width / height. 
     """
@@ -517,7 +520,7 @@ def numSeenObjs(room, h, probe, direction, floorMeta, theta, isDebug=False):
             h['numObjBeSeen'] += 1
             h['objBeSeen'].append(obj['modelId'])
 
-def theLawOfTheThird(h, room, theta, aspect=1):
+def theLawOfTheThird(h, room, theta, aspect=ASPECT):
     """
     'theta' is half the fov that vertically spand from the top -> bottom. 
     """
@@ -696,23 +699,45 @@ def autoViewOnePointPerspective(room, scene):
 def autoViewThird(room, scene):
     pass
 
+def renderPcamAsync(scenejson,identifier):
+    casename = pt.pathTracing(scenejson, 4, f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
+
 def renderGivenPcam(pcam, scenejson):
+    scenejson["PerspectiveCamera"] = scenejson["PerspectiveCamera"].copy()
     scenejson["PerspectiveCamera"]['origin'] = pcam['origin']
     scenejson["PerspectiveCamera"]['target'] = pcam['target']
     scenejson["PerspectiveCamera"]['up'] = pcam['up']
-    scenejson['canvas']['width']  = "600"
-    scenejson['canvas']['height'] = "600"
-    casename = pt.pathTracing(scenejson, 4)
+    scenejson["canvas"] = scenejson["canvas"].copy()
+    scenejson['canvas']['width']  = int(RENDERWIDTH)
+    scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
     identifier = uuid.uuid1()
     if not os.path.exists(f"./latentspace/autoview/{scenejson['origin']}"):
         os.makedirs(f"./latentspace/autoview/{scenejson['origin']}")
-    shutil.copy(casename + '/render.png', f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
     pcam['identifier'] = str(identifier)
     with open(f"./latentspace/autoview/{scenejson['origin']}/{identifier}.json", 'w') as f:
         json.dump(pcam, f, default=sk.jsonDumpsDefault)
+    thread = sk.BaseThread(
+        name='autoView', 
+        target=renderPcamAsync,
+        method_args=(scenejson.copy(),identifier)
+    )
+    thread.start()
 
 def autoViewRooms(scenejson):
+    # pt.SAVECONFIG = False
+    preloadAABBs(scenejson)
     for room in scenejson['rooms']:
+        # we do not generating views in an empty room. 
+        obj3DModelCount = 0
+        for obj in room['objList']:
+            try:
+                if sk.objectInDataset(obj['modelId']):
+                    obj3DModelCount += 1
+            except:
+                continue
+        if obj3DModelCount == 0:
+            continue
+
         # pcam = autoViewTwoPoint(room)
         # renderGivenPcam(pcam, test_file)
         # pcam = autoViewFromPatterns(room)
@@ -726,9 +751,10 @@ def autoViewRooms(scenejson):
 
         pcams = autoViewOnePointPerspective(room, scenejson)
         for tp in pcams:
+            print(tp)
             if pcams[tp] is None:
                 continue
-            renderGivenPcam(pcams[tp], scenejson)
+            renderGivenPcam(pcams[tp], scenejson.copy())
 
         # auto-views w.r.t one-point perspective. 
         # pcams = autoViewsRodrigues(room, test_file['PerspectiveCamera']['fov'])
@@ -836,18 +862,20 @@ def hamilton(scene):
         json.dump(res, f, default=sk.jsonDumpsDefault)
     return res
 
+# for 3D-Front, it requires 269669.1108505726 seconds. 
 def floorplanOrthes():
     pt.cameraType = 'orthographic'
     pt.SAVECONFIG = False
     pt.REMOVELAMP = True
     floorplanlist = os.listdir('./dataset/alilevel_door2021/')
-    for floorplanfile in floorplanlist:
+    # for floorplanfile in floorplanlist:
+    for floorplanfile in ['e8b0a6bf-58a2-49de-b9ea-231995fc9e3b.json', '317d64ff-b96e-4743-88f6-2b5b27551a7c.json']:
         if '.json' not in floorplanfile:
             continue
         with open(f'./dataset/alilevel_door2021/{floorplanfile}') as f:
             scenejson = json.load(f)
-        if os.path.exists(f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png"):
-            continue
+        # if os.path.exists(f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png"):
+        #     continue
         points = []
         for room in scenejson['rooms']:
             try:
@@ -907,7 +935,7 @@ if __name__ == "__main__":
 
     floorplanOrthes()
 
-    print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
+    print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 
 @app_autoView.route("/autoviewByID")
 def autoviewByID():
@@ -935,3 +963,15 @@ def autoViewPath():
     with open(f'./latentspace/autoview/{origin}/path') as f:
         res = json.load(f)
     return json.dumps(res)
+
+def autoViewsRes(origin):
+    ret = []
+    filenames = os.listdir(f'./latentspace/autoview/{origin}')
+    for filename in filenames:
+        if '.json' not in filename:
+            continue
+        with open(f'./latentspace/autoview/{origin}/{filename}') as f:
+            pcam = json.load(f)
+        pcam['img'] = pcam['identifier'] + '.png'
+        ret.append(pcam)
+    return ret

@@ -839,6 +839,22 @@ const datguiObjectFolderRemove = function(objmesh){
     }
 }
 
+const getDownloadSceneJson = function(){
+    let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
+        // delete unnecessary keys; 
+        json_to_dl.rooms.forEach(function(room){
+            room.objList = room.objList.filter( item => item !== null && item !== undefined )
+            room.objList.forEach(function(inst){
+                if(inst === null || inst === undefined){
+                    return
+                }
+                delete inst.key;
+            })
+        })
+    encodePerspectiveCamera(json_to_dl); 
+    return json_to_dl;
+}
+
 let fpsCountMode = false;
 let fpsAccumulate = 0;
 let fpsInterval = 0;
@@ -912,18 +928,7 @@ var setting_up = function () {
     $("#windoor_button").click(showHide_door_mageAdd_set);
     if(auxiliary_control) $("#auxiliary_button").click(auxiliary_control);
     $("#download_button").click(function(){
-        let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
-        // delete unnecessary keys; 
-        json_to_dl.rooms.forEach(function(room){
-            room.objList = room.objList.filter( item => item !== null && item !== undefined )
-            room.objList.forEach(function(inst){
-                if(inst === null || inst === undefined){
-                    return
-                }
-                delete inst.key;
-            })
-        })
-        encodePerspectiveCamera(json_to_dl); 
+        let json_to_dl = getDownloadSceneJson();
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
         var dlAnchorElem = document.getElementById('downloadAnchorElem');
         dlAnchorElem.setAttribute("href",     dataStr     );

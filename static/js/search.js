@@ -239,7 +239,10 @@ var clear_panel = function () {
 
 var searchPanelInitialization = function(){
     $("#searchbtn").click(clickTextSearchButton);
-    $("#autoView").click(clickAutoViewButton);
+    // $("#autoView").click(clickAutoViewButton);
+    $("#autoView").click(() => {
+        socket.emit('autoView', getDownloadSceneJson(), onlineGroup); 
+    });
     $("#autoViewPath").click(clickAutoViewPath);
     /*$("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);

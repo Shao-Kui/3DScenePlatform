@@ -2,8 +2,6 @@
 const socket = io();
 const onlineFuncList = {};
 const serverUUIDs = [];
-const onlineUserID = "{{ serverGivenUserID }}";
-const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
 gsap.ticker.lagSmoothing();
 
 const loadOnlineSceneJson = function(){
@@ -35,7 +33,8 @@ const socketInit = function(){
     });
     socket.on("functionCall", (fname, arguments) => {
         let args = [], i = 0;
-        while(arguments[i]!== undefined){args.push(arguments[i]); i++; }                
+        while(arguments[i]!== undefined){args.push(arguments[i]); i++; }          
+        // console.log(fname, args);      
         onlineFuncList[fname].apply(null, args);
     });
     socket.on("message", (arg) => {
@@ -46,6 +45,26 @@ const socketInit = function(){
     });
     socket.emit('join', onlineGroup);
     loadMoreServerUUIDs(10);
+    socket.on('autoView', ret => {
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        ret.forEach(function (item) {
+            let iDiv = document.createElement('div');
+            let image = new Image();
+            image.src = `/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img}`;
+            image.onload = function(){
+                iDiv.style.width = '120px';
+                iDiv.style.height = `${120 / (image.width / image.height)}px`;
+            };
+            iDiv.className = "catalogItem";
+            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img})`;
+            iDiv.style.backgroundSize = '100% 100%';
+            iDiv.addEventListener('click', clickAutoViewItem);
+            catalogItems.appendChild(iDiv);
+            $(iDiv).data('pcam', item);
+        });
+    })
 }
 
 const emitFunctionCall = function(funcName, arguments){

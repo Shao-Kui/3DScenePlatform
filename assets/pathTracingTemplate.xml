@@ -24,6 +24,10 @@
     </transform>
     {%- if cameraType != 'orthographic' %}
     <float name="fov" value="{{ scenejson.PerspectiveCamera.fov }}"/>
+    <string name="fovAxis" value="y"/>
+    {#
+    <string name="focalLength" value="{{ scenejson.PerspectiveCamera.focalLength }}"/>
+    #}
     {%- endif %}
     
     <!-- float name="fov" value="100"/ -->
