@@ -80,6 +80,41 @@ def areDoorsInRoom(level):
                     room['objList'].append(new_obj)
     return level_doorfix
 
+def areDoorsInRoom2021(level):
+    level_doorfix = level.copy()
+    # for each room in level, check each door; 
+    for room in level_doorfix['rooms']:
+        # inDatabase Check: 
+        for o in room['objList']:
+            if o['modelId'] in sk_to_ali or o['modelId'] in suncg:
+                o['inDatabase'] = True
+            else:
+                o['inDatabase'] = False
+        if not os.path.exists('room/{}/{}f.obj'.format(room['origin'], room['modelId'])):
+            continue
+        try:
+            room_meta = p2d('.', 'room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+            room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
+        except Exception as e:
+            print(e)
+            continue
+        for r in level['rooms']:
+            for obj in r['objList']:
+                if obj is None:
+                    continue
+                if 'coarseSemantic' not in obj:
+                    continue
+                if obj['coarseSemantic'] not in ['door', 'Door']:
+                    continue
+                block = windoorblock_f(obj)
+                block_polygon = Polygon(block['windoorbb']).buffer(.03)
+                # for this time, we do not duplicate doors, instead we add roomIds to the obj. 
+                if room_polygon.intersects(block_polygon):
+                    if 'roomIds' not in obj:
+                        obj['roomIds'] = []
+                    obj['roomIds'].append(room['roomId'])
+    return level_doorfix
+
 def batch():
     si = 0
     levelnames = os.listdir('./alilevel_oriFix')[si:]
@@ -92,8 +127,8 @@ def batch():
                 level = json.load(f)
         except PermissionError:
             continue
-        level_fix = areDoorsInRoom(level)
-        with open(f'./alilevel_windoorFix/{levelname}', 'w') as f:
+        level_fix = areDoorsInRoom2021(level)
+        with open(f'./alilevel_door2021/{levelname}', 'w') as f:
             json.dump(level_fix, f)
 
 def case1():

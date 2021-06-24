@@ -367,14 +367,6 @@ const transformObject3DOnly = function(uuid, xyz, mode='position'){
     lastMovedTimeStamp = currentMovedTimeStamp; 
 };
 
-const emitAnimationObject3DOnly = function(){
-    if(tCache.length === 0) return; 
-    if(origin && onlineGroup !== 'OFFLINE'){
-        socket.emit('functionCall', 'animateObject3DOnly', [tCache], onlineGroup);
-    }
-    tCache.length = 0; 
-}
-
 var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
 const animateObject3DOnly = function(transformations){
     onlineAnimationTimeLine.kill()
@@ -495,9 +487,9 @@ var onClickObj = function (event) {
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
-        console.log(`
-        Current room ID: ${currentRoomId} of 
-        room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
+        // console.log(`
+        // Current room ID: ${currentRoomId} of 
+        // room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     } else {
@@ -841,16 +833,21 @@ const datguiObjectFolderRemove = function(objmesh){
 
 const getDownloadSceneJson = function(){
     let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
-        // delete unnecessary keys; 
-        json_to_dl.rooms.forEach(function(room){
-            room.objList = room.objList.filter( item => item !== null && item !== undefined )
-            room.objList.forEach(function(inst){
-                if(inst === null || inst === undefined){
-                    return
-                }
-                delete inst.key;
-            })
+    json_to_dl.rooms.forEach( room => {
+        room.auxiliaryDomObj = undefined;
+        room.auxiliarySecObj = undefined;
+        room.auxiliaryWallObj = undefined;
+    })
+    // delete unnecessary keys; 
+    json_to_dl.rooms.forEach(function(room){
+        room.objList = room.objList.filter( item => item !== null && item !== undefined )
+        room.objList.forEach(function(inst){
+            if(inst === null || inst === undefined){
+                return
+            }
+            delete inst.key;
         })
+    })
     encodePerspectiveCamera(json_to_dl); 
     return json_to_dl;
 }

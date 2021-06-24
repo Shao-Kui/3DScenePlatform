@@ -52,13 +52,13 @@ const socketInit = function(){
         ret.forEach(function (item) {
             let iDiv = document.createElement('div');
             let image = new Image();
-            image.src = `/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img}`;
+            image.src = `/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier}`;
             image.onload = function(){
                 iDiv.style.width = '120px';
                 iDiv.style.height = `${120 / (image.width / image.height)}px`;
             };
             iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img})`;
+            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier})`;
             iDiv.style.backgroundSize = '100% 100%';
             iDiv.addEventListener('click', clickAutoViewItem);
             catalogItems.appendChild(iDiv);
@@ -69,7 +69,7 @@ const socketInit = function(){
 
 const emitFunctionCall = function(funcName, arguments){
     socket.emit('functionCall', funcName, arguments, onlineGroup);
-    socket.emit('onlineSceneUpdate', manager.renderManager.scene_json, onlineGroup);
+    socket.emit('onlineSceneUpdate', getDownloadSceneJson(), onlineGroup);
 }
 
 const claimControlObject3D = function(uuid, isRelease){
@@ -84,6 +84,14 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
     if(isRelease) manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
     else manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;  
 });
+
+const emitAnimationObject3DOnly = function(){
+    if(tCache.length === 0) return; 
+    if(origin && onlineGroup !== 'OFFLINE'){
+        socket.emit('functionCall', 'animateObject3DOnly', [tCache], onlineGroup);
+    }
+    tCache.length = 0; 
+}
 
 const onlineInitialization = function(){
     // try loading the online scene: 
