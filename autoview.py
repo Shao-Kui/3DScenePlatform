@@ -975,7 +975,7 @@ def autoViewOnePointPerspective(room, scene):
                 tarWindoorArea2021(mtm, scene, floorMeta, theta)
                 hypotheses.append(mtm)
 
-            # next we try generate the ground-shifted hypothesis. 
+            """
             hgs = h.copy()
             hgs['type'] = 'wellAlignedShifted'
             # find the wall corner with the longest diagonal in front of the probe point. 
@@ -991,7 +991,8 @@ def autoViewOnePointPerspective(room, scene):
             numSeenObjs(room, hgs, probe, direction, floorMeta, theta)
             theLawOfTheThird(hgs, room, theta, ASPECT)
             tarWindoorArea2021(hgs, scene, floorMeta, theta)
-            # hypotheses.append(hgs)
+            hypotheses.append(hgs)
+            """
     for h in hypotheses:
         h['isObjCovered'] = isObjCovered(h, scene)
     hypotheses.sort(key=probabilityOPP, reverse=True)
@@ -1047,6 +1048,7 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
             method_args=(scenejson.copy(),identifier,dst)
         )
         thread.start()
+        return thread
     # scenejson = json.loads( json.dumps(scenejson, default=sk.jsonDumpsDefault) )
     # thread = pt.pathTracingPara.delay(scenejson, 4, f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
     # renderThreads[str(identifier)] = thread
@@ -1057,6 +1059,7 @@ def autoViewRooms(scenejson, isPathTrancing=True):
     fov = scenejson['PerspectiveCamera']['fov']
     # change the fov/2 to Radian. 
     theta = (np.pi * fov / 180) / 2
+    renderThreads = []
     for room in scenejson['rooms']:
         # we do not generating views in an empty room. 
         obj3DModelCount = 0
@@ -1088,13 +1091,16 @@ def autoViewRooms(scenejson, isPathTrancing=True):
             if pcams[tp] is None:
                 continue
             # pcams[tp]['direction'] = balancing(pcams[tp], room, pcams[tp]['theta'])
-            renderGivenPcam(pcams[tp], scenejson.copy(), isPathTrancing=isPathTrancing)
+            thread = renderGivenPcam(pcams[tp], scenejson.copy(), isPathTrancing=isPathTrancing)
+            if thread is not None:
+                renderThreads.append(thread)
 
         # auto-views w.r.t one-point perspective. 
         # pcams = autoViewsRodrigues(room, test_file['PerspectiveCamera']['fov'])
         # for pcam in pcams:
         #     renderGivenPcam(pcam, test_file)
     hamilton(scenejson)
+    return renderThreads
 
 def hamiltonNext(ndp, views, scene):
     DIS = np.Inf
@@ -1134,6 +1140,7 @@ def hamilton(scene):
         view['isVisited'] = False
         if view['roomId'] not in involvedRoomIds:
             involvedRoomIds.append(view['roomId'])
+    print(involvedRoomIds)
     res = []
     # deciding connections of a floorplan. 
     G = nx.Graph()
@@ -1151,8 +1158,8 @@ def hamilton(scene):
                 continue
             if len(door['roomIds']) < 2:
                 continue
-            if door['roomIds'][0] not in involvedRoomIds and door['roomIds'][1] not in involvedRoomIds:
-                continue
+            # if door['roomIds'][0] not in involvedRoomIds and door['roomIds'][1] not in involvedRoomIds:
+            #     continue
             x = (door['bbox']['min'][0] + door['bbox']['max'][0]) / 2
             z = (door['bbox']['min'][2] + door['bbox']['max'][2]) / 2
             DIS = np.Inf
@@ -1166,25 +1173,80 @@ def hamilton(scene):
             G.add_edge(door['roomIds'][0], door['roomIds'][1], translate=translate, direction=direction, directionToRoom=room['roomId'])
     pre = nx.dfs_predecessors(G)
     suc = nx.dfs_successors(G)
+    print(pre, suc)
     # decide the s and t which are the start point and end point respectively. 
     # ndproom = list(nx.dfs_successors(G).keys())[0]
-    ndproom = views[0]['roomId']
-    # ndpNext = None
-    # for view in views:
-    #     if view['roomId'] == ndproom:
-    #         ndpNext = view
-    for e in G.edges:
-        if ndproom in e:
-            edge = G[e[0]][e[1]]
-            if ndproom != edge['directionToRoom']:
-                edge['direction'] = -edge['direction']
-            ndpNext = {
-                'roomId': ndproom,
-                'probe': edge['translate'],
-                'origin': edge['translate'].tolist(),
-                'target': (edge['translate'] + edge['direction']).tolist(),
-                'direction': edge['direction'].tolist()
-            }
+    # ndproom = views[0]['roomId']
+    ndproom = involvedRoomIds[0]
+    roomOrder = []
+    while ndproom != -1:
+        roomOrder.append(ndproom)
+        scene['rooms'][ndproom]['isVisited'] = True
+        ndproom = hamiltonNextRoom(ndproom, pre, suc, scene)
+    for room in scene['rooms']:
+        room['isVisited'] = False
+    print(roomOrder)
+    def subPath(s):
+        if s == len(roomOrder) - 1:
+            return (True, s)
+        state = False
+        start = roomOrder[s]
+        s += 1
+        while s < len(roomOrder) and roomOrder[s] != start: 
+            if roomOrder[s] in involvedRoomIds and not scene['rooms'][roomOrder[s]]['isVisited']:
+                state = True
+            s += 1
+        return (state, s)
+    i = 0
+    while i < len(roomOrder):
+        state, s = subPath(i)
+        if not state:
+            roomOrder = roomOrder[0:i+1] + roomOrder[s+1:]
+            i -= 1
+        else:
+            scene['rooms'][roomOrder[i]]['isVisited'] = True
+        i += 1
+    print(roomOrder)
+    ndproom = roomOrder[0]
+    for view in views:
+        if view['roomId'] == ndproom:
+            ndpNext = view
+    # perform the algorithm of Angluin and Valiant. 
+    for i in range(1, len(roomOrder)+1):
+        while ndpNext is not None:
+            ndp = ndpNext
+            res.append(ndp)
+            ndp['isVisited'] = True
+            ndpNext = hamiltonNext(ndp, views, scene)
+        if i == len(roomOrder):
+            break
+        lastndproom = roomOrder[i-1]
+        ndproom = roomOrder[i]
+        edge = G[lastndproom][ndproom]
+        # if edge['direction'].dot(edge['translate'] - ndp['probe']) < 0:
+        if edge['directionToRoom'] != ndproom:
+            edge['direction'] = -edge['direction']
+        ndpNext = {
+            'roomId': ndproom,
+            'probe': edge['translate'],
+            'origin': edge['translate'].tolist(),
+            'target': (edge['translate'] + edge['direction']).tolist(),
+            'direction': edge['direction'].tolist()
+        }
+    """
+    # for e in G.edges:
+    #     if ndproom in e:
+    #         edge = G[e[0]][e[1]]
+    #         if ndproom != edge['directionToRoom']:
+    #             edge['direction'] = -edge['direction']
+    #         ndpNext = {
+    #             'roomId': ndproom,
+    #             'probe': edge['translate'],
+    #             'origin': edge['translate'].tolist(),
+    #             'target': (edge['translate'] + edge['direction']).tolist(),
+    #             'direction': edge['direction'].tolist()
+    #         }
+    
     # perform the algorithm of Angluin and Valiant. 
     while not ndproom == -1:
         while ndpNext is not None:
@@ -1207,7 +1269,7 @@ def hamilton(scene):
             'target': (edge['translate'] + edge['direction']).tolist(),
             'direction': edge['direction'].tolist()
         }
-    
+    """
     with open(f'./latentspace/autoview/{scene["origin"]}/path', 'w') as f:
         json.dump(res, f, default=sk.jsonDumpsDefault)
     return res
@@ -1280,6 +1342,26 @@ def highResRendering():
         scenejson["canvas"] = {}
         renderGivenPcam(view, scenejson, dst=f"./latentspace/autoview/highres/{jfn.replace('.json', '.png')}")
 
+def sceneViewerBatch():
+    pt.SAVECONFIG = False
+    pt.REMOVELAMP = False
+    global RENDERWIDTH, SAMPLE_COUNT
+    SAMPLE_COUNT = 4
+    RENDERWIDTH = 600
+    sjfilenames = os.listdir('./dataset/alilevel_door2021')
+    sjfilenames = sjfilenames[0:100]
+    for sjfilename in sjfilenames:
+        with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
+            scenejson = json.load(f)
+        scenejson["PerspectiveCamera"] = {}
+        scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
+        scenejson["canvas"] = {}
+        preloadAABBs(scenejson)
+        print(f'Starting: {scenejson["origin"]}...')
+        renderThreads = autoViewRooms(scenejson)
+        for t in renderThreads:
+            t.join()
+
 if __name__ == "__main__":
     start_time = time.time()
     # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
@@ -1300,13 +1382,15 @@ if __name__ == "__main__":
     # pcam = toOriginAndTarget(pcam)
     # renderGivenPcam(pcam, test_file)
     
-    autoViewRooms(test_file)
+    # autoViewRooms(test_file)
 
     # hamilton(test_file)
 
     # floorplanOrthes()
 
     # highResRendering()
+
+    sceneViewerBatch()
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 
