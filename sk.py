@@ -5,6 +5,9 @@ import numpy as np
 from shapely.geometry.polygon import Polygon, LineString, Point
 
 AABBcache = {}
+ASPECT = 16 / 9
+with open('./dataset/objCatListAliv2.json') as f:
+    objCatList = json.load(f)
 
 # code is from https://github.com/mikedh/trimesh/issues/507
 def as_mesh(scene_or_mesh):
@@ -184,3 +187,9 @@ class BaseThread(threading.Thread):
         self.method(*self.method_args)
         if self.callback is not None:
             self.callback(*self.callback_args)
+
+def getobjCat(modelId):
+    if modelId in objCatList:
+        return objCatList[modelId][0]
+    else:
+        return "Unknown Category"
