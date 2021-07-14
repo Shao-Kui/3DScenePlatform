@@ -15,11 +15,12 @@ def showPcamInset(origin):
     ub = scenejson['bbox']['max']
 
     orthImg = cv2.imread(f'../dataset/alilevel_door2021_orth/{origin}.png')
+    orthImgHeight, orthImgWidth = orthImg.shape[:2]
 
-    xcenter = orthImg.shape[1] / 2
-    zcenter = orthImg.shape[0] / 2
-    xscale = orthImg.shape[1] / (ub[0] - lb[0])
-    zscale = orthImg.shape[0] / (ub[2] - lb[2])
+    xcenter = orthImgWidth / 2
+    zcenter = orthImgHeight / 2
+    xscale = orthImgWidth / (ub[0] - lb[0])
+    zscale = orthImgHeight / (ub[2] - lb[2])
 
     room = {}
     for filename in os.listdir(f'../latentspace/autoview/{origin}'):
@@ -52,7 +53,9 @@ def showPcamInset(origin):
                 hull = ConvexHull(points)
                 vertices = hull.vertices
             except:
-                print(points)
+                # 共綫
+                r = room[roomId].copy()
+                room[roomId] = sorted(r, key=lambda k: tuple(k['pos']))
                 vertices = np.arange(len(room[roomId]))
             if len(hull.vertices) > maxImgPerRoom:
                 pcamlist = []
@@ -78,25 +81,16 @@ def showPcamInset(origin):
     dotradius = 5
     margin = 25
     w, h = 600, 337
-    xpad, zpad = 625, 0
+    xpad, zpad = 625, 362
     resultImg = cv2.copyMakeBorder(
         orthImg, zpad, zpad, xpad, xpad, cv2.BORDER_CONSTANT, value=[255, 255, 255])
 
-#     show diagonal
-#     cv2.line(resultImg, (xpad, zpad), (orthImg.shape[1]+xpad, orthImg.shape[0]+zpad), (0, 0, 0))
-#     cv2.line(resultImg, (xpad, orthImg.shape[0]+zpad), (orthImg.shape[1]+xpad, zpad), (0, 0, 0))
-
     def cross(p1, p2, p3):
-        x1, y1 = p2 - p1
-        x2, y2 = p3 - p1
-        return np.sign(x1 * y2 - x2 * y1)
+        return np.sign(np.cross(p2-p1, p3-p1))
 
     def segIntersect(a1, a2, b1, b2):
         if max(a1[0], a2[0]) >= min(b1[0], b2[0]) and max(b1[0], b2[0]) >= min(a1[0], a2[0]) and max(a1[1], a2[1]) >= min(b1[1], b2[1]) and max(b1[1], b2[1]) >= min(a1[1], a2[1]):
-            if cross(a1, a2, b1) * cross(a1, a2, b2) <= 0 and cross(b1, b2, a1) * cross(b1, b2, a2) <= 0:
-                return True
-            else:
-                return False
+            return cross(a1, a2, b1) * cross(a1, a2, b2) <= 0 and cross(b1, b2, a1) * cross(b1, b2, a2) <= 0
         else:
             return False
 
@@ -116,6 +110,8 @@ def showPcamInset(origin):
                 pi1 = np.array(imgList[i]['pos']) + [xp, zp]
                 for j in range(i+1, len(imgList)):
                     pj1 = np.array(imgList[j]['pos']) + [xp, zp]
+                    if np.array_equal(pi1, pj1):
+                        continue
                     if segIntersect(pi1, pi2, pj1, pj2):
                         imgList[i], imgList[j] = imgList[j], imgList[i]
                         checkIntersect = True
@@ -123,6 +119,9 @@ def showPcamInset(origin):
             item = imgList[i]
             pcamImg = cv2.imread(
                 f"../latentspace/autoview/{origin}/{item['identifier']}.png")
+            if pcamImg.shape[1] > 600:
+                pcamImg = cv2.resize(pcamImg, (600, 337),
+                                     interpolation=cv2.INTER_AREA)
             img[startPos[0]:startPos[0]+h, startPos[1]:startPos[1]+w] = pcamImg
             pt1 = (item['pos'][0] + xp, item['pos'][1] + zp)
             pt2 = tuple(np.flip(startPos+lineOffset).astype(int))
@@ -132,17 +131,70 @@ def showPcamInset(origin):
             startPos += stride
         return img, zp, xp
 
-    leftlist = sorted(leftlist, key=lambda k: (k['pos'][1], -k['pos'][0]))
+    cap = int(orthImgWidth / 625)
+    topbottomlist = []
+    rightlist = sorted(rightlist, key=lambda k: (
+        k['pos'][0], min(k['pos'][1], orthImgHeight-k['pos'][1])))
+    idx = 0
+    if len(rightlist) > len(leftlist) and cap != 0:
+        capp = cap + 1
+    else:
+        capp = cap
+    while idx < len(rightlist) and len(rightlist) > orthImgHeight / 337 and len(topbottomlist) < capp:
+        x, z = rightlist[idx]['pos']
+        if (orthImgWidth - x) / orthImgWidth < min(z, orthImgHeight - z) / orthImgHeight:
+            idx += 1
+            continue
+        topbottomlist.append(rightlist[idx])
+        rightlist.pop(idx)
+
+    leftlist = sorted(
+        leftlist, key=lambda k: (-k['pos'][0], min(k['pos'][1], orthImgHeight-k['pos'][1])))
+    idx = 0
+    while idx < len(leftlist) and len(leftlist) > orthImgHeight / 337 and len(topbottomlist) < cap * 2:
+        x, z = leftlist[idx]['pos']
+        if x / orthImgWidth < min(z, orthImgHeight - z) / orthImgHeight:
+            idx += 1
+            continue
+        topbottomlist.append(leftlist[idx])
+        leftlist.pop(idx)
+
+    topbottomlist = sorted(topbottomlist, key=lambda k: k['pos'][1])
+    l = 0
+    while l < min(len(topbottomlist), cap) and topbottomlist[l]['pos'][1] < 0.5 * orthImgHeight:
+        l += 1
+    if len(topbottomlist) - l > cap:
+        l = len(topbottomlist) - cap
+    toplist = topbottomlist[:l]
+    bottomlist = topbottomlist[l:]
+
+    # print('left', len(leftlist))
+    leftlist = sorted(leftlist, key=lambda k: k['pos'][1])
     startpos = np.array(
         [int(zpad + zcenter - h * len(leftlist) / 2 - margin * (len(leftlist) - 1) / 2), 0])
     stride = np.array([h+margin, 0])
     resultImg, zpad, xpad = pasteImg(leftlist, startpos, stride, [h/2, w])
 
-    rightlist = sorted(rightlist, key=lambda k: (k['pos'][1], k['pos'][0]))
+    # print('right', len(rightlist))
+    rightlist = sorted(rightlist, key=lambda k: k['pos'][1])
     startpos = np.array([int(zpad + zcenter - h * len(rightlist) / 2 -
                              margin * (len(rightlist) - 1) / 2), resultImg.shape[1]-xpad+margin])
     stride = np.array([h+margin, 0])
     resultImg, zpad, xpad = pasteImg(rightlist, startpos, stride, [h/2, 0])
+
+    # print('top', len(toplist))
+    toplist = sorted(toplist, key=lambda k: k['pos'][0])
+    startpos = np.array([int((zpad-362)/2), int(xpad + xcenter -
+                                                w * len(toplist) / 2 - margin * (len(toplist) - 1) / 2)])
+    stride = np.array([0, w+margin])
+    resultImg, zpad, xpad = pasteImg(toplist, startpos, stride, [h, w/2])
+
+    # print('bottom', len(bottomlist))
+    bottomlist = sorted(bottomlist, key=lambda k: k['pos'][0])
+    startpos = np.array([resultImg.shape[0]-int((zpad+312)/2), int(xpad +
+                                                                   xcenter - w * len(bottomlist) / 2 - margin * (len(bottomlist) - 1) / 2)])
+    stride = np.array([0, w+margin])
+    resultImg, zpad, xpad = pasteImg(bottomlist, startpos, stride, [0, w/2])
 
     cv2.imwrite(f'{origin}.png', resultImg)
     plt.imshow(resultImg)
@@ -177,7 +229,9 @@ def showPcamPoints(origin):
     plt.imshow(orthImg)
 
 
-floorplanlist = ['0047c3ab-951b-4182-9082-b9fbf099c142', '00c0c75e-1c12-46b3-9fc8-0561b1b1b510', '317d64ff-b96e-4743-88f6-2b5b27551a7c', '43d35274-98e2-499a-af69-ac2bb283f708']
-for o in floorplanlist:
-    showPcamInset(o)
-    showPcamPoints(o)
+# floorplanlist = [_.split('.')[0]
+#                  for _ in os.listdir('../dataset/alilevel_door2021')]
+# for o in floorplanlist:
+#     print(o)
+#     showPcamInset(o)
+#     showPcamPoints(o)
