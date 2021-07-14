@@ -9,6 +9,11 @@ import sys
 import getopt
 import numpy as np
 from projection2d import getobjCat
+import sk
+import uuid
+# the following code is for backend-rendering. 
+# from celery import Celery
+# app = Celery('tasks', backend='rpc://', broker='pyamqp://')
 
 sysROOT = 'F:/3DIndoorScenePlatform/dataset/PathTracing'
 ROOT = './dataset/PathTracing'
@@ -16,9 +21,11 @@ file_loader = FileSystemLoader('./')
 env = Environment(loader=file_loader)
 template = env.get_template('./assets/pathTracingTemplate.xml')
 cameraType="perspective" # spherical
-num_samples=64
+num_samples = 64
 r_dir = 'batch'
 wallMaterial = True
+REMOVELAMP = True
+SAVECONFIG = True
 
 def autoPerspectiveCamera(scenejson):
     bbox = scenejson['rooms'][0]['bbox']
@@ -43,18 +50,25 @@ def autoPerspectiveCamera(scenejson):
     scenejson['PerspectiveCamera'] = PerspectiveCamera
     return PerspectiveCamera
 
-def pathTracing(scenejson, sampleCount=64):
+# @app.task
+# def pathTracingPara(scenejson, sampleCount=64, dst=None):
+#     return pathTracing(scenejson=scenejson, sampleCount=sampleCount, dst=dst)
+
+def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
-    casename = ROOT + f'/{scenejson["origin"]}-{dt_string}'
+    casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
+    # print(casename)
 
     if 'PerspectiveCamera' not in scenejson:
         autoPerspectiveCamera(scenejson)
     if 'canvas' not in scenejson:
         scenejson['canvas'] = {}
         scenejson['canvas']['width'] = "1309"
-        scenejson['canvas']['width'] = "809"
-
+        scenejson['canvas']['height'] = "809"
+    if 'focalLength' not in scenejson['PerspectiveCamera']:
+        scenejson['PerspectiveCamera']['focalLength'] = 35
+    scenejson['PerspectiveCamera']['focalLength'] = f"{scenejson['PerspectiveCamera']['focalLength']}mm"
     # re-organize scene json into Mitsuba .xml file: 
     scenejson["pcam"] = {}
     scenejson["pcam"]["origin"] = ', '.join([str(i) for i in scenejson["PerspectiveCamera"]["origin"]])
@@ -75,7 +89,7 @@ def pathTracing(scenejson, sampleCount=64):
             if 'inDatabase' in obj:
                 if not obj['inDatabase']:
                     continue
-            if getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"]:
+            if getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
                 print('A lamp is removed. ')
                 continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])
@@ -91,11 +105,15 @@ def pathTracing(scenejson, sampleCount=64):
     if not os.path.exists(casename):
         os.makedirs(casename)
     with open(casename + '/scenejson.json', 'w') as f:
-        json.dump(scenejson, f)
+        json.dump(scenejson, f, default=sk.jsonDumpsDefault)
     with open(casename + '/renderconfig.xml', 'w') as f:
         f.write(output)
     check_output(f"mitsuba \"{casename + '/renderconfig.xml'}\"", shell=True)
     check_output(f"mtsutil tonemap -o \"{casename + '/render.png'}\" \"{casename + '/renderconfig.exr'}\" ", shell=True)
+    if dst is not None:
+        shutil.copy(casename + '/render.png', dst)
+    if not SAVECONFIG:
+        shutil.rmtree(casename)
     return casename
 
 def batch():

@@ -1,5 +1,4 @@
 from flask import Blueprint, request
-import re
 import uuid
 from aip import AipSpeech
 import librosa

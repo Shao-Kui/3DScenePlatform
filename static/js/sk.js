@@ -1,7 +1,8 @@
 const objectCache = {}; 
 const gatheringObjCat = {}; 
-let loadObjectToCache = async function(modelId){
+let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
     if(modelId in objectCache){
+        anchor.apply(null, anchorArgs);
         return;
     }
     let mtlurl = `/mtl/${modelId}`;
@@ -43,21 +44,67 @@ let loadObjectToCache = async function(modelId){
                 }
             });
             objectCache[modelId] = instance;
+            anchor.apply(null, anchorArgs);;
         }, null, null, null, false);
     });
 };
 
-let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}){
-    if(!modelId in objectCache) return;
+let refreshObjectFromCache = function(objToInsert){
+    if(!(objToInsert.modelId in objectCache)) return;
+    let object3d = objectCache[objToInsert.modelId].clone();
+    object3d.name = undefined;
+    object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
+    object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
+    object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
+    object3d.userData = {
+        "type": 'object',
+        "key": objToInsert.key,
+        "roomId": objToInsert.roomId,
+        "modelId": objToInsert.modelId,
+        "coarseSemantic": objToInsert.coarseSemantic
+    };
+    object3d.children.forEach(child => {
+        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+    });
+    manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
+    // add reference from object3d to objectjson: 
+    object3d.userData.json = objToInsert;
+    scene.add(object3d)
+    renderer.render(scene, camera);
+    return object3d; 
+}
+
+const roomIDCaster = new THREE.Raycaster();
+const calculateRoomID = function(translate){
+    roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
+    let intersects = roomIDCaster.intersectObjects(manager.renderManager.fCache, true);
+    if (manager.renderManager.fCache.length > 0 && intersects.length > 0) { 
+        return intersects[0].object.parent.userData.roomId;
+    }
+    else{
+        return 0; 
+    }
+}
+
+let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!(modelId in objectCache)){
+        loadObjectToCache(modelId, anchor=addObjectFromCache, anchorArgs=[modelId, transform, uuid, origin]);
+        return; 
+    }
+    // check room ID: 
+    let roomID = calculateRoomID(transform.translate); 
     let objToInsert = {
         "modelId": modelId,
         "coarseSemantic": gatheringObjCat[modelId], 
         "translate": transform.translate,
         "scale": transform.scale,
-        "roomId": currentRoomId,
+        "roomId": roomID,
         "rotate": transform.rotate,
         "orient": transform.rotate[1], 
-        "key": THREE.Math.generateUUID(),
+        // "key": serverUUIDs.pop(),
+        "key": uuid,
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
     let object3d = objectCache[modelId].clone();
@@ -68,18 +115,20 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     object3d.userData = {
         "type": 'object',
         "key": objToInsert.key,
-        "roomId": currentRoomId,
+        "roomId": roomID,
         "modelId": modelId,
         "coarseSemantic": gatheringObjCat[modelId]
     };
     object3d.children.forEach(child => {
         if(child.material.origin_mtr) child.material = child.material.origin_mtr;
     });
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.push(objToInsert);
+    manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
-    //manager.renderManager.refresh_instances();
+    // manager.renderManager.refresh_instances();
+    object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
     scene.add(object3d)
     renderer.render(scene, camera);
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}
     return object3d; 
 };
 
@@ -137,7 +186,7 @@ const _refresh_mageAdd_wall = (json) => {
     json.rooms.forEach(room => {
         room.objList.forEach(meta => {
             if(meta === undefined || meta === null) return; 
-            if(!'coarseSemantic' in meta) return; 
+            if(!('coarseSemantic' in meta)) return; 
             if(meta.coarseSemantic === 'Door' || meta.coarseSemantic === 'door'){
                 _addDoor_mageAdd(meta); 
             }else if(meta.coarseSemantic === 'Window' || meta.coarseSemantic === 'widow'){
@@ -267,7 +316,80 @@ var find_object_json = function (obj) {
     return null;
 };
 
+const synchronizeObjectJsonByObject3D = function(object3d){
+    let objectjson = object3d.userData.json;
+    objectjson.scale[0] = object3d.scale.x;
+    objectjson.scale[1] = object3d.scale.y;
+    objectjson.scale[2] = object3d.scale.z;
+    objectjson.translate[0] = object3d.position.x;
+    objectjson.translate[1] = object3d.position.y;
+    objectjson.translate[2] = object3d.position.z;
+    objectjson.rotate[0] = object3d.rotation.x;
+    objectjson.rotate[1] = object3d.rotation.y;
+    objectjson.rotate[2] = object3d.rotation.z;
+    objectjson.orient = Math.atan2(Math.sin(object3d.rotation.y), Math.cos(object3d.rotation.x) * Math.cos(object3d.rotation.y));
+}
+
+const transformObjectByUUID = function(uuid, transform, origin=true){
+    let object3d = manager.renderManager.instanceKeyCache[uuid]; 
+    // set object3d first: 
+    object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
+    object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
+    object3d.rotation.set(transform.rotate[0], transform.rotate[1], transform.rotate[2]);
+    synchronizeObjectJsonByObject3D(object3d);
+    // the core code for calculating orientations of objects; 
+    if(AUXILIARY_MODE){auxiliaryMode();}
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);}
+};
+
+const tCache = []; 
+var fastTimeLine = gsap.timeline({repeat: 0});
+var lastMovedTimeStamp = moment();
+var currentMovedTimeStamp = moment();
+const transformObject3DOnly = function(uuid, xyz, mode='position'){
+    currentMovedTimeStamp = moment();
+    let object3d = manager.renderManager.instanceKeyCache[uuid]; 
+    object3d[mode].x = xyz[0]; object3d[mode].y = xyz[1]; object3d[mode].z = xyz[2]; 
+    // fastTimeLine.to(object3d[mode], {
+    //     // duration: moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
+    //     duration: 0.005,
+    //     x: xyz[0],
+    //     y: xyz[1],
+    //     z: xyz[2]
+    // });
+    tCache.push({
+        'uuid': uuid, 
+        'xyz': xyz, 
+        'duration': moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
+        'mode': mode
+    }); 
+    // if(tCache.length >= 100) emitAnimationObject3DOnly(); 
+    lastMovedTimeStamp = currentMovedTimeStamp; 
+};
+
+var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+const animateObject3DOnly = function(transformations){
+    onlineAnimationTimeLine.kill()
+    onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+    for(let i = 0; i < transformations.length; i++){
+        let t = transformations[i];
+        let object3d = manager.renderManager.instanceKeyCache[t.uuid]; 
+        onlineAnimationTimeLine.to(object3d[t.mode], {
+            duration: t.duration,
+            x: t.xyz[0],
+            y: t.xyz[1],
+            z: t.xyz[2]
+        });
+    }
+}
+
 var synchronize_json_object = function (object) {
+    if(fastTimeLine.isActive()){
+        fastTimeLine.seek(fastTimeLine.endTime());
+        fastTimeLine.kill();
+    }
+    fastTimeLine = gsap.timeline({repeat: 0}); 
+    tCache.length = 0; 
     var i = find_object_json(object);
     var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
     inst.scale[0] = object.scale.x;
@@ -283,6 +405,14 @@ var synchronize_json_object = function (object) {
     inst.orient = Math.atan2(Math.sin(object.rotation.y), Math.cos(object.rotation.x) * Math.cos(object.rotation.y));
     if(AUXILIARY_MODE){
         auxiliaryMode();
+    }
+    if(origin && onlineGroup !== 'OFFLINE'){
+        let transform = {
+            'translate': inst.translate,
+            'scale': inst.scale,
+            'rotate': inst.rotate
+        };
+        emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, false]);
     }
 };
 
@@ -335,6 +465,20 @@ var findGroundTranslation = function () {
     return pos;
 }
 
+const cancelClickingObject3D = function(){
+    // synchronize data to scene json; 
+    if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true); 
+    datguiObjectFolderRemove(INTERSECT_OBJ); 
+    console.log("object not intersected! ");
+    $('#tab_modelid').text(" ");
+    $('#tab_category').text(" ");  
+    INTERSECT_OBJ = undefined; //currentRoomId = undefined;
+    if (isToggle) {
+        radial.toggle();
+        isToggle = !isToggle;
+    }
+}
+
 var onClickObj = function (event) {
     scenecanvas.style.cursor = "auto";
     // do raycasting, judge whether or not users choose a new object; 
@@ -343,9 +487,9 @@ var onClickObj = function (event) {
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
-        console.log(`
-        Current room ID: ${currentRoomId} of 
-        room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
+        // console.log(`
+        // Current room ID: ${currentRoomId} of 
+        // room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     } else {
@@ -419,7 +563,20 @@ var onClickObj = function (event) {
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(INTERSECT_OBJ){
+            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key)
+            {claimControlObject3D(INTERSECT_OBJ.userData.key, true); }
+        }
+        // if this is the online mode and the object is already controlled by other users...
+        if(onlineGroup !== 'OFFLINE' && 
+            intersects[0].object.parent.userData.controlledByID !== undefined && 
+            intersects[0].object.parent.userData.controlledByID !== onlineUser.id
+        ){
+            console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
+            cancelClickingObject3D();return; 
+        }
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
         console.log(INTERSECT_OBJ);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
@@ -434,32 +591,25 @@ var onClickObj = function (event) {
         datguiObjectFolder(INTERSECT_OBJ);
         return;
     }else{
-        // synchronize data to scene json; 
-        datguiObjectFolderRemove(INTERSECT_OBJ); 
-        console.log("object not intersected! ");
-        $('#tab_modelid').text(" ");
-        $('#tab_category').text(" ");  
-        INTERSECT_OBJ = undefined; //currentRoomId = undefined;
-        if (isToggle) {
-            radial.toggle();
-            isToggle = !isToggle;
-        }
-    }
-
-    if (latent_space_mode == true && INTERSECT_OBJ) {
-        manager.renderManager.add_latent_obj();
-    }
-    if (latent_space_mode == true) {
-        manager.renderManager.refresh_latent();
-    }
-
-    if (Auto_Rec_Mode && manager.renderManager.scene_json && currentRoomId != undefined) {
-        palette_recommendation();
+        cancelClickingObject3D();
     }
 };
 
+const castMousePosition = function(){
+    let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+    .filter(d => d.userData.key !== INTERSECT_OBJ.userData.key)
+    .concat(Object.values(manager.renderManager.wfCache));
+    intersects = raycaster.intersectObjects(intersectObjList, true);
+    if(intersectObjList.length > 0 && intersects.length > 0){
+        return intersects[0].point; 
+    }else{
+        return undefined; 
+    }
+}
+
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    // currentMovedTimeStamp = moment();
     if(On_ADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
@@ -484,42 +634,45 @@ function onDocumentMouseMove(event) {
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
         rtt_nxt.sub(mouse.rotateBase);
-        INTERSECT_OBJ.rotateY(rtt_nxt.angle() - rtt_pre.angle());
+        // INTERSECT_OBJ.rotateY(rtt_nxt.angle() - rtt_pre.angle());
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.rotation.x, 
+            INTERSECT_OBJ.rotation.y + (rtt_nxt.angle() - rtt_pre.angle()), 
+            INTERSECT_OBJ.rotation.z
+        ], 'rotation')
     }
     if (On_MOVE && INTERSECT_OBJ != null) {
-        var last_pos = radial_move_method(mouse.x, mouse.y);
-        updateMousePosition();
-        var pos = radial_move_method(mouse.x, mouse.y);
-        pos.sub(last_pos);
-        INTERSECT_OBJ.position.set(
-            INTERSECT_OBJ.position.x + pos.x,
-            INTERSECT_OBJ.position.y + pos.y,
-            INTERSECT_OBJ.position.z + pos.z);
+        let ip = castMousePosition();
+        if(ip){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, [ip.x, ip.y, ip.z]); 
+        }
     }
     if (On_LIFT && INTERSECT_OBJ != null) {
         var last_y = mouse.y;
         updateMousePosition();
         var this_y = mouse.y;
-        INTERSECT_OBJ.position.set(
-            INTERSECT_OBJ.position.x,
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.position.x, 
             INTERSECT_OBJ.position.y + 2 * (this_y - last_y),
-            INTERSECT_OBJ.position.z);
+            INTERSECT_OBJ.position.z                          
+        ], 'position'); 
     }
     if (On_SCALE && INTERSECT_OBJ != null){
         var last_x = mouse.x;
         updateMousePosition();
         var this_x = mouse.x;
         s = 0.3;
-        INTERSECT_OBJ.scale.set(
-            INTERSECT_OBJ.scale.x + s * (this_x - last_x),
-            INTERSECT_OBJ.scale.y + s * (this_x - last_x),
-            INTERSECT_OBJ.scale.z + s * (this_x - last_x));
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [
+            INTERSECT_OBJ.scale.x + s * (this_x - last_x), 
+            INTERSECT_OBJ.scale.y + s * (this_x - last_x), 
+            INTERSECT_OBJ.scale.z + s * (this_x - last_x)
+        ], 'scale'); 
     }
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         tf.engine().startScope();
         auxiliaryMove();
         tf.engine().endScope();
-    }
+    }   
     updateMousePosition();
 };
 
@@ -557,6 +710,15 @@ const render_function = function(){
     }
 }
 
+const removeObjectByUUID = function(uuid){
+    let objectToDelete = manager.renderManager.instanceKeyCache[uuid];
+    if(objectToDelete === undefined) return; 
+    scene.remove(objectToDelete); // remove the object from the scene; 
+    let roomId = objectToDelete.userData.roomId;
+    delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(objectToDelete)];
+    delete manager.renderManager.instanceKeyCache[uuid];
+}
+
 const removeIntersectObject = function(){
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     let roomId = INTERSECT_OBJ.userData.roomId;
@@ -566,6 +728,7 @@ const removeIntersectObject = function(){
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
+    if(onlineGroup !== 'OFFLINE'){emitFunctionCall('removeObjectByUUID', [INTERSECT_OBJ.userData.key]);}
 }
 
 const onAddOff = function(){
@@ -607,7 +770,16 @@ const encodePerspectiveCamera = function(sceneJson){
     sceneJson.canvas.height = scenecanvas.height;
 }
 
-const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; 
+const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; dat.gui in the online mode; 
+const controllerOnChangeGen = function(mode, axis, objmesh){
+    return v => {
+        transformObject3DOnly(objmesh.userData.key, [
+            (axis === 'x') ? v : objmesh[mode].x,
+            (axis === 'y') ? v : objmesh[mode].y,
+            (axis === 'z') ? v : objmesh[mode].z
+        ], mode); 
+    }; 
+}; 
 const datguiObjectFolder = function(objmesh){
     // activating dat.gui:
     if(datgui_intersectfolder){
@@ -616,26 +788,39 @@ const datguiObjectFolder = function(objmesh){
     } 
     datgui_intersectfolder = datgui.addFolder(objmesh.userData.modelId);
     datgui_intersectfolder.open();
-    let ctrlScaleX = datgui_intersectfolder.add(objmesh.scale, 'x', 0.05, 3.0); 
+    let t = {
+        'scale': {'x': objmesh.scale.x, 'y': objmesh.scale.y, 'z': objmesh.scale.z},
+        'rotation': {'y': objmesh.rotation.y},
+        'position': {'x': objmesh.position.x, 'y': objmesh.position.y, 'z': objmesh.position.z}
+    };
+    let ctrlScaleX = datgui_intersectfolder.add(t.scale, 'x', 0.05, 3.0); 
     ctrlScaleX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-X';
-    let ctrlScaleY = datgui_intersectfolder.add(objmesh.scale, 'y', 0.05, 3.0); 
+    let ctrlScaleY = datgui_intersectfolder.add(t.scale, 'y', 0.05, 3.0); 
     ctrlScaleY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Y';
-    let ctrlScaleZ = datgui_intersectfolder.add(objmesh.scale, 'z', 0.05, 3.0); 
+    let ctrlScaleZ = datgui_intersectfolder.add(t.scale, 'z', 0.05, 3.0); 
     ctrlScaleZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Z';
     
-    let ctrlOrient = datgui_intersectfolder.add(objmesh.rotation, 'y', -3.15, 3.15, 0.01); 
+    let ctrlOrient = datgui_intersectfolder.add(t.rotation, 'y', -3.15, 3.15, 0.01); 
     ctrlOrient.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Orient';
 
     let rbb = manager.renderManager.scene_json.rooms[objmesh.userData.roomId].bbox; 
-    let ctrlPosX = datgui_intersectfolder.add(objmesh.position, 'x', 
+    let ctrlPosX = datgui_intersectfolder.add(t.position, 'x', 
     rbb.min[0], rbb.max[0]); 
     ctrlPosX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-X';
-    let ctrlPosY = datgui_intersectfolder.add(objmesh.position, 'y', 
+    let ctrlPosY = datgui_intersectfolder.add(t.position, 'y', 
     rbb.min[1], rbb.max[1]); 
-    ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y'
-    let ctrlPosZ = datgui_intersectfolder.add(objmesh.position, 'z', 
+    ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y';
+    let ctrlPosZ = datgui_intersectfolder.add(t.position, 'z', 
     rbb.min[2], rbb.max[2]); 
-    ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z'
+    ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z';
+
+    ctrlPosX.onChange(controllerOnChangeGen('position', 'x', objmesh)); 
+    ctrlPosY.onChange(controllerOnChangeGen('position', 'y', objmesh)); 
+    ctrlPosZ.onChange(controllerOnChangeGen('position', 'z', objmesh)); 
+    ctrlOrient.onChange(controllerOnChangeGen('rotation', 'y', objmesh)); 
+    ctrlScaleX.onChange(controllerOnChangeGen('scale', 'x', objmesh)); 
+    ctrlScaleY.onChange(controllerOnChangeGen('scale', 'y', objmesh)); 
+    ctrlScaleZ.onChange(controllerOnChangeGen('scale', 'z', objmesh)); 
 };
 
 const datguiObjectFolderRemove = function(objmesh){
@@ -644,6 +829,27 @@ const datguiObjectFolderRemove = function(objmesh){
         datgui_intersectfolder = undefined; 
         synchronize_json_object(objmesh);
     }
+}
+
+const getDownloadSceneJson = function(){
+    let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
+    json_to_dl.rooms.forEach( room => {
+        room.auxiliaryDomObj = undefined;
+        room.auxiliarySecObj = undefined;
+        room.auxiliaryWallObj = undefined;
+    })
+    // delete unnecessary keys; 
+    json_to_dl.rooms.forEach(function(room){
+        room.objList = room.objList.filter( item => item !== null && item !== undefined )
+        room.objList.forEach(function(inst){
+            if(inst === null || inst === undefined){
+                return
+            }
+            // delete inst.key;
+        })
+    })
+    encodePerspectiveCamera(json_to_dl); 
+    return json_to_dl;
 }
 
 let fpsCountMode = false;
@@ -673,6 +879,7 @@ var setting_up = function () {
     orth_initialization();
     searchPanelInitialization();
     radial_initialization();
+    onlineInitialization();
 
     // adding the `stats` panel for monitoring FPS; 
     stats = new Stats();
@@ -716,18 +923,7 @@ var setting_up = function () {
     });
     $("#windoor_button").click(showHide_door_mageAdd_set);
     $("#download_button").click(function(){
-        let json_to_dl = JSON.parse(JSON.stringify(manager.renderManager.scene_json));
-        // delete unnecessary keys; 
-        json_to_dl.rooms.forEach(function(room){
-            room.objList = room.objList.filter( item => item !== null && item !== undefined )
-            room.objList.forEach(function(inst){
-                if(inst === null || inst === undefined){
-                    return
-                }
-                delete inst.key;
-            })
-        })
-        encodePerspectiveCamera(json_to_dl); 
+        let json_to_dl = getDownloadSceneJson();
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
         var dlAnchorElem = document.getElementById('downloadAnchorElem');
         dlAnchorElem.setAttribute("href",     dataStr     );
@@ -745,6 +941,40 @@ var setting_up = function () {
         else{
             scene.remove(theaxis);
         }
+    });
+    $("#autoview").click(function(){
+
+        let fov = camera.fov; 
+        let focalLength = camera.filmGauge; 
+        let origin = [camera.position.x, camera.position.y, camera.position.z];
+        let rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
+        let target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
+        let up = new THREE.Vector3();
+        up.copy(camera.up);
+        up.applyQuaternion(camera.quaternion);
+        let canvas = {};
+        canvas.width = scenecanvas.width;
+        canvas.height = scenecanvas.height;
+
+        let resPos = [0, 1, 0];
+        let resLookAt = [0, 1, 3];
+
+        camera.rotation.order = 'YXZ';
+        // camera.lookAt(resLookAt[0], resLookAt[1], resLookAt[2]);
+        gsap.to(camera.position, {
+            duration: 1,
+            x: resPos[0],
+            y: resPos[1],
+            z: resPos[2]
+        });
+        gsap.to(orbitControls.target, {
+            duration: 1,
+            x: resLookAt[0],
+            y: resLookAt[1],
+            z: resLookAt[2]
+        });
+        // camera.position.set(resPos[0], resPos[1], resPos[2]);
+        // orbitControls.target.set(resLookAt[0], resLookAt[1], resLookAt[2]);
     })
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);

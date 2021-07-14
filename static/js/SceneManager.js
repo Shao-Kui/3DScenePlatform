@@ -92,12 +92,10 @@ class SceneManager {
                 }
             }
         });
-        console.log(instances_to_remove);
         instances_to_remove.forEach(function (inst) {
             self.scene.remove(inst);
         });
     };
-
 
     refresh_scene = (scene_json, refresh_camera = false) => {
         console.log('called refresh scene! ');
@@ -127,7 +125,6 @@ class SceneManager {
         spotLight.target.position.set(lx_level, 0, lz_level);
     }
 
-
     refresh_wall_and_floor = () => {
         this.cwfCache = [];
         this.fCache = []; 
@@ -137,7 +134,6 @@ class SceneManager {
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
         }
-
     };
 
     load_cwf_room_meta = room => {
@@ -235,110 +231,26 @@ class SceneManager {
     // };
 
     refresh_instances(){
-	    //try to add unique id for each instanceof
-	    var self=this;
-	    var newkeycache={};
+	    // var self=this;
+		this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
+		this.instanceKeyCache = {};
         this.scene_json.rooms.forEach(function(room){
-            room.objList.forEach(function(inst){ //an obj is a instance
+            room.objList.forEach(async function(inst){ //an obj is a instance
                 if(inst === null || inst == undefined){
                     return;
                 }
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
                         return;
-                if(!(inst.key)){
-                    inst.key=THREE.Math.generateUUID();
-                }
-                if(self.instanceKeyCache[inst.key]){
-                    var instance=self.instanceKeyCache[inst.key];
-                    instance.scale.set(inst.scale[0],inst.scale[1],inst.scale[2]);
-                    instance.rotation.set(inst.rotate[0],inst.rotate[1],inst.rotate[2],inst.rotateOrder);
-                    instance.position.set(inst.translate[0],inst.translate[1],inst.translate[2]);
-                    newkeycache[inst.key]=instance;
-                }
-                else{
-                    // to prevent incomplete model to be deleted by this.scene_remove
-                    // newkeycache[inst.key]=true;
-                    if(!(self.objectInfoCache[inst.modelId])){
-                        /*fetch("/objmeta/"+inst.modelId).then(function(response) {
-                            return response.json();
-                        })
-                        .then(function(meta) {
-                            if(meta.id === undefined || meta.name === undefined){
-                                return;
-                            }
-                            self.objectInfoCache[inst.modelId]=meta;
-                            self.load_instance(inst);
-                        });*/
-                        let meta = {};
-                        meta.mesh = `/mesh/${inst.modelId}`;
-                        meta.mtl = `/mtl/${inst.modelId}`;
-                        self.objectInfoCache[inst.modelId]=meta;
-                        self.load_instance(inst);
-                    }else{
-                        self.load_instance(inst);
-                    }
-                }
-                self.renderer.render(self.scene,self.camera);
+                if(inst.key === undefined) inst.key=THREE.Math.generateUUID();
+                loadObjectToCache(inst.modelId, function(){
+                    refreshObjectFromCache(inst);
+                });
             });
         });
-
-		this.scene_remove((userData)=>(userData.type=="object" && !newkeycache[userData.key]));
-		this.instanceKeyCache=newkeycache;
 	}
 
-    latent_space_click = () => {
-        var self = this;
-        if (latent_space_mode === false) {
-            self.enter_latent();
-        } else {
-            self.quit_latent();
-        }
-        latent_space_mode = !latent_space_mode;
-    };
-
-    load_instance = (inst, object_type = 'object') => {
-        var self = this;
-        var meta = this.objectInfoCache[inst.modelId];
-        var objLoader = new THREE.OBJLoader2();
-        objLoader.loadMtl(meta.mtl, null, function (materials) {
-            objLoader.setModelName(inst.modelId);
-            objLoader.setMaterials(materials);
-            objLoader.load(meta.mesh, function (event) {
-                var instance = event.detail.loaderRootNode;
-                instance.scale.set(inst.scale[0], inst.scale[1], inst.scale[2]);
-                instance.rotation.set(inst.rotate[0], inst.rotate[1], inst.rotate[2], inst.rotateOrder);
-                instance.position.set(inst.translate[0], inst.translate[1], inst.translate[2]);
-                instance.userData = {
-                    "type": object_type,
-                    "key": inst.key,
-                    "roomId": inst.roomId,
-                    "name": inst.modelId,
-                    "modelId": inst.modelId,
-                    "coarseSemantic": inst.coarseSemantic
-                };
-                self.instanceKeyCache[inst.key] = instance;
-                if (object_type === "latent")
-                    self.latentNameCache[inst.modelId] = instance;
-                instance.castShadow = true;
-                instance.receiveShadow = true;
-                traverseObjSetting(instance);
-                if('geometry' in instance){
-                    instance.geometry.computeBoundingBox();
-                }
-                instance.children.forEach(child => {
-                    if('geometry' in child){
-                        child.geometry.computeBoundingBox();
-                    }
-                });
-                self.scene.add(instance);
-                self.renderer.render(self.scene, self.camera);
-            }, null, null, null, false);
-        });
-    };
-
     refresh_camera = () => {
-        console.log("start to refresh camera! ");
         var bbox = this.scene_json.bbox;
         var lx = (bbox.max[0] + bbox.min[0]) / 2;
         var lz = (bbox.max[2] + bbox.min[2]) / 2;
@@ -405,7 +317,8 @@ class SceneController {
             var fr = new FileReader();
             fr.onload = function (e) {
                 var result = JSON.parse(e.target.result);
-                self.load_scene(result);
+                socket.emit('sceneRefresh', result, onlineGroup);
+                // self.load_scene(result);
             };
             fr.readAsText(files.item(0));
             $(self.load_dialog).dialog("close");

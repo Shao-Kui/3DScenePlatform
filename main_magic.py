@@ -124,6 +124,7 @@ def priors_of_roomShape():
     # print(existingPendingCatList)
     # load and process room shapes; 
     room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    room_meta = room_meta[:, 0:2]
     wallSecIndices = np.arange(1, len(room_meta)).tolist() + [0]
     res['room_meta'] = room_meta.tolist()
     rv = room_meta[:] - room_meta[wallSecIndices]

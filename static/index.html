@@ -3,11 +3,12 @@
     <meta charset="utf-8">
     <!-- 3rd party libraries -->
     <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
-    <script src="/static/3rdparty/tf.min27.js"></script>
+    <script src="/static/3rdparty/tf.min37.js"></script>
     <script src="/static/3rdparty/moment.min.js"></script>
     <script src="/static/3rdparty/popper.min.js"></script>
     <script src="/static/3rdparty/stats.js"></script>
     <script src="/static/3rdparty/dat.gui.min.js"></script>
+    <script src="/static/3rdparty/gsap.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
@@ -19,6 +20,7 @@
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
+    <script src="/static/3rdparty/socket.io.min.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
@@ -33,6 +35,7 @@
     <script src="/static/js/ai.js"></script>
     <script src="/static/js/search.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script>
         //Global state & variables! Careful!
@@ -90,6 +93,11 @@
         var datgui; 
         var datgui_intersectfolder; 
 
+        // this variable is used for determining the collaborative group a user belonging to; 
+        const onlineGroup = "{{ onlineGroup }}";
+        const onlineUserID = "{{ serverGivenUserID }}";
+        const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
+
         $(document).ready(function () {
             latent_space_mode = false;
             manager = new SceneController($("#ui")[0]);
@@ -115,8 +123,6 @@
             </div>
             <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-                <button id="tbd_button_1" type="button" class="btn btn-lg btn-primary nav_sk_button" 
-                style="">(TBD)</button>
                 <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
                 style="width: 9%">AuxiliaryMode
                 </button>
@@ -137,6 +143,9 @@
                         <button type="button" id="clearALL_button"
                         class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
                             ClearALL</button>
+                        <button id="autoview" type="button" 
+                        class="btn btn-lg btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
+                            AutoView</button>
                     </ul>
                 </div>
                 <a id="downloadAnchorElem" style="display:none"></a>
@@ -214,6 +223,11 @@
                     Collaborative Search
                 </button>
             </div-->
+            <div class="card-body">
+                <button id="autoView" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">SceneViewer</button>
+                <button id="autoViewPath" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">AutoPath</button>
+                <button id="_unknownButton2" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">Unknown</button>
+            </div>
             <div>
                 <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">双人床</button>
                 <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">茶几</button>

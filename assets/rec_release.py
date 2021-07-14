@@ -134,20 +134,6 @@ def loss_4(x, room_shape):
     min_result = torch.min(torch.zeros((len(x), 4, len(room_shape)), dtype=torch.float), torch.det(wall))
     return torch.sum(torch.abs(min_result))
 
-def rotate_bb_local_para(points, angle, scale):
-    result = points.clone()
-    scaled = points.clone()
-    scaled = scaled * scale
-    result[:, 0] = torch.cos(angle) * scaled[:, 0] + torch.sin(angle) * scaled[:, 1]
-    result[:, 1] = -torch.sin(angle) * scaled[:, 0] + torch.cos(angle) * scaled[:, 1]
-    return result
-
-def rotate_pos_prior(points, angle):
-    result = points.clone()
-    result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 2]
-    result[:, 2] = -torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 2]
-    return result
-
 def sample_translateRela(child, obj):
     priorid = "{}-{}".format(obj['modelId'], child['modelId'])
     if priorid not in priors['pos']:
