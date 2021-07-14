@@ -942,6 +942,7 @@ var setting_up = function () {
             scene.remove(theaxis);
         }
     });
+    $("#auxiliary_button").click(auxiliary_control);
     $("#autoview").click(function(){
 
         let fov = camera.fov; 

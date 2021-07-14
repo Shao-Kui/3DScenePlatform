@@ -5,7 +5,7 @@ import json
 import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-# from projection2d import processGeo as p2d, getobjCat, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
+from projection2d import processGeo as p2d, getobjCat, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
 
 app_magic = Blueprint('app_magic', __name__)
 
