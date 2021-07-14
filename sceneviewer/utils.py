@@ -139,6 +139,8 @@ def expandWallSeg(wallIndex, floorMeta):
     m = (p1 + p2) / 2
     DISNxt = -1
     DISPre = -1
+    resPre = None
+    resNxt = None
     for i in range(floorMeta.shape[0]):
         p3 = floorMeta[i][0:2]
         p4 = floorMeta[(i+1) % floorMeta.shape[0]][0:2]
@@ -277,7 +279,6 @@ def redundancyRemove(hypotheses):
             hj = hypotheses[j]
             if np.linalg.norm(hi['probe'] - hj['probe']) < 0.01 and np.linalg.norm(hi['direction'] - hj['direction']) < 0.01:
                 hypotheses[i]['toDelete'] = True
-                print('delete')
                 break
     for h in hypotheses:
         if 'toDelete' not in h:

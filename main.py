@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import flask
 from flask_cors import CORS
 import orm
@@ -282,6 +284,7 @@ def onlineMain(groupName):
                 with open(f'./examples/onlineScenes/{groupName}.json') as f:
                     onlineScenes[groupName] = json.load(f)
                 onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName]) 
+                print('Returned the Cached Scene. ')
             else:
                 with open('./assets/demo.json') as f:
                     onlineScenes[groupName] = json.load(f)
@@ -312,10 +315,15 @@ def message(data):
     print('Received a sent message: ', data)
 @socketio.on('connect')
 def connect():
-    print('Connected with ', request.remote_addr) # , 'UserID: ', session['userID']
+    print('Connected with ', request.remote_addr, datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")) # , 'UserID: ', session['userID']
+    emit('connect', ('Welcome to the Server of Shao-Kui. ', datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")), to=request.sid)
 @socketio.on('disconnect')
 def disconnect():
     print('Disconnected with ', request.remote_addr)
+
+@socketio.on('sktest')
+def sktest(data):
+    print('sktest from: ', request.remote_addr, '- goes: ', data)
 
 @socketio.on('onlineSceneUpdate')
 def onlineSceneUpdate(sceneJson, groupName): 
@@ -366,13 +374,18 @@ def autoViewAsync(scenejson, to):
         thread = sk.BaseThread(
             name='autoView',
             target=autoViewRooms,
-            method_args=(scenejson,),
+            method_args=(scenejson,False),
             callback=autoViewAsync,
             callback_args=(scenejson, to)
         )
         thread.start()
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=11425, threads=8)
+    # from waitress import serve
+    # serve(app, host="0.0.0.0", port=11425, threads=8)
+    socketio.run(app, host="0.0.0.0", port=11425)
+
     # app.run(host="0.0.0.0", port=11425, debug=True, threaded=True)
+    # from gevent import pywsgi
+    # server = pywsgi.WSGIServer(('0.0.0.0', 11425), app)
+    # server.serve_forever()

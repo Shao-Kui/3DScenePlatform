@@ -11,6 +11,9 @@ import numpy as np
 from projection2d import getobjCat
 import sk
 import uuid
+# the following code is for backend-rendering. 
+# from celery import Celery
+# app = Celery('tasks', backend='rpc://', broker='pyamqp://')
 
 sysROOT = 'F:/3DIndoorScenePlatform/dataset/PathTracing'
 ROOT = './dataset/PathTracing'
@@ -46,6 +49,10 @@ def autoPerspectiveCamera(scenejson):
         PerspectiveCamera['up'] = [1,0,0]
     scenejson['PerspectiveCamera'] = PerspectiveCamera
     return PerspectiveCamera
+
+# @app.task
+# def pathTracingPara(scenejson, sampleCount=64, dst=None):
+#     return pathTracing(scenejson=scenejson, sampleCount=sampleCount, dst=dst)
 
 def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()

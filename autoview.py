@@ -315,8 +315,11 @@ def autoViewOnePointPerspective(room, scene):
 
             # then we try following the 'Three-Wall' rule. (Left Side) 
             expandPre, expandNxt = expandWallSeg(wallIndex, floorMeta)
-            pThW1 = twoInfLineIntersection(expandPre, expandPre + floorMeta[wallIndex][2:4], p3, p4)
-            pThW2 = twoInfLineIntersection(expandNxt, expandNxt + floorMeta[wallIndex][2:4], p3, p4)
+            pThW1 = None
+            pThW2 = None
+            if expandPre is not None and expandNxt is not None:
+                pThW1 = twoInfLineIntersection(expandPre, expandPre + floorMeta[wallIndex][2:4], p3, p4)
+                pThW2 = twoInfLineIntersection(expandNxt, expandNxt + floorMeta[wallIndex][2:4], p3, p4)
             if pThW1 is not None and pThW2 is not None:
                 pThW1, pThW2 = np.array(pThW1), np.array(pThW2)
                 thw = h.copy()
@@ -390,26 +393,9 @@ def autoViewOnePointPerspective(room, scene):
                 thinR['direction'] = groundShifting(thinR['probe'], floorMeta, floorPoly, thinR['direction'], theta, H)
                 thinR['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thinR['probe'], ord=2)
                 hypotheses.append(thinR)
-            """
-            hgs = h.copy()
-            hgs['type'] = 'wellAlignedShifted'
-            # find the wall corner with the longest diagonal in front of the probe point. 
-            wallDiagIndex = findTheFrontFarestCorner(p, floorMeta, floorPoly, -normal)
-            # calculate the direction from the probe point to 'wallDiagIndex'. 
-            wallDiagTop = np.array([floorMeta[wallDiagIndex][0], H, floorMeta[wallDiagIndex][1]])
-            # calculate the projected vector on the vertical visual plane. 
-            projectedP = sk.pointProjectedToPlane(wallDiagTop, np.cross(np.array([0, 1, 0]), -normal3D), np.array([p[0], H/2, p[1]]))
-            projectedVec = projectedP - probe
-            # apply Rogrigues Formula. 
-            direction = sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), normal3D), -theta)
-            hgs['direction'] = direction
-            numSeenObjs(room, hgs, probe, direction, floorMeta, theta)
-            theLawOfTheThird(hgs, room, theta, ASPECT)
-            tarWindoorArea2021(hgs, scene, floorMeta, theta)
-            hypotheses.append(hgs)
-            """
     hypotheses = redundancyRemove(hypotheses)
     for h in hypotheses:
+        h['roomTypes'] = room['roomTypes']
         h['isObjCovered'] = isObjCovered(h, scene)
         theLawOfTheThird(h, room, theta, ASPECT)
         numSeenObjs(room, h, h['probe'], h['direction'], floorMeta, theta)
@@ -712,24 +698,28 @@ def floorplanOrthes():
     # swap the cameraType back to perspective cameras. 
     pt.cameraType = 'perspective'
 
-def highResRendering():
+def highResRendering(dst=None):
+    if dst is None:
+        dst = 'highres'
     pt.SAVECONFIG = False
     pt.REMOVELAMP = False
     global RENDERWIDTH, SAMPLE_COUNT
     SAMPLE_COUNT = 64
     RENDERWIDTH = 1920
-    jsonfilenames = os.listdir('./latentspace/autoview/highres')
+    jsonfilenames = os.listdir(f'./latentspace/autoview/{dst}')
     for jfn in jsonfilenames:
         if '.json' not in jfn:
             continue
-        with open(f'./latentspace/autoview/highres/{jfn}') as f:
+        with open(f'./latentspace/autoview/{dst}/{jfn}') as f:
             view = json.load(f)
         with open(f'dataset/alilevel_door2021/{view["scenejsonfile"]}.json') as f:
             scenejson = json.load(f)
         scenejson["PerspectiveCamera"] = {}
         scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
         scenejson["canvas"] = {}
-        renderGivenPcam(view, scenejson, dst=f"./latentspace/autoview/highres/{jfn.replace('.json', '.png')}")
+        rThread = renderGivenPcam(view, scenejson, dst=f"./latentspace/autoview/{dst}/{jfn.replace('.json', '.png')}")
+        print(f'Rendering {dst} -> {jfn} ... ')
+        rThread.join()
 
 def sceneViewerBatch():
     pt.SAVECONFIG = False
@@ -738,7 +728,7 @@ def sceneViewerBatch():
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[101:200]
+    sjfilenames = sjfilenames[201:300]
     for sjfilename in sjfilenames:
         with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
             scenejson = json.load(f)
@@ -747,6 +737,7 @@ def sceneViewerBatch():
         scenejson["canvas"] = {}
         preloadAABBs(scenejson)
         print(f'Starting: {scenejson["origin"]}...')
+        print(sjfilenames.index(sjfilename))
         renderThreads = autoViewRooms(scenejson)
         for t in renderThreads:
             t.join()
@@ -754,12 +745,12 @@ def sceneViewerBatch():
 if __name__ == "__main__":
     start_time = time.time()
     # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
-    with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd.json') as f:
+    # with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd.json') as f:
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-        test_file = json.load(f)
-    preloadAABBs(test_file)
+        # test_file = json.load(f)
+        # preloadAABBs(test_file)
 
     # pcam = autoViewOnePointPerspective(test_file['rooms'][4], test_file)
     # renderGivenPcam(pcam, test_file)
@@ -777,9 +768,17 @@ if __name__ == "__main__":
 
     # floorplanOrthes()
 
-    # highResRendering()
+    # sceneViewerBatch()
 
-    sceneViewerBatch()
+    # highResRendering('028448cc-806f-4f6f-81aa-68d5824f6c02')
+    # highResRendering('0338bdd5-e321-467e-a998-38f2218e2fdd')
+    # highResRendering('03ff3349-3ab0-45fd-ae99-53da3334cb69')
+    # highResRendering('03a73289-5269-42b1-af4b-f30056c97c64')
+    # highResRendering('04940635-c251-4356-968e-3b8d9fe93a4c')
+    # highResRendering("03b2259c-c24b-44a9-b055-2fe85137419a")
+    # highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
+    # highResRendering('02a9b734-993c-496c-99e4-6458e35f9178')
+    highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 

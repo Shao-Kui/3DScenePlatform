@@ -845,7 +845,7 @@ const getDownloadSceneJson = function(){
             if(inst === null || inst === undefined){
                 return
             }
-            delete inst.key;
+            // delete inst.key;
         })
     })
     encodePerspectiveCamera(json_to_dl); 

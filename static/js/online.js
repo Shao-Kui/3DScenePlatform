@@ -1,5 +1,6 @@
 // global variables for online mode; 
-const socket = io();
+// const socket = io();
+const socket = io({transports: ['websocket']});
 const onlineFuncList = {};
 const serverUUIDs = [];
 gsap.ticker.lagSmoothing();
@@ -33,7 +34,7 @@ const socketInit = function(){
     });
     socket.on("functionCall", (fname, arguments) => {
         let args = [], i = 0;
-        while(arguments[i]!== undefined){args.push(arguments[i]); i++; }          
+        while(arguments[i] !== undefined){args.push(arguments[i]); i++; }          
         // console.log(fname, args);      
         onlineFuncList[fname].apply(null, args);
     });

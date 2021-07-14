@@ -145,3 +145,22 @@ def hamilton(scene):
     with open(f'./latentspace/autoview/{scene["origin"]}/path', 'w') as f:
         json.dump(res, f, default=sk.jsonDumpsDefault)
     return res
+
+"""
+hgs = h.copy()
+hgs['type'] = 'wellAlignedShifted'
+# find the wall corner with the longest diagonal in front of the probe point. 
+wallDiagIndex = findTheFrontFarestCorner(p, floorMeta, floorPoly, -normal)
+# calculate the direction from the probe point to 'wallDiagIndex'. 
+wallDiagTop = np.array([floorMeta[wallDiagIndex][0], H, floorMeta[wallDiagIndex][1]])
+# calculate the projected vector on the vertical visual plane. 
+projectedP = sk.pointProjectedToPlane(wallDiagTop, np.cross(np.array([0, 1, 0]), -normal3D), np.array([p[0], H/2, p[1]]))
+projectedVec = projectedP - probe
+# apply Rogrigues Formula. 
+direction = sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), normal3D), -theta)
+hgs['direction'] = direction
+numSeenObjs(room, hgs, probe, direction, floorMeta, theta)
+theLawOfTheThird(hgs, room, theta, ASPECT)
+tarWindoorArea2021(hgs, scene, floorMeta, theta)
+hypotheses.append(hgs)
+"""
