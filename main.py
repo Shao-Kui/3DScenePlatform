@@ -2,7 +2,7 @@ import eventlet
 eventlet.monkey_patch()
 import flask
 from flask_cors import CORS
-import orm
+# import orm
 import json
 import os
 import base64
@@ -16,7 +16,7 @@ import uuid
 # from generate_descriptor import sketch_search
 from main_audio import app_audio
 from main_magic import app_magic
-from projection2d import objListCat, getobjCat
+from projection2d import objListCat
 from autoview import app_autoView, autoViewsRes, autoViewRooms
 import random
 import difflib
@@ -131,7 +131,7 @@ def query2nd():
     ret = []
     kw = flask.request.args.get('kw', default = "", type = str) # keyword
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
-        ret.append({"name": kw, "semantic": getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
+        ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
     catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
     if len(catMatches) != 0:
         cat = ChineseMapping[catMatches[0]]
@@ -145,7 +145,7 @@ def query2nd():
     modelIdlist = kw.split(';')
     for modelId in modelIdlist:
         if os.path.exists(f'./dataset/object/{modelId}/{modelId}.obj'):
-            ret.append({"name": modelId, "semantic": getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"})
+            ret.append({"name": modelId, "semantic": sk.getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"})
     if kw == '骁逸':
         xiaoyiids1 = ['bed', 'cabinet', 'cabinet1', 'chair', 'Chest of drawer', 'ClassicKitchenChair2', 
         'ClassicRoundTable1', 'CoffeeMaker', 'Cutlery Prefab', 'diining_furnitures_29__vray', 'DiningTable', 'DiningTable_006', 

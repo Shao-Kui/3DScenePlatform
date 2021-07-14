@@ -191,7 +191,10 @@ class BaseThread(threading.Thread):
 
 def getobjCat(modelId):
     if modelId in objCatList:
-        return objCatList[modelId][0]
+        if len(objCatList[modelId]) > 0:
+            return objCatList[modelId][0]
+        else:
+            return "Unknown Category"
     else:
         return "Unknown Category"
 
