@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from relayout import *
+from layoutmethods.relayout import *
 
 
 def rotate_bb_local_np(points, angle, scale):

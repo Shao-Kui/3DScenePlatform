@@ -7,11 +7,10 @@ import random
 import trimesh
 import threading
 import numpy as np
-from alutil import naive_heuristic, attempt_heuristic, rotate_bb_local_np
+from alutil import attempt_heuristic, rotate_bb_local_np
 from shapely.geometry.polygon import Polygon
-from shapely.geometry import Point
 from projection2d import processGeo as p2d, connected_component
-from rec_release import rotate_pos_prior, rotate_bb_local_para, loss_2, loss_4
+from sk import rotate_pos_prior, rotate_bb_local_para
 import patternChain
 
 with open('./latentspace/obj_coarse_semantic.json') as f:

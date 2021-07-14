@@ -1,5 +1,4 @@
 from flask import Blueprint, request
-import re
 import uuid
 from aip import AipSpeech
 import librosa
@@ -9,7 +8,7 @@ import datetime
 import json
 import os
 import orm
-from generate_descriptor import sketch_search
+# from generate_descriptor import sketch_search
 
 app_audio = Blueprint('app_audio', __name__)
 audio_sketch_word = None

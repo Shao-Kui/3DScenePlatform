@@ -4,25 +4,19 @@ import flask
 from flask_cors import CORS
 import orm
 import json
-import pdb
 import os
-import numpy as np
 import base64
 import time
 import datetime
-from io import BytesIO
-from PIL import Image
-from rec_release import fa_reshuffle
+# from rec_release import fa_reshuffle
 from autolayoutv2 import sceneSynthesis
-from flask import Flask, render_template, send_file, request, render_template, session
-from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
+from flask import Flask, request, session
+from flask_socketio import SocketIO, emit, join_room
 import uuid
 # from generate_descriptor import sketch_search
-# import blueprints for app to register; 
 from main_audio import app_audio
-from main_ls import app_ls
 from main_magic import app_magic
-from projection2d import processGeo as objCatList, objListCat, categoryRelation, getobjCat
+from projection2d import objListCat, getobjCat
 from autoview import app_autoView, autoViewsRes, autoViewRooms
 import random
 import difflib
@@ -30,7 +24,6 @@ import sk
 
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
-app.register_blueprint(app_ls)
 app.register_blueprint(app_magic)
 app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -238,7 +231,7 @@ def sklayout():
 @app.route("/reshuffle", methods=['POST', 'GET'])
 def reshuffle():
     if request.method == 'POST':
-        return json.dumps(fa_reshuffle(request.json))
+        return json.dumps(request.json)
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
 

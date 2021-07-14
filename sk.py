@@ -2,6 +2,7 @@ import trimesh
 import os
 import json
 import numpy as np
+import torch
 from shapely.geometry.polygon import Polygon, LineString, Point
 
 AABBcache = {}
@@ -193,3 +194,17 @@ def getobjCat(modelId):
         return objCatList[modelId][0]
     else:
         return "Unknown Category"
+
+def rotate_pos_prior(points, angle):
+    result = points.clone()
+    result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 2]
+    result[:, 2] = -torch.sin(angle) * points[:, 0] + torch.cos(angle) * points[:, 2]
+    return result
+
+def rotate_bb_local_para(points, angle, scale):
+    result = points.clone()
+    scaled = points.clone()
+    scaled = scaled * scale
+    result[:, 0] = torch.cos(angle) * scaled[:, 0] + torch.sin(angle) * scaled[:, 1]
+    result[:, 1] = -torch.sin(angle) * scaled[:, 0] + torch.cos(angle) * scaled[:, 1]
+    return result
