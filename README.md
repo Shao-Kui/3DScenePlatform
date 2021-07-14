@@ -7,7 +7,7 @@ Manipulating             |  Rendering
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/8.png "Manipulating & Searching")  |  ![Rendering](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/7.png "Rendering")
 
-This is the repository of the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
+This is the repository of the paper "MageAdd: Real-Time Interaction Simulation for Scene Synthesis" and "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to directly use a ready clone. 
 
@@ -138,7 +138,27 @@ root
 
 If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. The 'autolayout.py' and 'patternChain.py' are also usable, but only for SUNCG dataset. The 'v2' version of our method is specifically for 3D-Front. 
 # MageAdd
-Coming soon... ... ...
+
+[\[Paper\]][mageaddPaper] [\[Video\]][mageaddVideo] [\[Supp\]][mageaddSupp]
+
+This project is also the container for MageAdd, which is a interactive modelling tool for 3D scene synthesis. The source code of the MageAdd is included in the following files:
+```
+root
+  main_magic.py
+root
+  static
+    js
+      MageAdd.js
+```
+The .py file corrsponds to the **Piror Update** and the .js file contains the main logic of inference of MageAdd. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
+
+Our paper is accept as a full research paper in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
+```
+@article{,
+  title = {MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
+  author = {Shao-Kui Zhang and Yi-Xiao Li and Yu He and Yong-Liang Yang and Song-Hai Zhang}
+}
+```
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
@@ -190,7 +210,7 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
 [songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
-[shaokui]:https://github.com/Shao-Kui
+[shaokui]:https://shao-kui.github.io/
 [GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html
 [cvm2021]:http://iccvm.org/2021/
 [gmod]:https://www.journals.elsevier.com/graphical-models
@@ -198,3 +218,7 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
 [3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
 [graphicalmodels]:https://www.researchgate.net/publication/351745309_Geometry-Based_Layout_Generation_with_Hyper-Relations_AMONG_Objects
+[mageaddPaper]:https://shao-kui.github.io/
+[mageaddVideo]:https://shao-kui.github.io/
+[mageaddSupp]:https://shao-kui.github.io/
+[acmmm2021]:https://2021.acmmm.org/
