@@ -2,9 +2,14 @@ import numpy as np
 import sk
 from scipy.spatial.transform import Rotation as R
 from shapely.geometry.polygon import Polygon, LineString, Point
-from sk import ASPECT
+from sk import ASPECT, DEFAULT_FOV
 
 def preloadAABBs(scene):
+    if 'PerspectiveCamera' not in scene:
+        scene['PerspectiveCamera'] = {}
+        scene['PerspectiveCamera']['fov'] = sk.DEFAULT_FOV
+    if 'canvas' not in scene:
+        scene['canvas'] = {}
     for room in scene['rooms']:
         for obj in room['objList']:
             if sk.objectInDataset(obj['modelId']):

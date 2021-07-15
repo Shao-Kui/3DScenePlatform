@@ -4,17 +4,20 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
+import shutil
 
+DATASET_ROOT = './dataset'
+LATENTSPACE = './latentspace'
 
 def showPcamInset(origin):
     maxImgPerRoom = 3
 
-    with open(f'../dataset/alilevel_door2021/{origin}.json') as f:
+    with open(f'{DATASET_ROOT}/alilevel_door2021/{origin}.json') as f:
         scenejson = json.load(f)
     lb = scenejson['bbox']['min']
     ub = scenejson['bbox']['max']
 
-    orthImg = cv2.imread(f'../dataset/alilevel_door2021_orth/{origin}.png')
+    orthImg = cv2.imread(f'{DATASET_ROOT}/alilevel_door2021_orth/{origin}.png')
     orthImgHeight, orthImgWidth = orthImg.shape[:2]
 
     xcenter = orthImgWidth / 2
@@ -23,15 +26,15 @@ def showPcamInset(origin):
     zscale = orthImgHeight / (ub[2] - lb[2])
 
     room = {}
-    for filename in os.listdir(f'../latentspace/autoview/{origin}'):
+    for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
         if not filename.endswith(r'.json'):
             continue
 
         identifier = filename.split('.')[0]
-        if not os.path.exists(f'../latentspace/autoview/{origin}/{identifier}.png'):
+        if not os.path.exists(f'{LATENTSPACE}/autoview/{origin}/{identifier}.png'):
             continue
 
-        with open(f'../latentspace/autoview/{origin}/{filename}') as f:
+        with open(f'{LATENTSPACE}/autoview/{origin}/{filename}') as f:
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
@@ -118,7 +121,7 @@ def showPcamInset(origin):
                         break
             item = imgList[i]
             pcamImg = cv2.imread(
-                f"../latentspace/autoview/{origin}/{item['identifier']}.png")
+                f"{LATENTSPACE}/autoview/{origin}/{item['identifier']}.png")
             if pcamImg.shape[1] > 600:
                 pcamImg = cv2.resize(pcamImg, (600, 337),
                                      interpolation=cv2.INTER_AREA)
@@ -196,38 +199,49 @@ def showPcamInset(origin):
     stride = np.array([0, w+margin])
     resultImg, zpad, xpad = pasteImg(bottomlist, startpos, stride, [0, w/2])
 
-    cv2.imwrite(f'{origin}.png', resultImg)
+    """
+        Shao-Kui has changed the dir from f'{origin}.png' to:
+    """
+    cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamInset.png', resultImg)
     plt.imshow(resultImg)
 
 
 def showPcamPoints(origin):
-    with open(f'../dataset/alilevel_door2021/{origin}.json') as f:
+    with open(f'{DATASET_ROOT}/alilevel_door2021/{origin}.json') as f:
         scenejson = json.load(f)
     lb = scenejson['bbox']['min']
     ub = scenejson['bbox']['max']
 
-    orthImg = cv2.imread(f'../dataset/alilevel_door2021_orth/{origin}.png')
+    orthImg = cv2.imread(f'{DATASET_ROOT}/alilevel_door2021_orth/{origin}.png')
     xscale = orthImg.shape[1] / (ub[0] - lb[0])
     zscale = orthImg.shape[0] / (ub[2] - lb[2])
 
-    for filename in os.listdir(f'../latentspace/autoview/{origin}'):
+    for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
         if not filename.endswith(r'.json'):
             continue
 
         identifier = filename.split('.')[0]
-        if not os.path.exists(f'../latentspace/autoview/{origin}/{identifier}.png'):
+        if not os.path.exists(f'{LATENTSPACE}/autoview/{origin}/{identifier}.png'):
             continue
 
-        with open(f'../latentspace/autoview/{origin}/{filename}') as f:
+        with open(f'{LATENTSPACE}/autoview/{origin}/{filename}') as f:
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
         z = int((ub[2] - pcam['probe'][2]) * zscale)
         cv2.circle(orthImg, (x, z), 5, (0, 0, 0), -1)
 
-    cv2.imwrite(f'pp_{origin}.png', orthImg)
+    """
+        Shao-Kui has changed the dir from f'pp_{origin}.png' to:
+    """
+    cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamPoints.png', orthImg)
     plt.imshow(orthImg)
 
+def insetBatch(origins):
+    for origin in origins:
+        showPcamPoints(origin)
+        showPcamInset(origin)
+        shutil.copy(f'{LATENTSPACE}/autoview/{origin}/showPcamInset.png', f'./sceneviewer/mapping/{origin}.png')
 
 # floorplanlist = [_.split('.')[0]
 #                  for _ in os.listdir('../dataset/alilevel_door2021')]

@@ -6,17 +6,16 @@ import json
 import projection2d
 from projection2d import processGeo as p2d, getobjCat
 from shapely.geometry.polygon import Polygon, LineString, Point
-import random
 import pathTracing as pt
 import sk
 import time
-import uuid
 import os
 from sceneviewer.constraints import theLawOfTheThird,layoutConstraint,numSeenObjs,isObjCovered
 from sceneviewer.constraints import tarWindoorArea2021,wallNormalOffset
 from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSight
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
 from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget
+from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
 
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
     res_ratio_dom = json.load(f)
@@ -27,9 +26,8 @@ projection2d.get_norm = True
 TARDIS = 3.397448931651581
 CAMHEI = 1.
 pt.REMOVELAMP = False
-from sk import ASPECT
+from sk import ASPECT,DEFAULT_FOV
 RENDERWIDTH = 600
-DEFAULT_FOV = 75
 SAMPLE_COUNT = 4
 
 def keyObjectKeyFunction(obj):
@@ -224,6 +222,8 @@ def probabilityOPP(h):
     if h['isObjCovered']:
         return res
     if h['numObjBeSeen'] == 0:
+        return res
+    if h['wallNormalOffset'] < -0.20:
         return res
     res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.9 + h['layoutDirection'] * 3
     res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
@@ -463,9 +463,6 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
 def autoViewRooms(scenejson, isPathTrancing=True):
     pt.SAVECONFIG = False
     preloadAABBs(scenejson)
-    fov = scenejson['PerspectiveCamera']['fov']
-    # change the fov/2 to Radian. 
-    theta = (np.pi * fov / 180) / 2
     renderThreads = []
     for room in scenejson['rooms']:
         # we do not generating views in an empty room. 
@@ -478,20 +475,6 @@ def autoViewRooms(scenejson, isPathTrancing=True):
                 continue
         if obj3DModelCount == 0:
             continue
-
-        # pcam = autoViewTwoPoint(room)
-        # renderGivenPcam(pcam, test_file)
-        # pcam = autoViewFromPatterns(room)
-        # if pcam is not None:
-        #     renderGivenPcam(pcam, test_file)
-        # pcam = autoViewOnePoint(room)
-        # renderGivenPcam(pcam, test_file)
-
-        # pcam = autoViewTwoPointPerspective(room, scenejson)
-        # renderGivenPcam(pcam, scenejson)
-
-        # newDirection = balancing(pcam, test_file['rooms'][1], pcam['theta'])
-        # print(pcam['direction'], newDirection)
 
         pcams = autoViewOnePointPerspective(room, scenejson)
         """
@@ -507,12 +490,11 @@ def autoViewRooms(scenejson, isPathTrancing=True):
             thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
             if thread is not None:
                 renderThreads.append(thread)
-
-        # auto-views w.r.t one-point perspective. 
-        # pcams = autoViewsRodrigues(room, test_file['PerspectiveCamera']['fov'])
-        # for pcam in pcams:
-        #     renderGivenPcam(pcam, test_file)
     hamilton(scenejson)
+    for t in renderThreads:
+        t.join()
+    showPcamInset(scenejson['origin'])
+    showPcamPoints(scenejson['origin'])
     return renderThreads
 
 def hamiltonNext(ndp, views, scene):
@@ -712,6 +694,7 @@ def highResRendering(dst=None):
             continue
         with open(f'./latentspace/autoview/{dst}/{jfn}') as f:
             view = json.load(f)
+        origin = view['scenejsonfile']
         with open(f'dataset/alilevel_door2021/{view["scenejsonfile"]}.json') as f:
             scenejson = json.load(f)
         scenejson["PerspectiveCamera"] = {}
@@ -720,6 +703,8 @@ def highResRendering(dst=None):
         rThread = renderGivenPcam(view, scenejson, dst=f"./latentspace/autoview/{dst}/{jfn.replace('.json', '.png')}")
         print(f'Rendering {dst} -> {jfn} ... ')
         rThread.join()
+    showPcamPoints(origin)
+    showPcamInset(origin)
 
 def sceneViewerBatch():
     pt.SAVECONFIG = False
@@ -728,7 +713,7 @@ def sceneViewerBatch():
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[201:300]
+    sjfilenames = sjfilenames[301:302]
     for sjfilename in sjfilenames:
         with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
             scenejson = json.load(f)
@@ -749,26 +734,25 @@ if __name__ == "__main__":
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-        # test_file = json.load(f)
-        # preloadAABBs(test_file)
-
-    # pcam = autoViewOnePointPerspective(test_file['rooms'][4], test_file)
-    # renderGivenPcam(pcam, test_file)
-
-    # pcam = autoViewTwoPointPerspective(test_file['rooms'][1], test_file)
-    # newDirection = balancing(pcam, test_file['rooms'][1], pcam['theta'])
-    # print(pcam['direction'], newDirection)
-    # pcam['direction'] = newDirection
-    # pcam = toOriginAndTarget(pcam)
-    # renderGivenPcam(pcam, test_file)
-    
+    # with open('./dataset/alilevel_door2021/0486afe9-e7ec-40d9-91e0-09513a96a80e.json') as f:
+    #     test_file = json.load(f)
+    #     preloadAABBs(test_file)
     # autoViewRooms(test_file)
 
-    # hamilton(test_file)
-
-    # floorplanOrthes()
-
     # sceneViewerBatch()
+
+    batchList = [
+        '028448cc-806f-4f6f-81aa-68d5824f6c02',
+        '0338bdd5-e321-467e-a998-38f2218e2fdd',
+        '03ff3349-3ab0-45fd-ae99-53da3334cb69',
+        '03a73289-5269-42b1-af4b-f30056c97c64',
+        '04940635-c251-4356-968e-3b8d9fe93a4c',
+        "03b2259c-c24b-44a9-b055-2fe85137419a",
+        '0486afe9-e7ec-40d9-91e0-09513a96a80e',
+        '02a9b734-993c-496c-99e4-6458e35f9178',
+        "05d05b98-e95c-4671-935d-7af6a1468d07",
+        "071527d1-4cb5-47a9-abd0-b1d83bd3e286"
+    ]
 
     # highResRendering('028448cc-806f-4f6f-81aa-68d5824f6c02')
     # highResRendering('0338bdd5-e321-467e-a998-38f2218e2fdd')
@@ -778,7 +762,10 @@ if __name__ == "__main__":
     # highResRendering("03b2259c-c24b-44a9-b055-2fe85137419a")
     # highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
     # highResRendering('02a9b734-993c-496c-99e4-6458e35f9178')
-    highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
+    # highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
+    # highResRendering("071527d1-4cb5-47a9-abd0-b1d83bd3e286")
+
+    insetBatch(batchList)
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 

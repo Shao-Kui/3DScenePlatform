@@ -78,7 +78,11 @@ def objmeta_by_id(id):
 def mesh(name):
     # m = orm.query_model_by_id(id)
     # return flask.send_file(json.loads(m.resources)["mesh"])
-    return flask.send_file(f'./dataset/object/{name}/{name}.obj')
+    objDir = f'./dataset/object/{name}/{name}.obj'
+    if os.path.exists(objDir):
+        return flask.send_file(objDir)
+    else:
+        return None
 
 @app.route("/thumbnail/<id>/<int:view>")
 def thumbnail(id, view):

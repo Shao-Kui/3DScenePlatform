@@ -7,6 +7,7 @@ from shapely.geometry.polygon import Polygon, LineString, Point
 
 AABBcache = {}
 ASPECT = 16 / 9
+DEFAULT_FOV = 75
 with open('./dataset/objCatListAliv2.json') as f:
     objCatList = json.load(f)
 
