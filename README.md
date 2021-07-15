@@ -146,13 +146,15 @@ If all dependencies are satisfied, our layout method can be run by clicking the 
 Our layout framework is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
 ```
 @article{ZHANG2021101104,
-  title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
-  journal = {Graphical Models},
-  pages = {101104},
-  year = {2021},
-  issn = {1524-0703},
-  doi = {https://doi.org/10.1016/j.gmod.2021.101104},
-  author = {Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang},
+title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
+journal = {Graphical Models},
+volume = {116},
+pages = {101104},
+year = {2021},
+issn = {1524-0703},
+doi = {https://doi.org/10.1016/j.gmod.2021.101104},
+url = {https://www.sciencedirect.com/science/article/pii/S1524070321000096},
+author = {Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang}
 }
 ```
 # MageAdd
