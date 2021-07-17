@@ -469,7 +469,6 @@ const cancelClickingObject3D = function(){
     // synchronize data to scene json; 
     if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true); 
     datguiObjectFolderRemove(INTERSECT_OBJ); 
-    console.log("object not intersected! ");
     $('#tab_modelid').text(" ");
     $('#tab_category').text(" ");  
     INTERSECT_OBJ = undefined; //currentRoomId = undefined;

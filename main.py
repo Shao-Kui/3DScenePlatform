@@ -263,6 +263,14 @@ atexit.register(save_online_scenes)
 def applyuuid():
     return str(uuid.uuid4())
 
+@app.route("/getSceneJsonByID/<origin>")
+def getSceneJsonByID(origin):
+    if os.path.exists(f'./dataset/alilevel_door2021/{origin}.json'):
+        return flask.send_file(f'./dataset/alilevel_door2021/{origin}.json')
+    else:
+        with open('./assets/demo.json') as f:
+            return json.load(f)
+
 def generateObjectsUUIDs(sceneJson):
     # generate uuid for each object: 
     for room in sceneJson['rooms']:

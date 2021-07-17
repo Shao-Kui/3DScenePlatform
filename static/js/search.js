@@ -225,7 +225,76 @@ const clickAutoViewPath = function(){
     });
 }
 
-var clear_panel = function () {
+const mappingHover = function(e){
+    const F = 0.65;
+    let meta = $(e.target).data("meta");
+    let image = floorPlanMapping.get(meta.identifier);
+    let mappingDisplay = document.getElementById('mappingDisplay');
+    let w, h;
+    // make the image being displayed inside the window. 
+    if($(window).height() >= $(window).width()){
+        w = $(window).width() * F;
+        h = w / (image.width / image.height);
+    }else{
+        h = $(window).height() * F;
+        w = h / (image.height / image.width)
+    }
+    image.style.height = `${h}px`;
+    image.style.width = `${w}px`;
+    mappingDisplay.style.height = `${h}px`;
+    mappingDisplay.style.width = `${w}px`;
+    mappingDisplay.style.top = `${($(window).height()-h)/2}px`;
+    mappingDisplay.style.left = `${($(window).width()-w)/2}px`;
+    mappingDisplay.appendChild(image);
+    mappingDisplay.style.display = 'inline-block';
+}
+
+const mappingLeave = function(e){
+    let mappingDisplay = document.getElementById('mappingDisplay');
+    mappingDisplay.firstChild.remove();
+    mappingDisplay.style.display = 'none';
+}
+
+const mappingClick = function(e){
+    let meta = $(e.target).data("meta");
+    $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
+        socket.emit('sceneRefresh', result, onlineGroup);
+    });
+}
+
+const floorPlanMapping = new Map();
+const clickAutoViewMapping = function(){
+    let search_url = "/autoviewMapping";
+    $.getJSON(search_url, function (searchResults) {
+        floorPlanMapping.clear();
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        searchResults.forEach(function (item) {
+            let iDiv = document.createElement('div');
+            let image = new Image();
+            image.src = `/autoviewimgs/mapping/${item.identifier}`;
+            item.imgLoaded = false;
+            image.onload = function(){
+                let w = $(window).width() * 0.10;
+                iDiv.style.width = `${w}px`;
+                iDiv.style.height = `${w / (image.width / image.height)}px`;
+                item.imgLoaded = true
+            };
+            iDiv.className = "catalogItem";
+            iDiv.style.backgroundImage = `url(/autoviewimgs/mapping/${item.identifier})`;
+            iDiv.style.backgroundSize = '100% 100%';
+            iDiv.addEventListener('mouseover', mappingHover);
+            iDiv.addEventListener('mouseout', mappingLeave);
+            iDiv.addEventListener('click', mappingClick);
+            catalogItems.appendChild(iDiv);
+            $(iDiv).data('meta', item);
+            floorPlanMapping.set(item.identifier, image);
+        });
+    });
+};
+
+const clear_panel = function(){
     Auto_Rec_Mode = false;
     document.getElementById("rec_container").style.display = "none";
     document.getElementById("record_panel").style.display = "none";
@@ -237,13 +306,12 @@ var clear_panel = function () {
     document.getElementById("rec_button").style.backgroundColor = '#007bff';
 };
 
-var searchPanelInitialization = function(){
+const searchPanelInitialization = function(){
     $("#searchbtn").click(clickTextSearchButton);
     // $("#autoView").click(clickAutoViewButton);
-    $("#autoView").click(() => {
-        socket.emit('autoView', getDownloadSceneJson(), onlineGroup); 
-    });
+    $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
+    $("#autoViewMapping").click(clickAutoViewMapping);
     /*$("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#rec_button").click(function () {

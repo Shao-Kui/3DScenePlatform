@@ -785,9 +785,25 @@ def autoviewByID():
         ret.append(pcam)
     return json.dumps(ret)
 
+@app_autoView.route('/autoviewMapping')
+def autoviewMapping():
+    imgnames = os.listdir('./sceneviewer/mapping')
+    ret = []
+    for imgname in imgnames:
+        if '.png' not in imgname:
+            continue
+        t = {}
+        t['img'] = imgname
+        t['identifier'] = imgname.split('.')[0]
+        ret.append(t)
+    return json.dumps(ret)
+
 @app_autoView.route("/autoviewimgs/<origin>/<identifier>")
 def autoviewimgs(origin, identifier):
-    return flask.send_from_directory(f'./latentspace/autoview/{origin}', identifier + '.png')
+    if origin == 'mapping':
+        return flask.send_from_directory(f'./sceneviewer/mapping', identifier + '.png')
+    else:
+        return flask.send_from_directory(f'./latentspace/autoview/{origin}', identifier + '.png')
 
 @app_autoView.route("/autoViewPath")
 def autoViewPath():

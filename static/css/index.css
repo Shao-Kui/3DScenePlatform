@@ -6,6 +6,7 @@ html, body{
 #ui{
   margin: 0; height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 #menubar{

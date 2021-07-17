@@ -691,6 +691,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		event.preventDefault();
 		scenecanvas.addEventListener('click', onClickObj);
+        cancelClickingObject3D();
 
 		// Manually set the focus since calling preventDefault above
 		// prevents the browser from setting it automatically.
