@@ -24,8 +24,13 @@
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting.css" />
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting-cells.css" />
+    <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
     <!-- our code -->
     <link rel="stylesheet" href="/static/css/index.css"/>
+    <link rel="stylesheet" href="/static/css/tiler.css"/>
     <script src="/static/js/SceneManager.js"></script>
     <script src="/static/js/drawcanvas.js"></script>
     <script src="/static/js/render.js"></script>
@@ -282,9 +287,9 @@
 
     <div id="menu2" class="radialMenu"></div>
     <div id="menu_scale" class="radialMenu"></div>
-    <div id="mappingDisplay" style="width: 0%;height: 0%;position: absolute;top: 0;left: 0;z-index: 10;display: none;pointer-events:none;">
-        <!-- <img id="mappingDisplayImg" src="autoviewimgs/mapping/0338bdd5-e321-467e-a998-38f2218e2fdd" height="10px" width="10px"/> -->
-    </div>
+    <!-- <div class="tiler" id="mappingDisplay" style="width: 0%;height: 0%;position: absolute;top: 0;left: 0;z-index: 10;display: none;pointer-events:none;">
+        <img id="mappingDisplayImg" src="/autoviewimgs/mapping/0338bdd5-e321-467e-a998-38f2218e2fdd" height="10px" width="10px"/>
+    </div> -->
 </div>
 </body>
 </html>

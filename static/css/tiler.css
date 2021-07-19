@@ -1,0 +1,66 @@
+.tiler {
+    display: inline-block;
+    cursor: pointer;
+    visibility: hidden;
+    width: 33.3%;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+
+.tiler img {
+    display: block;
+    margin: auto;
+    max-width: 100%;
+    visibility: visible;
+}
+
+.tiler .cell-grid {
+    background-position: center center;
+    margin: auto;
+    position: fixed;
+    /* top: 1em;
+    bottom: 1em;
+    left: 1em;
+    right: 1em; */
+    z-index: 10;
+    /* max-width: 1000px;
+    max-height: 600px; */
+    perspective: 30px;
+    visibility:hidden;
+}
+
+.tiler .cell {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateZ(-15px);
+    transform-style: preserve-3d;
+    transition-property: transform, opacity;
+    transition-duration: 0.5s, 0.4s;
+    transition-timing-function: cubic-bezier(0.65, 0.01, 0.15, 1.33);
+    /* The center character index */
+    --center-x: calc((var(--col-total) - 1) / 2);
+    --center-y: calc((var(--row-total) - 1) / 2);
+    /* Offset from center, positive & negative */
+    --offset-x: calc(var(--col-index) - var(--center-x));
+    --offset-y: calc(var(--row-index) - var(--center-y));
+    /* Absolute distance from center, only positive */
+    --distance-x: calc(
+        (var(--offset-x) * var(--offset-x)) / var(--center-x)
+    );
+    /* Absolute distance from center, only positive */
+    --distance-y: calc(
+        (var(--offset-y) * var(--offset-y)) / var(--center-y)
+    );
+    transition-delay: calc( 0.1s * var(--distance-y) + 0.1s * var(--distance-x) );
+}
+
+.tiler-overlay {
+    z-index: 2;
+}
+
+.tiler:hover .cell {
+    transform: scale(1);
+    opacity: 1;
+}

@@ -10,11 +10,12 @@ import pathTracing as pt
 import sk
 import time
 import os
+import networkx as nx
 from sceneviewer.constraints import theLawOfTheThird,layoutConstraint,numSeenObjs,isObjCovered
-from sceneviewer.constraints import tarWindoorArea2021,wallNormalOffset
+from sceneviewer.constraints import tarWindoorArea2021,wallNormalOffset,isObjHalfCovered,secondNearestWallDis
 from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSight
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
-from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget
+from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget,hamiltonSmooth
 from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
 
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
@@ -220,17 +221,18 @@ def probabilityOPP(h):
     # return h['numObjBeSeen'] + h['targetWallWindoorArea']
     res = 0.
     if h['isObjCovered']:
+        res -= 1
         return res
     if h['numObjBeSeen'] == 0:
         return res
     if h['wallNormalOffset'] < -0.20:
         return res
-    res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.9 + h['layoutDirection'] * 3
+    res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.6 + h['layoutDirection'] * 3
     res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
     res += h['wallNormalOffset'] * 10
     return res
 
-def groundShifting(probe, floorMeta, floorPoly, direction, theta, H):
+def groundShifting(probe, floorMeta, floorPoly, direction, theta, H, isDebug=False):
     """
     H: the height of wall. NOT the half of the height. 
     """
@@ -238,6 +240,8 @@ def groundShifting(probe, floorMeta, floorPoly, direction, theta, H):
     direction2D = np.array([direction[0], direction[2]])
     # find the wall corner with the longest diagonal in front of the probe point. 
     wallDiagIndex = findTheFrontFarestCorner(p, floorMeta, floorPoly, direction2D)
+    if isDebug:
+        print(floorMeta[wallDiagIndex])
     # calculate the direction from the probe point to 'wallDiagIndex'. 
     wallDiagTop = np.array([floorMeta[wallDiagIndex][0], H, floorMeta[wallDiagIndex][1]])
     # calculate the projected vector on the vertical visual plane. 
@@ -398,11 +402,16 @@ def autoViewOnePointPerspective(room, scene):
         h['roomTypes'] = room['roomTypes']
         h['isObjCovered'] = isObjCovered(h, scene)
         theLawOfTheThird(h, room, theta, ASPECT)
-        numSeenObjs(room, h, h['probe'], h['direction'], floorMeta, theta)
+        numSeenObjs(room, h, h['probe'] + h['direction'] * 0.02, h['direction'], floorMeta, theta)
         tarWindoorArea2021(h, scene, floorMeta, theta)
         layoutConstraint(h, room, theta)
         wallNormalOffset(h, floorMeta)
+        isObjHalfCovered(h, room)
+        secondNearestWallDis(h, floorMeta)
+        if h['wallNormalOffset'] < 0.:
+            h['probe'] += (abs(h['wallNormalOffset']) * 0.01) * h['direction']     
         toOriginAndTarget(h)
+        h['score'] = probabilityOPP(h)              
     hypotheses.sort(key=probabilityOPP, reverse=True)
     for rank, h in zip(range(0,len(hypotheses)), hypotheses):
         h['rank'] = rank
@@ -486,15 +495,23 @@ def autoViewRooms(scenejson, isPathTrancing=True):
             if thread is not None:
                 renderThreads.append(thread)
         """
-        for pcam in pcams[0:6]:
+        for index, pcam in zip(range(len(pcams)), pcams[0:6]):
+            if index > 0 and pcam['score'] < 5:
+                continue
             thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
             if thread is not None:
                 renderThreads.append(thread)
+    if not os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
+        print(f'{scenejson["origin"]} is an empty floorplan. ')
+        return []
     hamilton(scenejson)
     for t in renderThreads:
         t.join()
-    showPcamInset(scenejson['origin'])
-    showPcamPoints(scenejson['origin'])
+    try:
+        showPcamInset(scenejson['origin'])
+        showPcamPoints(scenejson['origin'])
+    except:
+        pass
     return renderThreads
 
 def hamiltonNext(ndp, views, scene):
@@ -505,10 +522,18 @@ def hamiltonNext(ndp, views, scene):
             continue
         # if np.dot(np.array(view['direction']), np.array(ndp['direction'])) <= 0:
         #     continue
-        dis = np.linalg.norm(np.array(view['probe']) - np.array(ndp['probe']), ord=2)
+        dis = np.linalg.norm(view['probe'] - ndp['probe'], ord=2)
+        if np.linalg.norm(view['probe'] - ndp['probe']) < np.linalg.norm(view['direction'] - ndp['direction']):
+            continue
+        if np.dot(view['direction'], ndp['direction']) < 0:
+            continue
         if dis < DIS:
             DIS = dis
             res = view
+    # print(
+    #     np.linalg.norm(np.array(view['probe']) - np.array(ndp['probe'])), 
+    #     np.linalg.norm(np.array(view['direction']) - np.array(ndp['direction'])),
+    #     ndp['roomId'])
     return res
 
 def hamiltonNextRoom(roomId, pre, suc, scene):
@@ -520,7 +545,6 @@ def hamiltonNextRoom(roomId, pre, suc, scene):
         return pre[roomId]
     return -1
 
-import networkx as nx
 def hamilton(scene):
     involvedRoomIds = []
     views = []
@@ -531,10 +555,11 @@ def hamilton(scene):
         with open(f'./latentspace/autoview/{scene["origin"]}/{fn}') as f:
             views.append(json.load(f))
     for view in views:
+        view['probe'] = np.array(view['probe'])
+        view['direction'] = np.array(view['direction'])
         view['isVisited'] = False
         if view['roomId'] not in involvedRoomIds:
             involvedRoomIds.append(view['roomId'])
-    print(involvedRoomIds)
     res = []
     # deciding connections of a floorplan. 
     G = nx.Graph()
@@ -567,10 +592,7 @@ def hamilton(scene):
             G.add_edge(door['roomIds'][0], door['roomIds'][1], translate=translate, direction=direction, directionToRoom=room['roomId'])
     pre = nx.dfs_predecessors(G)
     suc = nx.dfs_successors(G)
-    print(pre, suc)
     # decide the s and t which are the start point and end point respectively. 
-    # ndproom = list(nx.dfs_successors(G).keys())[0]
-    # ndproom = views[0]['roomId']
     ndproom = involvedRoomIds[0]
     roomOrder = []
     while ndproom != -1:
@@ -579,7 +601,6 @@ def hamilton(scene):
         ndproom = hamiltonNextRoom(ndproom, pre, suc, scene)
     for room in scene['rooms']:
         room['isVisited'] = False
-    print(roomOrder)
     def subPath(s):
         if s == len(roomOrder) - 1:
             return (True, s)
@@ -600,7 +621,6 @@ def hamilton(scene):
         else:
             scene['rooms'][roomOrder[i]]['isVisited'] = True
         i += 1
-    print(roomOrder)
     ndproom = roomOrder[0]
     for view in views:
         if view['roomId'] == ndproom:
@@ -627,9 +647,17 @@ def hamilton(scene):
             'target': (edge['translate'] + edge['direction']).tolist(),
             'direction': edge['direction'].tolist()
         }
+    res = redundancyRemove(res, False)
+    # res = hamiltonSmooth(res)
     with open(f'./latentspace/autoview/{scene["origin"]}/path', 'w') as f:
         json.dump(res, f, default=sk.jsonDumpsDefault)
     return res
+
+def hamiltonBatch(batchList):
+    for i in batchList:
+        with open(f'./dataset/alilevel_door2021/{i}.json') as f:
+            test_file = json.load(f)
+        hamilton(test_file)
 
 # for 3D-Front, it requires 269669 seconds. 
 def floorplanOrthes():
@@ -713,7 +741,7 @@ def sceneViewerBatch():
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[301:302]
+    sjfilenames = sjfilenames[336:400]
     for sjfilename in sjfilenames:
         with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
             scenejson = json.load(f)
@@ -727,6 +755,16 @@ def sceneViewerBatch():
         for t in renderThreads:
             t.join()
 
+def autoViewRoom(room, scenejson):
+    pt.SAVECONFIG = False
+    preloadAABBs(scenejson)
+    renderThreads = []
+    pcams = autoViewOnePointPerspective(room, scenejson)
+    for pcam in pcams:
+        thread = renderGivenPcam(pcam, scenejson.copy())
+        if thread is not None:
+            renderThreads.append(thread)
+
 if __name__ == "__main__":
     start_time = time.time()
     # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
@@ -734,12 +772,13 @@ if __name__ == "__main__":
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-    # with open('./dataset/alilevel_door2021/0486afe9-e7ec-40d9-91e0-09513a96a80e.json') as f:
-    #     test_file = json.load(f)
-    #     preloadAABBs(test_file)
-    # autoViewRooms(test_file)
+    with open('./dataset/alilevel_door2021/08892fe9-7514-4c4a-a518-ca0839ad6e0b.json') as f:
+        test_file = json.load(f)
+        preloadAABBs(test_file)
+    autoViewRooms(test_file)
 
     # sceneViewerBatch()
+    # highResRendering('03a73289-5269-42b1-af4b-f30056c97c64')
 
     batchList = [
         '028448cc-806f-4f6f-81aa-68d5824f6c02',
@@ -765,7 +804,16 @@ if __name__ == "__main__":
     # highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
     # highResRendering("071527d1-4cb5-47a9-abd0-b1d83bd3e286")
 
-    insetBatch(batchList)
+    highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
+    highResRendering('07199256-1340-4456-b395-51df1728a340')
+    highResRendering('0734ff41-9567-4c61-9fe3-3fc4a1a4c859')
+    highResRendering('07f02d16-a025-4bc4-a45d-5f487c545f49')
+    highResRendering('080c76df-0abc-48e8-a165-8c2889728cdb')
+    highResRendering('080f4008-d8fa-4c36-973e-43d105fba378')
+    highResRendering('08892fe9-7514-4c4a-a518-ca0839ad6e0b')
+
+    # insetBatch(batchList)
+    # hamiltonBatch(batchList)
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 

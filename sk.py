@@ -50,6 +50,7 @@ def load_AABB(i):
     AABB['min'][0] = np.min(mesh.vertices[:, 0]).tolist()
     AABB['min'][1] = np.min(mesh.vertices[:, 1]).tolist()
     AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
+    AABB['vertices'] = np.array(mesh.vertices)
     with open(f'./dataset/object/{i}/{i}-AABB.json', 'w') as f:
         json.dump(AABB, f)
     AABBcache[i] = AABB
@@ -91,9 +92,11 @@ def transform_a_point(point, translate, angle, scale):
     result[2] = -np.sin(angle) * scaled[0] + np.cos(angle) * scaled[2]
     return result + translate
 
-def isLineIntersectsWithEdges(line, floorMeta):
+def isLineIntersectsWithEdges(line, floorMeta, isDebug=False):
     for i in range(floorMeta.shape[0]):
         l = LineString((floorMeta[i][0:2], floorMeta[(i+1)%floorMeta.shape[0]][0:2]))
+        if isDebug:
+            print(line, l, line.crosses(l))
         if line.crosses(l):
             return True
     return False
@@ -145,6 +148,11 @@ def pointProjectedToPlane(p, normal, startPoint):
     distanceToPlane = -np.dot(p - startPoint, normal)
     projectedP = p + distanceToPlane * normal
     return projectedP
+
+def distanceToPlane(p, p1, p2, p3):
+    normal = np.cross(p2 - p1, p3 - p1)
+    normal = normal / np.linalg.norm(normal)
+    return np.dot(p - p1, normal)
 
 def rogrigues(v, k, theta):
     # returns v_rot. 

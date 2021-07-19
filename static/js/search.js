@@ -73,6 +73,7 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
 }
 
 const clickAutoViewItem = function(e){
+    cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
     let pcam = $(e.target).data("pcam");
     let direction = new THREE.Vector3(
@@ -150,12 +151,16 @@ const clickAutoViewButton = function () {
     });
 };
 
+let autoViewPathPos = gsap.timeline({repeat: 0});
+let autoViewPathTar = gsap.timeline({repeat: 0});
 const AUTOVIEWPATHSPEED = 1.;
 const clickAutoViewPath = function(){
     let search_url = "/autoViewPath?origin=" + manager.renderManager.scene_json.origin;
     $.getJSON(search_url, function (data) {
-        let autoViewPathPos = gsap.timeline({repeat: 0});
-        let autoViewPathTar = gsap.timeline({repeat: 0});
+        autoViewPathPos.kill()
+        autoViewPathTar.kill()
+        autoViewPathPos = gsap.timeline({repeat: 0});
+        autoViewPathTar = gsap.timeline({repeat: 0});
         let lastPos = undefined
         let direction = new THREE.Vector3(
             orbitControls.target.x - camera.position.x,
@@ -256,12 +261,37 @@ const mappingLeave = function(e){
 }
 
 const mappingClick = function(e){
+    autoViewPathPos.kill();
+    autoViewPathTar.kill();
     let meta = $(e.target).data("meta");
     $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
         socket.emit('sceneRefresh', result, onlineGroup);
     });
 }
 
+const addImageProcess = function(src){
+    return new Promise((resolve) => {
+        let img = new Image();
+        img.onload = () => resolve(img);
+        img.src = src;
+    })
+}
+
+const getMappingWidthHeight = function(image){
+    const F = 0.75;
+    let w, h;
+    // make the image being displayed inside the window.
+    if($(window).height() >= $(window).width()){
+        w = $(window).width() * F;
+        h = w / (image.width / image.height);
+    }else{
+        h = $(window).height() * F;
+        w = h / (image.height / image.width);
+    }
+    return [w, h]
+}
+const nrs = 1;
+const ncs = 1;
 const floorPlanMapping = new Map();
 const clickAutoViewMapping = function(){
     let search_url = "/autoviewMapping";
@@ -273,24 +303,50 @@ const clickAutoViewMapping = function(){
         searchResults.forEach(function (item) {
             let iDiv = document.createElement('div');
             let image = new Image();
-            image.src = `/autoviewimgs/mapping/${item.identifier}`;
-            item.imgLoaded = false;
             image.onload = function(){
-                let w = $(window).width() * 0.10;
-                iDiv.style.width = `${w}px`;
-                iDiv.style.height = `${w / (image.width / image.height)}px`;
-                item.imgLoaded = true
+                iDiv.style.width = `${$(window).width() * 0.10}px`;
+                iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                let wh = getMappingWidthHeight(image);
+                let w = wh[0], h = wh[1];
+                $(`#grids-${item.identifier}`).css('height', `${h}px`);
+                $(`#grids-${item.identifier}`).css('width', `${w}px`);
+                $(`#grids-${item.identifier} .cell`).css('height', `${h/nrs}px`);
+                $(`#grids-${item.identifier} .cell`).css('width', `${w/ncs}px`);
+                $(`#grids-${item.identifier}`).css('top', `${($(window).height()-h)/2}px`);
+                $(`#grids-${item.identifier}`).css('left', `${($(window).width()-w)/2}px`);
             };
+            image.src = `/autoviewimgs/mapping/${item.identifier}`;
             iDiv.className = "catalogItem";
             iDiv.style.backgroundImage = `url(/autoviewimgs/mapping/${item.identifier})`;
             iDiv.style.backgroundSize = '100% 100%';
-            iDiv.addEventListener('mouseover', mappingHover);
-            iDiv.addEventListener('mouseout', mappingLeave);
+            iDiv.style.visibility = 'visible';
+            // iDiv.addEventListener('mouseover', mappingHover);
+            // iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
+            iDiv.classList.add('tiler');
             catalogItems.appendChild(iDiv);
             $(iDiv).data('meta', item);
             floorPlanMapping.set(item.identifier, image);
         });
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(index){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta.identifier}`);
+            $(this).attr('id', `grid-${meta.identifier}`);
+            let image = floorPlanMapping.get(meta.identifier);
+            let wh = getMappingWidthHeight(image);
+            let w = wh[0], h = wh[1];
+            $(this).css('height', `${h/nrs}px`);
+            $(this).css('width', `${w/ncs}px`);
+            $(this).parent().css('height', `${h}px`);
+            $(this).parent().css('width', `${w}px`);
+        })
     });
 };
 
