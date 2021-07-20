@@ -17,6 +17,8 @@ def preloadAABBs(scene):
         for obj in room['objList']:
             if sk.objectInDataset(obj['modelId']):
                 AABB = sk.load_AABB(obj['modelId'])
+                if 'coarseSemantic' not in obj:
+                    obj['coarseSemantic'] = sk.getobjCat(obj['modelId'])
             else:
                 if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
                     AABB = obj['bbox']
@@ -200,7 +202,6 @@ def isPointOnVisualPlanes(t, probe, direction, theta, aspect=ASPECT, isDebug=Fal
 def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=False):
     if isDebug:
         print('Checking: ', obj['modelId'])
-    
     if obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
         t = np.array(obj['translate_frombb'])
     else:

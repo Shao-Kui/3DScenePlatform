@@ -435,20 +435,6 @@ var updateMousePosition = function () {
     mouse.y = -((event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1;
 }
 
-var clickCatalogItem = function (e) {
-    scene.remove(scene.getObjectByName(INSERT_NAME));
-    // avoid confictions between ordinary insertions and the auxiliary mode; 
-    if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
-    On_ADD = true;
-    scenecanvas.style.cursor = "crosshair";
-    loadObjectToCache($(e.target).attr("modelId")); 
-    INSERT_OBJ = {
-        "modelId": $(e.target).attr("objectName"),
-        "coarseSemantic": $(e.target).attr("coarseSemantic"), 
-        "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
-    };
-}
-
 var findGroundTranslation = function () {
     if (currentRoomId === undefined) {
         return;
@@ -496,7 +482,7 @@ var onClickObj = function (event) {
     }
     if (On_ADD) {
         On_ADD = false;
-        if(scene.getObjectByName(INSERT_NAME)){
+        /*if(scene.getObjectByName(INSERT_NAME)){
             let obj = scene.getObjectByName(INSERT_NAME);
             addObjectFromCache(
                 modelId=INSERT_OBJ.modelId,
@@ -508,12 +494,25 @@ var onClickObj = function (event) {
             );
             scene.remove(scene.getObjectByName(INSERT_NAME)); 
             return; 
-        }
+        }*/
+        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        addObjectFromCache(
+            modelId=INSERT_OBJ.modelId,
+            transform={
+                'translate': [p.x, p.y, p.z], 
+                'rotate': [0,0,0],
+                'scale': [1,1,1]
+            }
+        );
+        scene.remove(scene.getObjectByName(INSERT_NAME));
+        applyLayoutViewAdjust();
+        return;
     }
     if (On_MOVE) {
         On_MOVE = false;
         synchronize_json_object(INTERSECT_OBJ);
         synchronize_roomId(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
         return;
     }
     if (On_LIFT) {
@@ -529,6 +528,7 @@ var onClickObj = function (event) {
     if (On_ROTATE) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
         return;
 
     }
@@ -554,6 +554,9 @@ var onClickObj = function (event) {
             }
         );
         auxiliaryMode();
+        if(ao.userData.mageAddDerive !== "" && ao.userData.mageAddDerive){
+            if(ao.userData.mageAddDerive.includes('dom')){applyLayoutViewAdjust();}
+        }
         return; 
     }
 
@@ -728,6 +731,7 @@ const removeIntersectObject = function(){
         auxiliaryMode();
     }
     if(onlineGroup !== 'OFFLINE'){emitFunctionCall('removeObjectByUUID', [INTERSECT_OBJ.userData.key]);}
+    applyLayoutViewAdjust();
 }
 
 const onAddOff = function(){
@@ -922,7 +926,20 @@ var setting_up = function () {
         });
     });
     $("#windoor_button").click(showHide_door_mageAdd_set);
-    if(auxiliary_control) $("#auxiliary_button").click(auxiliary_control);
+    $("#auxiliary_button").click(auxiliary_control);
+    $("#layoutviewadjust_button").click(layoutviewadjust_control);
+    $("#bestview_button").click(() => {
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/bestviewroom/${currentRoomId}`,
+            data: JSON.stringify(getDownloadSceneJson()),
+            success: function (data) {
+                pcam = JSON.parse(data);
+                viewTransform(pcam)
+            }
+        });
+    });
     $("#download_button").click(function(){
         let json_to_dl = getDownloadSceneJson();
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));

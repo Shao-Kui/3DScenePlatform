@@ -2,6 +2,7 @@ import numpy as np
 from sceneviewer.utils import calCamUpVec,isObjectInSight,isPointOnVisualPlanes
 import sk
 from sk import ASPECT,getobjCat
+from shapely.geometry.polygon import Point
 
 def theLawOfTheThird(h, room, theta, aspect=ASPECT):
     """
@@ -100,6 +101,13 @@ def isObjHalfCovered(h, room):
             h['isHalfCoverd'] = True
             h['halfCoverdObj'].append(obj['modelId'])
 
+def isProbeOutside(h, floorPoly):
+    if not floorPoly.contains(Point(h['probe'][0] + h['direction'][0]*0.001, h['probe'][2] + h['direction'][0]*0.001)):
+        h['isProbeOutside'] = True
+        return True
+    h['isProbeOutside'] = False
+    return False
+
 def isObjCovered(h, scene, aspect=ASPECT):
     """
     aspect: width / height. 
@@ -118,7 +126,8 @@ def isObjCovered(h, scene, aspect=ASPECT):
         for obj in room['objList']:
             if not sk.objectInDataset(obj['modelId']):
                 continue
-            if len(sk.inside_test(h['probe'].reshape(1, 3), obj['AABB']['eightPoints'])) == 0:
+            scaledAABB = (obj['AABB']['eightPoints'] - obj['AABB']['center']) * 2. + obj['AABB']['center']
+            if len(sk.inside_test(h['probe'].reshape(1, 3), scaledAABB)) == 0:
                 h['coveredBy'] = obj['modelId']
                 h['isObjCovered'] = True
                 return True
@@ -197,12 +206,14 @@ def tarWindoorArea2021(h, scene, floorMeta, theta, isDebug=False):
     h['totalWinArea'] = totalWinArea
     h['totalDoorArea'] = totalDoorArea
 
+LAYOUTLIST = ['L-shaped Sofa', 'Kids Bed', 'King-size Bed', 'Bookcase / jewelry Armoire',
+'Wardrobe', 'Desk', 'Dressing Table', 'Drawer Chest / Corner cabinet']
 def layoutConstraint(h, room, theta, aspect=ASPECT):
     h['layoutDirection'] = 0.
     for obj in room['objList']:
         if 'coarseSemantic' not in obj:
             continue
-        if getobjCat(obj['modelId']) not in ['L-shaped Sofa', 'Kids Bed', 'King-size Bed','Wardrobe','Desk']:
+        if getobjCat(obj['modelId']) not in LAYOUTLIST:
             continue
         objDirection = np.array([np.sin(obj['orient']), np.cos(obj['orient'])])
         camDirection = np.array([h['direction'][0], h['direction'][2]])

@@ -59,6 +59,7 @@
         var Auto_Insert_Mode = false;
         var Auto_Rec_Mode = false;
         var AUXILIARY_MODE = false;
+        var LayoutViewAdjust_MODE = false;
         const AUXILIARY_NAME = 'auxiliaryObject'; 
         const INSERT_NAME = 'INSERT_ON_ADD'
         var INTERSECT_OBJ;
@@ -129,9 +130,7 @@
             </div>
             <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
                 <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-                <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
-                style="width: 9%">AuxiliaryMode
-                </button>
+                <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"style="width: 9%">AuxiliaryMode</button>
                 <button id="layout2_button" type="button" class="btn btn-lg btn-primary nav_sk_button">layout2</button>
                 <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout1</button>
                 <button id="download_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Save</button>
@@ -149,6 +148,12 @@
                         <button type="button" id="clearALL_button"
                         class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
                             ClearALL</button>
+                        <button type="button" id="layoutviewadjust_button"
+                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
+                            ViewAdjust</button>
+                        <button type="button" id="bestview_button"
+                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
+                            BestView</button>
                         <button id="autoview" type="button" 
                         class="btn btn-lg btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
                             AutoView</button>

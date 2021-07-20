@@ -1,3 +1,34 @@
+const clickCatalogItem = function (e) {
+    scene.remove(scene.getObjectByName(INSERT_NAME));
+    // avoid confictions between ordinary insertions and the auxiliary mode; 
+    if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
+    On_ADD = true;
+    scenecanvas.style.cursor = "crosshair";
+    loadObjectToCache($(e.target).attr("modelId")); 
+    INSERT_OBJ = {
+        "modelId": $(e.target).attr("objectName"),
+        "coarseSemantic": $(e.target).attr("coarseSemantic"), 
+        "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
+    };
+}
+
+const applyLayoutViewAdjust = function(){
+    if(LayoutViewAdjust_MODE && (currentRoomId)){
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/autoviewroom/${currentRoomId}`,
+            data: JSON.stringify(getDownloadSceneJson()),
+            success: function (data) {
+                pcam = JSON.parse(data);
+                console.log(pcam);
+                viewTransform(pcam)
+                manager.renderManager.scene_json.lastAutoView = pcam;
+            }
+        });
+    }
+}
+
 var clickSketchSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
@@ -72,10 +103,9 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     return [mid, midLookat]
 }
 
-const clickAutoViewItem = function(e){
+const viewTransform = function(pcam){
     cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
-    let pcam = $(e.target).data("pcam");
     let direction = new THREE.Vector3(
         orbitControls.target.x - camera.position.x,
         orbitControls.target.y - camera.position.y,
@@ -131,6 +161,11 @@ const clickAutoViewItem = function(e){
             z: pcam.target[2]
         });
     }
+}
+
+const clickAutoViewItem = function(e){
+    let pcam = $(e.target).data("pcam");
+    viewTransform(pcam);
 }
 
 const clickAutoViewButton = function () {
@@ -290,6 +325,17 @@ const getMappingWidthHeight = function(image){
     }
     return [w, h]
 }
+
+const layoutviewadjust_control = function(){
+    var layoutviewadjust_button = document.getElementById("layoutviewadjust_button");
+    LayoutViewAdjust_MODE = !LayoutViewAdjust_MODE;
+    if(LayoutViewAdjust_MODE){
+        layoutviewadjust_button.style.backgroundColor = '#9400D3';
+    }else{
+        layoutviewadjust_button.style.backgroundColor = '#43CD80';
+    }
+}
+
 const nrs = 1;
 const ncs = 1;
 const floorPlanMapping = new Map();

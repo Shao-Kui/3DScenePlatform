@@ -52,7 +52,7 @@ def load_AABB(i):
     AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
     AABB['vertices'] = np.array(mesh.vertices)
     with open(f'./dataset/object/{i}/{i}-AABB.json', 'w') as f:
-        json.dump(AABB, f)
+        json.dump(AABB, f, default=jsonDumpsDefault)
     AABBcache[i] = AABB
     return AABBcache[i]
 

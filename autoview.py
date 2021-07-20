@@ -11,7 +11,7 @@ import sk
 import time
 import os
 import networkx as nx
-from sceneviewer.constraints import theLawOfTheThird,layoutConstraint,numSeenObjs,isObjCovered
+from sceneviewer.constraints import theLawOfTheThird,layoutConstraint,numSeenObjs,isObjCovered,isProbeOutside
 from sceneviewer.constraints import tarWindoorArea2021,wallNormalOffset,isObjHalfCovered,secondNearestWallDis
 from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSight
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
@@ -220,7 +220,7 @@ def probabilityOPP(h):
     # return h['numObjBeSeen'] + h['targetWallWindoorArea'] + h['viewLength']
     # return h['numObjBeSeen'] + h['targetWallWindoorArea']
     res = 0.
-    if h['isObjCovered']:
+    if h['isObjCovered'] or h['isProbeOutside']:
         res -= 1
         return res
     if h['numObjBeSeen'] == 0:
@@ -230,6 +230,18 @@ def probabilityOPP(h):
     res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.6 + h['layoutDirection'] * 3
     res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
     res += h['wallNormalOffset'] * 10
+    return res
+
+def probabilityOPP2(h):
+    res = 0.
+    if h['isObjCovered']:
+        return res
+    if h['numObjBeSeen'] == 0:
+        return res
+    if h['wallNormalOffset'] < -0.20:
+        return res
+    res += h['numObjBeSeen'] * 1. + h['layoutDirection'] * 4
+    res += (int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])) * 2
     return res
 
 def groundShifting(probe, floorMeta, floorPoly, direction, theta, H, isDebug=False):
@@ -250,7 +262,7 @@ def groundShifting(probe, floorMeta, floorPoly, direction, theta, H, isDebug=Fal
     # apply Rogrigues Formula. 
     return sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), -direction), -theta)
 
-def autoViewOnePointPerspective(room, scene):
+def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
     """
     This function tries generate all potential views w.r.t the One-Point Perspective Rule (OPP Rule). 
     Note that several variants exist w.r.t different rules. 
@@ -408,11 +420,12 @@ def autoViewOnePointPerspective(room, scene):
         wallNormalOffset(h, floorMeta)
         isObjHalfCovered(h, room)
         secondNearestWallDis(h, floorMeta)
+        isProbeOutside(h, floorPoly)
         if h['wallNormalOffset'] < 0.:
             h['probe'] += (abs(h['wallNormalOffset']) * 0.01) * h['direction']     
         toOriginAndTarget(h)
-        h['score'] = probabilityOPP(h)              
-    hypotheses.sort(key=probabilityOPP, reverse=True)
+        h['score'] = scoreFunc(h)              
+    hypotheses.sort(key=scoreFunc, reverse=True)
     for rank, h in zip(range(0,len(hypotheses)), hypotheses):
         h['rank'] = rank
     bestViews = {
@@ -772,10 +785,10 @@ if __name__ == "__main__":
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-    with open('./dataset/alilevel_door2021/08892fe9-7514-4c4a-a518-ca0839ad6e0b.json') as f:
-        test_file = json.load(f)
-        preloadAABBs(test_file)
-    autoViewRooms(test_file)
+    # with open('./dataset/alilevel_door2021/08892fe9-7514-4c4a-a518-ca0839ad6e0b.json') as f:
+    #     test_file = json.load(f)
+    #     preloadAABBs(test_file)
+    # autoViewRooms(test_file)
 
     # sceneViewerBatch()
     # highResRendering('03a73289-5269-42b1-af4b-f30056c97c64')
@@ -804,18 +817,73 @@ if __name__ == "__main__":
     # highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
     # highResRendering("071527d1-4cb5-47a9-abd0-b1d83bd3e286")
 
-    highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
-    highResRendering('07199256-1340-4456-b395-51df1728a340')
-    highResRendering('0734ff41-9567-4c61-9fe3-3fc4a1a4c859')
-    highResRendering('07f02d16-a025-4bc4-a45d-5f487c545f49')
-    highResRendering('080c76df-0abc-48e8-a165-8c2889728cdb')
-    highResRendering('080f4008-d8fa-4c36-973e-43d105fba378')
-    highResRendering('08892fe9-7514-4c4a-a518-ca0839ad6e0b')
+    # highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
+    # highResRendering('07199256-1340-4456-b395-51df1728a340')
+    # highResRendering('0734ff41-9567-4c61-9fe3-3fc4a1a4c859')
+    # highResRendering('07f02d16-a025-4bc4-a45d-5f487c545f49')
+    # highResRendering('080c76df-0abc-48e8-a165-8c2889728cdb')
+    # highResRendering('080f4008-d8fa-4c36-973e-43d105fba378')
+    # highResRendering('08892fe9-7514-4c4a-a518-ca0839ad6e0b')
 
-    # insetBatch(batchList)
+    insetBatch(['080f4008-d8fa-4c36-973e-43d105fba378'])
     # hamiltonBatch(batchList)
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
+
+@app_autoView.route("/bestviewroom/<roomId>", methods=['POST'])
+def bestviewroom(roomId):
+    if flask.request.method == 'POST':
+        pt.SAVECONFIG = False
+        preloadAABBs(flask.request.json)
+        pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json)
+        return json.dumps(pcams[0], default=sk.jsonDumpsDefault)
+
+@app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
+def autoviewroom(roomId):
+    if flask.request.method == 'POST':
+        pt.SAVECONFIG = False
+        preloadAABBs(flask.request.json)
+        pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json, scoreFunc=probabilityOPP2)
+        """
+        index = -1
+        while abs(index) <= len(pcams) - 1:
+            if pcams[index]['isObjCovered'] or pcams[index]['isProbeOutside']:
+                index -= 1
+            else:
+                break
+        return json.dumps(pcams[index], default=sk.jsonDumpsDefault)
+        """
+        
+        if 'lastAutoView' not in flask.request.json or 'lastFlag' not in flask.request.json['lastAutoView']:
+            pcams[0]['lastFlag'] = True
+            return json.dumps(pcams[0], default=sk.jsonDumpsDefault)
+        lastFlag = flask.request.json['lastAutoView']['lastFlag']
+        if lastFlag:
+            index = -1
+            while abs(index) <= len(pcams) - 1:
+                if pcams[index]['isObjCovered'] or pcams[index]['isProbeOutside']:
+                    index -= 1
+                else:
+                    break
+            res = pcams[-1]
+        else:
+            res = pcams[0]
+        res['lastFlag'] = not lastFlag
+        return json.dumps(res, default=sk.jsonDumpsDefault)
+        """
+        if 'lastAutoView' not in flask.request.json:
+             return json.dumps(pcams[0], default=sk.jsonDumpsDefault)
+        else:
+            for pcam in pcams:
+                if pcam['type'] != flask.request.json['lastAutoView']['type']:
+                    return json.dumps(pcam, default=sk.jsonDumpsDefault)
+                if pcam['type'] == 'twoWallPerspective':
+                    if pcam['wallDiagIndex'] != flask.request.json['lastAutoView']['wallDiagIndex']:
+                        return json.dumps(pcam, default=sk.jsonDumpsDefault)
+                else:
+                    if pcam['wallIndex'] != flask.request.json['lastAutoView']['wallIndex']:
+                        return json.dumps(pcam, default=sk.jsonDumpsDefault)
+        """
 
 @app_autoView.route("/autoviewByID")
 def autoviewByID():
