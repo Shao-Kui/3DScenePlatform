@@ -60,7 +60,7 @@ def getWallHeight(meshPath):
     mesh = as_mesh(trimesh.load(meshPath))
     return np.max(mesh.vertices[:, 1]).tolist()
 
-def getMeshVertices(methPath):
+def getMeshVertices(meshPath):
     mesh = as_mesh(trimesh.load(meshPath))
     return mesh.vertices
 

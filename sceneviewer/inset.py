@@ -4,26 +4,53 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
-import shutil
+import sys
+sys.path.append('..')
+import sk
+from projection2d import processGeo as p2d, getobjCat
 
 DATASET_ROOT = './dataset'
 LATENTSPACE = './latentspace'
+
+def getBBox(scenejson):
+    points = []
+    for room in scenejson['rooms']:
+        try:
+            floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+            points += floorMeta[:, 0:2].tolist()
+            wallMeta = sk.getMeshVertices('./dataset/room/{}/{}w.obj'.format(room['origin'], room['modelId']))
+            points += wallMeta[:, [0, 2]].tolist()
+        except:
+            continue
+    v = np.array(points)
+    l = np.min(v[:, 0])
+    r = np.max(v[:, 0])
+    u = np.min(v[:, 1])
+    d = np.max(v[:, 1])
+    return ([l, u], [r, d])
+
+def trimWhiteSpace(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    crop_rows = img[~np.all(gray == 255, axis=1), :]
+    cropped_image = crop_rows[:, ~np.all(gray == 255, axis=0)]
+    return cropped_image.copy()
 
 def showPcamInset(origin):
     maxImgPerRoom = 3
 
     with open(f'{DATASET_ROOT}/alilevel_door2021/{origin}.json') as f:
         scenejson = json.load(f)
-    lb = scenejson['bbox']['min']
-    ub = scenejson['bbox']['max']
+
+    lb, ub = getBBox(scenejson)
 
     orthImg = cv2.imread(f'{DATASET_ROOT}/alilevel_door2021_orth/{origin}.png')
+    orthImg = trimWhiteSpace(orthImg)
     orthImgHeight, orthImgWidth = orthImg.shape[:2]
 
     xcenter = orthImgWidth / 2
     zcenter = orthImgHeight / 2
     xscale = orthImgWidth / (ub[0] - lb[0])
-    zscale = orthImgHeight / (ub[2] - lb[2])
+    zscale = orthImgHeight / (ub[1] - lb[1])
 
     room = {}
     for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
@@ -38,7 +65,7 @@ def showPcamInset(origin):
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
-        z = int((ub[2] - pcam['probe'][2]) * zscale)
+        z = int((ub[1] - pcam['probe'][2]) * zscale)
         roomId = pcam['roomId']
         if roomId not in room:
             room[roomId] = [{'identifier': identifier, 'pos': [x, z]}]
@@ -57,10 +84,9 @@ def showPcamInset(origin):
                 vertices = hull.vertices
             except:
                 # 共綫
-                r = room[roomId].copy()
-                room[roomId] = sorted(r, key=lambda k: tuple(k['pos']))
+                room[roomId] = sorted(room[roomId], key=lambda k: tuple(k['pos']))
                 vertices = np.arange(len(room[roomId]))
-            if len(hull.vertices) > maxImgPerRoom:
+            if len(vertices) > maxImgPerRoom:
                 pcamlist = []
                 k = len(vertices) / maxImgPerRoom
                 for i in range(maxImgPerRoom):
@@ -199,22 +225,22 @@ def showPcamInset(origin):
     stride = np.array([0, w+margin])
     resultImg, zpad, xpad = pasteImg(bottomlist, startpos, stride, [0, w/2])
 
+    resultImg = trimWhiteSpace(resultImg)
     """
         Shao-Kui has changed the dir from f'{origin}.png' to:
     """
     cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamInset.png', resultImg)
-    plt.imshow(resultImg)
 
 
 def showPcamPoints(origin):
     with open(f'{DATASET_ROOT}/alilevel_door2021/{origin}.json') as f:
         scenejson = json.load(f)
-    lb = scenejson['bbox']['min']
-    ub = scenejson['bbox']['max']
+    lb, ub = getBBox(scenejson)
 
     orthImg = cv2.imread(f'{DATASET_ROOT}/alilevel_door2021_orth/{origin}.png')
+    orthImg = trimWhiteSpace(orthImg)
     xscale = orthImg.shape[1] / (ub[0] - lb[0])
-    zscale = orthImg.shape[0] / (ub[2] - lb[2])
+    zscale = orthImg.shape[0] / (ub[1] - lb[1])
 
     for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
         if not filename.endswith(r'.json'):
@@ -228,14 +254,13 @@ def showPcamPoints(origin):
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
-        z = int((ub[2] - pcam['probe'][2]) * zscale)
+        z = int((ub[1] - pcam['probe'][2]) * zscale)
         cv2.circle(orthImg, (x, z), 5, (0, 0, 0), -1)
 
     """
         Shao-Kui has changed the dir from f'pp_{origin}.png' to:
     """
     cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamPoints.png', orthImg)
-    plt.imshow(orthImg)
 
 def insetBatch(origins):
     for origin in origins:
