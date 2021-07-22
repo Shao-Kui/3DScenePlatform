@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
+import shutil
 import sys
 sys.path.append('..')
 import sk
