@@ -887,15 +887,31 @@ var setting_up = function () {
     // adding the `stats` panel for monitoring FPS; 
     stats = new Stats();
     stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-    stats.dom.style.top = '5%'
-    stats.dom.style.left = '25%'
+    // stats.dom.style.top = '5%'
+    // stats.dom.style.left = '25%'
+    stats.dom.style.position = "absolute";
     document.getElementById('scene').appendChild(stats.dom);
 
     // adding the `dat.gui` panel for modifying objects; 
     datgui = new dat.GUI(); // this initialization only conducts once; 
     datgui.domElement.style.marginRight = "0px"
-    datgui.domElement.parentElement.style.top = "5%"; 
+    datgui.domElement.parentElement.style.top = "0%"; 
     datgui.domElement.parentElement.style.right = "0%"; 
+    datgui.domElement.parentElement.style.position = "absolute";
+    document
+      .getElementById("uibody")
+      .appendChild(datgui.domElement.parentElement);
+
+    autocollapse("#menubar", 52);
+    $(window).on("resize", function () {
+      autocollapse("#menubar", 52);
+    });
+    $("#sidebar").on("shown.bs.collapse", function () {
+      autocollapse("#menubar", 52);
+    });
+    $("#sidebar").on("hidden.bs.collapse", function () {
+      autocollapse("#menubar", 52);
+    });
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
@@ -987,4 +1003,44 @@ var setting_up = function () {
     }
 
     gameLoop();
+};
+
+var autocollapse = function (menu, maxHeight) {
+  var nav = $(menu);
+  var navHeight = nav.innerHeight();
+  var menuBtns = $("#menuBtns");
+  if (navHeight >= maxHeight) {
+    $("#sidebar_button").removeClass("mr-auto").addClass("mr-5");
+
+    var ct = 10;
+    while (navHeight > maxHeight) {
+      ct = ct + 1;
+      //  add child to dropdown
+      var children = menuBtns.children("button");
+      var count = children.length;
+      $(children[count - 1])
+        .removeClass("mx-2 btn-lg")
+        .addClass("my-1 nav_sk_button");
+      $(children[count - 1]).prependTo(menu + " .dropdown-menu");
+      navHeight = nav.innerHeight();
+    }
+
+    $("#sidebar_button").removeClass("mr-5").addClass("mr-auto");
+  } else {
+    var collapsed = $(menu + " .dropdown-menu").children(menu + " button");
+
+    var ct = 20;
+    while (navHeight < maxHeight && collapsed.length > 6) {
+      ct = ct + 1;
+      //  remove child from dropdown
+      $(collapsed[0]).removeClass("my-1 nav_sk_button").addClass("mx-2 btn-lg");
+      $(collapsed[0]).appendTo(menuBtns);
+      navHeight = nav.innerHeight();
+      collapsed = $(menu + " .dropdown-menu").children("button");
+    }
+
+    if (navHeight > maxHeight) {
+      autocollapse(menu, maxHeight);
+    }
+  }
 };

@@ -1,6 +1,7 @@
 <html>
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- 3rd party libraries -->
     <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
     <script src="/static/3rdparty/tf.min37.js"></script>
@@ -21,16 +22,31 @@
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
-    <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
-    <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"
+    />
 
-    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting.css" />
-    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting-cells.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/splitting/dist/splitting.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/splitting/dist/splitting-cells.css"
+    />
     <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
     <!-- our code -->
-    <link rel="stylesheet" href="/static/css/index.css"/>
-    <link rel="stylesheet" href="/static/css/tiler.css"/>
+    <link rel="stylesheet" href="/static/css/index.css" />
+    <link rel="stylesheet" href="/static/css/tiler.css" />
     <script src="/static/js/SceneManager.js"></script>
     <script src="/static/js/drawcanvas.js"></script>
     <script src="/static/js/render.js"></script>
@@ -44,166 +60,148 @@
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script>
-        //Global state & variables! Careful!
-        var ALL_SCENE_READY = false;
-        var On_MOVE = false;
-        var On_ROTATE = false;
-        var On_LIFT = false;
-        var On_ADD = false;
-        var On_SCALE = false;
-        var On_xSCALE = false;
-        var On_ySCALE = false;
-        var On_zSCALE = false;
-        var On_Orth_MOVE = false;
-        var isToggle = false;
-        var Auto_Insert_Mode = false;
-        var Auto_Rec_Mode = false;
-        var AUXILIARY_MODE = false;
-        var LayoutViewAdjust_MODE = false;
-        const AUXILIARY_NAME = 'auxiliaryObject'; 
-        const INSERT_NAME = 'INSERT_ON_ADD'
-        var INTERSECT_OBJ;
-        var INSERT_OBJ;
+      //Global state & variables! Careful!
+      var ALL_SCENE_READY = false;
+      var On_MOVE = false;
+      var On_ROTATE = false;
+      var On_LIFT = false;
+      var On_ADD = false;
+      var On_SCALE = false;
+      var On_xSCALE = false;
+      var On_ySCALE = false;
+      var On_zSCALE = false;
+      var On_Orth_MOVE = false;
+      var isToggle = false;
+      var Auto_Insert_Mode = false;
+      var Auto_Rec_Mode = false;
+      var AUXILIARY_MODE = false;
+      var LayoutViewAdjust_MODE = false;
+      const AUXILIARY_NAME = "auxiliaryObject";
+      const INSERT_NAME = "INSERT_ON_ADD";
+      var INTERSECT_OBJ;
+      var INSERT_OBJ;
 
-        //Global variables, will be initialize only once.
-        var manager;
-        var menu;
-        var radial;
-        var radial_scale; 
-        var renderer;
-        var camera;
-        var scene;
-        var orbitControls;
+      //Global variables, will be initialize only once.
+      var manager;
+      var menu;
+      var radial;
+      var radial_scale;
+      var renderer;
+      var camera;
+      var scene;
+      var orbitControls;
 
-        var mouse = new THREE.Vector2();
-        var orthmouse = new THREE.Vector2();
-        var raycaster = new THREE.Raycaster();
-        var scenecanvas;
-        var orthcanvas;
-        var drawingCanvas;
-        var catalogItems;
-        var paint = false;
-        var drawStartPos = new THREE.Vector2();
-        var searchResults;
-        var currentRoomId;
-        var orthline;
+      var mouse = new THREE.Vector2();
+      var orthmouse = new THREE.Vector2();
+      var raycaster = new THREE.Raycaster();
+      var scenecanvas;
+      var orthcanvas;
+      var drawingCanvas;
+      var catalogItems;
+      var paint = false;
+      var drawStartPos = new THREE.Vector2();
+      var searchResults;
+      var currentRoomId;
+      var orthline;
 
-        var skyBox;
-        var lx_level;
-        var lz_level;
-        var renderTime = 0.6; 
-        var axis; 
+      var skyBox;
+      var lx_level;
+      var lz_level;
+      var renderTime = 0.6;
+      var axis;
 
-        var latent_space_mode;
+      var latent_space_mode;
 
-        var stats;
-        var datgui; 
-        var datgui_intersectfolder; 
+      var stats;
+      var datgui;
+      var datgui_intersectfolder;
 
-        // this variable is used for determining the collaborative group a user belonging to; 
-        const onlineGroup = "{{ onlineGroup }}";
-        const onlineUserID = "{{ serverGivenUserID }}";
-        const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
+      // this variable is used for determining the collaborative group a user belonging to;
+      const onlineGroup = "{{ onlineGroup }}";
+      const onlineUserID = "{{ serverGivenUserID }}";
+      const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
 
-        $(document).ready(function () {
-            latent_space_mode = false;
-            manager = new SceneController($("#ui")[0]);
-            renderer = manager.renderManager.renderer;
-            camera = manager.renderManager.camera;
-            scene = manager.renderManager.scene;
+      $(document).ready(function () {
+        latent_space_mode = false;
+        manager = new SceneController($("#ui")[0]);
+        renderer = manager.renderManager.renderer;
+        camera = manager.renderManager.camera;
+        scene = manager.renderManager.scene;
 
-            scenecanvas = document.getElementById('scenecanvas');
-            orthcanvas = document.getElementById('orthcanvas');
-            catalogItems = document.getElementById("catalogItems");
-            drawingCanvas = document.getElementById('drawing-canvas');
-            setting_up();
-        })
-
+        scenecanvas = document.getElementById("scenecanvas");
+        orthcanvas = document.getElementById("orthcanvas");
+        catalogItems = document.getElementById("catalogItems");
+        drawingCanvas = document.getElementById("drawing-canvas");
+        setting_up();
+      });
     </script>
-</head>
-<body>
-<div id="ui">
-    <nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light" style="overflow: visible;">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand">Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a>
-            </div>
-            <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
-                <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-                <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"style="width: 9%">AuxiliaryMode</button>
-                <button id="layout2_button" type="button" class="btn btn-lg btn-primary nav_sk_button">layout2</button>
-                <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout1</button>
-                <button id="download_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Save</button>
-                <button id="screenshot" type="button" class="btn btn-lg btn-primary nav_sk_button">Render</button>
-                <button id="axis_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Axis</button>
-                <div class="btn-group" style="float:right;width: 4%;">
-                    <button type="button" id="utils_button" class="btn btn-lg btn-primary nav_sk_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Utils<span class="caret"></span></button>
-                    <ul class="dropdown-menu" style="text-align: center;">
-                        <button type="button" id="windoor_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            WinDoor</button>
-                        <button type="button" id="clear_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            Clear</button>
-                        <button type="button" id="clearALL_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            ClearALL</button>
-                        <button type="button" id="layoutviewadjust_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            ViewAdjust</button>
-                        <button type="button" id="bestview_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            BestView</button>
-                        <button id="autoview" type="button" 
-                        class="btn btn-lg btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            AutoView</button>
-                    </ul>
-                </div>
-                <a id="downloadAnchorElem" style="display:none"></a>
-            </div>
-        </div>
-    </nav>
+  </head>
+  <body>
+    <div id="ui">
+      <div class="collapse show" id="sidebar">
+        <div id="retrieve" class="bg-dark text-white" align="center">
+          <!-- <div class="card-body">
+            <h3 class="card-title">3D Scene Platform</h3>
+          </div> -->
+          <div
+            style="
+              position: fixed;
+              bottom: 0%;
+              width: inherit;
+              min-width: 270px;
+            "
+          >
+            <a class="text-muted" style="overflow-wrap: break-word"
+              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
+            >
+          </div>
+          <div class="card-body bg-dark">
+            <a
+              class="dropdown-toggle h3"
+              role="button"
+              href="#sceneInfo"
+              data-toggle="collapse"
+              aria-expanded="false"
+              aria-controls="sceneInfo"
+              >3D Scene Platform</a
+            >
+          </div>
+          <table class="collapse table table-dark" id="sceneInfo">
+            <tbody>
+              <tr>
+                <th scope="row">Level</th>
+                <td colspan="3" id="tab_origin"></td>
+              </tr>
+              <tr>
+                <th scope="row">Room ID</th>
+                <td id="tab_roomid"></td>
+                <th>Room Type</th>
+                <td id="tab_roomtype"></td>
+              </tr>
+              <tr>
+                <th scope="row">Model ID</th>
+                <td id="tab_modelid"></td>
+                <th>Category</th>
+                <td id="tab_category"></td>
+              </tr>
+              <tr>
+                <th scope="row">AuxObj</th>
+                <td colspan="3" id="tab_auxobj"></td>
+              </tr>
+              <tr>
+                <th scope="row">AuxDom</th>
+                <td colspan="3" id="tab_auxdom">ALL</td>
+              </tr>
+              <tr>
+                <th scope="row">FPSavg</th>
+                <td id="tab_FPSavg"></td>
+                <th>Min-Max</th>
+                <td id="tab_minmax"></td>
+              </tr>
+            </tbody>
+          </table>
 
-    <div id="uibody">
-        <div id="retrieve" align="center">
-            <div class="card-header">
-                <h4 class="my-0 font-weight-normal">3D Scene Platform</h4>
-            </div>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <th scope="row">Level</th>
-                        <td colspan="3" id="tab_origin"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Room ID</th>
-                        <td id="tab_roomid"></td>
-                        <th>Room Type</th>
-                        <td id="tab_roomtype"></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Model ID</th>
-                        <td id="tab_modelid"> </td>
-                        <th>Category</th>
-                        <td id="tab_category"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">AuxObj</th>
-                        <td colspan="3" id="tab_auxobj"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">AuxDom</th>
-                        <td colspan="3" id="tab_auxdom">ALL</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">FPSavg</th>
-                        <td id="tab_FPSavg"> </td>
-                        <th>Min-Max</th>
-                        <td id="tab_minmax"> </td>
-                    </tr>
-                </tbody>
-            </table>
-            <!--div class="card-body">
+          <!--div class="card-body">
                 <button id="text_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
                 <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch
                 </button>
@@ -234,25 +232,113 @@
                     Collaborative Search
                 </button>
             </div-->
-            <div class="card-body">
-                <button id="autoView" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">SceneViewer</button>
-                <button id="autoViewPath" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">AutoPath</button>
-                <button id="autoViewMapping" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">Mapping</button>
-            </div>
-            <div>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">双人床</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">茶几</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">餐桌</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">小圆桌</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">梳妆台</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">衣柜</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">电视柜</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">沙发</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">椅子</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">储物柜</button>
-            </div>
-            <div id="collaborative_container">
-                <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
+          <div class="py-1 px-0">
+            <button
+              id="autoView"
+              type="button"
+              class="btn btn-lg btn-outline-light m-1"
+            >
+              SceneViewer
+            </button>
+            <button
+              id="autoViewPath"
+              type="button"
+              class="btn btn-lg btn-outline-light m-1"
+            >
+              AutoPath
+            </button>
+            <button
+              id="autoViewMapping"
+              type="button"
+              class="btn btn-lg btn-outline-light m-1"
+            >
+              Mapping
+            </button>
+          </div>
+          <div class="py-1 px-0">
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              双人床
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              茶几
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              餐桌
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              小圆桌
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              梳妆台
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              衣柜
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              电视柜
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              沙发
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              椅子
+            </button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-light rapidSearch m-1"
+              style="margin-bottom: 3px"
+            >
+              储物柜
+            </button>
+          </div>
+          <div id="collaborative_container">
+            <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
                 <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
                      style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
                     <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
@@ -264,38 +350,203 @@
                         Sketch Clear
                     </button>
                 </div-->
-                <div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
-                    <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
-                           style="width:75%;margin-left:5%;" id="searchinput">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
-                </div>
+            <div
+              class="form-inline mt-2 mt-md-0"
+              style="width: 100%; padding-top: 10px; padding-bottom: 10px"
+            >
+              <input
+                class="form-control mr-sm-2"
+                type="text"
+                placeholder="Search"
+                aria-label="Search"
+                style="width: 75%; margin-left: 5%"
+                id="searchinput"
+              />
+              <button
+                class="btn btn-outline-success my-2 my-sm-0"
+                type="submit"
+                id="searchbtn"
+              >
+                Search
+              </button>
             </div>
-            <div id="rec_container" style="display: none;">
-            </div>
-            <div id="catalogItems" class="catalogSectionContent" align="center"></div>
+            <!-- <form class="navbar-form navbar-left" action="/action_page.php">
+                    <div class="input-group">
+                        <input id="searchinput" type="text" class="form-control" placeholder="Search" name="search">
+                        <div class="input-group-btn">
+                            <button id="searchbtn" class="btn btn-default btn-outline-light" type="submit">
+                            <i class="glyphicon glyphicon-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form> -->
+          </div>
+          <div id="rec_container" style="display: none"></div>
+          <div
+            id="catalogItems"
+            class="catalogSectionContent"
+            align="center"
+          ></div>
         </div>
+      </div>
+      <div id="content">
+        <nav
+          id="menubar"
+          class="navbar navbar-expand-lg navbar-dark bg-dark py-3"
+        >
+          <button
+            class="btn btn-lg mr-auto"
+            id="sidebar_button"
+            type="button"
+            data-toggle="collapse"
+            data-target="#sidebar"
+            aria-controls="sidebar"
+            aria-expanded="true"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
 
-        <div id="scene">
+          <div id="menuBtns">
+            <button
+              id="load_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Load
+            </button>
+            <button
+              id="auxiliary_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              AuxiliaryMode
+            </button>
+
+            <button
+              id="layout2_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              layout2
+            </button>
+
+            <button
+              id="sklayout"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Layout1
+            </button>
+
+            <button
+              id="download_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Save
+            </button>
+            <button
+              id="screenshot"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Render
+            </button>
+            <button
+              id="axis_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Axis
+            </button>
+          </div>
+
+          <div class="dropdown">
+            <button
+              type="button"
+              id="utils_button"
+              class="btn btn-lg btn-outline-light dropdown-toggle mx-2"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Utils<span class="caret"></span>
+            </button>
+            <div
+              class="dropdown-menu bg-dark dropdown-menu-right"
+              aria-labelledby="utils_button"
+              style="text-align: center"
+            >
+              <button
+                type="button"
+                id="windoor_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                WinDoor
+              </button>
+              <button
+                type="button"
+                id="clear_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                id="clearALL_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                ClearALL
+              </button>
+              <button
+                type="button"
+                id="layoutviewadjust_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                ViewAdjust
+              </button>
+              <button
+                type="button"
+                id="bestview_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                BestView
+              </button>
+              <button
+                id="autoview"
+                type="button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                AutoView
+              </button>
+            </div>
+          </div>
+          <a id="downloadAnchorElem" style="display: none"></a>
+        </nav>
+
+        <div id="uibody">
+          <div id="scene">
             <canvas id="scenecanvas"></canvas>
             <canvas id="orthcanvas"></canvas>
+          </div>
         </div>
-    </div>
-
-    <div id="load_dialog" class="dialog" title="Load Scene File">
+      </div>
+      <div id="load_dialog" class="dialog" title="Load Scene File">
         <div class="form-group">
-            <label for="load_dialog_input">LoadFile</label>
-            <input type="file" class="form-control-file" id="load_dialog_input">
+          <label for="load_dialog_input">LoadFile</label>
+          <input type="file" class="form-control-file" id="load_dialog_input" />
         </div>
-        <button type="button" class="btn btn-primary" id="load_dialog_button">载入</button>
-    </div>
+        <button type="button" class="btn btn-primary" id="load_dialog_button">
+          载入
+        </button>
+      </div>
 
-
-    <div id="menu2" class="radialMenu"></div>
-    <div id="menu_scale" class="radialMenu"></div>
-    <!-- <div class="tiler" id="mappingDisplay" style="width: 0%;height: 0%;position: absolute;top: 0;left: 0;z-index: 10;display: none;pointer-events:none;">
+      <div id="menu2" class="radialMenu"></div>
+      <div id="menu_scale" class="radialMenu"></div>
+      <!-- <div class="tiler" id="mappingDisplay" style="width: 0%;height: 0%;position: absolute;top: 0;left: 0;z-index: 10;display: none;pointer-events:none;">
         <img id="mappingDisplayImg" src="/autoviewimgs/mapping/0338bdd5-e321-467e-a998-38f2218e2fdd" height="10px" width="10px"/>
     </div> -->
-</div>
-</body>
+    </div>
+  </body>
 </html>
-
