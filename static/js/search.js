@@ -332,7 +332,7 @@ const layoutviewadjust_control = function(){
     if(LayoutViewAdjust_MODE){
         layoutviewadjust_button.style.backgroundColor = '#9400D3';
     }else{
-        layoutviewadjust_button.style.backgroundColor = '#43CD80';
+        layoutviewadjust_button.style.backgroundColor = 'transparent';
     }
 }
 
@@ -414,6 +414,12 @@ const searchPanelInitialization = function(){
     $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
+    $("#floorPlanbtn").click(() => {
+        let origin = document.getElementById("searchinput").value;
+        $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
+            socket.emit('sceneRefresh', result, onlineGroup);
+        });
+    })
     /*$("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#rec_button").click(function () {

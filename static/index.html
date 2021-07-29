@@ -22,27 +22,11 @@
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"
-    />
-
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/splitting/dist/splitting.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/splitting/dist/splitting-cells.css"
-    />
+    <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting-cells.css"/>
     <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
     <!-- our code -->
     <link rel="stylesheet" href="/static/css/index.css" />
@@ -60,80 +44,80 @@
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script>
-      //Global state & variables! Careful!
-      var ALL_SCENE_READY = false;
-      var On_MOVE = false;
-      var On_ROTATE = false;
-      var On_LIFT = false;
-      var On_ADD = false;
-      var On_SCALE = false;
-      var On_xSCALE = false;
-      var On_ySCALE = false;
-      var On_zSCALE = false;
-      var On_Orth_MOVE = false;
-      var isToggle = false;
-      var Auto_Insert_Mode = false;
-      var Auto_Rec_Mode = false;
-      var AUXILIARY_MODE = false;
-      var LayoutViewAdjust_MODE = false;
-      const AUXILIARY_NAME = "auxiliaryObject";
-      const INSERT_NAME = "INSERT_ON_ADD";
-      var INTERSECT_OBJ;
-      var INSERT_OBJ;
+        //Global state & variables! Careful!
+        var ALL_SCENE_READY = false;
+        var On_MOVE = false;
+        var On_ROTATE = false;
+        var On_LIFT = false;
+        var On_ADD = false;
+        var On_SCALE = false;
+        var On_xSCALE = false;
+        var On_ySCALE = false;
+        var On_zSCALE = false;
+        var On_Orth_MOVE = false;
+        var isToggle = false;
+        var Auto_Insert_Mode = false;
+        var Auto_Rec_Mode = false;
+        var AUXILIARY_MODE = false;
+        var LayoutViewAdjust_MODE = false;
+        const AUXILIARY_NAME = "auxiliaryObject";
+        const INSERT_NAME = "INSERT_ON_ADD";
+        var INTERSECT_OBJ;
+        var INSERT_OBJ;
 
-      //Global variables, will be initialize only once.
-      var manager;
-      var menu;
-      var radial;
-      var radial_scale;
-      var renderer;
-      var camera;
-      var scene;
-      var orbitControls;
+        //Global variables, will be initialize only once.
+        var manager;
+        var menu;
+        var radial;
+        var radial_scale;
+        var renderer;
+        var camera;
+        var scene;
+        var orbitControls;
 
-      var mouse = new THREE.Vector2();
-      var orthmouse = new THREE.Vector2();
-      var raycaster = new THREE.Raycaster();
-      var scenecanvas;
-      var orthcanvas;
-      var drawingCanvas;
-      var catalogItems;
-      var paint = false;
-      var drawStartPos = new THREE.Vector2();
-      var searchResults;
-      var currentRoomId;
-      var orthline;
+        var mouse = new THREE.Vector2();
+        var orthmouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
+        var scenecanvas;
+        var orthcanvas;
+        var drawingCanvas;
+        var catalogItems;
+        var paint = false;
+        var drawStartPos = new THREE.Vector2();
+        var searchResults;
+        var currentRoomId;
+        var orthline;
 
-      var skyBox;
-      var lx_level;
-      var lz_level;
-      var renderTime = 0.6;
-      var axis;
+        var skyBox;
+        var lx_level;
+        var lz_level;
+        var renderTime = 0.6;
+        var axis;
 
-      var latent_space_mode;
+        var latent_space_mode;
 
-      var stats;
-      var datgui;
-      var datgui_intersectfolder;
+        var stats;
+        var datgui;
+        var datgui_intersectfolder;
 
-      // this variable is used for determining the collaborative group a user belonging to;
-      const onlineGroup = "{{ onlineGroup }}";
-      const onlineUserID = "{{ serverGivenUserID }}";
-      const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
+        // this variable is used for determining the collaborative group a user belonging to;
+        const onlineGroup = "{{ onlineGroup }}";
+        const onlineUserID = "{{ serverGivenUserID }}";
+        const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
 
-      $(document).ready(function () {
-        latent_space_mode = false;
-        manager = new SceneController($("#ui")[0]);
-        renderer = manager.renderManager.renderer;
-        camera = manager.renderManager.camera;
-        scene = manager.renderManager.scene;
+        $(document).ready(function () {
+            latent_space_mode = false;
+            manager = new SceneController($("#ui")[0]);
+            renderer = manager.renderManager.renderer;
+            camera = manager.renderManager.camera;
+            scene = manager.renderManager.scene;
 
-        scenecanvas = document.getElementById("scenecanvas");
-        orthcanvas = document.getElementById("orthcanvas");
-        catalogItems = document.getElementById("catalogItems");
-        drawingCanvas = document.getElementById("drawing-canvas");
-        setting_up();
-      });
+            scenecanvas = document.getElementById("scenecanvas");
+            orthcanvas = document.getElementById("orthcanvas");
+            catalogItems = document.getElementById("catalogItems");
+            drawingCanvas = document.getElementById("drawing-canvas");
+            setting_up();
+        });
     </script>
   </head>
   <body>
@@ -261,81 +245,61 @@
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              双人床
-            </button>
+            >双人床</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              茶几
-            </button>
+            >茶几</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              餐桌
-            </button>
+            >餐桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              小圆桌
-            </button>
+            >小圆桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              梳妆台
-            </button>
+            >梳妆台</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              衣柜
-            </button>
+            >衣柜</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              电视柜
-            </button>
+            >电视柜</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              沙发
-            </button>
+            >沙发</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              椅子
-            </button>
+            >椅子</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-light rapidSearch m-1"
               style="margin-bottom: 3px"
-            >
-              储物柜
-            </button>
+            >储物柜</button>
           </div>
           <div id="collaborative_container">
             <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
@@ -366,9 +330,13 @@
                 class="btn btn-outline-success my-2 my-sm-0"
                 type="submit"
                 id="searchbtn"
-              >
-                Search
-              </button>
+              >Object</button>
+              <button
+                class="btn btn-outline-success my-2 my-sm-0"
+                type="submit"
+                id="floorPlanbtn"
+              >FloorPlan</button>
+
             </div>
             <!-- <form class="navbar-form navbar-left" action="/action_page.php">
                     <div class="input-group">
@@ -421,14 +389,6 @@
               class="btn btn-lg btn-outline-light mx-2"
             >
               AuxiliaryMode
-            </button>
-
-            <button
-              id="layout2_button"
-              type="button"
-              class="btn btn-lg btn-outline-light mx-2"
-            >
-              layout2
             </button>
 
             <button
@@ -519,6 +479,13 @@
                 class="btn btn-outline-light my-1 nav_sk_button"
               >
                 AutoView
+              </button>
+              <button
+                id="layout2_button"
+                type="button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                layout2
               </button>
             </div>
           </div>
