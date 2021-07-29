@@ -18,6 +18,7 @@
     <script src="/static/3rdparty/three.js-r103/OBJLoader2.js"></script>
     <script src="/static/3rdparty/three.js-r103/TGALoader.js"></script>
     <script src="/static/3rdparty/three.js-r103/OrbitControls.js"></script>
+    <script src="/static/3rdparty/three.js-r103/PointerLockControls.js"></script>
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
@@ -74,6 +75,8 @@
         var camera;
         var scene;
         var orbitControls;
+        var firstPersonControls;
+        var fpCtrlMode = false;
 
         var mouse = new THREE.Vector2();
         var orthmouse = new THREE.Vector2();

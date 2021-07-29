@@ -266,6 +266,7 @@ const detectCollisionWall = function(wallMeta, object){
 }
 
 const gameLoop = function () {
+    if(fpCtrlMode){firstPersonUpdate();}
     stats.begin();
     render_update();
     orth_view_port_update();
