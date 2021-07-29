@@ -126,23 +126,11 @@
   <body>
     <div id="ui">
       <div class="collapse show" id="sidebar">
-        <div id="retrieve" class="bg-dark text-white" align="center">
+        <div id="retrieve" class="d-flex flex-column bg-dark text-white" align="center">
           <!-- <div class="card-body">
             <h3 class="card-title">3D Scene Platform</h3>
           </div> -->
-          <div
-            style="
-              position: fixed;
-              bottom: 0%;
-              width: inherit;
-              min-width: 270px;
-            "
-          >
-            <a class="text-muted" style="overflow-wrap: break-word"
-              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
-            >
-          </div>
-          <div class="card-body bg-dark">
+          <div class="bg-dark p-4">
             <a
               class="dropdown-toggle h3"
               role="button"
@@ -318,28 +306,27 @@
                     </button>
                 </div-->
             <div
-              class="form-inline mt-2 mt-md-0"
-              style="width: 100%; padding-top: 10px; padding-bottom: 10px"
+              class="input-group input-group-lg py-2 px-3"
             >
               <input
-                class="form-control mr-sm-2"
+                class="form-control"
                 type="text"
                 placeholder="Search"
                 aria-label="Search"
-                style="width: 75%; margin-left: 5%"
                 id="searchinput"
               />
-              <button
-                class="btn btn-outline-success my-2 my-sm-0"
-                type="submit"
-                id="searchbtn"
-              >Object</button>
-              <button
-                class="btn btn-outline-success my-2 my-sm-0"
-                type="submit"
-                id="floorPlanbtn"
-              >FloorPlan</button>
-
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-success"
+                  type="submit"
+                  id="searchbtn"
+                >Object</button>
+                <button
+                  class="btn btn-outline-success"
+                  type="submit"
+                  id="floorPlanbtn"
+                >FloorPlan</button>
+              </div>
             </div>
             <!-- <form class="navbar-form navbar-left" action="/action_page.php">
                     <div class="input-group">
@@ -355,9 +342,14 @@
           <div id="rec_container" style="display: none"></div>
           <div
             id="catalogItems"
-            class="catalogSectionContent"
+            class="catalogSectionContent mb-auto"
             align="center"
           ></div>
+          <div>
+            <a class="text-muted" style="overflow-wrap: break-word"
+              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
+            >
+          </div>
         </div>
       </div>
       <div id="content">
