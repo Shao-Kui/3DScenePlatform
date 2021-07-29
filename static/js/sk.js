@@ -906,12 +906,12 @@ var setting_up = function () {
     $(window).on("resize", function () {
       autocollapse("#menubar", 52);
     });
-    // $("#sidebar").on("shown.bs.collapse", function () {
-    //     autocollapse("#menubar", 52);
-    // });
-    // $("#sidebar").on("hidden.bs.collapse", function () {
-    //     autocollapse("#menubar", 52);
-    // });
+    $("#sidebar").on("shown.bs.collapse", function () {
+        autocollapse("#menubar", 52);
+    });
+    $("#sidebar").on("hidden.bs.collapse", function () {
+        autocollapse("#menubar", 52);
+    });
     $("#sidebar").on("shown.bs.collapse", onWindowResize);
     $("#sidebar").on("hidden.bs.collapse", onWindowResize);
     

@@ -7,7 +7,6 @@ html, body{
   margin: 0; height: 100%;
   overflow: hidden;
   position: relative;
-  position: relative;
 }
 
 #menubar{
@@ -39,7 +38,7 @@ html, body{
 #orthcanvas{
   position:absolute;
   width: 200px; height:200px;
-  left:25%;
+  left:0%;
   bottom: 0px;
 }
 
@@ -87,8 +86,7 @@ html, body{
 .catalogSectionContent {
     position: relative;
     width: 100%;
-    height: 450px;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .catalogItem {
@@ -138,4 +136,5 @@ a:focus {
 
 #uibody {
   position: relative;
+  background: #343a40;
 }
