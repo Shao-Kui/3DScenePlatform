@@ -918,7 +918,6 @@ var setting_up = function () {
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
-    $("#layout2_button").click(mageAddSample);
     $("#clear_button").click(() => {
         if(currentRoomId === undefined) return;
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
@@ -979,6 +978,39 @@ var setting_up = function () {
             scene.remove(theaxis);
         }
     });
+    $("#autoview").click(function(){
+        let fov = camera.fov; 
+        let focalLength = camera.filmGauge; 
+        let origin = [camera.position.x, camera.position.y, camera.position.z];
+        let rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
+        let target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
+        let up = new THREE.Vector3();
+        up.copy(camera.up);
+        up.applyQuaternion(camera.quaternion);
+        let canvas = {};
+        canvas.width = scenecanvas.width;
+        canvas.height = scenecanvas.height;
+
+        let resPos = [0, 1, 0];
+        let resLookAt = [0, 1, 3];
+
+        camera.rotation.order = 'YXZ';
+        // camera.lookAt(resLookAt[0], resLookAt[1], resLookAt[2]);
+        gsap.to(camera.position, {
+            duration: 1,
+            x: resPos[0],
+            y: resPos[1],
+            z: resPos[2]
+        });
+        gsap.to(orbitControls.target, {
+            duration: 1,
+            x: resLookAt[0],
+            y: resLookAt[1],
+            z: resLookAt[2]
+        });
+        // camera.position.set(resPos[0], resPos[1], resPos[2]);
+        // orbitControls.target.set(resLookAt[0], resLookAt[1], resLookAt[2]);
+    })
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {

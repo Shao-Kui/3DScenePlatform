@@ -7,7 +7,7 @@ Manipulating             |  Rendering
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/8.png "Manipulating & Searching")  |  ![Rendering](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/7.png "Rendering")
 
-This is the repository of the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
+This is the repository of the paper "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**" and "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to directly use a ready clone. 
 
@@ -121,24 +121,63 @@ In sum, each config contains a list of rooms and a room contains a list of objec
 Each room optionally has a ```roomTypes```, e.g., '['living room', 'kitchen']'. A 'modelId' of a room indexes to its ceiling, floor and wall. In this platform, similar to SUNCG, we split a room mesh into a ceiling, a floor and a wall. For example, a room with ```modelId: KidsRoom-1704``` has a 'KidsRoom-1704c.obj', 'KidsRoom-1704f.obj' and a 'KidsRoom-1704w.obj' in the 'root/dataset/room/{```origin```}/' directory. This simply separate room meshes with objects and separate floors, ceilling and walls, which is a enginneering and design decision for researches on scene synthesis or layout generation. If this separation is not necessary in your reasearch, you can simply ignore this attribute and take all meshes as 'objects' in ```objList```. ```roomId``` is necessary in our platform. It is the index of this room in ```rooms``` list of a config file. This attribute is used for fast indexing rooms and objects. Similarly each object also has a ```roomId``` denoting its room. 
 
 Each object must has a ```modelId``` indexing its mesh in directory 'root/dataset/object/{```modelId```}'. ```translate```, ```scale``` and ```rotate``` are also mandatory. They are all lists with 3 element, e.g., ```"rotate": [0.0,-0.593,0.0],```. ```type``` is optional, we use this attribute to separate ordinary objects, windows, doors, etc. ```rotateOrder``` is typically 'XYZ' in our platform, but we allow custom rotating orders. ```coarseSemantic``` is optional if you would label objects, e.g., 'armchair'. 
+
 # Layout Framework
+
+[\[Paper\]][graphicalmodels] [\[Pre\]][gbaPre] [\[Supp\]][graphicalmodels]
+
 Our layout framework in the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects" is included in the following files: 
 ```
-root
-  autolayout.py
-  patternChain.py
-  alutil.py
-  relayout.py
-  projection2d.py
+root/
+--autolayoutv2.py
+--patternChainv2.py
+--projection2d.py
+--layoutmethods/
+----alutil.py
+----relayout.py
 ```
-**autolayout.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
-**patternChain.py**: the code to dynamically check and generate hyper-relations;  
+**autolayoutv2.py**: coherent grouping, prior loading, prior caching and bounding box generating, etc;  
+**patternChainv2.py**: the code to dynamically check and generate hyper-relations;  
 **alutil.py** and **relayout.py**: geometric arranging;  
 **projection2d.py**: converting room meshes to polygons (room shape); 
 
-If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. 
+If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. The 'autolayout.py' and 'patternChain.py' are also usable, but only for SUNCG dataset. The 'v2' version of our method is specifically for 3D-Front. 
+
+Our layout framework is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
+```
+@article{ZHANG2021101104,
+title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
+journal = {Graphical Models},
+volume = {116},
+pages = {101104},
+year = {2021},
+issn = {1524-0703},
+doi = {https://doi.org/10.1016/j.gmod.2021.101104},
+url = {https://www.sciencedirect.com/science/article/pii/S1524070321000096},
+author = {Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang}
+}
+```
 # MageAdd
-Coming soon... ... ...
+
+[\[Paper\]][mageaddPaper] [\[Video\]][mageaddVideo] [\[Supp\]][mageaddSupp]
+
+This project is also the container for MageAdd, which is a interactive modelling tool for 3D scene synthesis. The source code of the MageAdd is included in the following files:
+```
+root/
+--main_magic.py
+--static/
+------js/
+------MageAdd.js
+```
+The .py file corrsponds to the **Piror Update** and the .js file contains the main logic of inference of MageAdd. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
+
+Our paper is accept as a full research paper in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
+```
+@article{,
+  title = {MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
+  author = {Shao-Kui Zhang and Yi-Xiao Li and Yu He and Yong-Liang Yang and Song-Hai Zhang}
+}
+```
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
@@ -172,25 +211,23 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
-Our paper is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and will be recommended to [Graphical Models][gmod] after several revisions. A preprint is available on arXiv. Please cite our paper if this repository helps! 
-```
-@article{shaokui2021geometrybased,
-  title={Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
-  author={Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang},
-  journal={arXiv preprint arXiv:2101.02903},
-  year={2021}
-}
-```
+The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, Yong-Liang Yang, [Song-Hai Zhang][songhai]. 
 # Copyright
 This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT security guaranteed if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
 
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
 [songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
-[shaokui]:https://github.com/Shao-Kui
+[shaokui]:https://shao-kui.github.io/
 [GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html
 [cvm2021]:http://iccvm.org/2021/
 [gmod]:https://www.journals.elsevier.com/graphical-models
 [thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
 [3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
+[graphicalmodels]:https://www.researchgate.net/publication/351745309_Geometry-Based_Layout_Generation_with_Hyper-Relations_AMONG_Objects
+[mageaddPaper]:https://shao-kui.github.io/
+[mageaddVideo]:https://shao-kui.github.io/
+[mageaddSupp]:https://shao-kui.github.io/
+[gbaPre]:https://www.bilibili.com/video/BV1FU4y1a7A1/
+[acmmm2021]:https://2021.acmmm.org/

@@ -862,10 +862,10 @@ def wall_distance_orient():
 
 with open('./dataset/objCatListAliv2.json') as f:
     objCatList = json.load(f)
-with open('./latentspace/roomTypeDemo.json') as f:
-    roomTypeDemo = json.load(f)
 with open('./dataset/objListCataAliv2.json') as f:
     objListCat = json.load(f)
+with open('./latentspace/roomTypeDemo.json') as f:
+    roomTypeDemo = json.load(f)
 # with open('./latentspace/pos-orient-4/categoryRelation-origin.json') as f:
 #     _categoryRelation = json.load(f)
 #     categoryRelation = {}

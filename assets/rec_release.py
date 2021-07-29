@@ -10,7 +10,7 @@ from projection2d import process as p2d
 # from sk_loader import csrmatrix, ymatrix, obj_semantic, name_to_ls, ls_to_name, wallvector, cornervector
 import matplotlib.pyplot as plt
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater']
-four_points_xz = torch.load("./latentspace/four_points_xz.pt")
+# four_points_xz = torch.load("./latentspace/four_points_xz.pt")
 ls = np.load("./latentspace/ls-release-2.npy")
 PRIORS = "./latentspace/pos-orient-denoised/{}.json"
 PRIORS_POS_ALT = "E:/PyCharm Projects/SceneEmbedding/pos/{}.json"

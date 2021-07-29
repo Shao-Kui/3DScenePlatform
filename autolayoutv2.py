@@ -13,14 +13,6 @@ from projection2d import processGeo as p2d, connected_component, getobjCat
 from sk import rotate_pos_prior, rotate_bb_local_para
 import patternChainv2 as patternChain
 
-with open('./latentspace/obj_coarse_semantic.json') as f:
-    obj_semantic = json.load(f)
-with open('./latentspace/name_to_ls.json') as f:
-    name_to_ls = json.load(f)
-with open('./latentspace/ls_to_name.json') as f:
-    ls_to_name = json.load(f)
-with open('./latentspace/windoorblock.json') as f:
-    windoorblock = json.load(f)
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 
 'Pendant Lamp', 'Ceiling Lamp']
 leaderlist = ['double_bed', 'desk', 'coffee_table', 'King-size Bed', 'Coffee Table']
