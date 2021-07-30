@@ -23,13 +23,29 @@
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
-    <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
-    <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting-cells.css"/>
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/splitting/dist/splitting.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/splitting/dist/splitting-cells.css"
+    />
     <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
     <!-- our code -->
+    <link rel="stylesheet" href="/static/css/color-bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/index.css" />
     <link rel="stylesheet" href="/static/css/tiler.css" />
     <script src="/static/js/SceneManager.js"></script>
@@ -45,92 +61,93 @@
     <script src="/static/js/audio_recording.js"></script>
     <script src="/static/js/MageAdd.js"></script>
     <script>
-        //Global state & variables! Careful!
-        var ALL_SCENE_READY = false;
-        var On_MOVE = false;
-        var On_ROTATE = false;
-        var On_LIFT = false;
-        var On_ADD = false;
-        var On_SCALE = false;
-        var On_xSCALE = false;
-        var On_ySCALE = false;
-        var On_zSCALE = false;
-        var On_Orth_MOVE = false;
-        var isToggle = false;
-        var Auto_Insert_Mode = false;
-        var Auto_Rec_Mode = false;
-        var AUXILIARY_MODE = false;
-        var LayoutViewAdjust_MODE = false;
-        const AUXILIARY_NAME = "auxiliaryObject";
-        const INSERT_NAME = "INSERT_ON_ADD";
-        var INTERSECT_OBJ;
-        var INSERT_OBJ;
+      //Global state & variables! Careful!
+      var ALL_SCENE_READY = false;
+      var On_MOVE = false;
+      var On_ROTATE = false;
+      var On_LIFT = false;
+      var On_ADD = false;
+      var On_SCALE = false;
+      var On_xSCALE = false;
+      var On_ySCALE = false;
+      var On_zSCALE = false;
+      var On_Orth_MOVE = false;
+      var isToggle = false;
+      var Auto_Insert_Mode = false;
+      var Auto_Rec_Mode = false;
+      var AUXILIARY_MODE = false;
+      var LayoutViewAdjust_MODE = false;
+      const AUXILIARY_NAME = "auxiliaryObject";
+      const INSERT_NAME = "INSERT_ON_ADD";
+      var INTERSECT_OBJ;
+      var INSERT_OBJ;
 
-        //Global variables, will be initialize only once.
-        var manager;
-        var menu;
-        var radial;
-        var radial_scale;
-        var renderer;
-        var camera;
-        var scene;
-        var orbitControls;
+      //Global variables, will be initialize only once.
+      var manager;
+      var menu;
+      var radial;
+      var radial_scale;
+      var renderer;
+      var camera;
+      var scene;
+      var orbitControls;
 
-        var mouse = new THREE.Vector2();
-        var orthmouse = new THREE.Vector2();
-        var raycaster = new THREE.Raycaster();
-        var scenecanvas;
-        var orthcanvas;
-        var drawingCanvas;
-        var catalogItems;
-        var paint = false;
-        var drawStartPos = new THREE.Vector2();
-        var searchResults;
-        var currentRoomId;
-        var orthline;
+      var mouse = new THREE.Vector2();
+      var orthmouse = new THREE.Vector2();
+      var raycaster = new THREE.Raycaster();
+      var scenecanvas;
+      var orthcanvas;
+      var drawingCanvas;
+      var catalogItems;
+      var paint = false;
+      var drawStartPos = new THREE.Vector2();
+      var searchResults;
+      var currentRoomId;
+      var orthline;
 
-        var skyBox;
-        var lx_level;
-        var lz_level;
-        var renderTime = 0.6;
-        var axis;
+      var skyBox;
+      var lx_level;
+      var lz_level;
+      var renderTime = 0.6;
+      var axis;
 
-        var latent_space_mode;
+      var latent_space_mode;
 
-        var stats;
-        var datgui;
-        var datgui_intersectfolder;
+      var stats;
+      var datgui;
+      var datgui_intersectfolder;
 
-        // this variable is used for determining the collaborative group a user belonging to;
-        const onlineGroup = "{{ onlineGroup }}";
-        const onlineUserID = "{{ serverGivenUserID }}";
-        const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
+      // this variable is used for determining the collaborative group a user belonging to;
+      const onlineGroup = "{{ onlineGroup }}";
+      const onlineUserID = "{{ serverGivenUserID }}";
+      const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
 
-        $(document).ready(function () {
-            latent_space_mode = false;
-            manager = new SceneController($("#ui")[0]);
-            renderer = manager.renderManager.renderer;
-            camera = manager.renderManager.camera;
-            scene = manager.renderManager.scene;
+      $(document).ready(function () {
+        latent_space_mode = false;
+        manager = new SceneController($("#ui")[0]);
+        renderer = manager.renderManager.renderer;
+        camera = manager.renderManager.camera;
+        scene = manager.renderManager.scene;
 
-            scenecanvas = document.getElementById("scenecanvas");
-            orthcanvas = document.getElementById("orthcanvas");
-            catalogItems = document.getElementById("catalogItems");
-            drawingCanvas = document.getElementById("drawing-canvas");
-            setting_up();
-        });
+        scenecanvas = document.getElementById("scenecanvas");
+        orthcanvas = document.getElementById("orthcanvas");
+        catalogItems = document.getElementById("catalogItems");
+        drawingCanvas = document.getElementById("drawing-canvas");
+        setting_up();
+      });
     </script>
   </head>
   <body>
     <div id="ui">
       <div class="collapse show" id="sidebar">
-        <div id="retrieve" class="d-flex flex-column bg-dark text-white" align="center">
+        <div id="retrieve" class="d-flex flex-column" align="center">
           <!-- <div class="card-body">
             <h3 class="card-title">3D Scene Platform</h3>
           </div> -->
-          <div class="bg-dark p-4">
+          <div class="bg-primary p-4" style="height: 50.75px">
             <a
               class="dropdown-toggle h3"
+              id="title"
               role="button"
               href="#sceneInfo"
               data-toggle="collapse"
@@ -139,7 +156,10 @@
               >3D Scene Platform</a
             >
           </div>
-          <table class="collapse table table-dark" id="sceneInfo">
+          <table
+            class="collapse table text-dark table-responsive"
+            id="sceneInfo"
+          >
             <tbody>
               <tr>
                 <th scope="row">Level</th>
@@ -209,21 +229,21 @@
             <button
               id="autoView"
               type="button"
-              class="btn btn-lg btn-outline-light m-1"
+              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
             >
               SceneViewer
             </button>
             <button
               id="autoViewPath"
               type="button"
-              class="btn btn-lg btn-outline-light m-1"
+              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
             >
               AutoPath
             </button>
             <button
               id="autoViewMapping"
               type="button"
-              class="btn btn-lg btn-outline-light m-1"
+              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
             >
               Mapping
             </button>
@@ -232,63 +252,73 @@
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >双人床</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              双人床
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >茶几</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              茶几
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >餐桌</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              餐桌
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >小圆桌</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              小圆桌
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >梳妆台</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              梳妆台
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >衣柜</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              衣柜
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >电视柜</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              电视柜
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >沙发</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              沙发
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >椅子</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              椅子
+            </button>
             <button
               id=""
               type="button"
-              class="btn btn-lg btn-outline-light rapidSearch m-1"
-              style="margin-bottom: 3px"
-            >储物柜</button>
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >
+              储物柜
+            </button>
           </div>
           <div id="collaborative_container">
             <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
@@ -303,9 +333,7 @@
                         Sketch Clear
                     </button>
                 </div-->
-            <div
-              class="input-group input-group-lg py-2 px-3"
-            >
+            <div class="input-group input-group-lg py-2 px-3">
               <input
                 class="form-control"
                 type="text"
@@ -315,22 +343,26 @@
               />
               <div class="input-group-append">
                 <button
-                  class="btn btn-outline-success"
+                  class="btn btn-outline-primary"
                   type="submit"
                   id="searchbtn"
-                >Object</button>
+                >
+                  Object
+                </button>
                 <button
-                  class="btn btn-outline-success"
+                  class="btn btn-outline-primary"
                   type="submit"
                   id="floorPlanbtn"
-                >FloorPlan</button>
+                >
+                  FloorPlan
+                </button>
               </div>
             </div>
             <!-- <form class="navbar-form navbar-left" action="/action_page.php">
                     <div class="input-group">
                         <input id="searchinput" type="text" class="form-control" placeholder="Search" name="search">
                         <div class="input-group-btn">
-                            <button id="searchbtn" class="btn btn-default btn-outline-light" type="submit">
+                            <button id="searchbtn" class="btn btn-default btn-outline-dark" type="submit">
                             <i class="glyphicon glyphicon-search"></i>
                             </button>
                         </div>
@@ -353,7 +385,7 @@
       <div id="content">
         <nav
           id="menubar"
-          class="navbar navbar-expand-lg navbar-dark bg-dark py-3"
+          class="navbar navbar-expand-lg navbar-dark bg-primary py-3"
         >
           <button
             class="btn btn-lg mr-auto"
@@ -433,7 +465,7 @@
               Utils<span class="caret"></span>
             </button>
             <div
-              class="dropdown-menu bg-dark dropdown-menu-right"
+              class="dropdown-menu bg-primary dropdown-menu-right"
               aria-labelledby="utils_button"
               style="text-align: center"
             >
