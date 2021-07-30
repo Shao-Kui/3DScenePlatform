@@ -128,5 +128,130 @@ var onKeyUp = function (event) {
             clickTextSearchButton();
             break;
           
-  }
+    }
 };
+
+var firstPersonControls;
+var fpCtrlMode = false;
+const fpctrl = {
+    moveForward: false,
+    moveBackward: false,
+    moveLeft: false,
+    moveRight: false,
+    moveUp: false,
+    moveDown: false,
+    prevTime: performance.now(),
+    direction: new THREE.Vector3(),
+}
+
+const onKeyDownFirstPerson = function(event){
+    switch ( event.keyCode ) {
+        case 38: // up
+        case 87: // w
+            fpctrl.moveForward = true;
+            break;
+        case 37: // left
+        case 65: // a
+            fpctrl.moveLeft = true;
+            break;
+        case 40: // down
+        case 83: // s
+            fpctrl.moveBackward = true;
+            break;
+        case 39: // right
+        case 68: // d
+            fpctrl.moveRight = true;
+            break;
+        case 32: // space
+            fpctrl.moveUp = true;
+            break;
+        case 67: // C
+            fpctrl.moveDown = true;
+            break;
+    }
+};
+
+var onKeyUpFirstPerson = function (event) {
+    switch ( event.keyCode ) {
+        case 38: // forward
+        case 87: // w
+            fpctrl.moveForward = false;
+            break;
+        case 37: // left
+        case 65: // a
+            fpctrl.moveLeft = false;
+            break;
+        case 40: // backward
+        case 83: // s
+            fpctrl.moveBackward = false;
+            break;
+        case 39: // right
+        case 68: // d
+            fpctrl.moveRight = false;
+            break;
+        case 32: // space
+            fpctrl.moveUp = false;
+            break;
+        case 67: // C
+            fpctrl.moveDown = false;
+            break;
+    }
+};
+
+const firstPersonUpdate = function(){
+    if (firstPersonControls.isLocked === true) {
+        delta = 0.05;
+        let fw = Number(fpctrl.moveForward) - Number(fpctrl.moveBackward);
+        let lr = Number(fpctrl.moveLeft) - Number(fpctrl.moveRight);
+        let ud = Number(fpctrl.moveUp) - Number(fpctrl.moveDown);
+        let camera_direction = firstPersonControls.getDirection(new THREE.Vector3());
+        if ( fpctrl.moveForward || fpctrl.moveBackward ){
+            camera.position.x += camera_direction.x * delta * fw;
+            camera.position.y += camera_direction.y * delta * fw;
+            camera.position.z += camera_direction.z * delta * fw;
+            orbitControls.target.x += camera_direction.x * delta * fw;
+            orbitControls.target.y += camera_direction.y * delta * fw;
+            orbitControls.target.z += camera_direction.z * delta * fw;
+        }
+        if ( fpctrl.moveLeft || fpctrl.moveRight ){
+            let v = new THREE.Vector3().crossVectors(camera.up, camera_direction);
+            camera.position.x += v.x * delta * lr;
+            camera.position.y += v.y * delta * lr;
+            camera.position.z += v.z * delta * lr;
+            orbitControls.target.x = camera_direction.x + camera.position.x;
+            orbitControls.target.z = camera_direction.z + camera.position.z;
+            orbitControls.target.y = camera_direction.y + camera.position.y;
+        }
+        if ( fpctrl.moveUp || fpctrl.moveDown ){
+            camera.position.y += delta * ud;
+            orbitControls.target.y = camera_direction.y + camera.position.y;
+        }
+    }
+};
+
+const firstPersonLockFunction = function(){
+    firstPersonControls.lock();
+}
+
+const firstPersonOn = function(){
+    orbitControls.enabled = false;
+    fpCtrlMode = true;
+    firstPersonControls.connect();
+    document.removeEventListener('click', onClickObj)
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup', onKeyUp);
+    document.addEventListener('click', firstPersonLockFunction);
+    document.addEventListener('keydown', onKeyDownFirstPerson, false);
+    document.addEventListener('keyup', onKeyUpFirstPerson, false);
+}
+
+const firstPersonOff = function(){
+    orbitControls.enabled = true;
+    fpCtrlMode = false;
+    firstPersonControls.disconnect();
+    document.removeEventListener('click', firstPersonLockFunction);
+    document.removeEventListener('keydown', onKeyDownFirstPerson);
+    document.removeEventListener('keyup', onKeyUpFirstPerson);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+}

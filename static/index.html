@@ -75,8 +75,6 @@
         var camera;
         var scene;
         var orbitControls;
-        var firstPersonControls;
-        var fpCtrlMode = false;
 
         var mouse = new THREE.Vector2();
         var orthmouse = new THREE.Vector2();
@@ -393,6 +391,12 @@
             >
               Layout1
             </button>
+
+            <button
+              id="firstperson_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >First-Person</button>
 
             <button
               id="download_button"

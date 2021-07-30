@@ -71,6 +71,12 @@ let refreshObjectFromCache = function(objToInsert){
     object3d.userData.json = objToInsert;
     scene.add(object3d)
     renderer.render(scene, camera);
+    if(object3d.userData.coarseSemantic === 'Ceiling Lamp'){
+        let light = new THREE.PointLight( 0xffffff, 5, 100 );
+        light.position.set(0,0,0);
+        light.castShadow = true;
+        object3d.add(light);
+    }
     return object3d; 
 }
 
@@ -266,7 +272,6 @@ const detectCollisionWall = function(wallMeta, object){
 }
 
 const gameLoop = function () {
-    if(fpCtrlMode){firstPersonUpdate();}
     stats.begin();
     render_update();
     orth_view_port_update();
@@ -274,6 +279,9 @@ const gameLoop = function () {
     camera.updateMatrixWorld();
     manager.renderManager.orthcamera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, camera);
+    if(fpCtrlMode){
+        firstPersonUpdate();
+    }
     renderer.render(scene, camera);
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
     stats.end();
@@ -990,12 +998,9 @@ var setting_up = function () {
         let canvas = {};
         canvas.width = scenecanvas.width;
         canvas.height = scenecanvas.height;
-
         let resPos = [0, 1, 0];
         let resLookAt = [0, 1, 3];
-
         camera.rotation.order = 'YXZ';
-        // camera.lookAt(resLookAt[0], resLookAt[1], resLookAt[2]);
         gsap.to(camera.position, {
             duration: 1,
             x: resPos[0],
@@ -1008,9 +1013,18 @@ var setting_up = function () {
             y: resLookAt[1],
             z: resLookAt[2]
         });
-        // camera.position.set(resPos[0], resPos[1], resPos[2]);
-        // orbitControls.target.set(resLookAt[0], resLookAt[1], resLookAt[2]);
-    })
+    });
+    $("#firstperson_button").click(function(){
+        let button = document.getElementById("firstperson_button");
+        fpCtrlMode = !fpCtrlMode;
+        if(fpCtrlMode){
+            button.style.backgroundColor = '#9400D3';
+            firstPersonOn();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            firstPersonOff();
+        }
+    });
 
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
