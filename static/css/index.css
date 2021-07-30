@@ -19,11 +19,41 @@ html, body{
 }
 
 #retrieve{
-  margin: 0; width: 25%; height:100%;
-  overflow: hidden;
+  margin: 0; width: 25%;
+  overflow: auto;
   float:left;
   background-color: #F0F0F0;
   min-width: 270px;
+  height: 100%;
+}
+
+@media (max-width: 575.98px) {
+  #retrieve {
+    min-width: 200px;
+  }
+  .btn-responsive, .rapidSearch {
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    border-radius: .2rem;
+  }
+  .input-group-lg .input-group-append .btn {
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .4rem;
+  }
+  .input-group-lg .form-control {
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .4rem;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 1199.98px) {
+  .btn-responsive, .rapidSearch {
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .4rem;
+  }
 }
 
 #scene{
@@ -127,14 +157,21 @@ html, body{
   box-shadow: none;
 }
 
-a,
-a:hover,
-a:focus {
-  color: inherit;
+#title {
+  color: white;
   text-decoration: none;
 }
 
 #uibody {
   position: relative;
   background: #343a40;
+}
+
+.btn-outline-light:hover {
+  /* color:#f3969a; */
+  color:#78c2ad;
+}
+
+#sceneInfo.collapse.show {
+  min-height: 150px;
 }

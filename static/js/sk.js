@@ -1014,14 +1014,15 @@ var autocollapse = function (menu, maxHeight) {
   if (navHeight >= maxHeight) {
     $("#sidebar_button").removeClass("mr-auto").addClass("mr-5");
 
-    var ct = 10;
     while (navHeight > maxHeight) {
-      ct = ct + 1;
       //  add child to dropdown
       var children = menuBtns.children("button");
       var count = children.length;
+      if (count == 0) {
+        break;
+      }
       $(children[count - 1])
-        .removeClass("mx-2 btn-lg")
+        .removeClass("mx-2 btn-lg navbar-btn")
         .addClass("my-1 nav_sk_button");
       $(children[count - 1]).prependTo(menu + " .dropdown-menu");
       navHeight = nav.innerHeight();
@@ -1031,18 +1032,23 @@ var autocollapse = function (menu, maxHeight) {
   } else {
     var collapsed = $(menu + " .dropdown-menu").children(menu + " button");
 
-    var ct = 20;
     while (navHeight < maxHeight && collapsed.length > 6) {
-      ct = ct + 1;
       //  remove child from dropdown
-      $(collapsed[0]).removeClass("my-1 nav_sk_button").addClass("mx-2 btn-lg");
+      $(collapsed[0]).removeClass("my-1 nav_sk_button").addClass("mx-2 btn-lg navbar-btn");
       $(collapsed[0]).appendTo(menuBtns);
       navHeight = nav.innerHeight();
       collapsed = $(menu + " .dropdown-menu").children("button");
     }
 
     if (navHeight > maxHeight) {
-      autocollapse(menu, maxHeight);
+      var children = menuBtns.children("button");
+      var count = children.length;
+      if (count > 0) {
+        $(children[count - 1])
+          .removeClass("mx-2 btn-lg navbar-btn")
+          .addClass("my-1 nav_sk_button");
+        $(children[count - 1]).prependTo(menu + " .dropdown-menu");
+      }
     }
   }
 };
