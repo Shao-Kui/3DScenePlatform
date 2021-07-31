@@ -39,13 +39,13 @@ const auxiliary_control = function(){
     }else{
         // remove 'auxiliaryObject' in the scene; 
         auxiliary_remove();
-        autoinsert_button.style.backgroundColor = '#43CD80';
+        autoinsert_button.style.backgroundColor = 'transparent';
         fpsCount();
     }
 }
 
 let categoryCodec = {}; 
-const auxiliaryLoadWall = async function(){
+const auxiliaryLoadWall = function(anchor=()=>{}, anchorArgs=[]){
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
@@ -60,12 +60,14 @@ const auxiliaryLoadWall = async function(){
             gatheringAuxObjCat(data.coarseSemantic); 
             data.object.forEach(o => {
                 loadObjectToCache(o);
-            })
+            });
+            mageAddWalReady = true;
+            anchor.apply(null, anchorArgs);
         }
     });
 }; 
 
-const auxiliaryRoom = async function(){
+const auxiliaryRoom = function(anchor=()=>{}, anchorArgs=[]){
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
@@ -86,11 +88,13 @@ const auxiliaryRoom = async function(){
             data.object.forEach(o => {
                 loadObjectToCache(o);
             })
+            mageAddDomReady = true;
+            anchor.apply(null, anchorArgs);
         }
     });
 }
 
-const auxiliaryLoadSub = async function(){
+const auxiliaryLoadSub = function(anchor=()=>{}, anchorArgs=[]){
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
@@ -109,13 +113,15 @@ const auxiliaryLoadSub = async function(){
             gatheringAuxObjCat(data.coarseSemantic); 
             data.object.forEach(o => {
                 loadObjectToCache(o);
-            })
+            });
+            mageAddSubReady = true;
+            anchor.apply(null, anchorArgs);
         }  
     });
 }
 
 let auxiliaryPrior;
-let auxiliaryMode = async function(){
+let auxiliaryMode = function(anchor=()=>{}, anchorArgs=[]){
     if(currentRoomId === undefined){
         return;
     }
@@ -123,9 +129,9 @@ let auxiliaryMode = async function(){
     manager.renderManager.scene_json.rooms[currentRoomId].objList
     .filter( item => item !== null && item !== undefined ); 
     _auxCatList.length = 1; 
-    auxiliaryRoom();
-    auxiliaryLoadWall();
-    auxiliaryLoadSub(); 
+    auxiliaryRoom(anchor=anchor, anchorArgs=anchorArgs);
+    auxiliaryLoadWall(anchor=anchor, anchorArgs=anchorArgs);
+    auxiliaryLoadSub(anchor=anchor, anchorArgs=anchorArgs); 
 }; 
 
 const realTimeObjCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
@@ -287,7 +293,7 @@ const auxiliaryCG = function(theIntersect, auto=false){
     // find the nearest distance to the nearest wall; ( np.abs(np.cross(p2-p1, p1-p3)) / norm(p2-p1) )
     let ado = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj;
     if(ado === undefined)
-        return;
+        return false;
     let wallIndex;
     let secWallIndex; // the second nearest wall index; 
     let ftnw = findTheNearestWall(theIntersect); 
@@ -303,7 +309,7 @@ const auxiliaryCG = function(theIntersect, auto=false){
         vecSub = tf.abs(tf.transpose(tf.transpose(ado.tensor).slice([2], [1])).sub(minDis)).reshape([-1]);
         secVecSub = tf.transpose(tf.transpose(ado.tensor).slice([6], [1])).reshape([-1]); 
     }else{
-        return;
+        return false;
     }
     // filter out priors exceed the second nearest wall; 
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
@@ -322,7 +328,7 @@ const auxiliaryCG = function(theIntersect, auto=false){
     if(auto) threshold = 0.05;
     if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
         scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
-        return;
+        return false;
     }
     let objname = ado.index[index];
     let theprior = ado.prior[index];
@@ -341,8 +347,9 @@ const auxiliaryCG = function(theIntersect, auto=false){
                 'scale': [theprior[3], theprior[4], theprior[5]]
             }
         );
-        auxiliaryMode();
+        return true;
     }
+    return false
 }
 
 const auxiliaryMove = function(){
@@ -461,8 +468,7 @@ const auxiliaryMove_fullAuto = function(sample){
         if(aso.tensor.shape[0] !== 0){
             vecSub = tf.transpose(tf.transpose(aso.tensor).slice([0], [3])).sub(intersectPoint);
         }else{
-            auxiliaryCG(intersects[0], true);
-            return;
+            return auxiliaryCG(intersects[0], true);
         }
         let eucNorm = tf.norm(vecSub, 'euclidean', 1);
         if($('#tab_auxdom').text() !== 'ALL'){
@@ -481,9 +487,8 @@ const auxiliaryMove_fullAuto = function(sample){
         if(eucDis >= threshold){
             scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
             if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
-                auxiliaryCG(intersects[0], true);
+                return auxiliaryCG(intersects[0], true);
             }
-            return;
         }
         let Y; 
         if(['Rug'].includes(aso.coarseSemantic[objname])){
@@ -503,17 +508,20 @@ const auxiliaryMove_fullAuto = function(sample){
                     'scale': [1.0, 1.0, 1.0]
                 }
             );
-            auxiliaryMode();
+            return true;
         }
+        return false;
     }
 }
+
+var mageAddSubReady = false;
+var mageAddDomReady = false;
+var mageAddWalReady = false;
 
 const mageAddSample = async function(){
     if(currentRoomId === undefined){
         return;
     }
-    // request priors firstly; 
-    auxiliaryMode();
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
@@ -521,19 +529,29 @@ const mageAddSample = async function(){
         data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
         success: function (data) {
             let samples = JSON.parse(data);
-            mageAddAuto(samples);
+            auxiliaryMode(anchor=mageAddAuto, anchorArgs=[samples]);
         }
     });
 }
 
-const mageAddAuto = async function(samples){
-    // console.log('try', samples[samples.length-1])
-    setTimeout(()=>{
-        auxiliaryMove_fullAuto(samples.pop());
-        if(samples.length > 0){
-            tf.engine().startScope();
-            mageAddAuto(samples);
-            tf.engine().endScope();
+const mageAddAuto = function(samples){
+    if(samples.length <= 0){
+        mageAddSubReady = false;
+        mageAddDomReady = false;
+        mageAddWalReady = false;
+        return
+    }
+    if(mageAddSubReady && mageAddDomReady && mageAddWalReady){
+        tf.engine().startScope();
+        let status = auxiliaryMove_fullAuto(samples.pop());
+        tf.engine().endScope();
+        if(status){
+            mageAddSubReady = false;
+            mageAddDomReady = false;
+            mageAddWalReady = false;
+            auxiliaryMode(anchor=mageAddAuto, anchorArgs=[samples]); // Update priors. 
+        }else{
+            mageAddAuto(samples); // Try the next sample. 
         }
-    }, 25);
+    }
 };

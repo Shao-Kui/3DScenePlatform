@@ -15,6 +15,35 @@ var keyboard_update = function(){
   prevTime = time;
 };
 
+const transformControlsConfig = function(){
+    transformControls.addEventListener('dragging-changed', function (event){
+        scenecanvas.removeEventListener('click', onClickObj);
+        orbitControls.enabled = !event.value;
+        if (isToggle) {
+            radial.toggle();
+            isToggle = !isToggle;
+        }
+        if(!event.value){
+            synchronizeIntersectedObject();
+        }
+    });
+    transformControls.addEventListener('objectChange', function(event){
+        console.log(event)
+    })
+    transformControls.addEventListener('change', function (event) {
+        if(transformControls.mode === 'translate'){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, 
+                [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 'position');
+        }else if(transformControls.mode === 'rotate'){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, 
+                [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z], 'rotation');
+        }else if(transformControls.mode === 'scale'){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, 
+                [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z], 'scale');
+        }
+    });
+}
+
 const topdownview = function(){
     let bbox = manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
     let lx = (bbox.max[0] + bbox.min[0]) / 2;
@@ -77,7 +106,8 @@ const topdownview = function(){
     //     z: 0
     // });
 };
-var onKeyDown = function(event){
+
+const onKeyDown = function(event){
     if(event.target.matches("input")) return;
     switch ( event.keyCode ) {
         case 81: // Q
@@ -100,6 +130,9 @@ var onKeyDown = function(event){
         case 82: // R
             render_function();
             break;
+        case 83: // S
+            downloadSceneJson();
+            break;
         case 49: // 1
             auxiliary_catlist(-1)
             break;
@@ -108,6 +141,16 @@ var onKeyDown = function(event){
             break;
         case 192: // `
             auxiliary_catlist(0)
+            break;
+
+        case 188: // ,
+            transformControls.setMode('translate');
+            break;
+        case 190: // .
+            transformControls.setMode('rotate');
+            break;
+        case 191: // /
+            transformControls.setMode('scale');
             break;
     }
 };

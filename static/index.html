@@ -12,37 +12,23 @@
     <script src="/static/3rdparty/gsap.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
-    <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
-    <script src="/static/3rdparty/three.js-r103/LoaderSupport.js"></script>
-    <script src="/static/3rdparty/three.js-r103/MTLLoader.js"></script>
-    <script src="/static/3rdparty/three.js-r103/OBJLoader2.js"></script>
-    <script src="/static/3rdparty/three.js-r103/TGALoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/three.min.js"></script>
+    <!-- <script src="/static/3rdparty/three.js-r103/LoaderSupport.js"></script> -->
+    <script src="/static/3rdparty/three.js-r131/MTLLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/OBJLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/TGALoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/TransformControls.js"></script>
     <script src="/static/3rdparty/three.js-r103/OrbitControls.js"></script>
     <script src="/static/3rdparty/three.js-r103/PointerLockControls.js"></script>
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/splitting/dist/splitting.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/splitting/dist/splitting-cells.css"
-    />
+    <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/splitting/dist/splitting-cells.css"/>
     <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
     <!-- our code -->
     <link rel="stylesheet" href="/static/css/color-bootstrap.min.css" />
@@ -77,8 +63,10 @@
       var Auto_Rec_Mode = false;
       var AUXILIARY_MODE = false;
       var LayoutViewAdjust_MODE = false;
+      var lighting_Mode = false;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
+      const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
       var INTERSECT_OBJ;
       var INSERT_OBJ;
 
@@ -91,6 +79,7 @@
       var camera;
       var scene;
       var orbitControls;
+      var transformControls;
 
       var mouse = new THREE.Vector2();
       var orthmouse = new THREE.Vector2();
@@ -253,72 +242,52 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              双人床
-            </button>
+            >双人床</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              茶几
-            </button>
+            >茶几</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              餐桌
-            </button>
+            >餐桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              小圆桌
-            </button>
+            >小圆桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              梳妆台
-            </button>
+            >梳妆台</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              衣柜
-            </button>
+            >衣柜</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              电视柜
-            </button>
+            >电视柜</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              沙发
-            </button>
+            >沙发</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              椅子
-            </button>
+            >椅子</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >
-              储物柜
-            </button>
+            >储物柜</button>
           </div>
           <div id="collaborative_container">
             <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
@@ -505,11 +474,11 @@
                 BestView
               </button>
               <button
-                id="autoview"
+                id="lighting_btn"
                 type="button"
                 class="btn btn-outline-light my-1 nav_sk_button"
               >
-                AutoView
+                Lighting
               </button>
               <button
                 id="layout2_button"

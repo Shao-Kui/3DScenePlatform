@@ -31,6 +31,7 @@ var toggles = function () {
 var radial_move_control = function (event) {
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_MOVE = true;
+    transformControls.detach();
     toggles();
 };
 
@@ -39,23 +40,27 @@ var radial_rotate_control = function (event) {
     mouse.rotateBase = new THREE.Vector2();
     mouse.rotateBase.set(mouse.x, mouse.y);
     On_ROTATE = true;
+    transformControls.detach();
     toggles();
 };
 
 var radial_lift_control = function(event){
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_LIFT = true;
+    transformControls.detach();
     toggles();
 };
 
 var radial_scale_control = function(event){
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_SCALE = true;
+    transformControls.detach();
     toggles();
 };
 
 var radial_remove_control = function (event) {
     removeIntersectObject();
+    transformControls.detach();
     toggles();
 };
 

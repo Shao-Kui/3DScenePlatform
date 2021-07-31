@@ -3,7 +3,7 @@ const traverseObjSetting = function (object) {
         object.castShadow = true;
         object.receiveShadow = true;
         if(Array.isArray(object.material)){
-            for(var i = 0; i < object.material.length; i++){
+            for(let i = 0; i < object.material.length; i++){
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
@@ -76,6 +76,9 @@ class SceneManager {
         this.on_resize();
         orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         firstPersonControls = new THREE.PointerLockControls(this.camera, this.renderer.domElement);
+        transformControls = new THREE.TransformControls(this.camera, this.renderer.domElement);
+        transformControlsConfig();
+        this.scene.add(transformControls);
         // firstPersonControls = new THREE.PointerLockControls(this.camera);
         this.camera.position.set(0, 6, 0);
         this.camera.lookAt(9, 6, 12);
@@ -154,13 +157,11 @@ class SceneManager {
     load_cwf_instances = (modelId, suffix, roomId) => {
         var meta = modelId + suffix;
         var self = this;
-        var objLoader = new THREE.OBJLoader2();
+        var objLoader = new THREE.OBJLoader();
         var mtl_path = "/room/" + self.scene_json.origin + "/" + meta + '.mtl';
         var obj_path = "/room/" + self.scene_json.origin + "/" + meta + '.obj';
-        objLoader.setModelName(meta);
-        // objLoader.setMaterials(material);
-        objLoader.load(obj_path, function (event) {
-            var instance = event.detail.loaderRootNode;
+        objLoader.load(obj_path, function (instance) {
+            // var instance = event.detail.loaderRootNode;
             instance.userData = {"type": suffix, "roomId": roomId, "meta": meta, "modelId": modelId};
             instance.castShadow = true;
             instance.receiveShadow = true;

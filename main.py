@@ -27,7 +27,7 @@ app.register_blueprint(app_audio)
 app.register_blueprint(app_magic)
 app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.secret_key = 'GHOST of Tsushima. '
+app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
 socketio = SocketIO(app, manage_session=False)
 
@@ -52,6 +52,45 @@ def main():
 def send(fname):
     return flask.send_from_directory("static", fname)
 
+@app.route("/mesh/<name>")
+def mesh(name):
+    # m = orm.query_model_by_id(id)
+    # return flask.send_file(json.loads(m.resources)["mesh"])
+    objDir = f'./dataset/object/{name}/{name}.obj'
+    if os.path.exists(objDir):
+        return flask.send_file(objDir)
+    else:
+        return ""
+
+@app.route("/thumbnail/<name>")
+def thumbnail_sk(name):
+    # m = orm.query_model_by_id(id)
+    # return flask.send_from_directory(os.path.join(".", "dataset", "object", m.name, "render20"), "render-%s-%d.png" % (m.name, 10))
+    return flask.send_from_directory(os.path.join(".", "dataset", "object", name, "render20"), "render-%s-%d.png" % (name, 10))
+
+@app.route("/mtl/<name>")
+def mtl(name):
+    mtlDir = f'./dataset/object/{name}/{name}.mtl'
+    if os.path.exists(mtlDir):
+        return flask.send_file(mtlDir)
+    else:
+        return ""
+
+@app.route("/texture//<id>")
+def texture(id):
+    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
+
+@app.route("/texture/<id>")
+def texture_(id):
+    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
+
+"""
+@app.route("/thumbnail/<id>/<int:view>")
+def thumbnail(id, view):
+    m = orm.query_model_by_id(id)
+    return flask.send_from_directory(os.path.join(".", "dataset", "objd20", m.name, "render20"),
+                                     "render-%s-%d.png" % (m.name, view))
+
 @app.route("/objmeta/<obj>")
 def objmeta(obj):
     m = orm.query_model_by_name(obj)
@@ -74,42 +113,6 @@ def objmeta_by_id(id):
         ret["texture"] = "/texture/"
         return json.dumps(ret)
 
-@app.route("/mesh/<name>")
-def mesh(name):
-    # m = orm.query_model_by_id(id)
-    # return flask.send_file(json.loads(m.resources)["mesh"])
-    objDir = f'./dataset/object/{name}/{name}.obj'
-    if os.path.exists(objDir):
-        return flask.send_file(objDir)
-    else:
-        return None
-
-@app.route("/thumbnail/<id>/<int:view>")
-def thumbnail(id, view):
-    m = orm.query_model_by_id(id)
-    return flask.send_from_directory(os.path.join(".", "dataset", "objd20", m.name, "render20"),
-                                     "render-%s-%d.png" % (m.name, view))
-
-@app.route("/thumbnail/<name>")
-def thumbnail_sk(name):
-    # m = orm.query_model_by_id(id)
-    # return flask.send_from_directory(os.path.join(".", "dataset", "object", m.name, "render20"), "render-%s-%d.png" % (m.name, 10))
-    return flask.send_from_directory(os.path.join(".", "dataset", "object", name, "render20"), "render-%s-%d.png" % (name, 10))
-
-@app.route("/mtl/<name>")
-def mtl(name):
-    # m = orm.query_model_by_id(id)
-    # return flask.send_file(json.loads(m.resources)["mtl"])
-    return flask.send_file(f'./dataset/object/{name}/{name}.mtl')
-
-@app.route("/texture//<id>")
-def texture(id):
-    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
-
-@app.route("/texture/<id>")
-def texture_(id):
-    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
-
 @app.route("/query")
 def textquery():
     kw=flask.request.args.get('kw', default = "", type = str) # keyword
@@ -127,6 +130,7 @@ def textquery():
             "semantic": 'currentlyUnknown',
             "thumbnail":f"/thumbnail/{kw}"})
     return json.dumps(ret)
+"""
 
 with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
@@ -268,8 +272,7 @@ def getSceneJsonByID(origin):
     if os.path.exists(f'./dataset/alilevel_door2021/{origin}.json'):
         return flask.send_file(f'./dataset/alilevel_door2021/{origin}.json')
     else:
-        with open('./assets/demo.json') as f:
-            return json.load(f)
+        return ""
 
 def generateObjectsUUIDs(sceneJson):
     # generate uuid for each object: 
@@ -338,7 +341,10 @@ def onlineSceneUpdate(sceneJson, groupName):
     onlineScenes[groupName] = sceneJson
 
 @socketio.on('sceneRefresh')
-def sceneRefresh(sceneJson, groupName): 
+def sceneRefresh(sceneJson, groupName):
+    if 'origin' not in sceneJson or 'rooms' not in sceneJson:
+        print('Invalid scene-refresh .json file. ')
+        return
     onlineScenes[groupName] = generateObjectsUUIDs(sceneJson)
     emit('sceneRefresh', onlineScenes[groupName], room=groupName, include_self=True)
 

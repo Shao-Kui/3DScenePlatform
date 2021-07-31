@@ -7,21 +7,11 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
     }
     let mtlurl = `/mtl/${modelId}`;
     let meshurl = `/mesh/${modelId}`;
-    var objLoader = new THREE.OBJLoader2();
-    objLoader.loadMtl(mtlurl, null, function (materials) {
-        Object.keys(materials).forEach(mtrname => {
-            let mtr = materials[mtrname];
-            let newmtr_lowopa = mtr.clone();
-            newmtr_lowopa.transparent = true;
-            newmtr_lowopa.opacity = 0.6;
-            mtr.newmtr_lowopa = newmtr_lowopa;
-            newmtr_lowopa.origin_mtr = mtr;
-            mtr.origin_mtr = mtr;
-        });
-        objLoader.setModelName(modelId);
-        objLoader.setMaterials(materials);
-        objLoader.load(meshurl, function (event) {
-            let instance = event.detail.loaderRootNode;
+    let objLoader = new THREE.OBJLoader();
+    let mtlLoader = new THREE.MTLLoader();
+    mtlLoader.load(mtlurl, function (mCreator) {
+        objLoader.setMaterials(mCreator);
+        objLoader.load(meshurl, function (instance) {
             instance.userData = {
                 "type": 'object',
                 "roomId": currentRoomId,
@@ -43,9 +33,42 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
                     child.geometry.computeBoundingBox();
                 }
             });
+            traverseMtlToOppacity(instance);
             objectCache[modelId] = instance;
             anchor.apply(null, anchorArgs);;
-        }, null, null, null, false);
+        });
+    });
+};
+
+const traverseMtlToOppacity = function (object) {
+    if(object instanceof THREE.Mesh){
+        let newmtr_lowopa;
+        if(Array.isArray(object.material)){
+            newmtr_lowopa = [];
+            for(let i = 0; i < object.material.length; i++){
+                let mtl = object.material[i].clone()
+                mtl.transparent = true;
+                mtl.opacity = 0.6;
+                newmtr_lowopa.push(mtl);
+            }
+        }else{
+            newmtr_lowopa = object.material.clone();
+            newmtr_lowopa.transparent = true;
+            newmtr_lowopa.opacity = 0.6;
+            
+        }
+        newmtr_lowopa.origin_mtr = object.material;
+        newmtr_lowopa.newmtr_lowopa = newmtr_lowopa;
+        object.material.origin_mtr = object.material;
+        object.material.newmtr_lowopa = newmtr_lowopa;
+        object.material = newmtr_lowopa;
+        return;
+    }
+    if(object.children.length === 0){
+        return;
+    }
+    object.children.forEach(function(child){
+        traverseMtlToOppacity(child);
     });
 };
 
@@ -71,12 +94,6 @@ let refreshObjectFromCache = function(objToInsert){
     object3d.userData.json = objToInsert;
     scene.add(object3d)
     renderer.render(scene, camera);
-    if(object3d.userData.coarseSemantic === 'Ceiling Lamp'){
-        let light = new THREE.PointLight( 0xffffff, 5, 100 );
-        light.position.set(0,0,0);
-        light.castShadow = true;
-        object3d.add(light);
-    }
     return object3d; 
 }
 
@@ -274,7 +291,7 @@ const detectCollisionWall = function(wallMeta, object){
 const gameLoop = function () {
     stats.begin();
     render_update();
-    orth_view_port_update();
+    // orth_view_port_update();
     keyboard_update();
     camera.updateMatrixWorld();
     manager.renderManager.orthcamera.updateMatrixWorld();
@@ -466,10 +483,117 @@ const cancelClickingObject3D = function(){
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     $('#tab_modelid').text(" ");
     $('#tab_category').text(" ");  
+    transformControls.detach();
     INTERSECT_OBJ = undefined; //currentRoomId = undefined;
     if (isToggle) {
         radial.toggle();
         isToggle = !isToggle;
+    }
+}
+
+const onTouchObj = function (event) {
+    console.log(event)
+    scenecanvas.style.cursor = "auto";
+    // do raycasting, judge whether or not users choose a new object; 
+    camera.updateMatrixWorld();
+    let pos = new THREE.Vector2();
+    pos.x = ((event.changedTouches[0].clientX - $(scenecanvas).offset().left) / scenecanvas.clientWidth) * 2 - 1;
+    pos.y = -((event.changedTouches[0].clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1;
+    raycaster.setFromCamera(pos, camera);
+    var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
+    if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
+        currentRoomId = intersects[0].object.parent.userData.roomId;
+        $('#tab_roomid').text(currentRoomId);
+        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
+    } else {
+        currentRoomId = undefined;
+    }
+    if (On_ADD) {
+        On_ADD = false;
+        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        addObjectFromCache(
+            modelId=INSERT_OBJ.modelId,
+            transform={
+                'translate': [p.x, p.y, p.z], 
+                'rotate': [0,0,0],
+                'scale': [1,1,1]
+            }
+        );
+        scene.remove(scene.getObjectByName(INSERT_NAME));
+        applyLayoutViewAdjust();
+        return;
+    }
+    if (On_MOVE) {
+        On_MOVE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        synchronize_roomId(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
+        return;
+    }
+    if (On_LIFT) {
+        On_LIFT = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        return;
+    }
+    if (On_SCALE) {
+        On_SCALE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        return;
+    }
+    if (On_ROTATE) {
+        On_ROTATE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
+        return;
+
+    }
+    // intersect objects; 
+    var instanceKeyCache = manager.renderManager.instanceKeyCache;
+    instanceKeyCache = Object.values(instanceKeyCache);
+    intersects = raycaster.intersectObjects(instanceKeyCache, true);
+    if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(INTERSECT_OBJ){
+            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key)
+            {claimControlObject3D(INTERSECT_OBJ.userData.key, true); }
+        }
+        // if this is the online mode and the object is already controlled by other users...
+        if(onlineGroup !== 'OFFLINE' && 
+            intersects[0].object.parent.userData.controlledByID !== undefined && 
+            intersects[0].object.parent.userData.controlledByID !== onlineUser.id
+        ){
+            console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
+            cancelClickingObject3D();return; 
+        }
+        INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
+        console.log(INTERSECT_OBJ);
+        $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
+        $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
+        $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
+        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
+        menu.style.left = (event.changedTouches[0].clientX - 63) + "px";
+        menu.style.top = (event.changedTouches[0].clientY - 63) + "px";
+        if (!isToggle) {
+            radial.toggle();
+            isToggle = !isToggle;
+        }
+        datguiObjectFolder(INTERSECT_OBJ);
+        return;
+    }else{
+        cancelClickingObject3D();
+    }
+};
+
+const synchronizeIntersectedObject = function(){
+    synchronize_json_object(INTERSECT_OBJ);
+    synchronize_roomId(INTERSECT_OBJ);
+    if(onlineGroup !== 'OFFLINE'){
+        let transform = {
+            'translate': INTERSECT_OBJ.translate,
+            'scale': INTERSECT_OBJ.scale,
+            'rotate': INTERSECT_OBJ.rotate
+        };
+        emitFunctionCall('transformObjectByUUID', [INTERSECT_OBJ.userData.key, transform, false]);
     }
 }
 
@@ -575,8 +699,10 @@ var onClickObj = function (event) {
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
         if(INTERSECT_OBJ){
-            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key)
-            {claimControlObject3D(INTERSECT_OBJ.userData.key, true); }
+            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
+                claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+                synchronizeIntersectedObject();
+            }
         }
         // if this is the online mode and the object is already controlled by other users...
         if(onlineGroup !== 'OFFLINE' && 
@@ -588,6 +714,7 @@ var onClickObj = function (event) {
         }
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         claimControlObject3D(INTERSECT_OBJ.userData.key, false);
+        transformControls.attach(INTERSECT_OBJ);
         console.log(INTERSECT_OBJ);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
@@ -883,8 +1010,17 @@ const fpsCount = function(){
     }
 }
 
+const downloadSceneJson =  function(){
+    let json_to_dl = getDownloadSceneJson();
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
+    var dlAnchorElem = document.getElementById('downloadAnchorElem');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
+    dlAnchorElem.click();
+}
+
 var temp;
-var setting_up = function () {
+const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
     // setUpCanvasDrawing();
     render_initialization();
@@ -966,14 +1102,7 @@ var setting_up = function () {
             }
         });
     });
-    $("#download_button").click(function(){
-        let json_to_dl = getDownloadSceneJson();
-        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
-        var dlAnchorElem = document.getElementById('downloadAnchorElem');
-        dlAnchorElem.setAttribute("href",     dataStr     );
-        dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
-        dlAnchorElem.click();
-    });
+    $("#download_button").click(downloadSceneJson);
     $("#screenshot").click(render_function);
     $("#axis_button").click(function(){
         let theaxis = scene.getObjectByName('axeshelper');
@@ -1025,7 +1154,30 @@ var setting_up = function () {
             firstPersonOff();
         }
     });
-
+    $("#lighting_btn").click(function(){
+        let button = document.getElementById("lighting_btn");
+        lighting_Mode = !lighting_Mode;
+        if(lighting_Mode){
+            button.style.backgroundColor = '#9400D3';
+            Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
+                if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp'].includes(object3d.userData.coarseSemantic)){
+                    let light = new THREE.PointLight( 0xffffff, 5, 100 );
+                    light.name = SEMANTIC_POINTLIGHT;
+                    light.position.set(0,0,0);
+                    light.castShadow = true;
+                    object3d.add(light);
+                }
+            });
+        }else{
+            button.style.backgroundColor = 'transparent';
+            Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
+                if(['Ceiling Lamp', 'Pendant Lamp'].includes(object3d.userData.coarseSemantic)){
+                    object3d.remove(object3d.getObjectByName(SEMANTIC_POINTLIGHT));
+                }
+            });
+        }
+    });
+    
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1033,6 +1185,7 @@ var setting_up = function () {
     });
     window.addEventListener('resize', onWindowResize, false);
     // scenecanvas.addEventListener('click', onClickObj);
+    scenecanvas.addEventListener('touchend', onTouchObj);
     scenecanvas.addEventListener('wheel', onWheel);
     scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);

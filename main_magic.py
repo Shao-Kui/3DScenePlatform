@@ -352,10 +352,7 @@ def random_points_within(poly, num_points):
 @app_magic.route("/magic_samplepoints", methods=['POST', 'GET'])
 def mageAddAuto():
     rj = request.json
-    if 'auxiliaryDomObj' in rj:
-        room_meta = rj['auxiliaryDomObj']['room_meta']
-    else:
-        room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
-    samples = random_points_within(Polygon(room_meta), 1000)
-    print(samples[0])
+    room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    room_meta = room_meta[:, 0:2]
+    samples = random_points_within(Polygon(room_meta), 500)
     return json.dumps(samples)

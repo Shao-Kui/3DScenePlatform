@@ -1,13 +1,27 @@
 var orth_initialization = function(){
-  var geometry = new THREE.Geometry();
-  geometry.vertices.push(new THREE.Vector3(-1, 100, 1));
-  geometry.vertices.push(new THREE.Vector3(1, 100, 1));
-  geometry.vertices.push(new THREE.Vector3(1, 100, -1));
-  geometry.vertices.push(new THREE.Vector3(-1, 100, -1));
-  geometry.vertices.push(new THREE.Vector3(-1, 100, 1));
-  var material = new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 10 } );
-  orthline = new THREE.Line( geometry, material );
-  scene.add( orthline );
+    // var geometry = new THREE.Geometry();
+    // geometry.vertices.push(new THREE.Vector3(-1, 100, 1));
+    // geometry.vertices.push(new THREE.Vector3(1, 100, 1));
+    // geometry.vertices.push(new THREE.Vector3(1, 100, -1));
+    // geometry.vertices.push(new THREE.Vector3(-1, 100, -1));
+    // geometry.vertices.push(new THREE.Vector3(-1, 100, 1));
+    // var material = new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 10 } );
+    // orthline = new THREE.Line( geometry, material );
+    // scene.add( orthline );
+
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array( [
+        -1, 100, 1,
+        1, 100, 1,
+        1, 100, -1,
+        -1, 100, -1,
+        -1, 100, 1
+    ] );
+    // itemSize = 3 because there are 3 values (components) per vertex
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    const material = new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 10 } );
+    orthline = new THREE.Line( geometry, material );
+    // scene.add( orthline );
 }
 
 var orth_view_port_update = function(){

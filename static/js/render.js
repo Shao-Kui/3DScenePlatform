@@ -23,7 +23,7 @@ var skyMaterialsCloudtop = [
 ];
 
 var spotLight = new THREE.SpotLight( 0xffffff, 6);
-var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 9.3);
+var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 6.3);
 
 var render_initialization = function () {
     //enabling shadow casting
@@ -32,7 +32,7 @@ var render_initialization = function () {
 
     //lighting and shadowing
     //0.9 is the stable lightness of ambient light after mid-term; 
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 3.6);
+    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
     scene.add(ambientLight);
 
     //0.3 is the stable lightness of directional light after mid-term; 
@@ -67,7 +67,7 @@ var render_initialization = function () {
     scene.add( hlight );
 
     //adding skybox
-    var skyGeo = new THREE.CubeGeometry(1000, 1000, 1000);
+    var skyGeo = new THREE.BoxGeometry(1000, 1000, 1000);
     var skyMaterials = skyMaterialsCloudtop;
     skyBox = new THREE.Mesh(skyGeo, skyMaterials);
     scene.add(skyBox);
