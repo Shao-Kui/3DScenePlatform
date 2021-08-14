@@ -1,140 +1,75 @@
-#coding=utf-8
+# coding=utf-8
 
+from sketch_retrieval.models import *
+from PIL import Image
+from torchvision import transforms
+import numpy as np
+import torch.nn as nn
 import torch
+import faiss
 import time
 import glob
-import os,shutil,json
-from datetime import datetime
-from sketch_retrival import *
+import os
+import json
 
-from sketch_retrival.tools.ImgDataset import SingleImgDataset
-from sketch_retrival.models.MVCNN import SVCNN
-from torch.autograd import Variable
-import torch.nn as nn
-import numpy as np
-import heapq
-
-category_file='./sketch_retrival/categories.txt'
-objedge_dir='./sketch_retrival/objedge20/'
-feature_dir = './sketch_retrival/features/'
-model_dir = './sketch_retrival/MVCNN_stage_1'
-search_file = './sketch_retrival/qs.png'
-
-def generate_all_features(cnet,classnames,objs):
-    val_dataset = SingleImgDataset(objedge_dir, classnames,objs,test_mode=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=0)
-
-    features = []
-    objs = []
-    for _, data in enumerate(val_loader, 0):
-        files = data[2]
-        x = Variable(data[1]).cuda()
-        y = cnet.net_1(x)
-        y = y.view(y.shape[0],-1)
-        for i in  range(5):
-            y = cnet.net_2._modules[str(i)](y)
-        y = y.cpu().data.numpy()
-        for i in range(len(files)):
-            obj = files[i].split('/')[-2]
-            feature = y[i]
-            #print(obj,feature)
-            features.append(feature)
-            objs.append(obj)
-    
-    return features,objs
-
-def generate_feature(cnet,filename):
-    val_dataset = SingleImgDataset(objedge_dir, ['tmp'],[],test_mode=True)
-    val_dataset.filepaths=[[filename,'tmp']]
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0)
-
-    feature = None
-    for _, data in enumerate(val_loader, 0):
-        x = Variable(data[1]).cuda()
-        y = cnet.net_1(x)
-        y = y.view(y.shape[0],-1)
-        for i in  range(5):
-            y = cnet.net_2._modules[str(i)](y)
-        y = y.cpu().data.numpy()
-        feature=y[0]
-    return feature
-
-def model_statistics():
-    objs=[]
-    with open(category_file,'r') as inf:
-        objs=[line.split('\t')[1:3] for line in inf]
-
-    objs_data=glob.glob(objedge_dir+'*')
-    #print(objs_data)
-    # Warning: in Linux use '/' and in Windows use '\\'
-    objs_data = [d.split('\\')[-1] for d in objs_data]
-    objs = [d for d in objs if d[0] in objs_data and not d[1] in ['door','wall','window','floor','ceil']]
-    keys = {}
-    for d in objs:
-        keys[d[0]]=d[1]
-    classnames = list(set([d[1] for d in objs]))
-    return classnames,objs,keys
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
-def load_cnet():
-    classnames,objs,keys = model_statistics()
-
-    #print(classnames,objs)
-    # model=2493,classnames=180
-    cnet = SVCNN("MVCNN", nclasses=len(classnames))
-    cnet.load(model_dir)
-    cnet.cuda()
-    cnet.eval()
-
-    if os.path.exists(feature_dir+'features.npy'):
-        features = np.load(feature_dir+'features.npy')
-        objs = np.load(feature_dir+'objs.npy')
-    else:
-        features,objs = generate_all_features(cnet,classnames,objs)
-        features = np.array(features)
-        objs= np.array(objs)
-        np.save(feature_dir+'features.npy',features)
-        np.save(feature_dir+'objs.npy',objs)
-    
-    return cnet,features,objs,keys
+model_lib_dir = './sketch_retrieval/models.index'
+catalog_dir = './sketch_retrieval/catalog.json'
+ckpt_dir = './sketch_retrieval/epoch_57.pth'
 
 
-def sketch_search(filename=search_file,k=20,classname=None):
-    start_time = time.time()
-    f_42 = generate_feature(cnet,filename)
-    
-    print("\r\n\r\n------- %s secondes1 --- \r\n\r\n" % (time.time() - start_time))
-    
-    #print(datetime.now())
-    if not classname:
-        key_features = features.copy()
-        key_objs = objs.copy()
-    else:
-        key_features =[]
-        key_objs = []
-        for feature,o in zip(features,objs):
-            if classname == keys[o]:
-                key_features.append(feature)
-                key_objs.append(o)
-        key_features = np.array(key_features)
-        key_objs = np.array(key_objs)
+net = None
+models_index = None
+model_names = None
 
-    print("\r\n\r\n------- %s secondes2 --- \r\n\r\n" % (time.time() - start_time))
-    #print(len(key_features),len(key_objs),'-----------------------------')
-    distances = np.linalg.norm(key_features-f_42,axis=1)
-    distances = distances.tolist()
-    #print(datetime.now())
-    min_num_index=map(distances.index, heapq.nsmallest(k,distances))
-    end_time = time.time()
-    print("\r\n\r\n------- %s secondes3 --- \r\n\r\n" % (end_time - start_time))
-    results = [key_objs[x] for x in min_num_index]
-    return results
-    
 
-cnet,features,objs,keys = load_cnet()
+def sketch_search(filename, k=20, classname=None):
 
-if __name__ == '__main__':
-    print(datetime.now())
-    results = sketch_search(search_file)
-    print(results)
-    print(datetime.now())
+    sketch_aug = transforms.Compose([
+        transforms.CenterCrop((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
+    ])
+    sketch_img = Image.open(filename).convert('RGB')
+    sketch_img = sketch_aug(sketch_img)
+    sketch_img = torch.stack([sketch_img])
+    sketch_data = sketch_img.cuda(non_blocking=True)
+    sketch_features, _ = net(sketch_data, None)
+    pred = models_index.search(
+        sketch_features.detach().cpu().numpy(), k)[1]  # bs, 10
+    pred = pred[0]
+    return [model_names[i] for i in pred]
+
+
+def init_sketch_retrieval():
+    model_lib = faiss.read_index(model_lib_dir)
+    model = CrossModalCNN(dict(
+        backbone='resnet34',
+        pretrained=False,
+        feature_dim=512
+    ), dict(
+        backbone='resnet34',
+        pretrained=False,
+        feature_dim=512,
+        num_views=20
+    ))
+    model = torch.nn.DataParallel(model).cuda()
+    state = torch.load(ckpt_dir)
+    model.load_state_dict(state['model_state_dict'])
+    model.eval()
+    with open(catalog_dir, 'r') as f:
+        names = json.load(f)
+        names = names['models']
+    return model, model_lib, names
+
+
+net, models_index, model_names = init_sketch_retrieval()
+
+# if __name__ == '__main__':
+#     print(datetime.now())
+#     results = sketch_search(search_file)
+#     print(results)
+#     print(datetime.now())
