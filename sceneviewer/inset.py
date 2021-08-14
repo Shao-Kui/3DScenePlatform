@@ -11,7 +11,8 @@ import sk
 from projection2d import processGeo as p2d, getobjCat
 
 DATASET_ROOT = './dataset'
-LATENTSPACE = './latentspace'
+LATENTSPACE = './latentspace/autoview'
+# LATENTSPACE = './sceneviewer/results'
 
 def getBBox(scenejson):
     points = []
@@ -54,15 +55,15 @@ def showPcamInset(origin):
     zscale = orthImgHeight / (ub[1] - lb[1])
 
     room = {}
-    for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
+    for filename in os.listdir(f'{LATENTSPACE}/{origin}'):
         if not filename.endswith(r'.json'):
             continue
 
         identifier = filename.split('.')[0]
-        if not os.path.exists(f'{LATENTSPACE}/autoview/{origin}/{identifier}.png'):
+        if not os.path.exists(f'{LATENTSPACE}/{origin}/{identifier}.png'):
             continue
 
-        with open(f'{LATENTSPACE}/autoview/{origin}/{filename}') as f:
+        with open(f'{LATENTSPACE}/{origin}/{filename}') as f:
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
@@ -148,7 +149,7 @@ def showPcamInset(origin):
                         break
             item = imgList[i]
             pcamImg = cv2.imread(
-                f"{LATENTSPACE}/autoview/{origin}/{item['identifier']}.png")
+                f"{LATENTSPACE}/{origin}/{item['identifier']}.png")
             if pcamImg.shape[1] > 600:
                 pcamImg = cv2.resize(pcamImg, (600, 337),
                                      interpolation=cv2.INTER_AREA)
@@ -230,7 +231,7 @@ def showPcamInset(origin):
     """
         Shao-Kui has changed the dir from f'{origin}.png' to:
     """
-    cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamInset.png', resultImg)
+    cv2.imwrite(f'{LATENTSPACE}/{origin}/showPcamInset.png', resultImg)
 
 
 def showPcamPoints(origin):
@@ -243,15 +244,15 @@ def showPcamPoints(origin):
     xscale = orthImg.shape[1] / (ub[0] - lb[0])
     zscale = orthImg.shape[0] / (ub[1] - lb[1])
 
-    for filename in os.listdir(f'{LATENTSPACE}/autoview/{origin}'):
+    for filename in os.listdir(f'{LATENTSPACE}/{origin}'):
         if not filename.endswith(r'.json'):
             continue
 
         identifier = filename.split('.')[0]
-        if not os.path.exists(f'{LATENTSPACE}/autoview/{origin}/{identifier}.png'):
+        if not os.path.exists(f'{LATENTSPACE}/{origin}/{identifier}.png'):
             continue
 
-        with open(f'{LATENTSPACE}/autoview/{origin}/{filename}') as f:
+        with open(f'{LATENTSPACE}/{origin}/{filename}') as f:
             pcam = json.load(f)
 
         x = int((ub[0] - pcam['probe'][0]) * xscale)
@@ -261,13 +262,13 @@ def showPcamPoints(origin):
     """
         Shao-Kui has changed the dir from f'pp_{origin}.png' to:
     """
-    cv2.imwrite(f'{LATENTSPACE}/autoview/{origin}/showPcamPoints.png', orthImg)
+    cv2.imwrite(f'{LATENTSPACE}/{origin}/showPcamPoints.png', orthImg)
 
 def insetBatch(origins):
     for origin in origins:
         showPcamPoints(origin)
         showPcamInset(origin)
-        shutil.copy(f'{LATENTSPACE}/autoview/{origin}/showPcamInset.png', f'./sceneviewer/mapping/{origin}.png')
+        shutil.copy(f'{LATENTSPACE}/{origin}/showPcamInset.png', f'./sceneviewer/mapping/{origin}.png')
 
 # floorplanlist = [_.split('.')[0]
 #                  for _ in os.listdir('../dataset/alilevel_door2021')]
