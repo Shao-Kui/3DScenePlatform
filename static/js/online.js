@@ -82,8 +82,17 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
     if(!(objKey in manager.renderManager.instanceKeyCache)){
         return; 
     }
-    if(isRelease) manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
-    else manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;  
+    if(isRelease){
+        manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
+        let index = outlinePass2.selectedObjects.indexOf(manager.renderManager.instanceKeyCache[objKey]);
+        if(index > -1){
+            outlinePass2.selectedObjects.splice(index, 1);
+        }
+    }
+    else{
+        manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;
+        outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[objKey]);
+    };  
 });
 
 const emitAnimationObject3DOnly = function(){

@@ -420,8 +420,9 @@ const searchPanelInitialization = function(){
             socket.emit('sceneRefresh', result, onlineGroup);
         });
     })
-    /*$("#sketchsearchbtn").click(clickSketchSearchButton);
+    $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
+    /*
     $("#rec_button").click(function () {
         clear_panel();
         Auto_Rec_Mode = true;

@@ -18,6 +18,11 @@
     <script src="/static/3rdparty/three.js-r131/OBJLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TGALoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TransformControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/EffectComposer.js"></script>
+    <script src="/static/3rdparty/three.js-r131/OutlinePass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/RenderPass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/ShaderPass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/CopyShader.js"></script>
     <script src="/static/3rdparty/three.js-r103/OrbitControls.js"></script>
     <script src="/static/3rdparty/three.js-r103/PointerLockControls.js"></script>
     <script src="/static/3rdparty/threex.windowresize.js"></script>
@@ -76,6 +81,7 @@
       var radial;
       var radial_scale;
       var renderer;
+      var composer, renderPass, outlinePass, outlinePass2; // Post-Processing. 
       var camera;
       var scene;
       var orbitControls;
@@ -290,7 +296,7 @@
             >储物柜</button>
           </div>
           <div id="collaborative_container">
-            <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
+            <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
                 <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
                      style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
                     <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
@@ -301,7 +307,7 @@
                             style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
                         Sketch Clear
                     </button>
-                </div-->
+                </div->
             <div class="input-group input-group-lg py-2 px-3">
               <input
                 class="form-control"
