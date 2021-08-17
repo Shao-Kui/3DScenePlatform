@@ -136,9 +136,6 @@
     <div id="ui">
       <div class="collapse show" id="sidebar">
         <div id="retrieve" class="d-flex flex-column" align="center">
-          <!-- <div class="card-body">
-            <h3 class="card-title">3D Scene Platform</h3>
-          </div> -->
           <div class="bg-primary p-4" style="height: 50.75px">
             <a
               class="dropdown-toggle h3"
@@ -224,21 +221,21 @@
             <button
               id="autoView"
               type="button"
-              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
+              class="btn btn-outline-dark m-1 btn-responsive"
             >
               SceneViewer
             </button>
             <button
               id="autoViewPath"
               type="button"
-              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
+              class="btn btn-outline-dark m-1 btn-responsive"
             >
               AutoPath
             </button>
             <button
               id="autoViewMapping"
               type="button"
-              class="btn btn-lg btn-outline-dark m-1 btn-responsive"
+              class="btn btn-outline-dark m-1 btn-responsive"
             >
               Mapping
             </button>
@@ -296,18 +293,20 @@
             >储物柜</button>
           </div>
           <div id="collaborative_container">
-            <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
-                <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
-                     style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
-                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
-                        Sketch Search
-                    </button>
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchclearbtn"
-                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
-                        Sketch Clear
-                    </button>
-                </div->
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDiv" role="button" aria-expanded="false" aria-controls="drawingCanvasDiv">
+              Drawing Canvas
+            </a>
+            <div class="collapse" id="drawingCanvasDiv">
+              <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
+              <div id="sketchsearchdiv" class="btn-group mx-1 my-3">
+                  <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchsearchbtn">
+                      Sketch Search
+                  </button>
+                  <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchclearbtn">
+                      Sketch Clear
+                  </button>
+              </div>
+            </div>
             <div class="input-group input-group-lg py-2 px-3">
               <input
                 class="form-control"
