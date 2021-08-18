@@ -13,7 +13,7 @@ from autolayoutv2 import sceneSynthesis
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
-# from generate_descriptor import sketch_search
+from sketch_retrieval.generate_descriptor import sketch_search
 from main_audio import app_audio
 from main_magic import app_magic
 from projection2d import objListCat
@@ -212,8 +212,9 @@ def sketch():
         with open(filename, 'wb') as f:
             f.write(imgdata)
         start_time = time.time()
-        results = sketch_search('./qs.png', 400)
+        results = sketch_search('./qs.png')
         end_time = time.time()
+        """
         tmp = []
         for i in results:
             if i not in tmp:
@@ -225,6 +226,8 @@ def sketch():
         ret = [
             {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d" % (m.id,)}
             for m in results if m != None]
+        """
+        ret = [{"name":modelId, "semantic": sk.getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"} for modelId in results]
         print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
@@ -275,6 +278,13 @@ def getSceneJsonByID(origin):
         return ""
 
 def generateObjectsUUIDs(sceneJson):
+    # generate wall height: 
+    for room in sceneJson['rooms']:
+        try:
+            sceneJson['coarseWallHeight'] = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+            break
+        except:
+            continue
     # generate uuid for each object: 
     for room in sceneJson['rooms']:
         for obj in room['objList']:
@@ -347,6 +357,16 @@ def sceneRefresh(sceneJson, groupName):
         return
     onlineScenes[groupName] = generateObjectsUUIDs(sceneJson)
     emit('sceneRefresh', onlineScenes[groupName], room=groupName, include_self=True)
+
+@socketio.on('functionCallUnity')
+def functionCallUnity(theJson): 
+    fname = theJson['fname']
+    arguments = [json.loads(theJson['arguments'])]
+    groupName = theJson['groupName']
+    if groupName not in onlineScenes:
+        emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
+        return
+    emit('functionCall', (fname, arguments), room=groupName, include_self=False) 
 
 @socketio.on('functionCall')
 def functionCall(fname, arguments, groupName): 
