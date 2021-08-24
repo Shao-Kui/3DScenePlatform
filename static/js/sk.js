@@ -100,8 +100,9 @@ let refreshObjectFromCache = function(objToInsert){
 const roomIDCaster = new THREE.Raycaster();
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
-    let intersects = roomIDCaster.intersectObjects(manager.renderManager.fCache, true);
-    if (manager.renderManager.fCache.length > 0 && intersects.length > 0) { 
+    let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache, true);
+    if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) { 
+        console.log(intersects[0].object.parent.userData)
         return intersects[0].object.parent.userData.roomId;
     }
     else{
@@ -299,7 +300,8 @@ const gameLoop = function () {
     if(fpCtrlMode){
         firstPersonUpdate();
     }
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
+    composer.render();
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
     stats.end();
     requestAnimationFrame(gameLoop);
@@ -491,8 +493,10 @@ const cancelClickingObject3D = function(){
     }
 }
 
+var onTouchTimes = 1;
 const onTouchObj = function (event) {
-    console.log(event)
+    onTouchTimes -= 1;
+    if(onTouchTimes > 0) return; 
     scenecanvas.style.cursor = "auto";
     // do raycasting, judge whether or not users choose a new object; 
     camera.updateMatrixWorld();
@@ -505,10 +509,10 @@ const onTouchObj = function (event) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
-    } else {
+    }else{
         currentRoomId = undefined;
     }
-    if (On_ADD) {
+    if(On_ADD){
         On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
         addObjectFromCache(
@@ -545,16 +549,33 @@ const onTouchObj = function (event) {
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         return;
-
     }
-    // intersect objects; 
+    onClickIntersectObject(event.changedTouches[0]);
+};
+
+const synchronizeIntersectedObject = function(){
+    synchronize_json_object(INTERSECT_OBJ);
+    synchronize_roomId(INTERSECT_OBJ);
+    if(onlineGroup !== 'OFFLINE'){
+        let transform = {
+            'translate': [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z],
+            'scale': [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z],
+            'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z]
+        };
+        emitFunctionCall('transformObjectByUUID', [INTERSECT_OBJ.userData.key, transform, false]);
+    }
+}
+
+const onClickIntersectObject = function(event){
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
         if(INTERSECT_OBJ){
-            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key)
-            {claimControlObject3D(INTERSECT_OBJ.userData.key, true); }
+            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
+                claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+                synchronizeIntersectedObject();
+            }
         }
         // if this is the online mode and the object is already controlled by other users...
         if(onlineGroup !== 'OFFLINE' && 
@@ -566,14 +587,14 @@ const onTouchObj = function (event) {
         }
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         claimControlObject3D(INTERSECT_OBJ.userData.key, false);
-        console.log(INTERSECT_OBJ);
+        transformControls.attach(INTERSECT_OBJ);
         $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
         $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
         $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
-        menu.style.left = (event.changedTouches[0].clientX - 63) + "px";
-        menu.style.top = (event.changedTouches[0].clientY - 63) + "px";
-        if (!isToggle) {
+        menu.style.left = (event.clientX - 63) + "px";
+        menu.style.top = (event.clientY - 63) + "px";
+        if ((!isToggle) && event.pointerType === "mouse") {
             radial.toggle();
             isToggle = !isToggle;
         }
@@ -581,19 +602,6 @@ const onTouchObj = function (event) {
         return;
     }else{
         cancelClickingObject3D();
-    }
-};
-
-const synchronizeIntersectedObject = function(){
-    synchronize_json_object(INTERSECT_OBJ);
-    synchronize_roomId(INTERSECT_OBJ);
-    if(onlineGroup !== 'OFFLINE'){
-        let transform = {
-            'translate': INTERSECT_OBJ.translate,
-            'scale': INTERSECT_OBJ.scale,
-            'rotate': INTERSECT_OBJ.rotate
-        };
-        emitFunctionCall('transformObjectByUUID', [INTERSECT_OBJ.userData.key, transform, false]);
     }
 }
 
@@ -692,45 +700,7 @@ var onClickObj = function (event) {
         }
         return; 
     }
-
-    // intersect objects; 
-    var instanceKeyCache = manager.renderManager.instanceKeyCache;
-    instanceKeyCache = Object.values(instanceKeyCache);
-    intersects = raycaster.intersectObjects(instanceKeyCache, true);
-    if (instanceKeyCache.length > 0 && intersects.length > 0) {
-        if(INTERSECT_OBJ){
-            if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
-                claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-                synchronizeIntersectedObject();
-            }
-        }
-        // if this is the online mode and the object is already controlled by other users...
-        if(onlineGroup !== 'OFFLINE' && 
-            intersects[0].object.parent.userData.controlledByID !== undefined && 
-            intersects[0].object.parent.userData.controlledByID !== onlineUser.id
-        ){
-            console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
-            cancelClickingObject3D();return; 
-        }
-        INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
-        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
-        transformControls.attach(INTERSECT_OBJ);
-        console.log(INTERSECT_OBJ);
-        $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
-        $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
-        $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
-        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
-        menu.style.left = (event.clientX - 63) + "px";
-        menu.style.top = (event.clientY - 63) + "px";
-        if (!isToggle) {
-            radial.toggle();
-            isToggle = !isToggle;
-        }
-        datguiObjectFolder(INTERSECT_OBJ);
-        return;
-    }else{
-        cancelClickingObject3D();
-    }
+    onClickIntersectObject(event);
 };
 
 const castMousePosition = function(){
@@ -747,6 +717,15 @@ const castMousePosition = function(){
 
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    // raycasting & highlight objects: 
+    var instanceKeyCache = manager.renderManager.instanceKeyCache;
+    instanceKeyCache = Object.values(instanceKeyCache);
+    intersects = raycaster.intersectObjects(instanceKeyCache, true);
+    if (instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined) {
+        outlinePass.selectedObjects = [intersects[0].object.parent];
+    }else{
+        outlinePass.selectedObjects = []
+    }  
     // currentMovedTimeStamp = moment();
     if(On_ADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
@@ -820,6 +799,7 @@ var onWindowResize = function(){
     camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight); 
+    composer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight);
 }
 
 var saveFile = function (strData, filename) {
@@ -868,6 +848,7 @@ const removeIntersectObject = function(){
     }
     if(onlineGroup !== 'OFFLINE'){emitFunctionCall('removeObjectByUUID', [INTERSECT_OBJ.userData.key]);}
     applyLayoutViewAdjust();
+    INTERSECT_OBJ = undefined;
 }
 
 const onAddOff = function(){
@@ -900,6 +881,7 @@ const encodePerspectiveCamera = function(sceneJson){
     sceneJson.PerspectiveCamera.origin = [camera.position.x, camera.position.y, camera.position.z];
     sceneJson.PerspectiveCamera.rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
     sceneJson.PerspectiveCamera.target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
+    sceneJson.PerspectiveCamera.roomId = calculateRoomID([camera.position.x, camera.position.y, camera.position.z]);
     let up = new THREE.Vector3()
     up.copy(camera.up)
     up.applyQuaternion(camera.quaternion)
@@ -1015,14 +997,14 @@ const downloadSceneJson =  function(){
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json_to_dl));
     var dlAnchorElem = document.getElementById('downloadAnchorElem');
     dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-l${json_to_dl.id}-dl.json`);
+    dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-r${json_to_dl.PerspectiveCamera.roomId}.json`);
     dlAnchorElem.click();
 }
 
 var temp;
 const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
-    // setUpCanvasDrawing();
+    setUpCanvasDrawing();
     render_initialization();
     orth_initialization();
     searchPanelInitialization();

@@ -29,12 +29,21 @@ html, body{
 
 @media (max-width: 575.98px) {
   #retrieve {
-    min-width: 200px;
+    min-width: 220px;
+  }
+  #drawing-canvas {
+    height: 200px;
+    width: 200px;
   }
   .btn-responsive, .rapidSearch {
     padding: .25rem .5rem;
     font-size: .875rem;
     border-radius: .2rem;
+  }
+  .btn-canvas-responsive {
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .4rem;
   }
   .input-group-lg .input-group-append .btn {
     padding: .375rem .75rem;
@@ -53,6 +62,22 @@ html, body{
     padding: .375rem .75rem;
     font-size: 1rem;
     border-radius: .4rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .btn-responsive {
+    padding: .5rem 1rem;
+    font-size: 1.25rem;
+    border-radius: .6rem;
+  }
+}
+
+@media (min-width: 576px) {
+  .btn-canvas-responsive {
+    padding: .5rem 1rem;
+    font-size: 1.25rem;
+    border-radius: .6rem;
   }
 }
 
@@ -174,4 +199,9 @@ html, body{
 
 #sceneInfo.collapse.show {
   min-height: 150px;
+}
+
+a.dropdown-toggle, a.dropdown-toggle:hover, a.dropdown-toggle:focus {
+  color: #5a5a5a;
+  text-decoration: none;
 }

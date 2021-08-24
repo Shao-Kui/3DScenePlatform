@@ -23,7 +23,7 @@ var skyMaterialsCloudtop = [
 ];
 
 var spotLight = new THREE.SpotLight( 0xffffff, 6);
-var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 6.3);
+var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 9.3);
 
 var render_initialization = function () {
     //enabling shadow casting
@@ -32,7 +32,7 @@ var render_initialization = function () {
 
     //lighting and shadowing
     //0.9 is the stable lightness of ambient light after mid-term; 
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
+    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.6);
     scene.add(ambientLight);
 
     //0.3 is the stable lightness of directional light after mid-term; 
@@ -71,6 +71,28 @@ var render_initialization = function () {
     var skyMaterials = skyMaterialsCloudtop;
     skyBox = new THREE.Mesh(skyGeo, skyMaterials);
     scene.add(skyBox);
+
+    // Effect Composer
+    // postprocessing
+    composer = new THREE.EffectComposer(renderer);
+    renderPass = new THREE.RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    outlinePass = new THREE.OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight ), scene, camera );
+    outlinePass.edgeStrength = 6;
+    outlinePass.edgeGlow = 0.1;
+    outlinePass.edgeThickness = 1;
+    outlinePass.pulsePeriod = 5;
+    outlinePass.visibleEdgeColor.set("#2f8713");
+    outlinePass.hiddenEdgeColor.set("#ffffff");
+    composer.addPass(outlinePass);
+    outlinePass2 = new THREE.OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight ), scene, camera );
+    outlinePass2.edgeStrength = 6;
+    outlinePass2.edgeGlow = 0.1;
+    outlinePass2.edgeThickness = 1;
+    outlinePass2.pulsePeriod = 5;
+    outlinePass2.visibleEdgeColor.set("#3f3395");
+    outlinePass2.hiddenEdgeColor.set("#000000");
+    composer.addPass(outlinePass2);
 };
 
 

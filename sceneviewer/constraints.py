@@ -224,7 +224,7 @@ def wallNormalOffset(h, floorMeta):
     direction = np.array([h['direction'][0], h['direction'][2]])
     direction /= np.linalg.norm(direction)
     if h['type'] == 'twoWallPerspective':
-        res = 1.
+        res = 0.
     elif h['type'] == 'againstMidWall':
         res = np.dot(direction, floorMeta[h['wallIndex']][2:4])
     else:

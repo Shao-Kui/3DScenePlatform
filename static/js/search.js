@@ -29,7 +29,20 @@ const applyLayoutViewAdjust = function(){
     }
 }
 
-var clickSketchSearchButton = function () {
+const newCatalogItem = function(item){
+    let iDiv = document.createElement('div');
+    iDiv.className = "catalogItem";
+    iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+    iDiv.setAttribute('objectID', item.id);
+    iDiv.setAttribute('objectName', item.name);
+    iDiv.setAttribute('modelId', item.name);
+    iDiv.setAttribute('coarseSemantic', item.semantic);
+    iDiv.setAttribute('semantic', item.semantic);
+    iDiv.addEventListener('click', clickCatalogItem)
+    catalogItems.appendChild(iDiv);
+};
+
+const clickSketchSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
@@ -44,19 +57,12 @@ var clickSketchSearchButton = function () {
     }).done(function (o) {
         searchResults = JSON.parse(o);
         searchResults.forEach(function (item) {
-            var iDiv = document.createElement('div');
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
-            iDiv.setAttribute('objectID', item.id);
-            iDiv.setAttribute('objectName', item.name);
-            iDiv.setAttribute('coarseSemantic', item.semantic);
-            iDiv.addEventListener('click', clickCatalogItem)
-            catalogItems.appendChild(iDiv);
-        })
+            newCatalogItem(item);
+        });
     });
 };
 
-var clickTextSearchButton = function () {
+const clickTextSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
@@ -64,17 +70,8 @@ var clickTextSearchButton = function () {
     $.getJSON(search_url, function (data) {
         searchResults = data;
         searchResults.forEach(function (item) {
-            var iDiv = document.createElement('div');
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
-            iDiv.setAttribute('objectID', item.id);
-            iDiv.setAttribute('objectName', item.name);
-            iDiv.setAttribute('modelId', item.name);
-            iDiv.setAttribute('coarseSemantic', item.semantic);
-            iDiv.setAttribute('semantic', item.semantic);
-            iDiv.addEventListener('click', clickCatalogItem)
-            catalogItems.appendChild(iDiv);
-        })
+            newCatalogItem(item);
+        });
     });
 };
 
@@ -420,8 +417,9 @@ const searchPanelInitialization = function(){
             socket.emit('sceneRefresh', result, onlineGroup);
         });
     })
-    /*$("#sketchsearchbtn").click(clickSketchSearchButton);
+    $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
+    /*
     $("#rec_button").click(function () {
         clear_panel();
         Auto_Rec_Mode = true;
