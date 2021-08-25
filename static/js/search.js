@@ -12,6 +12,20 @@ const clickCatalogItem = function (e) {
     };
 }
 
+const clickTextureItem = function(e){
+    console.log($(e.target));
+    let texture = new THREE.TextureLoader().load($(e.target).data("imgpath"));
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 1);
+    let material = new THREE.MeshPhongMaterial( { map: texture } );
+    manager.renderManager.cwfCache.forEach(o => {
+        o.children.forEach(c => {
+            c.material = material;
+        });
+    });
+};
+
 const applyLayoutViewAdjust = function(){
     if(LayoutViewAdjust_MODE && (currentRoomId)){
         $.ajax({
@@ -419,6 +433,23 @@ const searchPanelInitialization = function(){
     })
     $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
+    $("#manyTextures").click(() => {
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        let search_url = "/manyTextures";
+        $.getJSON(search_url, function (data) {
+            searchResults = data;
+            searchResults.forEach(function (item) {
+                let iDiv = document.createElement('div');
+                iDiv.className = "catalogItem";
+                iDiv.style.backgroundImage = "url(" + item.imgpath + ")";;
+                iDiv.addEventListener('click', clickTextureItem)
+                catalogItems.appendChild(iDiv);
+                $(iDiv).data('imgpath', item.imgpath);
+            });
+        });
+    })
     /*
     $("#rec_button").click(function () {
         clear_panel();

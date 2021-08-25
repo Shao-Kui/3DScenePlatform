@@ -158,8 +158,8 @@ class SceneManager {
         var meta = modelId + suffix;
         var self = this;
         var objLoader = new THREE.OBJLoader();
-        var mtl_path = "/room/" + self.scene_json.origin + "/" + meta + '.mtl';
-        var obj_path = "/room/" + self.scene_json.origin + "/" + meta + '.obj';
+        let mtl_path = "/room/" + self.scene_json.origin + "/" + meta + '.mtl';
+        let obj_path = "/room/" + self.scene_json.origin + "/" + meta + '.obj';
         objLoader.load(obj_path, function (instance) {
             // var instance = event.detail.loaderRootNode;
             instance.userData = {"type": suffix, "roomId": roomId, "meta": meta, "modelId": modelId};
@@ -168,23 +168,10 @@ class SceneManager {
             instance.name = meta;
             traverseObjSetting(instance);
             self.scene.add(instance);
-            // let texture = new THREE.TextureLoader().load( '/texture/textile_5_4.jpg' );
-            // texture.wrapS = THREE.RepeatWrapping;
-            // texture.wrapT = THREE.RepeatWrapping;
-            // texture.repeat.set(4, 4);
-            // var material = new THREE.MeshPhongMaterial( {
-            //     map: texture,
-            // });
-            // manager.renderManager.cwfCache.forEach(o => {
-            //     let texture = new THREE.TextureLoader().load( '/texture/textile_9_3.jpg' );
-            //     // immediately use the texture for material creation
-            //     let material = new THREE.MeshPhongMaterial( { map: texture } );
-            //     o.children[0].material = material;
-            // });
             if(suffix === 'f'){
                 instance.traverse(function(child){
                     if(child instanceof THREE.Mesh){
-                        child.material.color.setHex(0x8899AA);
+                        // child.material.color.setHex(0x8899AA);
                         // child.material.map = texture;
                         // child.material = material
                     }
@@ -196,13 +183,14 @@ class SceneManager {
             if(suffix === 'w'){
                 instance.traverse(function(child){
                     if(child instanceof THREE.Mesh){
-                        child.material.color.setHex(0x8899AA);
+                        // child.material.color.setHex(0x8899AA);
                     }
                 });
                 self.cwfCache.push(instance);
                 self.wfCache.push(instance);
                 self.wCache.push(instance); 
             }
+            instance
         }, null, null, null, false);
     }
 

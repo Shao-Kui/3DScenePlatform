@@ -159,6 +159,9 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
 const door_mageAdd_set = []; 
 const window_factor = 0.5; 
 const _addDoor_mageAdd = (doorMeta) => {
+    if(doorMeta.bbox === undefined){
+        return;
+    }
     let worldBbox = doorMeta.bbox; 
     let _minIndex = tf.argMin([
         worldBbox.max[0] - worldBbox.min[0], 

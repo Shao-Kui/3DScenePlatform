@@ -164,35 +164,70 @@ def query2nd():
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in xiaoyiids1]
     return json.dumps(ret)
 
+ROOMDIR = "room2021"
+
 @app.route("/room/<houseid>/<roomid>")
 def roominfo(houseid, roomid):
     structs = {"c": "c.obj", "w": "w.obj", "f": "f.obj"}
-    ret = [k for k in structs if os.path.isfile(os.path.join("dataset", "room", houseid, roomid + structs[k]))]
+    ret = [k for k in structs if os.path.isfile(os.path.join("dataset", ROOMDIR, houseid, roomid + structs[k]))]
+    if(len(ret) == 0):
+        ret = [k for k in structs if os.path.isfile(os.path.join("dataset", "room", houseid, roomid + structs[k]))]
     return json.dumps(ret)
 
 @app.route("/room/<houseid>/<roomid>f.obj")
 def floor(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "f.obj"))
+    p = os.path.join("dataset", ROOMDIR, houseid, roomid + "f.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    p = os.path.join("dataset", "room", houseid, roomid + "f.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    return ""
 
 @app.route("/room/<houseid>/<roomid>w.obj")
 def wall(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "w.obj"))
+    p = os.path.join("dataset", ROOMDIR, houseid, roomid + "w.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    p = os.path.join("dataset", "room", houseid, roomid + "w.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    return ""
 
 @app.route("/room/<houseid>/<roomid>c.obj")
 def ceil(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "c.obj"))
+    p = os.path.join("dataset", ROOMDIR, houseid, roomid + "c.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    p = os.path.join("dataset", "room", houseid, roomid + "c.obj")
+    if os.path.isfile(p):
+        return flask.send_file(p)
+    return ""
+
+@app.route("/GeneralTexture/<imgname>")
+def GeneralTexture(imgname):
+    return flask.send_file(f'./dataset/GeneralTexture/{imgname}')
+
+@app.route("/manyTextures")
+def manyTextures():
+    res = []
+    for imgname in os.listdir('./dataset/GeneralTexture'):
+        res.append({
+            'imgpath': f'/GeneralTexture/{imgname}'
+        })
+    return json.dumps(res)
 
 @app.route("/room/<houseid>/<roomid>f.mtl")
 def floor_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "f.mtl"))
+    return flask.send_file(os.path.join("dataset", ROOMDIR, houseid, roomid + "f.mtl"))
 
 @app.route("/room/<houseid>/<roomid>w.mtl")
 def wall_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "w.mtl"))
+    return flask.send_file(os.path.join("dataset", ROOMDIR, houseid, roomid + "w.mtl"))
 
 @app.route("/room/<houseid>/<roomid>c.mtl")
 def ceil_mtl(houseid, roomid):
-    return flask.send_file(os.path.join("dataset", "room", houseid, roomid + "c.mtl"))
+    return flask.send_file(os.path.join("dataset", ROOMDIR, houseid, roomid + "c.mtl"))
 
 @app.route("/set_scene_configuration", methods=['POST', 'GET'])
 def set_scene_configuration():
@@ -285,6 +320,11 @@ def generateObjectsUUIDs(sceneJson):
             break
         except:
             continue
+    # standardize roomids: 
+    for room,roomId in zip(sceneJson['rooms'], range(len(sceneJson['rooms']))):
+        room['roomId'] = roomId
+        for obj in room['objList']:
+            obj['roomId'] = roomId
     # generate uuid for each object: 
     for room in sceneJson['rooms']:
         for obj in room['objList']:
@@ -345,6 +385,15 @@ def sktest(data):
 
 @socketio.on('onlineSceneUpdate')
 def onlineSceneUpdate(sceneJson, groupName): 
+    if groupName not in onlineScenes:
+        emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
+        return
+    onlineScenes[groupName] = sceneJson
+
+@socketio.on('onlineSceneUpdateUnity')
+def onlineSceneUpdateUnity(_json):
+    sceneJson = [json.loads(_json['sceneJson'])]
+    groupName = _json['groupName']
     if groupName not in onlineScenes:
         emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
         return
