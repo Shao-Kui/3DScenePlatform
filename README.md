@@ -145,7 +145,7 @@ root/
 
 If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. The 'autolayout.py' and 'patternChain.py' are also usable, but only for SUNCG dataset. The 'v2' version of our method is specifically for 3D-Front. 
 
-Our layout framework is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
+Our layout framework is accepted as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
 ```
 @article{ZHANG2021101104,
 title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
@@ -175,7 +175,7 @@ root/
 ```
 The .py file corrsponds to the **Piror Update** and the .js file contains the main logic of inference of MageAdd. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
 
-Our paper is accept as an oral presentation in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
+Our paper is accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
 ```
 @inproceedings{shaokui2021mageadd,
   title={MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
