@@ -9,9 +9,9 @@ import threading
 import numpy as np
 from layoutmethods.alutil import attempt_heuristic
 from shapely.geometry.polygon import Polygon
-from projection2d import processGeo as p2d, connected_component, getobjCat
+from layoutmethods.projection2d import processGeo as p2d, connected_component, getobjCat
 from sk import rotate_pos_prior, rotate_bb_local_para
-import patternChainv2 as patternChain
+import layoutmethods.patternChainv2 as patternChain
 
 BANNED = ['switch', 'column', 'fireplace', 'pet', 'range_hood', 'heater','curtain', 'person', 
 'Pendant Lamp', 'Ceiling Lamp']

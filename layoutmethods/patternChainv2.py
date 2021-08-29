@@ -6,7 +6,7 @@ from shapely.geometry.polygon import Polygon
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
-from projection2d import getobjCat
+from layoutmethods.projection2d import getobjCat
 from copy import deepcopy
 
 pendingList = []

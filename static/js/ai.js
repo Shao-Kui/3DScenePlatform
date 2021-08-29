@@ -1,4 +1,4 @@
-var auto_layout = function(){
+const auto_layout = function(){
     if (currentRoomId === undefined) {
         console.log("No room is specified. ");
         return
@@ -11,8 +11,25 @@ var auto_layout = function(){
         success: function (data) {
             data = JSON.parse(data);
             temp = data;
-            manager.renderManager.scene_json.rooms[currentRoomId].objList = data.objList;
-            manager.renderManager.refresh_instances();
+            refreshRoomByID(currentRoomId, data.objList);
+        }
+    });
+};
+
+const auto_layout_PlanIT = function(){
+    if (currentRoomId === undefined) {
+        console.log("No room is specified. ");
+        return
+    }
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/planit",
+        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId]),
+        success: function (data) {
+            data = JSON.parse(data);
+            temp = data;
+            refreshRoomByID(currentRoomId, data.objList);
         }
     });
 };

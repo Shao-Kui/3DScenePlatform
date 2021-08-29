@@ -10,6 +10,8 @@ ASPECT = 16 / 9
 DEFAULT_FOV = 75
 with open('./dataset/objCatListAliv2.json') as f:
     objCatList = json.load(f)
+with open('./dataset/objListCataAliv2.json') as f:
+    objListCat = json.load(f)
 
 # code is from https://github.com/mikedh/trimesh/issues/507
 def as_mesh(scene_or_mesh):

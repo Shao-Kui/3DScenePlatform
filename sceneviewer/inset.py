@@ -8,7 +8,7 @@ import shutil
 import sys
 sys.path.append('..')
 import sk
-from projection2d import processGeo as p2d
+from layoutmethods.projection2d import processGeo as p2d
 from skimage import draw
 
 DATASET_ROOT = './dataset'

@@ -8,7 +8,6 @@ import shutil
 import sys
 import getopt
 import numpy as np
-from projection2d import getobjCat
 import sk
 import uuid
 # the following code is for backend-rendering. 
@@ -24,7 +23,7 @@ cameraType="perspective" # spherical
 num_samples = 64
 r_dir = 'batch'
 wallMaterial = True
-REMOVELAMP = True
+REMOVELAMP = False
 SAVECONFIG = True
 
 def autoPerspectiveCamera(scenejson):
@@ -89,7 +88,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             if 'inDatabase' in obj:
                 if not obj['inDatabase']:
                     continue
-            if getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
+            if sk.getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
                 print('A lamp is removed. ')
                 continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])

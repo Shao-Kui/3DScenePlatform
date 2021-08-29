@@ -102,7 +102,6 @@ const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
     let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) { 
-        console.log(intersects[0].object.parent.userData)
         return intersects[0].object.parent.userData.roomId;
     }
     else{
@@ -359,6 +358,16 @@ const synchronizeObjectJsonByObject3D = function(object3d){
     objectjson.rotate[1] = object3d.rotation.y;
     objectjson.rotate[2] = object3d.rotation.z;
     objectjson.orient = Math.atan2(Math.sin(object3d.rotation.y), Math.cos(object3d.rotation.x) * Math.cos(object3d.rotation.y));
+    let newRoomId = calculateRoomID(objectjson.translate);
+    if(newRoomId !== objectjson.roomId){
+        let index = find_object_json(object3d);
+        manager.renderManager.scene_json.rooms[newRoomId].objList.push(objectjson);
+        delete manager.renderManager.scene_json.rooms[objectjson.roomId].objList[index];
+        manager.renderManager.scene_json.rooms[objectjson.roomId].objList = 
+        manager.renderManager.scene_json.rooms[objectjson.roomId].objList.filter( item => item !== null && item !== undefined );
+        objectjson.roomId = newRoomId;
+        object3d.roomId = newRoomId;
+    }
 }
 
 const transformObjectByUUID = function(uuid, transform, origin=true){
@@ -1047,6 +1056,7 @@ const setting_up = function () {
     
     $(".btn").mousedown(function(e){e.preventDefault();})
     $("#sklayout").click(auto_layout);
+    $("#btnPlanIT").click(auto_layout_PlanIT);
     $("#clear_button").click(() => {
         if(currentRoomId === undefined) return;
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 

@@ -9,14 +9,14 @@ import base64
 import time
 import datetime
 # from rec_release import fa_reshuffle
-from autolayoutv2 import sceneSynthesis
+from layoutmethods.autolayoutv2 import sceneSynthesis
+from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
 from sketch_retrieval.generate_descriptor import sketch_search
 from main_audio import app_audio
 from main_magic import app_magic
-from projection2d import objListCat
 from autoview import app_autoView, autoViewsRes, autoViewRooms
 import random
 import difflib
@@ -144,11 +144,11 @@ def query2nd():
     if len(catMatches) != 0:
         cat = ChineseMapping[catMatches[0]]
         print(f'get query: {cat}. ')
-        random.shuffle(objListCat[cat])
-        if len(objListCat[cat]) >= 20:
-            modelIds = objListCat[cat][0:20]
+        random.shuffle(sk.objListCat[cat])
+        if len(sk.objListCat[cat]) >= 20:
+            modelIds = sk.objListCat[cat][0:20]
         else:
-            modelIds = objListCat[cat]
+            modelIds = sk.objListCat[cat]
         ret += [{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
     modelIdlist = kw.split(';')
     for modelId in modelIdlist:
@@ -273,6 +273,18 @@ def sklayout():
         return json.dumps(sceneSynthesis(request.json))
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
+
+@app.route("/planit", methods=['POST'])
+def planit():
+    res = roomSynthesisPlanIT(request.json)
+    roomId = request.json['roomId']
+    if res is None:
+        res = request.json
+    else:
+        res['roomId'] = roomId
+        for o in res['objList']:
+            o['roomId'] = roomId
+    return json.dumps(res)
 
 @app.route("/reshuffle", methods=['POST', 'GET'])
 def reshuffle():

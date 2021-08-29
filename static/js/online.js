@@ -103,6 +103,12 @@ const emitAnimationObject3DOnly = function(){
     tCache.length = 0; 
 }
 
+const refreshRoomByID = function(roomId, objList, origin=true){
+    manager.renderManager.scene_json.rooms[roomId].objList = objList;
+    manager.renderManager.refresh_instances();
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('refreshRoomByID', [roomId, objList, false]);}
+}
+
 const onlineInitialization = function(){
     // try loading the online scene: 
     loadOnlineSceneJson();
@@ -111,6 +117,7 @@ const onlineInitialization = function(){
     onlineFuncList['removeObjectByUUID'] = removeObjectByUUID;
     onlineFuncList['transformObjectByUUID'] = transformObjectByUUID;
     onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
+    onlineFuncList['refreshRoomByID'] = refreshRoomByID;
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){
