@@ -124,6 +124,8 @@ Each object must has a ```modelId``` indexing its mesh in directory 'root/datase
 
 # Layout Framework
 
+![GBA](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/gba.png "Graphical Models")
+
 [\[Paper\]][graphicalmodels] [\[Pre\]][gbaPre] [\[Supp\]][graphicalmodels]
 
 Our layout framework in the paper "Geometry-Based Layout Generation with Hyper-Relations AMONG Objects" is included in the following files: 
@@ -143,7 +145,7 @@ root/
 
 If all dependencies are satisfied, our layout method can be run by clicking the **layout1** button in the front-end GUI. Note that you have to select a room first. The 'autolayout.py' and 'patternChain.py' are also usable, but only for SUNCG dataset. The 'v2' version of our method is specifically for 3D-Front. 
 
-Our layout framework is accept as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
+Our layout framework is accepted as an oral presentation in [Computational Visual Media 2021][cvm2021], and is publicated in [Graphical Models][gmod]. Please cite our paper if this repository helps! 
 ```
 @article{ZHANG2021101104,
 title = {Geometry-Based Layout Generation with Hyper-Relations AMONG Objects},
@@ -159,6 +161,8 @@ author = {Shao-Kui Zhang and Wei-Yu Xie and Song-Hai Zhang}
 ```
 # MageAdd
 
+![MageAdd](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teasermm.png "ACM MM 2021 Oral")
+
 [\[Paper\]][mageaddPaper] [\[Video\]][mageaddVideo] [\[Supp\]][mageaddSupp]
 
 This project is also the container for MageAdd, which is a interactive modelling tool for 3D scene synthesis. The source code of the MageAdd is included in the following files:
@@ -171,11 +175,14 @@ root/
 ```
 The .py file corrsponds to the **Piror Update** and the .js file contains the main logic of inference of MageAdd. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
 
-Our paper is accept as a full research paper in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
+Our paper is accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
 ```
-@article{,
-  title = {MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
-  author = {Shao-Kui Zhang and Yi-Xiao Li and Yu He and Yong-Liang Yang and Song-Hai Zhang}
+@inproceedings{shaokui2021mageadd,
+  title={MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
+  author={Zhang, Shao-Kui and Li, Yi-Xiao and He, Yu and Yang Yong-Liang and Zhang Song-Hai},
+  booktitle={Proceedings of the 29th ACM International Conference on Multimedia, October 20--24, 2021, Virtual Event, China},
+  year={2021},
+  doi={10.1145/3474085.3475194}
 }
 ```
 # Manuals  
@@ -211,7 +218,7 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
-The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, Yong-Liang Yang, [Song-Hai Zhang][songhai]. 
+The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], [Song-Hai Zhang][songhai]. 
 # Copyright
 This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT security guaranteed if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
 
@@ -226,8 +233,9 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
 [3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
 [graphicalmodels]:https://www.researchgate.net/publication/351745309_Geometry-Based_Layout_Generation_with_Hyper-Relations_AMONG_Objects
-[mageaddPaper]:https://shao-kui.github.io/
-[mageaddVideo]:https://shao-kui.github.io/
-[mageaddSupp]:https://shao-kui.github.io/
+[mageaddPaper]:http://yongliangyang.net/docs/mageAdd_mm21.pdf
+[mageaddVideo]:https://www.bilibili.com/video/BV1JP4y1x78p/
+[mageaddSupp]:http://yongliangyang.net/docs/mageAdd_supp_mm21.pdf
 [gbaPre]:https://www.bilibili.com/video/BV1FU4y1a7A1/
 [acmmm2021]:https://2021.acmmm.org/
+[yongliang]:http://yongliangyang.net/
