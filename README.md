@@ -232,10 +232,10 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [thucpriorlink]:https://cloud.tsinghua.edu.cn/f/36a3e973fe014bd89fcf/
 [googlepriorlink]:https://drive.google.com/drive/folders/15WBBqGS79C9nG8m_41Bn43rzv3Cxb4xH?usp=sharing
 [3dfront2suncg]:https://github.com/Shao-Kui/3DScenePlatform/blob/master/assets/3dfuture2suncg.py
-[graphicalmodels]:https://www.researchgate.net/publication/351745309_Geometry-Based_Layout_Generation_with_Hyper-Relations_AMONG_Objects
-[mageaddPaper]:http://yongliangyang.net/docs/mageAdd_mm21.pdf
+[graphicalmodels]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/GBA.pdf
+[mageaddPaper]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/MageAdd.pdf
 [mageaddVideo]:https://www.bilibili.com/video/BV1JP4y1x78p/
-[mageaddSupp]:http://yongliangyang.net/docs/mageAdd_supp_mm21.pdf
+[mageaddSupp]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/DocMageAdd.pdf
 [gbaPre]:https://www.bilibili.com/video/BV1FU4y1a7A1/
 [acmmm2021]:https://2021.acmmm.org/
 [yongliang]:http://yongliangyang.net/
