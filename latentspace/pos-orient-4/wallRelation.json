@@ -1,0 +1,194 @@
+{
+  "armchair": {
+    "_mageAddWall": []
+  },
+  "Lounge Chair / Cafe Chair / Office Chair": {
+    "_mageAddWall": []
+  },
+  "Pendant Lamp": {
+    "_mageAddWall": []
+  },
+  "Coffee Table": {
+    "_mageAddWall": ["Wall Clock", "Picture Frame"],
+    "Three-seat / Multi-seat Sofa": {
+      "name": "Three-seat / Multi-seat Sofa",
+      "share": [
+        "Loveseat Sofa",
+        "Three-seat / Multi-seat Sofa"
+      ],
+      "ref": "109-156",
+      "max": 2
+    },
+    "TV Stand": {
+      "name": "TV Stand",
+      "ref": "171-116",
+      "max": 1
+    },
+    "armchair": {
+      "name": "armchair",
+      "ref": "173-69",
+      "max": 2
+    },
+    "Footstool / Sofastool / Bed End Stool / Stool": {
+      "name": "Footstool / Sofastool / Bed End Stool / Stool",
+      "ref": "173-69",
+      "max": 2
+    }
+  },
+  "Corner/Side Table": {
+    "_mageAddWall": ["Wall Clock"],
+    "Lounge Chair / Cafe Chair / Office Chair": {
+      "name": "Lounge Chair / Cafe Chair / Office Chair",
+      "ref": "173-69"
+    }
+  },
+  "Dining Table": {
+    "_mageAddWall": ["Wall Clock", "Picture Frame", "Chandelier"],
+    "Dining Chair": {
+      "name": "Dining Chair",
+      "ref": "452-89",
+      "max": 8
+    }
+  },
+  "King-size Bed": {
+    "_mageAddWall": ["Wall Clock", "Picture Frame"],
+    "Nightstand": {
+      "name": "Nightstand",
+      "ref": "75-233",
+      "max": 2
+    },
+    "TV Stand": {
+      "name": "TV Stand",
+      "ref": "77-116",
+      "max": 1
+    }
+  },
+  "Nightstand": {
+    "_mageAddWall": ["Wall Lamp"]
+  },
+  "Bookcase / jewelry Armoire": {
+    "_mageAddWall": []
+  },
+  "Three-seat / Multi-seat Sofa": {
+    "_mageAddWall": []
+  },
+  "TV Stand": {
+    "_mageAddWall": [],
+    "TV": {
+      "name": "TV",
+      "ref": "115-216",
+      "max": 1
+    }
+  },
+  "Drawer Chest / Corner cabinet": {
+    "_mageAddWall": []
+  },
+  "Shelf": {
+    "_mageAddWall": []
+  },
+  "Wardrobe": {
+    "_mageAddWall": []
+  },
+  "Footstool / Sofastool / Bed End Stool / Stool": {
+    "_mageAddWall": []
+  },
+  "Sideboard / Side Cabinet / Console table": {
+    "_mageAddWall": []
+  },
+  "Ceiling Lamp": {
+    "_mageAddWall": []
+  },
+  "Children Cabinet": {
+    "_mageAddWall": []
+  },
+  "Bed Frame": {
+    "_mageAddWall": []
+  },
+  "Round End Table": {
+    "_mageAddWall": []
+  },
+  "Desk": {
+    "_mageAddWall": [],
+    "Dining Chair": {
+      "name": "Dining Chair",
+      "ref": "105-335",
+      "max": 1
+    },
+    "Laptop": {
+      "name": "Laptop",
+      "ref": "104-120",
+      "max": 1
+    }
+  },
+  "Single bed": {
+    "_mageAddWall": []
+  },
+  "Loveseat Sofa": {
+    "_mageAddWall": []
+  },
+  "Dining Chair": {
+    "_mageAddWall": []
+  },
+  "Barstool": {
+    "_mageAddWall": []
+  },
+  "Lazy Sofa": {
+    "_mageAddWall": []
+  },
+  "L-shaped Sofa": {
+    "_mageAddWall": []
+  },
+  "Wine Cabinet": {
+    "_mageAddWall": []
+  },
+  "Dressing Table": {
+    "_mageAddWall": [],
+    "Footstool / Sofastool / Bed End Stool / Stool": {
+      "name": "Footstool / Sofastool / Bed End Stool / Stool",
+      "ref": "203-541",
+      "max": 1
+    }
+  },
+  "Dressing Chair": {
+    "_mageAddWall": []
+  },
+  "Kids Bed": {
+    "_mageAddWall": []
+  },
+  "Classic Chinese Chair": {
+    "_mageAddWall": []
+  },
+  "Bunk Bed": {
+    "_mageAddWall": []
+  },
+  "Chaise Longue Sofa": {
+    "_mageAddWall": []
+  },
+  "Laptop": {
+    "_mageAddWall": []
+  },
+  "Wall Clock": {
+    "_mageAddWall": []
+  },
+  "Picture Frame": {
+    "_mageAddWall": []
+  },
+  "Wall Lamp": {
+    "_mageAddWall": []
+  },
+  "Chandelier": {
+    "_mageAddWall": []
+  },
+  "TV": {
+    "_mageAddWall": []
+  },
+  "Rug": {
+    "_mageAddWall": []
+  },
+  "Table Lamp": {
+    "_mageAddWall": []
+  },
+  "Unknown Category": {
+    "_mageAddWall": []
+  }
+}

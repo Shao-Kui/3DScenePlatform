@@ -124,8 +124,11 @@ def textquery():
             "thumbnail":f"/thumbnail/{kw}"})
     return json.dumps(ret)
 
-with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
-    ChineseMapping = json.load(f)
+if os.path.exists('./dataset/ChineseMapping.json'):
+    with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
+        ChineseMapping = json.load(f)
+else:
+    ChineseMapping = {}
 @app.route("/query2nd")
 def query2nd():
     ret = []
@@ -268,6 +271,7 @@ def generateObjectsUUIDs(sceneJson):
             obj['key'] = str(uuid.uuid4())
     return sceneJson
 
+# 'demo.json' is simply a randomly chosen scene.json file satisfying the SK-Format. 
 @app.route("/online/<groupName>", methods=['GET', 'POST'])
 def onlineMain(groupName):
     if request.method == 'POST':

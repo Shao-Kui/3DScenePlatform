@@ -18,8 +18,8 @@ from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSi
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
 from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget
 
-with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
-    res_ratio_dom = json.load(f)
+# with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
+#     res_ratio_dom = json.load(f)
 
 app_autoView = Blueprint('app_autoView', __name__)
 pt.r_dir = 'AutoView'

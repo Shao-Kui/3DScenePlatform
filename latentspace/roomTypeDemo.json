@@ -1,0 +1,113 @@
+{
+  "LivingDiningRoom": [
+    [
+      "Shelf",
+      "Coffee Table",
+      "Dining Table",
+      "Sideboard / Side Cabinet / Console table",
+      "Wine Cabinet",
+      "Drawer Chest / Corner cabinet",
+      "Bookcase / jewelry Armoire",
+      "Round End Table"
+    ]
+  ],
+  "MasterBedroom": [
+    [
+      "King-size Bed",
+      "Wardrobe",
+      "Dressing Table",
+      "Desk",
+      "Corner/Side Table",
+      "Drawer Chest / Corner cabinet",
+      "Round End Table"
+    ]
+  ],
+  "ElderlyRoom": [
+    [
+      "King-size Bed",
+      "Wardrobe",
+      "Dressing Table",
+      "Classic Chinese Chair"
+    ]
+  ],
+  "SecondBedroom": [
+    [
+      "Single bed",
+      "Wardrobe",
+      "Desk",
+      "Dressing Table",
+      "Bookcase / jewelry Armoire",
+      "Drawer Chest / Corner cabinet"
+    ]
+  ],
+  "Bedroom": [
+    [
+      "King-size Bed",
+      "Wardrobe",
+      "Desk",
+      "Bookcase / jewelry Armoire",
+      "Drawer Chest / Corner cabinet"
+    ]
+  ],
+  "KidsRoom": [
+    [
+      "Kids Bed",
+      "Children Cabinet",
+      "Desk",
+      "Round End Table",
+      "Drawer Chest / Corner cabinet",
+      "Bookcase / jewelry Armoire"
+    ],
+    [
+      "Bunk Bed",
+      "Children Cabinet",
+      "Desk",
+      "Round End Table",
+      "Drawer Chest / Corner cabinet",
+      "Bookcase / jewelry Armoire"
+    ]
+  ],
+  "Library": [
+    [
+      "Bookcase / jewelry Armoire",
+      "Desk",
+      "Corner/Side Table",
+      "Sideboard / Side Cabinet / Console table",
+      "Round End Table"
+    ]
+  ],
+  "LivingRoom": [
+    [
+      "Shelf",
+      "Coffee Table",
+      "Sideboard / Side Cabinet / Console table",
+      "Drawer Chest / Corner cabinet",
+      "Bookcase / jewelry Armoire",
+      "Round End Table"
+    ]
+  ],
+  "DiningRoom": [
+    [
+      "Shelf",
+      "Sideboard / Side Cabinet / Console table",
+      "Dining Table",
+      "Drawer Chest / Corner cabinet",
+      "Wine Cabinet",
+      "Bookcase / jewelry Armoire"
+    ]
+  ],
+  "NannyRoom": [
+    []
+  ],
+  "Balcony": [
+    []
+  ],
+  "Office": [
+    []
+  ],
+  "Aisle": [
+    [
+      "Drawer Chest / Corner cabinet"
+    ]
+  ]
+}

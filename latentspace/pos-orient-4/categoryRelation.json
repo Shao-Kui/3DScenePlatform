@@ -1,0 +1,128 @@
+{
+  "armchair": {},
+  "Lounge Chair / Cafe Chair / Office Chair": {},
+  "Pendant Lamp": {},
+  "Coffee Table": {
+    "Three-seat / Multi-seat Sofa": {
+      "name": "Three-seat / Multi-seat Sofa",
+      "share": [
+        "Loveseat Sofa",
+        "Three-seat / Multi-seat Sofa"
+      ],
+      "ref": "109-156",
+      "max": 2
+    },
+    "TV Stand": {
+      "name": "TV Stand",
+      "ref": "171-116",
+      "max": 1
+    },
+    "armchair": {
+      "name": "armchair",
+      "ref": "173-69",
+      "max": 2
+    },
+    "Footstool / Sofastool / Bed End Stool / Stool": {
+      "name": "Footstool / Sofastool / Bed End Stool / Stool",
+      "ref": "173-69",
+      "max": 2
+    }
+  },
+  "Corner/Side Table": {
+    "Lounge Chair / Cafe Chair / Office Chair": {
+      "name": "Lounge Chair / Cafe Chair / Office Chair",
+      "ref": "cstable-chair"
+    }
+  },
+  "Dining Table": {
+    "Dining Chair": {
+      "name": "Dining Chair",
+      "ref": "452-89",
+      "max": 8
+    }
+  },
+  "King-size Bed": {
+    "Nightstand": {
+      "name": "Nightstand",
+      "ref": "75-233",
+      "max": 2
+    },
+    "TV Stand": {
+      "name": "TV Stand",
+      "ref": "77-116",
+      "max": 1
+    },
+    "Rug": {
+      "name": "Rug",
+      "ref": "s__418-235",
+      "max": 1
+    }
+  },
+  "Nightstand": {},
+  "Bookcase / jewelry Armoire": {},
+  "Three-seat / Multi-seat Sofa": {},
+  "TV Stand": {
+    "TV": {
+      "name": "TV",
+      "ref": "115-216",
+      "max": 1
+    }
+  },
+  "Drawer Chest / Corner cabinet": {},
+  "Shelf": {},
+  "Wardrobe": {},
+  "Footstool / Sofastool / Bed End Stool / Stool": {},
+  "Sideboard / Side Cabinet / Console table": {},
+  "Ceiling Lamp": {},
+  "Children Cabinet": {},
+  "Bed Frame": {},
+  "Round End Table": {},
+  "Desk": {
+    "Dining Chair": {
+      "name": "Dining Chair",
+      "ref": "desk105-chair",
+      "max": 1
+    },
+    "Laptop": {
+      "name": "Laptop",
+      "ref": "104-120",
+      "max": 1
+    },
+    "Table Lamp": {
+      "name": "Table Lamp",
+      "ref": "107-419",
+      "max": 1
+    }
+  },
+  "Single bed": {
+  	"Nightstand": {
+      "name": "Nightstand",
+      "ref": "75-233",
+      "max": 1
+    }
+  },
+  "Loveseat Sofa": {},
+  "Dining Chair": {},
+  "Barstool": {},
+  "Lazy Sofa": {},
+  "L-shaped Sofa": {},
+  "Wine Cabinet": {},
+  "Dressing Table": {
+    "Footstool / Sofastool / Bed End Stool / Stool": {
+      "name": "Footstool / Sofastool / Bed End Stool / Stool",
+      "ref": "203-541",
+      "max": 1
+    }
+  },
+  "Dressing Chair": {},
+  "Kids Bed": {
+  	"Nightstand": {
+      "name": "Nightstand",
+      "ref": "75-233",
+      "max": 1
+    }
+  },
+  "Classic Chinese Chair": {},
+  "Bunk Bed": {},
+  "Chaise Longue Sofa": {}
+}
