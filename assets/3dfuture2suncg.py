@@ -215,21 +215,17 @@ def main(args):
 
     if not os.path.exists(args.save_path):
         os.mkdir(args.save_path)
-    if not os.path.exists(os.path.join(args.save_path, "alilevel")):
-        os.mkdir(os.path.join(args.save_path, "alilevel"))
-    if not os.path.exists(os.path.join(args.save_path, "room")):
-        os.mkdir(os.path.join(args.save_path, "room"))
-    if not os.path.exists(os.path.join(args.save_path, "background")):
-        os.mkdir(os.path.join(args.save_path, "background"))
-    filenames = os.listdir('../../3D-FRONT')
-    # # DEBUG
+    if not os.path.exists(os.path.join(args.save_path, "alilevel2021")):
+        os.mkdir(os.path.join(args.save_path, "alilevel2021"))
+    if not os.path.exists(os.path.join(args.save_path, "room2021")):
+        os.mkdir(os.path.join(args.save_path, "room2021"))
+    if not os.path.exists(os.path.join(args.save_path, "backgroundobj")):
+        os.mkdir(os.path.join(args.save_path, "backgroundobj"))
+    filenames = os.listdir('F:/3DFurniture/3D-FRONT')
+    # DEBUG
     # filenames = [
     #     '00f2a7e7-a994-4734-8104-8cb81560beb0.json',
-    #     '0e02ee68-5940-49dd-bbdc-0e3667ec9e49.json',
-    #     '4b663d06-fc0a-44ca-887a-d0bfc584a3ee.json',
     #     '1aab0a4b-760c-4489-b012-da6cefdca8a4.json',
-    #     '129c9a2a-f789-4cd0-82c0-2b6d5293c45f.json',
-    #     '5a4c9099-cf8f-4439-96ee-43736096617a.json',
     #     '5c0a1757-e14e-4901-a3a3-498537689821.json',
     #     '4c1b75c2-351b-4b6b-a7df-c867a2d9b3d6.json',
     #     '274ef293-2cf8-4c9a-8125-814f91d0bc83.json',
@@ -246,8 +242,8 @@ def main(args):
         if not os.path.exists(os.path.join(args.save_path, "backgroundobj", filename[:-5])):
             os.mkdir(os.path.join(args.save_path,
                      "backgroundobj", filename[:-5]))
-        if not os.path.exists(os.path.join(args.save_path, "room", filename[:-5])):
-            os.mkdir(os.path.join(args.save_path, "room", filename[:-5]))
+        if not os.path.exists(os.path.join(args.save_path, "room2021", filename[:-5])):
+            os.mkdir(os.path.join(args.save_path, "room2021", filename[:-5]))
         with open(os.path.join(args.FRONT_path, filename), 'r', encoding='utf-8') as f:
             frontJson = json.load(f)
 
@@ -308,8 +304,8 @@ def main(args):
                 "roomId": roomIdx,
                 "objList": []
             }
-            if not os.path.exists(os.path.join(args.save_path, "room", filename[:-5])):
-                os.mkdir(os.path.join(args.save_path, "room", filename[:-5]))
+            if not os.path.exists(os.path.join(args.save_path, "room2021", filename[:-5])):
+                os.mkdir(os.path.join(args.save_path, "room2021", filename[:-5]))
             wallObjs = []
             ceilObjs = []
             floorObjs = []
@@ -428,7 +424,7 @@ def main(args):
 
             # adding a new line is because of a bug of three.js library...
             wfcroot = os.path.join(
-                args.save_path, "room", filename[:-5], front_room["instanceid"])
+                args.save_path, "room2021", filename[:-5], front_room["instanceid"])
             # We merge the components of the scene into three models, including wall, floor and ceil.
             if len(wallObjs) > 0:
                 tmp = myconcatenate(wallObjs)
@@ -460,7 +456,7 @@ def main(args):
             suncgJson["bbox"]["max"] = Max3d(
                 suncgJson["bbox"]["max"], suncg_room["bbox"]["max"])
 
-        with open(os.path.join(args.save_path, "alilevel", filename), "w") as f:
+        with open(os.path.join(args.save_path, "alilevel2021", filename), "w") as f:
             json.dump(suncgJson, f)
         # break
 
