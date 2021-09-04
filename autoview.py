@@ -3,8 +3,8 @@ from flask import Blueprint
 import flask
 import numpy as np
 import json
-import projection2d
-from projection2d import processGeo as p2d, getobjCat
+from layoutmethods import projection2d
+from layoutmethods.projection2d import processGeo as p2d, getobjCat
 from shapely.geometry.polygon import Polygon, LineString, Point
 import pathTracing as pt
 import sk
@@ -17,6 +17,7 @@ from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSi
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
 from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget,hamiltonSmooth
 from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
+import shutil
 
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
     res_ratio_dom = json.load(f)
@@ -220,13 +221,16 @@ def probabilityOPP(h):
     # return h['numObjBeSeen'] + h['targetWallWindoorArea'] + h['viewLength']
     # return h['numObjBeSeen'] + h['targetWallWindoorArea']
     res = 0.
-    if h['isObjCovered'] or h['isProbeOutside']:
-        res -= 1
-        return res
     if h['numObjBeSeen'] == 0:
+        return res
+    if h['isProbeOutside']:
         return res
     if h['wallNormalOffset'] < -0.20:
         return res
+    if h['isObjCovered']:
+        res -= 1
+    if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+        res += 1
     res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.6 + h['layoutDirection'] * 3
     res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
     res += h['wallNormalOffset'] * 10
@@ -398,7 +402,6 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 thinL['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thinL['probe'], ord=2)
                 hypotheses.append(thinL)
 
-                # then we try following the 'Three-Wall' rule. (Right Side)
                 thinR = thw.copy()
                 thinR['probe'] = pThW2 + (pThW1 - pThW2)/3
                 thinR['type'] = 'threeWall_R_thin'
@@ -408,7 +411,17 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 thinR['direction'] /= np.linalg.norm(thinR['direction'])
                 thinR['direction'] = groundShifting(thinR['probe'], floorMeta, floorPoly, thinR['direction'], theta, H)
                 thinR['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thinR['probe'], ord=2)
-                hypotheses.append(thinR)
+
+                wasThin = thw.copy()
+                wasThin['probe'] = (pThW1 + pThW2) / 2
+                wasThin['type'] = 'was_thin'
+                wasThin['probe'] = np.array([wasThin['probe'][0], H/2, wasThin['probe'][1]])
+                acr = (floorMeta[wallIndexNext][0:2] + floorMeta[wallIndex][0:2]) / 2
+                wasThin['direction'] = np.array([acr[0], H/2, acr[1]]) - wasThin['probe']
+                wasThin['direction'] /= np.linalg.norm(wasThin['direction'])
+                wasThin['direction'] = groundShifting(wasThin['probe'], floorMeta, floorPoly, wasThin['direction'], theta, H)
+                wasThin['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - wasThin['probe'], ord=2)
+                hypotheses.append(wasThin)
     hypotheses = redundancyRemove(hypotheses)
     for h in hypotheses:
         h['roomTypes'] = room['roomTypes']
@@ -422,7 +435,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
         secondNearestWallDis(h, floorMeta)
         isProbeOutside(h, floorPoly)
         if h['wallNormalOffset'] < 0.:
-            h['probe'] += (abs(h['wallNormalOffset']) * 0.01) * h['direction']     
+            h['probe'] += (abs(h['wallNormalOffset']) * 0.02) * h['direction']     
         toOriginAndTarget(h)
         h['score'] = scoreFunc(h)              
     hypotheses.sort(key=scoreFunc, reverse=True)
@@ -433,14 +446,17 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
         'threeWall_R': None,
         'threeWall': None,
         'againstMidWall': None,
-        'twoWallPerspective': None
+        'twoWallPerspective': None,
+        'threeWall_thin': None,
+        'threeWall_R_thin': None,
+        'was_thin': None
     }
     for h in hypotheses:
         for viewTps in bestViews:
             if viewTps != h['type']:
                 continue
             if bestViews[viewTps] is None:
-                bestViews[viewTps] = toOriginAndTarget(h)
+                bestViews[viewTps] = h
     # bestViews = []
     # numOfChosen = min(3, len(hypotheses))
     # for index in range(0, numOfChosen):
@@ -499,21 +515,21 @@ def autoViewRooms(scenejson, isPathTrancing=True):
             continue
 
         pcams = autoViewOnePointPerspective(room, scenejson)
-        """
-        for tp in pcams:
-            if pcams[tp] is None:
-                continue
-            # pcams[tp]['direction'] = balancing(pcams[tp], room, pcams[tp]['theta'])
-            thread = renderGivenPcam(pcams[tp], scenejson.copy(), isPathTrancing=isPathTrancing)
-            if thread is not None:
-                renderThreads.append(thread)
-        """
-        for index, pcam in zip(range(len(pcams)), pcams[0:6]):
-            if index > 0 and pcam['score'] < 5:
-                continue
-            thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
-            if thread is not None:
-                renderThreads.append(thread)
+        if isinstance(pcams, (dict,)):
+            for tp in pcams:
+                if pcams[tp] is None:
+                    continue
+                # pcams[tp]['direction'] = balancing(pcams[tp], room, pcams[tp]['theta'])
+                thread = renderGivenPcam(pcams[tp], scenejson.copy(), isPathTrancing=isPathTrancing)
+                if thread is not None:
+                    renderThreads.append(thread)
+        elif isinstance(pcams, (list,)):
+            for index, pcam in zip(range(len(pcams)), pcams[0:6]):
+                if index > 0 and pcam['score'] < 5:
+                    continue
+                thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
+                if thread is not None:
+                    renderThreads.append(thread)
     if not os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
         print(f'{scenejson["origin"]} is an empty floorplan. ')
         return []
@@ -744,8 +760,15 @@ def highResRendering(dst=None):
         rThread = renderGivenPcam(view, scenejson, dst=f"./latentspace/autoview/{dst}/{jfn.replace('.json', '.png')}")
         print(f'Rendering {dst} -> {jfn} ... ')
         rThread.join()
+    if dst == 'highres':
+        return
     showPcamPoints(origin)
     showPcamInset(origin)
+    try:
+        shutil.copytree(f'./latentspace/autoview/{origin}', f'./sceneviewer/results/{origin}')
+        shutil.copy(f'./dataset/alilevel_door2021/{origin}.json', f'./sceneviewer/results/{origin}/scenejson.json')
+    except:
+        pass
 
 def sceneViewerBatch():
     pt.SAVECONFIG = False
@@ -754,7 +777,7 @@ def sceneViewerBatch():
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[336:400]
+    sjfilenames = sjfilenames[701:800]
     for sjfilename in sjfilenames:
         with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
             scenejson = json.load(f)
@@ -785,15 +808,18 @@ if __name__ == "__main__":
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-    # with open('./dataset/alilevel_door2021/08892fe9-7514-4c4a-a518-ca0839ad6e0b.json') as f:
-    #     test_file = json.load(f)
-    #     preloadAABBs(test_file)
-    # autoViewRooms(test_file)
+    # with open('./dataset/alilevel_door2021/1310949e-14c4-40fb-a410-e9973be8f50a.json') as f:
+    #    test_file = json.load(f)
+    #    preloadAABBs(test_file)
+    # autoViewRoom(test_file['rooms'][6], test_file)    
+    # autoViewRoom(test_file['rooms'][4], test_file)
+    # autoViewRoom(test_file['rooms'][5], test_file)
+    # autoViewRoom(test_file['rooms'][7], test_file)
+    # autoViewRoom(test_file['rooms'][3], test_file)
 
     # sceneViewerBatch()
-    # highResRendering('03a73289-5269-42b1-af4b-f30056c97c64')
 
-    batchList = [
+    _batchList = [
         '028448cc-806f-4f6f-81aa-68d5824f6c02',
         '0338bdd5-e321-467e-a998-38f2218e2fdd',
         '03ff3349-3ab0-45fd-ae99-53da3334cb69',
@@ -803,29 +829,86 @@ if __name__ == "__main__":
         '0486afe9-e7ec-40d9-91e0-09513a96a80e',
         '02a9b734-993c-496c-99e4-6458e35f9178',
         "05d05b98-e95c-4671-935d-7af6a1468d07",
-        "071527d1-4cb5-47a9-abd0-b1d83bd3e286"
+        "071527d1-4cb5-47a9-abd0-b1d83bd3e286",
+        '1337c3b5-e8e8-4e2f-b7d5-f3aafdfd6f7b',
+        '12d084a8-6632-472a-af65-32e7109e5783',
+        '13da455c-9e07-43b2-9e3f-d6d04953ed73',
+        '13df5493-ce89-4506-b44e-79cf4cd70dcf',
+        '129008ef-715d-468c-afc5-ffe677749a7b',
+
+        '07199256-1340-4456-b395-51df1728a340',
+        '0734ff41-9567-4c61-9fe3-3fc4a1a4c859',
+        '07f02d16-a025-4bc4-a45d-5f487c545f49',
+        '080c76df-0abc-48e8-a165-8c2889728cdb',
+        '080f4008-d8fa-4c36-973e-43d105fba378',
+        '08892fe9-7514-4c4a-a518-ca0839ad6e0b',
+        '09da55e8-7969-4f80-bbbf-1b4450339558',
+        '0a048a26-4b3f-4d28-a92f-f81feacaec27',
+        '0b600c41-0c8e-42da-bd16-364f3775fc08',
+        '0a625f72-80fe-47aa-a5bd-4d41b98f2477',
+        '0c2cf150-5293-43d7-acbf-8c1b0a67070a',
+        '0c2871b9-8c04-4a17-b750-98ed1d3481f9',
+        '0c282c9e-45e5-4b9c-9f8b-dd03260f66f6',
+        '0c1558c3-0dbb-4bab-ac73-a60059bf29b6',
+        '0c0bfec0-4f44-496f-92f9-4c6c4822693c',
+        '0c026d68-32ff-40ba-8468-68c53fe83579',
+        '0bfc766b-76b6-483e-affa-1502e50d9245',
+        '0bf1e074-c12a-4299-9348-a7625db13fef',
+        '0bedeb9c-a14f-4b8f-9278-c113f396cd29',
+        '0be73303-6270-482d-be06-528c07da02fb',
+        '0bd6a397-9660-4769-bc08-84047dbd5b52',
+        '0bd6628a-d04c-4fd6-9dbb-78d983b590ad',
+        '0bd1cdea-366c-47b6-a65d-ee7ccde0aaa9',
+        '0bb97953-5e24-4874-a799-c78d1374c3f9',
+        '0bb42fe5-5bca-4154-b721-d9eb8370b947',
+        '0bae68bc-b465-4f11-9d52-ebf5b44b0100',
+        '0b9e6ebf-18b8-453f-8457-0b62adab1827',
+        '0b923d1a-d8af-497b-8482-acb8103a4eae',
+        '0b49b9ac-af46-4e0a-b60e-5f1cb0db54b1',
+        '0b324ba6-32f3-4ea8-b3d7-710bf86014dc',
+        '0b1bec4e-9607-499c-8a34-b78f114d6314',
+        '0b105b2a-e368-40ef-90a3-a4c422b915b4',
+        '0adfb786-3070-498b-a0a4-ed7b9b050931',
+        '0ad9d615-74b1-4537-8144-aa459ada39b6',
+        '0ad01ed9-1cf8-4cad-8cae-b7cca6ddaf11',
+        '0abea0c8-3398-4d26-b03d-9fb1fc9708a4',
+        '0abe65fc-108e-4f9b-a8ff-29758234b9ec',
+        '0aad3aa3-ec12-49a0-b7cf-548d42b0b12b',
+        '0aa05d5a-81d5-497b-832c-c90c3fe73a36',
+        '0a6cbc7a-613a-41c8-a52e-5b8491f898ce',
+        '0a625f72-80fe-47aa-a5bd-4d41b98f2477',
+        '0d2ade9f-c238-47b4-8b02-c0f2324e76be',
+        '0e75222c-2d88-401b-8f36-1510d06f6675',
+        '0d4aac61-f561-426e-9091-0a4a6625fcb5',
+        '0df95e6f-4f59-4f45-b883-2d9ac6a3dbad',
+        '0de4695f-4f6a-4b52-9a79-0a9685dc9880',
+        '0dce14f8-0700-474a-8ac4-d65fe9a2263d',
+        '0d7ded41-b1f0-4696-b8d4-4a97933d269c',
+        '1161ca83-eb14-4f54-9db7-979743710223',
+        '1406ae68-1301-4668-9e2b-eddd896d5842',
+        '13cdb804-7a94-4708-b89d-03f699fccf5c',
+        '1378067e-c594-41c1-995d-8f62cb257d45',
+        '13ca007f-c55b-489a-9f28-f3e5baffe5c9',
+        '1344f85d-7268-4d3a-b84a-a7cfb8c9e441'
     ]
 
-    # highResRendering('028448cc-806f-4f6f-81aa-68d5824f6c02')
-    # highResRendering('0338bdd5-e321-467e-a998-38f2218e2fdd')
-    # highResRendering('03ff3349-3ab0-45fd-ae99-53da3334cb69')
-    # highResRendering('03a73289-5269-42b1-af4b-f30056c97c64')
-    # highResRendering('04940635-c251-4356-968e-3b8d9fe93a4c')
-    # highResRendering("03b2259c-c24b-44a9-b055-2fe85137419a")
-    # highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
-    # highResRendering('02a9b734-993c-496c-99e4-6458e35f9178')
-    # highResRendering("05d05b98-e95c-4671-935d-7af6a1468d07")
-    # highResRendering("071527d1-4cb5-47a9-abd0-b1d83bd3e286")
+    batchList = [
+        'highres',
+        '1310949e-14c4-40fb-a410-e9973be8f50a',
+        '13c929aa-1a8b-47c0-9f34-273b45378dd0'
+    ]
 
-    # highResRendering('0486afe9-e7ec-40d9-91e0-09513a96a80e')
-    # highResRendering('07199256-1340-4456-b395-51df1728a340')
-    # highResRendering('0734ff41-9567-4c61-9fe3-3fc4a1a4c859')
-    # highResRendering('07f02d16-a025-4bc4-a45d-5f487c545f49')
-    # highResRendering('080c76df-0abc-48e8-a165-8c2889728cdb')
-    # highResRendering('080f4008-d8fa-4c36-973e-43d105fba378')
-    # highResRendering('08892fe9-7514-4c4a-a518-ca0839ad6e0b')
+    for origin in batchList:
+        try:
+            highResRendering(origin)
+            pass
+        except Exception as e:
+            print(e)
 
-    insetBatch(['080f4008-d8fa-4c36-973e-43d105fba378'])
+    # for origin in os.listdir('./sceneviewer/results'):
+    #     shutil.copy(f'./sceneviewer/results/{origin}/showPcamInset2.png', f'C:/Users/ljm/Desktop/untitled3/supp2/{origin}.png')
+    # insetBatch(os.listdir('./sceneviewer/results'))
+    # insetBatch(['03ff3349-3ab0-45fd-ae99-53da3334cb69'])
     # hamiltonBatch(batchList)
 
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
@@ -833,6 +916,10 @@ if __name__ == "__main__":
 @app_autoView.route("/bestviewroom/<roomId>", methods=['POST'])
 def bestviewroom(roomId):
     if flask.request.method == 'POST':
+        try:
+            roomId = int(roomId)
+        except:
+            return None
         pt.SAVECONFIG = False
         preloadAABBs(flask.request.json)
         pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json)
@@ -841,9 +928,13 @@ def bestviewroom(roomId):
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):
     if flask.request.method == 'POST':
+        try:
+            roomId = int(roomId)
+        except:
+            return None
         pt.SAVECONFIG = False
         preloadAABBs(flask.request.json)
-        pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json, scoreFunc=probabilityOPP2)
+        pcams = autoViewOnePointPerspective(flask.request.json['rooms'][roomId], flask.request.json, scoreFunc=probabilityOPP2)
         """
         index = -1
         while abs(index) <= len(pcams) - 1:
@@ -905,7 +996,7 @@ def autoviewByID():
 def autoviewMapping():
     imgnames = os.listdir('./sceneviewer/mapping')
     ret = []
-    for imgname in imgnames:
+    for imgname in imgnames[0:5]:
         if '.png' not in imgname:
             continue
         t = {}
@@ -938,6 +1029,9 @@ def autoViewsRes(origin):
             continue
         with open(f'./latentspace/autoview/{origin}/{filename}') as f:
             pcam = json.load(f)
-        pcam['img'] = pcam['identifier'] + '.png'
+        try:
+            pcam['img'] = pcam['identifier'] + '.png'
+        except:
+            continue
         ret.append(pcam)
     return ret

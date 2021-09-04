@@ -18,6 +18,8 @@ var keyboard_update = function(){
 const transformControlsConfig = function(){
     transformControls.addEventListener('dragging-changed', function (event){
         scenecanvas.removeEventListener('click', onClickObj);
+        onTouchTimes = 2;
+        // scenecanvas.removeEventListener('touchend', onTouchObj);
         orbitControls.enabled = !event.value;
         if (isToggle) {
             radial.toggle();
@@ -27,10 +29,10 @@ const transformControlsConfig = function(){
             synchronizeIntersectedObject();
         }
     });
-    transformControls.addEventListener('objectChange', function(event){
-        console.log(event)
-    })
     transformControls.addEventListener('change', function (event) {
+        if(INTERSECT_OBJ === undefined){
+            return;
+        }
         if(transformControls.mode === 'translate'){
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 'position');
@@ -211,6 +213,10 @@ const onKeyDownFirstPerson = function(event){
         case 67: // C
             fpctrl.moveDown = true;
             break;
+        case 82: // R
+            render_function();
+            downloadSceneJson();
+            break;
     }
 };
 
@@ -250,24 +256,26 @@ const firstPersonUpdate = function(){
         let camera_direction = firstPersonControls.getDirection(new THREE.Vector3());
         if ( fpctrl.moveForward || fpctrl.moveBackward ){
             camera.position.x += camera_direction.x * delta * fw;
-            camera.position.y += camera_direction.y * delta * fw;
+            // camera.position.y += camera_direction.y * delta * fw;
+            camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2;
             camera.position.z += camera_direction.z * delta * fw;
             orbitControls.target.x += camera_direction.x * delta * fw;
-            orbitControls.target.y += camera_direction.y * delta * fw;
+            // orbitControls.target.y += camera_direction.y * delta * fw;
             orbitControls.target.z += camera_direction.z * delta * fw;
         }
         if ( fpctrl.moveLeft || fpctrl.moveRight ){
             let v = new THREE.Vector3().crossVectors(camera.up, camera_direction);
             camera.position.x += v.x * delta * lr;
-            camera.position.y += v.y * delta * lr;
+            // camera.position.y += v.y * delta * lr;
+            camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2;
             camera.position.z += v.z * delta * lr;
             orbitControls.target.x = camera_direction.x + camera.position.x;
             orbitControls.target.z = camera_direction.z + camera.position.z;
             orbitControls.target.y = camera_direction.y + camera.position.y;
         }
         if ( fpctrl.moveUp || fpctrl.moveDown ){
-            camera.position.y += delta * ud;
-            orbitControls.target.y = camera_direction.y + camera.position.y;
+            // camera.position.y += delta * ud;
+            // orbitControls.target.y = camera_direction.y + camera.position.y;
         }
     }
 };
@@ -277,6 +285,7 @@ const firstPersonLockFunction = function(){
 }
 
 const firstPersonOn = function(){
+    camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2; 
     orbitControls.enabled = false;
     fpCtrlMode = true;
     firstPersonControls.connect();

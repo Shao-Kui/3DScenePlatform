@@ -332,16 +332,13 @@ def generateObjectsUUIDs(sceneJson):
             break
         except:
             continue
-    # standardize roomids: 
+    # standardize roomids & generate uuid for each object: 
     for room,roomId in zip(sceneJson['rooms'], range(len(sceneJson['rooms']))):
         room['roomId'] = roomId
         for obj in room['objList']:
-            obj['roomId'] = roomId
-    # generate uuid for each object: 
-    for room in sceneJson['rooms']:
-        for obj in room['objList']:
             if obj is None:
                 continue
+            obj['roomId'] = roomId
             obj['key'] = str(uuid.uuid4())
     return sceneJson
 
