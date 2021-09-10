@@ -124,7 +124,7 @@ const audioToText = function(){
         console.log(wav_file);
         reco.clear();
         $.ajax({
-            url: "http://166.111.71.80:11427/voice",
+            url: "/voice",
             type: "post",
             processData: false,
             contentType: false,
