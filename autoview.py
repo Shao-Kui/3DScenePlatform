@@ -801,6 +801,26 @@ def autoViewRoom(room, scenejson):
         if thread is not None:
             renderThreads.append(thread)
 
+def renderLabelledImages():
+    originnames = os.listdir('./dataset/PathTracing/TanHao/us-results')
+    global RENDERWIDTH, SAMPLE_COUNT
+    SAMPLE_COUNT = 64
+    RENDERWIDTH = 1920
+    pt.SAVECONFIG = False
+    pt.REMOVELAMP = False
+    for originname in originnames:
+        jsonnames = os.listdir(f'./dataset/PathTracing/TanHao/us-results/{originname}')
+        for jsonname in jsonnames:
+            if '.json' not in jsonname:
+                continue
+            with open(f'./dataset/PathTracing/TanHao/us-results/{originname}/{jsonname}') as f:
+                scenejson = json.load(f)
+            scenejson['canvas']['width']  = int(RENDERWIDTH)
+            scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
+            identifier = jsonname.split('.')[0]
+            print(f'Rendering -- {originname} -- {identifier}. ')
+            pt.pathTracing(scenejson, SAMPLE_COUNT, f"./dataset/PathTracing/TanHao/us-results/{originname}/{identifier}.png")
+
 if __name__ == "__main__":
     start_time = time.time()
     # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
@@ -900,7 +920,7 @@ if __name__ == "__main__":
 
     for origin in batchList:
         try:
-            highResRendering(origin)
+            # highResRendering(origin)
             pass
         except Exception as e:
             print(e)
@@ -910,7 +930,7 @@ if __name__ == "__main__":
     # insetBatch(os.listdir('./sceneviewer/results'))
     # insetBatch(['03ff3349-3ab0-45fd-ae99-53da3334cb69'])
     # hamiltonBatch(batchList)
-
+    renderLabelledImages()
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 
 @app_autoView.route("/bestviewroom/<roomId>", methods=['POST'])
