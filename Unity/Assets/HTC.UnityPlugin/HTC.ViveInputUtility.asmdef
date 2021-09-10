@@ -1,0 +1,27 @@
+{
+    "name": "HTC.ViveInputUtility",
+    "references": [
+        "Unity.XR.Management",
+        "SteamVR",
+        "Oculus.Avatar",
+        "Oculus.VR",
+        "Oculus.Platform",
+        "UnityEngine.SpatialTracking",
+        "Unity.XR.OpenVR",
+        "Wave.Essence",
+        "Wave.Native",
+        "Controller",
+        "Hand",
+        "HTC.ViveHandTracking",
+        "Wave.Essence.Controller.Model"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

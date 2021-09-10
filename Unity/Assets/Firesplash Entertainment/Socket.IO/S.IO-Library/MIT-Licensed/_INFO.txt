@@ -1,0 +1,4 @@
+These files are MIT-Licensed files re-used from this asset:
+https://assetstore.unity.com/packages/tools/network/socketio-for-native-and-webgl-builds-76508
+
+We only changed minimal portions of the code to fit into our integration.

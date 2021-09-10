@@ -1,0 +1,4 @@
+You can eighter use the nodejs based example in DemoServerCode.zip (run npm install before running the js)
+To do this, use localhost:8123 as the address in the example.
+
+Or use our server hosted example (preconfigured)
