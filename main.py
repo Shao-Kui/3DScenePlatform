@@ -19,6 +19,7 @@ from main_audio import app_audio
 from main_magic import app_magic
 from autoview import app_autoView, autoViewsRes, autoViewRooms
 import random
+from subprocess import check_output
 import difflib
 import sk
 
@@ -267,6 +268,26 @@ def sketch():
         return json.dumps(ret)
     return "Post image! "
 
+# Audio Module. 
+from layoutmethods import parse
+from layoutmethods import speechRec as spr
+L = parse.LanguageAnalysis()
+@app.route("/voice", methods=['POST'])
+def voice():
+    uuid4 = uuid.uuid4()
+    filename = f"./layoutmethods/audio/{uuid4}.wav"
+    pcmfilename = filename.replace('.wav', '.pcm')
+    request.files['record'].save(filename)
+    c = f'ffmpeg -y -i {filename} -acodec pcm_s16le -f s16le -ac 1 -ar 16000 {pcmfilename}'
+    check_output(c, shell=True)
+    res = {}
+    start_time = time.time()
+    print(spr.audiofile_rec(pcmfilename))
+    res['rawText'] = " ".join(spr.audiofile_rec(pcmfilename)['result'])
+    print(time.time() - start_time)
+    res['parsed'] = L.parserText(res['rawText'])
+    return json.dumps(res)
+
 @app.route("/sklayout", methods=['POST', 'GET'])
 def sklayout():
     if request.method == 'POST':
@@ -319,8 +340,8 @@ def applyuuid():
 
 @app.route("/getSceneJsonByID/<origin>")
 def getSceneJsonByID(origin):
-    if os.path.exists(f'./dataset/alilevel_door2021/{origin}.json'):
-        return flask.send_file(f'./dataset/alilevel_door2021/{origin}.json')
+    if os.path.exists(f'./dataset/Levels2021/{origin}.json'):
+        return flask.send_file(f'./dataset/Levels2021/{origin}.json')
     else:
         return ""
 

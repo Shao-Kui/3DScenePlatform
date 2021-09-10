@@ -1,6 +1,9 @@
+/Unity
 /static/*.ico
 /latentspace
 /layoutmethods/planit
+/layoutmethods/audio
+/layoutmethods/ltp_data_v3.4.0
 /deprecated
 /examples
 /rooms
