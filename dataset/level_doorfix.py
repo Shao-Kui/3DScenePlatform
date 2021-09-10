@@ -82,6 +82,8 @@ def areDoorsInRoom(level):
 
 def areDoorsInRoom2021(level):
     level_doorfix = level.copy()
+    for room in level_doorfix['rooms']:
+        room['blockList'] = []
     # for each room in level, check each door; 
     for room in level_doorfix['rooms']:
         # inDatabase Check: 
@@ -104,7 +106,7 @@ def areDoorsInRoom2021(level):
                     continue
                 if 'coarseSemantic' not in obj:
                     continue
-                if obj['coarseSemantic'] not in ['door', 'Door']:
+                if obj['coarseSemantic'] not in ['door', 'window', 'Door', 'Window']:
                     continue
                 block = windoorblock_f(obj)
                 block_polygon = Polygon(block['windoorbb']).buffer(.03)
@@ -113,6 +115,10 @@ def areDoorsInRoom2021(level):
                     if 'roomIds' not in obj:
                         obj['roomIds'] = []
                     obj['roomIds'].append(room['roomId'])
+                    if obj not in room['objList']:
+                        new_obj = obj.copy()
+                        new_obj['roomId'] = room['roomId']
+                        room['blockList'].append(new_obj)
     return level_doorfix
 
 def batch():
@@ -128,7 +134,7 @@ def batch():
         except PermissionError:
             continue
         level_fix = areDoorsInRoom2021(level)
-        with open(f'./alilevel_door2021/{levelname}', 'w') as f:
+        with open(f'./Levels2021/{levelname}', 'w') as f:
             json.dump(level_fix, f)
 
 def case1():

@@ -307,6 +307,9 @@ def sceneSynthesis(rj):
         o['childnum'] = {}
         o['myparent'] = None
         pend_obj_list.append(o)
+    if 'blockList' in rj:
+        for o in rj['blockList']:
+            blocks.append(windoorblock_f(o))
     # load priors; 
     csrrelation = torch.zeros((len(pend_obj_list), len(pend_obj_list)), dtype=torch.float)
     for center in pend_obj_list:
