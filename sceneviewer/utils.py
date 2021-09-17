@@ -311,8 +311,9 @@ def redundancyRemove(hypotheses, checkDirection=True):
                     hypotheses[i]['toDelete'] = True
                     break
     for h in hypotheses:
-        if 'toDelete' not in h:
-            res.append(h)
+        if np.isnan(np.sum(h['probe'])) or np.isnan(np.sum(h['direction'])) or 'toDelete' in h:
+            continue
+        res.append(h)
     return res
 
 S_NUM = 100

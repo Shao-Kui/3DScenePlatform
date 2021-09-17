@@ -112,7 +112,11 @@ const calculateRoomID = function(translate){
 let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
-    if(!(modelId in objectCache)){
+    commandStack.push({
+        'func': removeObjectByUUID,
+        'args': [uuid, true]
+    });
+    /*if(!(modelId in objectCache)){
         loadObjectToCache(modelId, anchor=addObjectFromCache, anchorArgs=[modelId, transform, uuid, origin]);
         return; 
     }
@@ -151,7 +155,8 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
     scene.add(object3d)
     renderer.render(scene, camera);
-    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}
+    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}*/
+    let object3d = addObjectByUUID(uuid, modelId, transform, origin);
     return object3d; 
 };
 
@@ -370,18 +375,6 @@ const synchronizeObjectJsonByObject3D = function(object3d){
     }
 }
 
-const transformObjectByUUID = function(uuid, transform, origin=true){
-    let object3d = manager.renderManager.instanceKeyCache[uuid]; 
-    // set object3d first: 
-    object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
-    object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
-    object3d.rotation.set(transform.rotate[0], transform.rotate[1], transform.rotate[2]);
-    synchronizeObjectJsonByObject3D(object3d);
-    // the core code for calculating orientations of objects; 
-    if(AUXILIARY_MODE){auxiliaryMode();}
-    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);}
-};
-
 const tCache = []; 
 var fastTimeLine = gsap.timeline({repeat: 0});
 var lastMovedTimeStamp = moment();
@@ -423,15 +416,23 @@ const animateObject3DOnly = function(transformations){
     }
 }
 
-var synchronize_json_object = function (object) {
+const synchronize_json_object = function (object) {
+    synchronize_roomId(object);
     if(fastTimeLine.isActive()){
         fastTimeLine.seek(fastTimeLine.endTime());
         fastTimeLine.kill();
     }
     fastTimeLine = gsap.timeline({repeat: 0}); 
     tCache.length = 0; 
-    var i = find_object_json(object);
-    var inst = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
+    let inst = object.userData.json;
+    commandStack.push({
+        'func': transformObjectByUUID,
+        'args': [object.userData.key, {
+            'translate': [...inst.translate],
+            'scale': [...inst.scale],
+            'rotate': [...inst.rotate]
+        }, true]
+    });
     inst.scale[0] = object.scale.x;
     inst.scale[1] = object.scale.y;
     inst.scale[2] = object.scale.z;
@@ -446,7 +447,7 @@ var synchronize_json_object = function (object) {
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
-    if(origin && onlineGroup !== 'OFFLINE'){
+    if(onlineGroup !== 'OFFLINE'){
         let transform = {
             'translate': inst.translate,
             'scale': inst.scale,
@@ -456,18 +457,16 @@ var synchronize_json_object = function (object) {
     }
 };
 
-var synchronize_roomId = function (object) {
-    if (currentRoomId === object.userData.roomId || currentRoomId === undefined) {
-        return;
-    }
-    var i = find_object_json(object);
-    var obj_json = manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
-    obj_json.roomId = currentRoomId;
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.push(obj_json);
-    delete manager.renderManager.scene_json.rooms[object.userData.roomId].objList[i];
-    manager.renderManager.scene_json.rooms[object.userData.roomId].objList = 
-    manager.renderManager.scene_json.rooms[object.userData.roomId].objList.filter( item => item !== null && item !== undefined )
-    object.userData.roomId = currentRoomId;
+const synchronize_roomId = function (object) {
+    let rooms = manager.renderManager.scene_json.rooms;
+    let oriRoomId = object.userData.json.roomId;
+    let newRoomId = calculateRoomID([object.position.x, object.position.y, object.position.z]);
+    object.userData.json.roomId = newRoomId; 
+    object.userData.roomId = newRoomId; 
+    rooms[newRoomId].objList.push(object.userData.json);
+    let i = rooms[oriRoomId].objList.indexOf(object.userData.json);
+    rooms[oriRoomId].objList.splice(i, 1);
+    console.log(newRoomId, oriRoomId);
 }
 
 var updateMousePosition = function () {
@@ -518,7 +517,7 @@ const onTouchObj = function (event) {
     raycaster.setFromCamera(pos, camera);
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
-        currentRoomId = intersects[0].object.parent.userData.roomId;
+        currentRoomId = intersects[0].object.parent.userData.json.roomId;
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     }else{
@@ -542,7 +541,6 @@ const onTouchObj = function (event) {
     if (On_MOVE) {
         On_MOVE = false;
         synchronize_json_object(INTERSECT_OBJ);
-        synchronize_roomId(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         return;
     }
@@ -565,19 +563,6 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
-const synchronizeIntersectedObject = function(){
-    synchronize_json_object(INTERSECT_OBJ);
-    synchronize_roomId(INTERSECT_OBJ);
-    if(onlineGroup !== 'OFFLINE'){
-        let transform = {
-            'translate': [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z],
-            'scale': [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z],
-            'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z]
-        };
-        emitFunctionCall('transformObjectByUUID', [INTERSECT_OBJ.userData.key, transform, false]);
-    }
-}
-
 const onClickIntersectObject = function(event){
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
@@ -586,7 +571,7 @@ const onClickIntersectObject = function(event){
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-                synchronizeIntersectedObject();
+                synchronize_json_object(INTERSECT_OBJ);
             }
         }
         // if this is the online mode and the object is already controlled by other users...
@@ -664,7 +649,6 @@ var onClickObj = function (event) {
     if (On_MOVE) {
         On_MOVE = false;
         synchronize_json_object(INTERSECT_OBJ);
-        synchronize_roomId(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         return;
     }
@@ -840,26 +824,26 @@ const render_function = function(){
     }
 }
 
-const removeObjectByUUID = function(uuid){
-    let objectToDelete = manager.renderManager.instanceKeyCache[uuid];
-    if(objectToDelete === undefined) return; 
-    scene.remove(objectToDelete); // remove the object from the scene; 
-    let roomId = objectToDelete.userData.roomId;
-    delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(objectToDelete)];
-    delete manager.renderManager.instanceKeyCache[uuid];
-}
-
 const removeIntersectObject = function(){
+    commandStack.push({
+        'func': addObjectByUUID,
+        'args': [
+            INTERSECT_OBJ.userData.key, 
+            INTERSECT_OBJ.userData.json.modelId, 
+            {
+                'translate': [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 
+                'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z], 
+                'scale': [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z]
+            }, 
+            true
+        ]
+    });
     datguiObjectFolderRemove(INTERSECT_OBJ); 
-    let roomId = INTERSECT_OBJ.userData.roomId;
-    delete manager.renderManager.scene_json.rooms[roomId].objList[find_object_json(INTERSECT_OBJ)];
-    delete manager.renderManager.instanceKeyCache[INTERSECT_OBJ.userData.key];
-    scene.remove(INTERSECT_OBJ); 
     if(AUXILIARY_MODE){
         auxiliaryMode();
     }
-    if(onlineGroup !== 'OFFLINE'){emitFunctionCall('removeObjectByUUID', [INTERSECT_OBJ.userData.key]);}
     applyLayoutViewAdjust();
+    removeObjectByUUID(INTERSECT_OBJ.userData.key);
     INTERSECT_OBJ = undefined;
 }
 
@@ -960,7 +944,6 @@ const datguiObjectFolderRemove = function(objmesh){
     if(datgui_intersectfolder){
         datgui.removeFolder(datgui_intersectfolder); 
         datgui_intersectfolder = undefined; 
-        synchronize_json_object(objmesh);
     }
 }
 
@@ -1037,9 +1020,7 @@ const setting_up = function () {
     datgui.domElement.parentElement.style.top = "0%"; 
     datgui.domElement.parentElement.style.right = "0%"; 
     datgui.domElement.parentElement.style.position = "absolute";
-    document
-      .getElementById("uibody")
-      .appendChild(datgui.domElement.parentElement);
+    document.getElementById("uibody").appendChild(datgui.domElement.parentElement);
 
     autocollapse("#menubar", 52);
     $(window).on("resize", function () {
@@ -1068,6 +1049,7 @@ const setting_up = function () {
             delete objlist[i];
         }
         manager.renderManager.scene_json.rooms[currentRoomId].objList = objlist.filter(o => o!==undefined&&o!==null); 
+        refreshRoomByID(currentRoomId, manager.renderManager.scene_json.rooms[currentRoomId].objList);
     });
     $("#clearALL_button").click(() => {
         manager.renderManager.scene_json.rooms.forEach(room => {
@@ -1110,34 +1092,13 @@ const setting_up = function () {
             scene.remove(theaxis);
         }
     });
-    $("#autoview").click(function(){
-        let fov = camera.fov; 
-        let focalLength = camera.filmGauge; 
-        let origin = [camera.position.x, camera.position.y, camera.position.z];
-        let rotate = [camera.rotation.x, camera.rotation.y, camera.rotation.z];
-        let target = [orbitControls.target.x, orbitControls.target.y, orbitControls.target.z];
-        let up = new THREE.Vector3();
-        up.copy(camera.up);
-        up.applyQuaternion(camera.quaternion);
-        let canvas = {};
-        canvas.width = scenecanvas.width;
-        canvas.height = scenecanvas.height;
-        let resPos = [0, 1, 0];
-        let resLookAt = [0, 1, 3];
-        camera.rotation.order = 'YXZ';
-        gsap.to(camera.position, {
-            duration: 1,
-            x: resPos[0],
-            y: resPos[1],
-            z: resPos[2]
-        });
-        gsap.to(orbitControls.target, {
-            duration: 1,
-            x: resLookAt[0],
-            y: resLookAt[1],
-            z: resLookAt[2]
-        });
-    });
+    $("#scenePalette").click(function(){
+        if($("#scenePaletteSVG").css('display') === 'block'){
+            $("#scenePaletteSVG").css('display', 'none')
+        }else{
+            $("#scenePaletteSVG").css('display', 'block')
+        }
+    })
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
         fpCtrlMode = !fpCtrlMode;

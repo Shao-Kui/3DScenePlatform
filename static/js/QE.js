@@ -26,7 +26,7 @@ const transformControlsConfig = function(){
             isToggle = !isToggle;
         }
         if(!event.value){
-            synchronizeIntersectedObject();
+            synchronize_json_object(INTERSECT_OBJ);
         }
     });
     transformControls.addEventListener('change', function (event) {
@@ -109,6 +109,7 @@ const topdownview = function(){
     // });
 };
 
+var ctrlPressing = false;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
     switch ( event.keyCode ) {
@@ -154,6 +155,15 @@ const onKeyDown = function(event){
         case 191: // /
             transformControls.setMode('scale');
             break;
+        case 17:
+            ctrlPressing = true;
+            break;
+    }
+    if(event.keyCode === 90 && ctrlPressing){
+        if(commandStack.length > 0){
+            let cmd = commandStack.pop();
+            cmd.func.apply(null, cmd.args);
+        }
     }
 };
 
@@ -171,6 +181,9 @@ var onKeyUp = function (event) {
             break;
         case 13: // ENTER
             clickTextSearchButton();
+            break;
+        case 17:
+            ctrlPressing = false;
             break;
           
     }
