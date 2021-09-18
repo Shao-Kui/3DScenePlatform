@@ -34,32 +34,28 @@ const auto_layout_PlanIT = function(){
     });
 };
 
+const paletteRender = function(modelIds){
+    let svg = d3.select('#scenePaletteSVG');
+    svg.selectAll('.latentElement').remove();
+    let width = svg.attr('width'), height = svg.attr('height');
+}
+
+const paletteExpand = function(modelIds){
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/rec_ls_euc",
+        dataType: "json",
+        data: JSON.stringify(modelIds),
+        success: function (data) {
+            paletteRender(JSON.parse(data));
+        }
+    });
+}
+
 var palette_recommendation = function(){
     if(currentRoomId === undefined){
       return;
     }
-    $.ajax({
-        type: "POST",
-        contentType: "application/json; charset=utf-8",
-        url: "/palette_recommendation",
-        crossDomain: true,
-        data: JSON.stringify(manager.renderManager.scene_json.rooms[currentRoomId].objList),
-        success: function (data) {
-            while(catalogItems.firstChild){
-                catalogItems.firstChild.remove();
-            }
-            console.log(data);
-            data.forEach(function(item){
-                var iDiv = document.createElement('div');
-                iDiv.className = "catalogItem";
-                iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
-                iDiv.setAttribute('objectID', item.id);
-                iDiv.setAttribute('objectName', item.name);
-                iDiv.setAttribute('semantic', item.semantic);
-                iDiv.addEventListener('click', clickCatalogItem)
-                catalogItems.appendChild(iDiv);
-            })
-        },
-        dataType: "json"
-    });
+    
 }

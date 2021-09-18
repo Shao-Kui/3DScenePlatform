@@ -1094,9 +1094,9 @@ const setting_up = function () {
     });
     $("#scenePalette").click(function(){
         if($("#scenePaletteSVG").css('display') === 'block'){
-            $("#scenePaletteSVG").css('display', 'none')
+            $("#scenePaletteSVG").css('display', 'none');
         }else{
-            $("#scenePaletteSVG").css('display', 'block')
+            $("#scenePaletteSVG").css('display', 'block');
         }
     })
     $("#firstperson_button").click(function(){
