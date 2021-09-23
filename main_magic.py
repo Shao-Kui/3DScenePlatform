@@ -1,3 +1,5 @@
+from operator import mod
+from types import MethodType
 from flask import Blueprint, request
 import numpy as np
 import os
@@ -6,6 +8,8 @@ import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from layoutmethods.projection2d import processGeo as p2d, getobjCat, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
+from sketch_retrieval.generate_descriptor import sketch_search, sketch_search_suncg, sketch_search_non_suncg
+import sk
 
 app_magic = Blueprint('app_magic', __name__)
 
@@ -335,6 +339,73 @@ def magic_category():
         return json.dumps(d)
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
+
+with open('./latentspace/name_to_ls_suncgonly.json') as f:
+    name_to_ls = json.load(f)
+with open('./latentspace/ls_to_name_suncgonly.json') as f:
+    ls_to_name = json.load(f)
+ls = np.load("./latentspace/ls-release-2.npy")
+
+@app_magic.route("/rec_ls_euc", methods=['POST'])
+def recommendation_ls_euclidean():
+    e_room = []
+    for modelId in request.json:
+        if modelId in name_to_ls:
+            e_room.append(modelId)
+            continue
+        e_room.append(sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0])
+    dist = np.zeros((len(ls_to_name)))
+    for item in e_room:
+        test_point = ls[name_to_ls[item]].reshape(1, 2)
+        dist += np.linalg.norm(ls - test_point, axis=1)
+    indices = np.argsort(dist)
+    counter = 0
+    elements = []
+    existObjects = []
+    for i in indices:
+        if ls_to_name[str(i)] in e_room:
+            continue
+        modelId = ls_to_name[str(i)]
+        modelId = sketch_search_non_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+        if sk.getobjCat(modelId) == sk.getobjCat(e_room[0]):
+            continue
+        if modelId in existObjects:
+            continue
+        else:
+            existObjects.append(modelId)
+        elements.append({
+            'index': counter,
+            'modelId': modelId,
+            'x': ls[i, 0],
+            'y': ls[i, 1],
+            'coarseSemantic': sk.getobjCat(modelId)
+        })
+        counter += 1
+        if counter >= 20:
+            break
+    subeles = []
+    for modelId in request.json:
+        if sk.getobjCat(modelId) in categoryRelation:
+            for cat in categoryRelation[sk.getobjCat(modelId)]:
+                if len(objListCat[cat]) >= 5:
+                    subeles += random.sample(objListCat[cat], 5)
+                else:
+                    subeles += objListCat[cat]
+    for modelId in subeles:
+        if modelId in name_to_ls:
+            suncgid = modelId
+        else:
+            suncgid = sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+        i = name_to_ls[str(suncgid)]
+        elements.append({
+            'index': counter,
+            'modelId': modelId,
+            'x': ls[i, 0],
+            'y': ls[i, 1],
+            'coarseSemantic': sk.getobjCat(modelId)
+        }) 
+        counter += 1
+    return json.dumps(elements)
 
 # code is from: https://stackoverflow.com/questions/55392019/get-random-points-within-polygon-corners
 def random_points_within(poly, num_points):

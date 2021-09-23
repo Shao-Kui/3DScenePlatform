@@ -30,7 +30,7 @@ app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
-socketio = SocketIO(app, manage_session=False)
+socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)

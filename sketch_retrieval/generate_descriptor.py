@@ -114,10 +114,10 @@ def init_sketch_retrieval():
         names = names['models']
     with open(suncg_catalog_dir, 'r') as f:
         suncg_names = json.load(f)
-        suncg_names = names['models']
+        suncg_names = suncg_names['models']
     with open(non_suncg_catalog_dir, 'r') as f:
         non_suncg_names = json.load(f)
-        non_suncg_names = names['models']
+        non_suncg_names = non_suncg_names['models']
     return model, model_lib, names, suncg_model_lib, suncg_names, non_suncg_model_lib, non_suncg_names
 
 

@@ -9,6 +9,10 @@ html, body{
   position: relative;
 }
 
+#content{
+    height: 100%;
+}
+
 #menubar{
   margin: 0;
 }
@@ -16,6 +20,8 @@ html, body{
 #uibody{
   margin: 0; height: 95%;
   overflow: hidden;
+  position: relative;
+  background: #ffffff;
 }
 
 #retrieve{
@@ -185,11 +191,6 @@ html, body{
 #title {
   color: white;
   text-decoration: none;
-}
-
-#uibody {
-  position: relative;
-  background: #343a40;
 }
 
 .btn-outline-light:hover {

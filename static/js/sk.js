@@ -596,6 +596,8 @@ const onClickIntersectObject = function(event){
             isToggle = !isToggle;
         }
         datguiObjectFolder(INTERSECT_OBJ);
+        if($("#scenePaletteSVG").css('display') === 'block')
+        {paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
         return;
     }else{
         cancelClickingObject3D();
@@ -789,13 +791,14 @@ function onDocumentMouseMove(event) {
     updateMousePosition();
 };
 
-var onWindowResize = function(){
-    $('#scenecanvas').width('100%'); 
-    $('#scenecanvas').height('100%'); 
+const onWindowResize = function(){
     camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight); 
     composer.setSize(scenecanvas.clientWidth, scenecanvas.clientHeight);
+    $('#uibody').height($(document).height() - $('#menubar').outerHeight());
+    $('#scenecanvas').width('100%'); 
+    $('#scenecanvas').height($(document).height() - $('#menubar').outerHeight()); 
 }
 
 var saveFile = function (strData, filename) {
@@ -1075,7 +1078,7 @@ const setting_up = function () {
             data: JSON.stringify(getDownloadSceneJson()),
             success: function (data) {
                 pcam = JSON.parse(data);
-                viewTransform(pcam)
+                viewTransform(pcam);
             }
         });
     });
@@ -1092,13 +1095,14 @@ const setting_up = function () {
             scene.remove(theaxis);
         }
     });
+    paletteInit();
     $("#scenePalette").click(function(){
         if($("#scenePaletteSVG").css('display') === 'block'){
             $("#scenePaletteSVG").css('display', 'none');
         }else{
             $("#scenePaletteSVG").css('display', 'block');
         }
-    })
+    });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
         fpCtrlMode = !fpCtrlMode;
@@ -1159,7 +1163,7 @@ const setting_up = function () {
     for (let i = 0; i < rapidSearches.length; i++) {
         rapidSearches[i].addEventListener('click', rapidSFunc, false);
     }
-
+    onWindowResize();
     gameLoop();
 };
 

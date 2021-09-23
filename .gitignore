@@ -26,6 +26,7 @@ qs.png
 *.pyc
 sceneviewer/mapping/*
 sceneviewer/results/*
+/sketch_retrieval
 /sketch_retrival/features
 /sketch_retrival/MVCNN_stage_1
 /sketch_retrival/MVCNN_stage_2
