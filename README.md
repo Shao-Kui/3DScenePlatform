@@ -1,11 +1,11 @@
 # Introduction
 Platform Overview             |  Viewing & Roaming
 :-------------------------:|:-------------------------:
-![Overview](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/6.png "Platform Overview")  |  ![Viewing](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/viewing.png "Viewing & Roaming")
+![Overview](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/PlatformOverview.png "Platform Overview")  |  ![Viewing](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/viewing2.png "Viewing & Roaming")
 
 Manipulating             |  Rendering
 :-------------------------:|:-------------------------:
-![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/8.png "Manipulating & Searching")  |  ![Rendering](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/7.png "Rendering")
+![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/manipulating.png "Manipulating & Searching")  |  ![Synthesis](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/algorithm.png "Synthesis")
 
 This is the repository of the paper "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**" and "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**". Our platform is web-based. We hope this repository could help researches on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain enginneering bugs and this doc may not cover all your confusions. Please do issue us if you have problems with this repo or e-mails us by zhangsk18@mails.tsinghua.edu.cn. 
 
