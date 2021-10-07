@@ -3,7 +3,7 @@ Platform Overview             |  Viewing & Roaming
 :-------------------------:|:-------------------------:
 ![Overview](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/PlatformOverview.png "Platform Overview")  |  ![Viewing](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/viewing2.png "Viewing & Roaming")
 
-Manipulating             |  Rendering
+Manipulating             |  Synthesis
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/manipulating.png "Manipulating & Searching")  |  ![Synthesis](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/algorithm.png "Synthesis")
 
