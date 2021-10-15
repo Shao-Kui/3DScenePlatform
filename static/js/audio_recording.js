@@ -43,74 +43,43 @@ function stop_reco() {
     console.log('stop recording')
 }
 
+var requestAudioLastCat;
 const requestAudioObject = function(data){
-    console.log(`time requires: ${moment.duration(new moment().diff(startTime)).asSeconds()}s`)
-    console.log(data)
+    // console.log(`time requires: ${moment.duration(new moment().diff(startTime)).asSeconds()}s`)
     if(data.rawText.includes('删')){
         removeIntersectObject();
         toggles();
     }
+    requestAudioLastCat = data.rawText.replaceAll('。', '');
+    $('#searchinput').val(data.rawText.replaceAll('。', ''));
     if(data.parsed[0][0] !== undefined){
     if(data.parsed[0][0].length >= 2){
         if(currentRoomId === undefined) return; 
-        let englishCategory = ""; 
-        switch(data.parsed[0][0][0]){
-            case '床':
-                englishCategory = "King-size Bed";
-                break;
-            case '双人床':
-                englishCategory = "King-size Bed";
-                break;
-            case '床头柜':
-                englishCategory = "Nightstand";
-                break;
-            case '桌子':
-                englishCategory = "Dining Table"; 
-                break;
-            case '餐桌':
-                englishCategory = "Dining Table"; 
-                break;
-            case '茶几':
-                englishCategory = "Coffee Table"; 
-                break;
-            case '梳妆台':
-                englishCategory = "Dressing Table"; 
-                break;
-            case '软凳':
-                englishCategory = "Footstool&nbsp;&frasl;&nbsp;Sofastool&nbsp;&frasl;&nbsp;Bed&nbsp;End&nbsp;Stool&nbsp;&frasl;&nbsp;Stool"; 
-                break;
-            case '床凳':
-                englishCategory = "Footstool&nbsp;&frasl;&nbsp;Sofastool&nbsp;&frasl;&nbsp;Bed&nbsp;End&nbsp;Stool&nbsp;&frasl;&nbsp;Stool"; 
-                break;
-            case '书桌':
-                englishCategory = "Desk"; 
-                break;
-            case '椅子':
-                englishCategory = "Dining Chair"; 
-                break;
-            default:
-                englishCategory = "Desk"; 
-                break;
+        if(data.cat === 'unknown') return;
+        if(!('cat' in data)) return;
+        let callback = data => {
+            data = JSON.parse(data);
+            let anchor = function(d){
+                let modelId = d.modelId;
+                let rm = tf.tensor(manager.renderManager.scene_json.rooms[currentRoomId].roomShape); 
+                let xz = rm.mean(axis=0).arraySync(); 
+                addObjectFromCache(
+                    modelId=modelId,
+                    transform={
+                        'translate': [xz[0], 0, xz[1]], 
+                        'rotate': [0, 0, 0],
+                        'scale': [1, 1, 1]
+                    }
+                );
+            }
+            loadObjectToCache(data.modelId, anchor=anchor, anchorArgs = [data]);
         }
-        $.getJSON(`/audio_categoryObj/${englishCategory}`, async data => {
-            await loadObjectToCache(data.modelId);
-            await auxiliaryRoom(); 
-            var timeout = setInterval(function() {
-                console.log('checking... ... ...')
-                if(data.modelId in objectCache && 'auxiliaryDomObj' in manager.renderManager.scene_json.rooms[currentRoomId]) {
-                    let rm = tf.tensor(manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.room_meta); 
-                    let xz = rm.mean(axis=0).arraySync(); 
-                    addObjectFromCache(
-                        modelId=data.modelId,
-                        transform={
-                            'translate': [xz[0], 0, xz[1]], 
-                            'rotate': [0, 0, 0],
-                            'scale': [1, 1, 1]
-                        }
-                    );
-                    clearInterval(timeout); 
-                }
-            }, 100);
+        $.ajax({
+            type: "POST",
+            contentType: "text; charset=utf-8",
+            url: `/audio_categoryObj`,
+            data: data.cat,
+            success: callback
         });
     }}
     reco.clear();

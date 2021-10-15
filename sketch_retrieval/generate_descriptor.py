@@ -11,6 +11,7 @@ import time
 import glob
 import os
 import json
+import sk
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -43,15 +44,30 @@ def sketch_search(filename, k=20, classname=None):
                              std=[0.229, 0.224, 0.225])
     ])
     sketch_img = Image.open(filename).convert('RGB')
+    start_time = time.time()
     sketch_img = sketch_aug(sketch_img)
     sketch_img = torch.stack([sketch_img])
     sketch_data = sketch_img.cuda(non_blocking=True)
     sketch_features, _ = net(sketch_data, None)
-    pred = models_index.search(
-        sketch_features.detach().cpu().numpy(), k)[1]  # bs, 10
-    pred = pred[0]
-    return [model_names[i] for i in pred]
-
+    detachedFeatures = sketch_features.detach().cpu().numpy()
+    end_time = time.time()
+    print("\r\n------- %s secondes --- \r\n" % (end_time - start_time))
+    if classname is None:
+        pred = models_index.search(detachedFeatures, k)[1]  # bs, 10
+        pred = pred[0]
+        res = [model_names[i] for i in pred]
+    else:
+        for F in (2**np.arange(1,7)).tolist():
+            pred = models_index.search(detachedFeatures, k*F)[1]  # bs, 10
+            pred = pred[0]
+            res = []
+            for i in pred:
+                if sk.getobjCat(model_names[i]) == classname:
+                    res.append(model_names[i])
+            if len(res) >= k:
+                break
+        print(f'total iterations: {F}')
+    return res
 
 def sketch_search_suncg(filename, k=20, classname=None):
 

@@ -340,6 +340,31 @@ def magic_category():
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
 
+@app_magic.route("/mageAddSingle", methods=['POST', 'GET'])
+def mageAddSingle():
+    tarObj = request.json['tarObj']
+    res = {'subPrior': [], 'domPrior': [], 'belonging': []}
+    for room in request.json['rooms']:
+        for obj in room['objList']:
+            if obj is None:
+                continue
+            if 'modelId' not in obj:
+                continue
+            ppri = f'./latentspace/pos-orient-4/{obj["modelId"]}.json'
+            if os.path.exists(ppri):
+                with open(ppri) as f:
+                    pri = json.load(f)
+            else:
+                continue
+            for c_sec in pri:
+                if c_sec != sk.getobjCat(tarObj) or c_sec not in categoryRelation[getobjCat(obj['modelId'])]:
+                    continue
+                res['subPrior'] += priorTransform(pri[c_sec], obj['translate'], obj['orient'], obj['scale'])
+                res['belonging'] += np.full(len(pri[c_sec]), obj["modelId"]).tolist()
+    with open(f'./latentspace/wdot-4/{tarObj}.json') as f:
+        res['domPrior'] += json.load(f)
+    return json.dumps(res)
+
 with open('./latentspace/name_to_ls_suncgonly.json') as f:
     name_to_ls = json.load(f)
 with open('./latentspace/ls_to_name_suncgonly.json') as f:

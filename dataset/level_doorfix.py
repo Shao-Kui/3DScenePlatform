@@ -3,7 +3,9 @@ import os
 import math
 import numpy as np
 from shapely.geometry.polygon import Polygon
+import projection2d
 from projection2d import processGeo as p2d
+projection2d.get_norm = True
 """
 This script is used to fix issues of 
 'one door belongs to multiple rooms'; 
@@ -97,6 +99,9 @@ def areDoorsInRoom2021(level):
         try:
             room_meta = p2d('.', 'room/{}/{}f.obj'.format(room['origin'], room['modelId']))
             room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
+            room['roomShape'] = room_meta[:, 0:2].tolist()
+            room['roomNorm'] = room_meta[:, 2:4].tolist()
+            room['roomOrient'] = np.arctan2(room_meta[:, 2:4][:, 0], room_meta[:, 2:4][:, 1]).tolist()
         except Exception as e:
             print(e)
             continue

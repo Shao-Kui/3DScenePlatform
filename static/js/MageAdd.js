@@ -197,7 +197,7 @@ const auxiliaryWall = function(theIntersect){
         return;
     // if(awo === undefined)
     //     return;
-    let ftnw = findTheNearestWall(theIntersect); 
+    let ftnw = findTheNearestWall(theIntersect, manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor); 
     let wallDistances = ftnw[1]; 
     wallIndex = ftnw[0][0]; 
     secWallIndex = ftnw[0][1]; 
@@ -258,9 +258,30 @@ const auxiliaryWall = function(theIntersect){
     );
 };
 
-const findTheNearestWall = function(theIntersect){
-    let wallPointStart = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor;
-    let wallPointEnd = tf.concat([wallPointStart.slice([1], [wallPointStart.shape[0]-1]), wallPointStart.slice([0], [1])])
+const genFloorPlanWallTensors = function(){
+    if(manager.roomShapeTensorAll !== undefined){
+        manager.roomStartTensorAll.dispose();
+        manager.roomEndTensorAll.dispose();
+    }
+    manager.roomStartAll = [];
+    manager.roomEndAll = [];
+    manager.roomNormAll = [];
+    manager.roomOrientAll = [];
+    manager.renderManager.scene_json.rooms.forEach(room => {
+        if('roomShape' in room){
+            manager.roomStartAll = manager.roomStartAll.concat(room.roomShape);
+            manager.roomEndAll = manager.roomEndAll.concat(room.roomShape.slice(1,room.roomShape.length).concat(room.roomShape.slice(0,1)));
+            manager.roomNormAll = manager.roomNormAll.concat(room.roomNorm);
+            manager.roomOrientAll = manager.roomOrientAll.concat(room.roomOrient);
+        }
+    });
+    manager.roomStartTensorAll = tf.tensor(manager.roomStartAll);
+    manager.roomEndTensorAll = tf.tensor(manager.roomEndAll);
+}
+
+const findTheNearestWall = function(theIntersect, wallPointStart, wallPointEnd=undefined){
+    // let wallPointStart = manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor;
+    if(wallPointEnd === undefined){wallPointEnd = tf.concat([wallPointStart.slice([1], [wallPointStart.shape[0]-1]), wallPointStart.slice([0], [1])]);}
     let p3 = tf.tensor([theIntersect.point.x, theIntersect.point.z]);
     let a_square = tf.sum(tf.square(wallPointEnd.sub(wallPointStart)), axis=1);
     let b_square = tf.sum(tf.square(wallPointEnd.sub(p3)), axis=1);
@@ -296,7 +317,7 @@ const auxiliaryCG = function(theIntersect, auto=false){
         return false;
     let wallIndex;
     let secWallIndex; // the second nearest wall index; 
-    let ftnw = findTheNearestWall(theIntersect); 
+    let ftnw = findTheNearestWall(theIntersect, manager.renderManager.scene_json.rooms[currentRoomId].auxiliaryDomObj.roomShapeTensor); 
     let wallDistances = ftnw[1];
     wallIndex = ftnw[0][0];
     secWallIndex = ftnw[0][1]; 
@@ -555,3 +576,135 @@ const mageAddAuto = function(samples){
         }
     }
 };
+
+const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
+    if(objectCache[objname] === undefined){
+        return false;
+    }
+    objectCache[objname].name = AUXILIARY_NAME;
+    objectCache[objname].position.set(x, y, z);
+    objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
+    objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
+    // detecting collisions between the pending object and other objects: 
+    olist = Object.values(manager.renderManager.instanceKeyCache);
+    for(let i = 0; i < olist.length; i++){
+        let objmesh = olist[i];
+        if(detectCollisionGroups(objectCache[objname], objmesh)){
+            // console.log('Collision with an Object: ', objmesh); 
+            auxiliary_remove();
+            return false;
+        }
+    }
+    // detecting collisions between the pending objects and buffered door meshes; 
+    for(let i = 0; i < door_mageAdd_set.length; i++){
+        let doorMesh = door_mageAdd_set[i];
+        if(detectCollisionGroups(doorMesh, objectCache[objname])){
+            // console.log('Collision with a Windoor: ', doorMesh); 
+            auxiliary_remove();
+            return false;
+        }
+    }
+    // detecting collisions between the pending objects and the wall: 
+    for(let i = 0; i < manager.renderManager.scene_json.rooms.length; i++){
+        let wallMeta = manager.renderManager.scene_json.rooms[i].roomShape;
+        if(detectCollisionWall(wallMeta, objectCache[objname])){
+            // console.log('Collision with a Wall: ', wallMeta); 
+            auxiliary_remove();
+            return false; 
+        }
+    }
+    if(!scene.getObjectByName(AUXILIARY_NAME)){
+        scene.add(objectCache[objname]);
+    }
+    if(scene.getObjectByName(AUXILIARY_NAME).userData.modelId !== objname){
+        auxiliary_remove();
+        scene.add(objectCache[objname]);
+    }
+    objectCache[objname].userData.mageAddDerive = mageAddDerive; 
+    return true
+}
+
+const mageAddSingleCG = function(theIntersect){
+    // find the nearest distance to the nearest wall; ( np.abs(np.cross(p2-p1, p1-p3)) / norm(p2-p1) )
+    let wallIndex;
+    let secWallIndex; // the second nearest wall index; 
+    let ftnw = findTheNearestWall(theIntersect, manager.roomStartTensorAll, manager.roomEndTensorAll); 
+    let wallDistances = ftnw[1];
+    wallIndex = ftnw[0][0];
+    secWallIndex = ftnw[0][1];
+    // console.log(manager.roomStartAll[wallIndex], manager.roomEndAll[wallIndex]);
+    let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
+    let secMinDis = wallDistances.slice([secWallIndex], [1]); // the distance w.r.t the second nearest wall; 
+    let vecSub;
+    let secVecSub; 
+    if(mageAddSinglePrior.domTensor.shape[0] !== 0){
+        vecSub = tf.abs(tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([2], [1])).sub(minDis)).reshape([-1]);
+        secVecSub = tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([6], [1])).reshape([-1]); 
+    }else{
+        realTimeSingleCache(INSERT_OBJ['modelId'], theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]);
+        return;
+    }
+    // filter out priors exceed the second nearest wall; 
+    vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
+    let index = tf.argMin(vecSub).arraySync();
+    let threshold = 0.6; 
+    if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
+        realTimeSingleCache(INSERT_OBJ['modelId'], theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]);
+        return;
+    }
+    let theprior = mageAddSinglePrior.domPrior[index];
+    realTimeSingleCache(INSERT_OBJ['modelId'], // object name
+        theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
+        manager.roomOrientAll[wallIndex] + theprior[1], // theta
+        [theprior[3], theprior[4], theprior[5]], // scale
+        'dom'
+    );
+}
+/*
+This function is a special version of 'MageAdd', where we try adding a single object. 
+*/
+var mageAddSinglePrior = undefined; 
+const mageAddSingle = function(){
+    // this may require a systematic optimization, since objList can be reduced to a single room;
+    let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+    .concat(Object.values(manager.renderManager.fCache));
+    intersects = raycaster.intersectObjects(intersectObjList, true);
+    if (intersectObjList.length > 0 && intersects.length > 0) {
+        if(mageAddSinglePrior === undefined){
+            realTimeSingleCache(INSERT_OBJ['modelId'], intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0]);
+            return;
+        }
+        let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
+        let vecSub;
+        // if auxiliaryPiror.tensor.shape[0] equals to 0, then no context exists; 
+        if(mageAddSinglePrior.subTensor.shape[0] !== 0){
+            vecSub = tf.transpose(tf.transpose(mageAddSinglePrior.subTensor).slice([0], [3])).sub(intersectPoint);
+        }else{
+            mageAddSingleCG(intersects[0]);
+            return;
+        }
+        // transform priors
+        let eucNorm = tf.norm(vecSub, 'euclidean', 1);
+        let index = tf.argMin(eucNorm).arraySync();
+        let eucDis = eucNorm.slice([index], [1]).arraySync();
+        let theprior = mageAddSinglePrior.subPrior[index];
+        let threshold = 0.6; 
+        if(eucDis >= threshold){
+            if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
+                mageAddSingleCG(intersects[0]);
+                return;
+            }
+        }
+        let Y; 
+        if(['Rug'].includes(INSERT_OBJ.coarseSemantic)){
+            Y = 0; 
+        }else{
+            Y = intersects[0].point.y;
+        }
+        realTimeSingleCache(
+            INSERT_OBJ['modelId'], 
+            intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+            mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${INSERT_OBJ['modelId']}`
+        );
+    }
+}

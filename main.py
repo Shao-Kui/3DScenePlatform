@@ -10,6 +10,7 @@ import time
 import datetime
 # from rec_release import fa_reshuffle
 from layoutmethods.autolayoutv2 import sceneSynthesis
+# from layoutmethods.layout1 import fa_layout_pro
 from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
@@ -242,29 +243,18 @@ def set_scene_configuration():
 @app.route("/sketch", methods=['POST', 'GET'])
 def sketch():
     if request.method == 'POST':
+        keyword = request.form.get('keyword')
+        if keyword == 'unknown' or keyword == '' or keyword not in ChineseMapping:
+            keyword = None
+        else:
+            keyword = ChineseMapping[keyword]
         image_data = bytes(request.form.get('imgBase64'), encoding="ascii")
         imgdata = base64.b64decode(image_data)
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-        start_time = time.time()
-        results = sketch_search('./qs.png')
-        end_time = time.time()
-        """
-        tmp = []
-        for i in results:
-            if i not in tmp:
-                tmp.append(i)
-                if len(tmp) >= 20:
-                    break
-        results = tmp
-        results = orm.query_model_by_names(results)
-        ret = [
-            {"id": m.id, "name": m.name, "semantic": m.category.wordnetSynset, "thumbnail": "/thumbnail/%d" % (m.id,)}
-            for m in results if m != None]
-        """
+        results = sketch_search('./qs.png', k=20, classname=keyword)
         ret = [{"name":modelId, "semantic": sk.getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"} for modelId in results]
-        print("\r\n\r\n------- %s secondes --- \r\n\r\n" % (end_time - start_time))
         return json.dumps(ret)
     return "Post image! "
 
@@ -286,6 +276,14 @@ def voice():
     res['rawText'] = " ".join(spr.audiofile_rec(pcmfilename)['result'])
     print(time.time() - start_time)
     res['parsed'] = L.parserText(res['rawText'])
+    try:
+        adding = res['parsed'][0][0][0]
+    except:
+        adding = 'unknown'
+    if adding in ChineseMapping:
+        res['cat'] = ChineseMapping[adding]
+    else:
+        res['cat'] = 'unknown'
     return json.dumps(res)
 
 @app.route("/sklayout", methods=['POST', 'GET'])
@@ -294,6 +292,11 @@ def sklayout():
         return json.dumps(sceneSynthesis(request.json))
     if request.method == 'GET':
         return "Do not support using GET to using recommendation. "
+
+# @app.route("/layout1", methods=['POST', 'GET'])
+# def layout1():
+#     if request.method == 'POST':
+#         return json.dumps(fa_layout_pro(request.json))
 
 @app.route("/planit", methods=['POST'])
 def planit():
@@ -363,20 +366,37 @@ def generateObjectsUUIDs(sceneJson):
             obj['key'] = str(uuid.uuid4())
     return sceneJson
 
+def loadOnlineGroup(groupName):
+    if groupName not in onlineScenes:
+        # if the server has already saved the cached scenes:  
+        if os.path.exists(f'./examples/onlineScenes/{groupName}.json'):
+            try:
+                with open(f'./examples/onlineScenes/{groupName}.json') as f:
+                    onlineScenes[groupName] = json.load(f)
+            except:
+                with open('./assets/demo.json') as f:
+                    onlineScenes[groupName] = json.load(f)
+            onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName]) 
+            print('Returned the Cached Scene. ')
+        else:
+            with open('./assets/demo.json') as f:
+                onlineScenes[groupName] = json.load(f)
+            onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
+
+@app.route("/groupPreview/<groupName>", methods=['GET'])
+def groupPreview(groupName):
+    loadOnlineGroup(groupName)
+    origin = onlineScenes[groupName]['origin']
+    mapDir = f'./sceneviewer/results/{origin}/showPcamInset2.png'
+    if os.path.exists(mapDir):
+        return flask.send_file(mapDir)
+    else:
+        return flask.send_file(f'./dataset/alilevel_door2021_orth/{origin}.png')
+
 @app.route("/online/<groupName>", methods=['GET', 'POST'])
 def onlineMain(groupName):
     if request.method == 'POST':
-        if groupName not in onlineScenes:
-            # if the server has already saved the cached scenes:  
-            if os.path.exists(f'./examples/onlineScenes/{groupName}.json'):
-                with open(f'./examples/onlineScenes/{groupName}.json') as f:
-                    onlineScenes[groupName] = json.load(f)
-                onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName]) 
-                print('Returned the Cached Scene. ')
-            else:
-                with open('./assets/demo.json') as f:
-                    onlineScenes[groupName] = json.load(f)
-                onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
+        loadOnlineGroup(groupName)
         return json.dumps(onlineScenes[groupName])
     now = datetime.datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")

@@ -120,8 +120,8 @@ def toy_uploader():
     # os.remove(filename)
     return json.dumps(result)
 
-@app_audio.route('/audio_categoryObj/<catname>')
-def audio_categoryObj(catname):
+@app_audio.route('/audio_categoryObj', methods=['POST'])
+def audio_categoryObj():
     res = {}
-    res['modelId'] = random.choice(sk.objListCat[catname])
+    res['modelId'] = random.choice(sk.objListCat[request.data.decode("utf-8")])
     return json.dumps(res)

@@ -1,8 +1,30 @@
 const clickCatalogItem = function (e) {
+    e.preventDefault();
     scene.remove(scene.getObjectByName(INSERT_NAME));
     // avoid confictions between ordinary insertions and the auxiliary mode; 
-    if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
-    On_ADD = true;
+    if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;
+    if(e.type === 'contextmenu'){
+        On_MAGEADD = true;
+        let j = getDownloadSceneJson();
+        j['tarObj'] = $(e.target).attr("objectName");
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: "/mageAddSingle",
+            data: JSON.stringify(j),
+            success: function (data) {
+                if(mageAddSinglePrior !== undefined){
+                    mageAddSinglePrior.subTensor.dispose();
+                    mageAddSinglePrior.domTensor.dispose();
+                }
+                mageAddSinglePrior = JSON.parse(data);
+                mageAddSinglePrior.subTensor = tf.tensor(mageAddSinglePrior.subPrior);
+                mageAddSinglePrior.domTensor = tf.tensor(mageAddSinglePrior.domPrior);
+            }
+        });
+    }else{
+        On_ADD = true;
+    }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache($(e.target).attr("modelId")); 
     INSERT_OBJ = {
@@ -52,7 +74,8 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('modelId', item.name);
     iDiv.setAttribute('coarseSemantic', item.semantic);
     iDiv.setAttribute('semantic', item.semantic);
-    iDiv.addEventListener('click', clickCatalogItem)
+    iDiv.addEventListener('click', clickCatalogItem);
+    iDiv.addEventListener('contextmenu', clickCatalogItem);
     catalogItems.appendChild(iDiv);
 };
 
@@ -60,15 +83,18 @@ const clickSketchSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
-    var dataURL = drawingCanvas.toDataURL();
+    let dataURL = drawingCanvas.toDataURL();
     dataURL = dataURL.split(',')[1]
+    let keyword = $('#searchinput').val();
     $.ajax({
         type: "POST",
         url: "/sketch",
         data: {
-            imgBase64: dataURL
+            imgBase64: dataURL,
+            keyword: keyword
         }
     }).done(function (o) {
+        $('#searchinput').val(''); // remember to clear the input box each time; 
         searchResults = JSON.parse(o);
         searchResults.forEach(function (item) {
             newCatalogItem(item);

@@ -287,11 +287,16 @@ const detectCollisionWall = function(wallMeta, object){
             halfHeight, 
             wallMeta[(j+1)%(wallMeta.length)][1]
         );
-        let direction = end.sub(start); 
+        let direction = end.clone().sub(start); 
+        let wallLength = direction.length();
         direction.normalize();
         wallRayCaster.set(start, direction); 
-        var intersects = wallRayCaster.intersectObjects([object], true); 
-        if(intersects.length > 0) return true; 
+        let intersects = wallRayCaster.intersectObjects([object], true); 
+        if(intersects.length > 0) {
+            if(intersects[0].point.clone().sub(start).length() < wallLength){
+                return true; 
+            }
+        }
     }
     return false;
 }
@@ -612,29 +617,29 @@ var onClickObj = function (event) {
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
-        // console.log(`
-        // Current room ID: ${currentRoomId} of 
-        // room type ${manager.renderManager.scene_json.rooms[currentRoomId].roomTypes}`);
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     } else {
         currentRoomId = undefined;
     }
-    if (On_ADD) {
-        On_ADD = false;
-        /*if(scene.getObjectByName(INSERT_NAME)){
-            let obj = scene.getObjectByName(INSERT_NAME);
+    if(On_MAGEADD){
+        On_MAGEADD = false;
+        if(scene.getObjectByName(AUXILIARY_NAME)){
+            let obj = scene.getObjectByName(AUXILIARY_NAME);
             addObjectFromCache(
                 modelId=INSERT_OBJ.modelId,
                 transform={
                     'translate': [obj.position.x, obj.position.y, obj.position.z], 
-                    'rotate': [0,0,0],
-                    'scale': [1,1,1]
+                    'rotate': [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+                    'scale': [obj.scale.x, obj.scale.y, obj.scale.z]
                 }
             );
-            scene.remove(scene.getObjectByName(INSERT_NAME)); 
+            scene.remove(scene.getObjectByName(AUXILIARY_NAME)); 
             return; 
-        }*/
+        }
+    }
+    if (On_ADD) {
+        On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
@@ -718,8 +723,18 @@ function onDocumentMouseMove(event) {
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
-    intersects = raycaster.intersectObjects(instanceKeyCache, true);
-    if (instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined) {
+    intersects = raycaster.intersectObjects(
+        instanceKeyCache
+        .concat(Object.values(manager.renderManager.fCache))
+        .concat(Object.values(manager.renderManager.wCache)), 
+        true
+    );
+    if(intersects.length > 0){
+        $('#tab_X').text(intersects[0].point.x.toFixed(3));
+        $('#tab_Y').text(intersects[0].point.y.toFixed(3));
+        $('#tab_Z').text(intersects[0].point.z.toFixed(3));
+    }
+    if (instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(intersects[0].object.parent)) {
         outlinePass.selectedObjects = [intersects[0].object.parent];
     }else{
         outlinePass.selectedObjects = []
@@ -740,6 +755,12 @@ function onDocumentMouseMove(event) {
         }else{
             scene.remove(scene.getObjectByName(INSERT_NAME)); 
         }
+    }
+    if(On_MAGEADD && INSERT_OBJ.modelId in objectCache){
+        scene.remove(scene.getObjectByName(INSERT_NAME)); 
+        tf.engine().startScope();
+        mageAddSingle();
+        tf.engine().endScope();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {
         var rtt_pre = new THREE.Vector2();
@@ -866,6 +887,12 @@ const onRightClickObj = function(event){
     if(On_ADD){
         onAddOff();
         return; 
+    }
+    if(On_MAGEADD){
+        onAddOff();
+        auxiliary_remove();
+        On_MAGEADD = false;
+        return;
     }
 }
 
@@ -1144,6 +1171,7 @@ const setting_up = function () {
         document.getElementById("utils_button").blur();
     });
     window.addEventListener('resize', onWindowResize, false);
+    $(window).resize(onWindowResize);
     // scenecanvas.addEventListener('click', onClickObj);
     scenecanvas.addEventListener('touchend', onTouchObj);
     scenecanvas.addEventListener('wheel', onWheel);

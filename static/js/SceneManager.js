@@ -335,5 +335,6 @@ class SceneController {
         $('#tab_origin').text(json.origin);
         this.renderManager.refresh_scene(json, true); 
         _refresh_mageAdd_wall(json); 
+        genFloorPlanWallTensors();
     }
 }
