@@ -442,7 +442,7 @@ def onlineSceneUpdate(sceneJson, groupName):
 
 @socketio.on('onlineSceneUpdateUnity')
 def onlineSceneUpdateUnity(_json):
-    sceneJson = [json.loads(_json['sceneJson'])]
+    sceneJson = json.loads(_json['sceneJson'])
     groupName = _json['groupName']
     if groupName not in onlineScenes:
         emit('onlineSceneUpdate', {'error': "No Valid Group Is Found. "}, room=groupName) 
@@ -460,8 +460,11 @@ def sceneRefresh(sceneJson, groupName):
 @socketio.on('functionCallUnity')
 def functionCallUnity(theJson): 
     fname = theJson['fname']
-    arguments = [json.loads(theJson['arguments'])]
+    arguments = json.loads(theJson['arguments'])
     groupName = theJson['groupName']
+    if fname != 'animateObject3DOnly':
+        print(theJson['arguments'])
+        print(fname, arguments, groupName)
     if groupName not in onlineScenes:
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
@@ -471,6 +474,8 @@ def functionCallUnity(theJson):
 def functionCall(fname, arguments, groupName): 
 # def functionCall(fname, arguments): 
     # currently, we only allow a user exists in a single room; 
+    if fname != 'animateObject3DOnly':
+        print(fname, arguments, groupName)
     if groupName not in onlineScenes:
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
