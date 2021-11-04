@@ -209,6 +209,17 @@ def getobjCat(modelId):
     else:
         return "Unknown Category"
 
+with open('./dataset/objCatListLG.json') as f:
+    objCatListLG = json.load(f)
+def getObjCatsLG(modelId):
+    if modelId in objCatListLG:
+        if len(objCatListLG[modelId]) > 0:
+            return objCatListLG[modelId]
+        else:
+            return ["Unknown Category"]
+    else:
+        return ["Unknown Category"]
+
 def rotate_pos_prior(points, angle):
     result = points.clone()
     result[:, 0] = torch.cos(angle) * points[:, 0] + torch.sin(angle) * points[:, 2]

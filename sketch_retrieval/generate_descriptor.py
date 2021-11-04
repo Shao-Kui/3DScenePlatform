@@ -62,7 +62,7 @@ def sketch_search(filename, k=20, classname=None):
             pred = pred[0]
             res = []
             for i in pred:
-                if sk.getobjCat(model_names[i]) == classname:
+                if classname in sk.getObjCatsLG(model_names[i]):
                     res.append(model_names[i])
             if len(res) >= k:
                 break

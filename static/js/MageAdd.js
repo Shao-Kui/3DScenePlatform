@@ -577,6 +577,26 @@ const mageAddAuto = function(samples){
     }
 };
 
+const loadSingleObjectPrior = function(modelId){
+    let j = getDownloadSceneJson();
+    j['tarObj'] = modelId;
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/mageAddSingle",
+        data: JSON.stringify(j),
+        success: function (data) {
+            if(mageAddSinglePrior !== undefined){
+                mageAddSinglePrior.subTensor.dispose();
+                mageAddSinglePrior.domTensor.dispose();
+            }
+            mageAddSinglePrior = JSON.parse(data);
+            mageAddSinglePrior.subTensor = tf.tensor(mageAddSinglePrior.subPrior);
+            mageAddSinglePrior.domTensor = tf.tensor(mageAddSinglePrior.domPrior);
+        }
+    });
+}
+
 const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
     if(objectCache[objname] === undefined){
         return false;
@@ -585,34 +605,34 @@ const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1
     objectCache[objname].position.set(x, y, z);
     objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
     objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
-    // detecting collisions between the pending object and other objects: 
-    olist = Object.values(manager.renderManager.instanceKeyCache);
-    for(let i = 0; i < olist.length; i++){
-        let objmesh = olist[i];
-        if(detectCollisionGroups(objectCache[objname], objmesh)){
-            // console.log('Collision with an Object: ', objmesh); 
-            auxiliary_remove();
-            return false;
-        }
-    }
-    // detecting collisions between the pending objects and buffered door meshes; 
-    for(let i = 0; i < door_mageAdd_set.length; i++){
-        let doorMesh = door_mageAdd_set[i];
-        if(detectCollisionGroups(doorMesh, objectCache[objname])){
-            // console.log('Collision with a Windoor: ', doorMesh); 
-            auxiliary_remove();
-            return false;
-        }
-    }
-    // detecting collisions between the pending objects and the wall: 
-    for(let i = 0; i < manager.renderManager.scene_json.rooms.length; i++){
-        let wallMeta = manager.renderManager.scene_json.rooms[i].roomShape;
-        if(detectCollisionWall(wallMeta, objectCache[objname])){
-            // console.log('Collision with a Wall: ', wallMeta); 
-            auxiliary_remove();
-            return false; 
-        }
-    }
+    // // detecting collisions between the pending object and other objects: 
+    // olist = Object.values(manager.renderManager.instanceKeyCache);
+    // for(let i = 0; i < olist.length; i++){
+    //     let objmesh = olist[i];
+    //     if(detectCollisionGroups(objectCache[objname], objmesh)){
+    //         // console.log('Collision with an Object: ', objmesh); 
+    //         auxiliary_remove();
+    //         return false;
+    //     }
+    // }
+    // // detecting collisions between the pending objects and buffered door meshes; 
+    // for(let i = 0; i < door_mageAdd_set.length; i++){
+    //     let doorMesh = door_mageAdd_set[i];
+    //     if(detectCollisionGroups(doorMesh, objectCache[objname])){
+    //         // console.log('Collision with a Windoor: ', doorMesh); 
+    //         auxiliary_remove();
+    //         return false;
+    //     }
+    // }
+    // // detecting collisions between the pending objects and the wall: 
+    // for(let i = 0; i < manager.renderManager.scene_json.rooms.length; i++){
+    //     let wallMeta = manager.renderManager.scene_json.rooms[i].roomShape;
+    //     if(detectCollisionWall(wallMeta, objectCache[objname])){
+    //         // console.log('Collision with a Wall: ', wallMeta); 
+    //         auxiliary_remove();
+    //         return false; 
+    //     }
+    // }
     if(!scene.getObjectByName(AUXILIARY_NAME)){
         scene.add(objectCache[objname]);
     }
@@ -632,7 +652,6 @@ const mageAddSingleCG = function(theIntersect){
     let wallDistances = ftnw[1];
     wallIndex = ftnw[0][0];
     secWallIndex = ftnw[0][1];
-    // console.log(manager.roomStartAll[wallIndex], manager.roomEndAll[wallIndex]);
     let minDis = wallDistances.slice([wallIndex], [1]).arraySync();
     let secMinDis = wallDistances.slice([secWallIndex], [1]); // the distance w.r.t the second nearest wall; 
     let vecSub;
@@ -641,24 +660,20 @@ const mageAddSingleCG = function(theIntersect){
         vecSub = tf.abs(tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([2], [1])).sub(minDis)).reshape([-1]);
         secVecSub = tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([6], [1])).reshape([-1]); 
     }else{
-        realTimeSingleCache(INSERT_OBJ['modelId'], theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]);
-        return;
+        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]];
     }
     // filter out priors exceed the second nearest wall; 
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
     let index = tf.argMin(vecSub).arraySync();
     let threshold = 0.6; 
     if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
-        realTimeSingleCache(INSERT_OBJ['modelId'], theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]);
-        return;
+        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]];
     }
     let theprior = mageAddSinglePrior.domPrior[index];
-    realTimeSingleCache(INSERT_OBJ['modelId'], // object name
-        theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
-        manager.roomOrientAll[wallIndex] + theprior[1], // theta
-        [theprior[3], theprior[4], theprior[5]], // scale
-        'dom'
-    );
+    return [theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
+            manager.roomOrientAll[wallIndex] + theprior[1], // theta
+            [theprior[3], theprior[4], theprior[5]], // scale
+            'dom'];
 }
 /*
 This function is a special version of 'MageAdd', where we try adding a single object. 
@@ -671,8 +686,7 @@ const mageAddSingle = function(){
     intersects = raycaster.intersectObjects(intersectObjList, true);
     if (intersectObjList.length > 0 && intersects.length > 0) {
         if(mageAddSinglePrior === undefined){
-            realTimeSingleCache(INSERT_OBJ['modelId'], intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0]);
-            return;
+            return [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0]];
         }
         let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
         let vecSub;
@@ -680,8 +694,7 @@ const mageAddSingle = function(){
         if(mageAddSinglePrior.subTensor.shape[0] !== 0){
             vecSub = tf.transpose(tf.transpose(mageAddSinglePrior.subTensor).slice([0], [3])).sub(intersectPoint);
         }else{
-            mageAddSingleCG(intersects[0]);
-            return;
+            return mageAddSingleCG(intersects[0]);
         }
         // transform priors
         let eucNorm = tf.norm(vecSub, 'euclidean', 1);
@@ -691,8 +704,7 @@ const mageAddSingle = function(){
         let threshold = 0.6; 
         if(eucDis >= threshold){
             if(manager.renderManager.fCache.includes(intersects[0].object.parent)){
-                mageAddSingleCG(intersects[0]);
-                return;
+                return mageAddSingleCG(intersects[0]);
             }
         }
         let Y; 
@@ -701,10 +713,7 @@ const mageAddSingle = function(){
         }else{
             Y = intersects[0].point.y;
         }
-        realTimeSingleCache(
-            INSERT_OBJ['modelId'], 
-            intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-            mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${INSERT_OBJ['modelId']}`
-        );
+        return [intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
+                mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${INSERT_OBJ['modelId']}`];
     }
 }

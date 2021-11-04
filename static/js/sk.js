@@ -471,7 +471,6 @@ const synchronize_roomId = function (object) {
     rooms[newRoomId].objList.push(object.userData.json);
     let i = rooms[oriRoomId].objList.indexOf(object.userData.json);
     rooms[oriRoomId].objList.splice(i, 1);
-    console.log(newRoomId, oriRoomId);
 }
 
 var updateMousePosition = function () {
@@ -522,10 +521,10 @@ const onTouchObj = function (event) {
     raycaster.setFromCamera(pos, camera);
     var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
-        currentRoomId = intersects[0].object.parent.userData.json.roomId;
+        currentRoomId = intersects[0].object.parent.userData.roomId;
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
-    }else{
+    } else {
         currentRoomId = undefined;
     }
     if(On_ADD){
@@ -659,6 +658,12 @@ var onClickObj = function (event) {
         applyLayoutViewAdjust();
         return;
     }
+    if (On_MAGEMOVE) {
+        On_MAGEMOVE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
+        return;
+    }
     if (On_LIFT) {
         On_LIFT = false;
         synchronize_json_object(INTERSECT_OBJ);
@@ -723,7 +728,7 @@ function onDocumentMouseMove(event) {
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
-    intersects = raycaster.intersectObjects(
+    let intersects = raycaster.intersectObjects(
         instanceKeyCache
         .concat(Object.values(manager.renderManager.fCache))
         .concat(Object.values(manager.renderManager.wCache)), 
@@ -742,10 +747,7 @@ function onDocumentMouseMove(event) {
     // currentMovedTimeStamp = moment();
     if(On_ADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
-        let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
-        .concat(Object.values(manager.renderManager.wfCache));
-        intersects = raycaster.intersectObjects(intersectObjList, true);
-        if(intersectObjList.length > 0 && intersects.length > 0){
+        if(intersects.length > 0){
             let ip = intersects[0].point
             objectCache[INSERT_OBJ.modelId].name = INSERT_NAME;
             objectCache[INSERT_OBJ.modelId].position.set(ip.x, ip.y, ip.z);
@@ -759,7 +761,15 @@ function onDocumentMouseMove(event) {
     if(On_MAGEADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         tf.engine().startScope();
-        mageAddSingle();
+        realTimeSingleCache.apply(null, [INSERT_OBJ['modelId']].concat(mageAddSingle()))
+        tf.engine().endScope();
+    }
+    if(On_MAGEMOVE){
+        tf.engine().startScope();
+        let args = mageAddSingle();
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position'); 
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [INTERSECT_OBJ.rotation.x, args[3], INTERSECT_OBJ.rotation.z], 'rotation'); 
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, args[4], 'scale'); 
         tf.engine().endScope();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {

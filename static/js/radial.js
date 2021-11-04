@@ -28,6 +28,13 @@ var toggles = function () {
     isToggle = !isToggle;
 };
 
+const radial_mage_control = function(event){
+    loadSingleObjectPrior(INTERSECT_OBJ.userData.modelId);
+    On_MAGEMOVE = true;
+    transformControls.detach();
+    toggles();
+}
+
 var radial_move_control = function (event) {
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_MOVE = true;
@@ -94,5 +101,5 @@ var radial_initialization = function(){
     radial_scale_button.addEventListener('click', radial_scale_control);
 
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
-    radial_latentspace_button.addEventListener('click', manager.renderManager.latent_space_click);
+    radial_latentspace_button.addEventListener('click', radial_mage_control);
 };

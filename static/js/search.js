@@ -5,23 +5,7 @@ const clickCatalogItem = function (e) {
     if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;
     if(e.type === 'contextmenu'){
         On_MAGEADD = true;
-        let j = getDownloadSceneJson();
-        j['tarObj'] = $(e.target).attr("objectName");
-        $.ajax({
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            url: "/mageAddSingle",
-            data: JSON.stringify(j),
-            success: function (data) {
-                if(mageAddSinglePrior !== undefined){
-                    mageAddSinglePrior.subTensor.dispose();
-                    mageAddSinglePrior.domTensor.dispose();
-                }
-                mageAddSinglePrior = JSON.parse(data);
-                mageAddSinglePrior.subTensor = tf.tensor(mageAddSinglePrior.subPrior);
-                mageAddSinglePrior.domTensor = tf.tensor(mageAddSinglePrior.domPrior);
-            }
-        });
+        loadSingleObjectPrior($(e.target).attr("objectName"));
     }else{
         On_ADD = true;
     }
