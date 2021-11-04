@@ -214,7 +214,7 @@ This repo will also be continuously updated, with more functions, features and o
 * The navigation of mini-map (Bottom-Left) is defunct currently. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Tian-Xing Xu is involved for the format conversion of 3D-Front. 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang is involved for the Unity-based client for VR. Tian-Xing Xu is involved for the format conversion of 3D-Front. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. 
 
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
 
