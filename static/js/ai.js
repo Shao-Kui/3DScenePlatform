@@ -48,10 +48,31 @@ const paletteInit = function(){
     svg.call(zoom);
 }
 
+// const clickPaletteItem = function(e, d){
+//     e.preventDefault();
+//     console.log(e);
+//     scene.remove(scene.getObjectByName(INSERT_NAME));
+//     // avoid confictions between ordinary insertions and the auxiliary mode; 
+//     if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
+//     if(e.type === 'contextmenu'){
+//         On_MAGEADD = true;
+//         loadSingleObjectPrior(d.modelId);
+//     }else{
+//         On_ADD = true;
+//     }
+//     scenecanvas.style.cursor = "crosshair";
+//     loadObjectToCache(d.modelId); 
+//     INSERT_OBJ = {
+//         "modelId": d.modelId,
+//         "coarseSemantic": d.coarseSemantic, 
+//         "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
+//     };
+// }
+
 const paletteRender = function(elements){
     let svg = d3.select('#scenePaletteSVG');
     let width = svg.attr('width'), height = svg.attr('height');
-    let g = d3.select("#scenePaletteSVG g");
+    let g = d3.select("#scenePaletteSVG g").attr('id', 'scenePaletteGroup');
     const RADIUS = 40;
     g.selectAll('.mypattern').data(elements).join('pattern').attr('class', 'mypattern')
     .attr("id", d => `ls_${d.index}_img`).attr("width", 1).attr("height", 1).attr("patternUnits", 'objectBoundingBox')
@@ -61,20 +82,8 @@ const paletteRender = function(elements){
     .attr("width", RADIUS*2).attr("height", RADIUS*2);
     let circles = g.selectAll('circle').data(elements).join('circle').attr('r', RADIUS)
     .attr("fill", d => `url(#ls_${d.index}_img)`)
-    .on('click', function(_, d){
-        scene.remove(scene.getObjectByName(INSERT_NAME));
-        // avoid confictions between ordinary insertions and the auxiliary mode; 
-        if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;    
-        On_ADD = true;
-        scenecanvas.style.cursor = "crosshair";
-        console.log(d.modelId)
-        loadObjectToCache(d.modelId); 
-        INSERT_OBJ = {
-            "modelId": d.modelId,
-            "coarseSemantic": d.coarseSemantic, 
-            "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
-        };
-    });
+    .on('click', clickCatalogItem)
+    .on('contextmenu', clickCatalogItem);
     let links = [];
     for(let i = 1; i < elements.length; i++){
         let dis = Math.sqrt(Math.pow(elements[i].x-elements[0].x, 2) + Math.pow(elements[i].y-elements[0].y, 2));

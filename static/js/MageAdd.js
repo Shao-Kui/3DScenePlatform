@@ -593,6 +593,14 @@ const loadSingleObjectPrior = function(modelId){
             mageAddSinglePrior = JSON.parse(data);
             mageAddSinglePrior.subTensor = tf.tensor(mageAddSinglePrior.subPrior);
             mageAddSinglePrior.domTensor = tf.tensor(mageAddSinglePrior.domPrior);
+            // this may require a systematic optimization, since objList can be reduced to a single room;
+            mageAddSinglePrior.intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
+            .concat(Object.values(manager.renderManager.fCache));
+            if(INTERSECT_OBJ){
+                mageAddSinglePrior.intersectObjList = 
+                mageAddSinglePrior.intersectObjList.filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
+            }
+            mageAddSinglePrior.modelId = modelId;
         }
     });
 }
@@ -602,9 +610,27 @@ const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1
         return false;
     }
     objectCache[objname].name = AUXILIARY_NAME;
-    objectCache[objname].position.set(x, y, z);
-    objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
-    objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
+    gsap.to(objectCache[objname].position, {
+        duration: 0.2,
+        x: x,
+        y: y,
+        z: z
+    });
+    gsap.to(objectCache[objname].rotation, {
+        duration: 0.2,
+        x: 0,
+        y: theta,
+        z: 0
+    });
+    gsap.to(objectCache[objname].scale, {
+        duration: 0.2,
+        x: scale[0],
+        y: scale[1],
+        z: scale[2]
+    });
+    // objectCache[objname].position.set(x, y, z);
+    // objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
+    // objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
     // // detecting collisions between the pending object and other objects: 
     // olist = Object.values(manager.renderManager.instanceKeyCache);
     // for(let i = 0; i < olist.length; i++){
@@ -680,11 +706,8 @@ This function is a special version of 'MageAdd', where we try adding a single ob
 */
 var mageAddSinglePrior = undefined; 
 const mageAddSingle = function(){
-    // this may require a systematic optimization, since objList can be reduced to a single room;
-    let intersectObjList = Object.values(manager.renderManager.instanceKeyCache)
-    .concat(Object.values(manager.renderManager.fCache));
-    intersects = raycaster.intersectObjects(intersectObjList, true);
-    if (intersectObjList.length > 0 && intersects.length > 0) {
+    intersects = raycaster.intersectObjects(mageAddSinglePrior.intersectObjList, true);
+    if (mageAddSinglePrior.intersectObjList.length > 0 && intersects.length > 0) {
         if(mageAddSinglePrior === undefined){
             return [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0]];
         }
@@ -707,13 +730,13 @@ const mageAddSingle = function(){
                 return mageAddSingleCG(intersects[0]);
             }
         }
-        let Y; 
-        if(['Rug'].includes(INSERT_OBJ.coarseSemantic)){
-            Y = 0; 
-        }else{
-            Y = intersects[0].point.y;
-        }
+        let Y = intersects[0].point.y; 
+        // if(['Rug'].includes(INSERT_OBJ.coarseSemantic)){
+        //     Y = 0; 
+        // }else{
+        //     Y = intersects[0].point.y;
+        // }
         return [intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-                mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${INSERT_OBJ['modelId']}`];
+                mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${mageAddSinglePrior.modelId}`];
     }
 }

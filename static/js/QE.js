@@ -162,7 +162,8 @@ const onKeyDown = function(event){
     if(event.keyCode === 90 && ctrlPressing){
         if(commandStack.length > 0){
             let cmd = commandStack.pop();
-            cmd.func.apply(null, cmd.args);
+            onlineFuncList[cmd.funcName].apply(null, cmd.args);
+            emitFunctionCall(cmd.funcName, cmd.args);
         }
     }
 };

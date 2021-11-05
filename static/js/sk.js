@@ -113,7 +113,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
     commandStack.push({
-        'func': removeObjectByUUID,
+        'funcName': 'removeObjectByUUID',
         'args': [uuid, true]
     });
     /*if(!(modelId in objectCache)){
@@ -156,7 +156,9 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     scene.add(object3d)
     renderer.render(scene, camera);
     if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}*/
-    let object3d = addObjectByUUID(uuid, modelId, transform, origin);
+    let roomID = calculateRoomID(transform.translate)
+    let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
+    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     return object3d; 
 };
 
@@ -376,6 +378,7 @@ const synchronizeObjectJsonByObject3D = function(object3d){
         manager.renderManager.scene_json.rooms[objectjson.roomId].objList = 
         manager.renderManager.scene_json.rooms[objectjson.roomId].objList.filter( item => item !== null && item !== undefined );
         objectjson.roomId = newRoomId;
+        object3d.userData.roomId = newRoomId;
         object3d.roomId = newRoomId;
     }
 }
@@ -384,44 +387,41 @@ const tCache = [];
 var fastTimeLine = gsap.timeline({repeat: 0});
 var lastMovedTimeStamp = moment();
 var currentMovedTimeStamp = moment();
-const transformObject3DOnly = function(uuid, xyz, mode='position'){
+const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false){
     currentMovedTimeStamp = moment();
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
-    object3d[mode].x = xyz[0]; object3d[mode].y = xyz[1]; object3d[mode].z = xyz[2]; 
-    // fastTimeLine.to(object3d[mode], {
-    //     // duration: moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
-    //     duration: 0.005,
-    //     x: xyz[0],
-    //     y: xyz[1],
-    //     z: xyz[2]
-    // });
+    if(smooth){
+        gsap.to(object3d[mode], {
+            duration: 0.2,
+            x: xyz[0],
+            y: xyz[1],
+            z: xyz[2]
+        });
+    }else{
+        object3d[mode].x = xyz[0]; object3d[mode].y = xyz[1]; object3d[mode].z = xyz[2]; 
+    }
     tCache.push({
         'uuid': uuid, 
         'xyz': xyz, 
         'duration': moment.duration(currentMovedTimeStamp.diff(lastMovedTimeStamp)).asSeconds(),
-        'mode': mode
+        'mode': mode,
+        'smooth': smooth
     }); 
     // if(tCache.length >= 100) emitAnimationObject3DOnly(); 
     lastMovedTimeStamp = currentMovedTimeStamp; 
 };
 
-var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
-const animateObject3DOnly = function(transformations){
-    onlineAnimationTimeLine.kill()
-    onlineAnimationTimeLine = gsap.timeline({repeat: 0});
-    for(let i = 0; i < transformations.length; i++){
-        let t = transformations[i];
-        let object3d = manager.renderManager.instanceKeyCache[t.uuid]; 
-        onlineAnimationTimeLine.to(object3d[t.mode], {
-            duration: t.duration,
-            x: t.xyz[0],
-            y: t.xyz[1],
-            z: t.xyz[2]
-        });
-    }
-}
-
 const synchronize_json_object = function (object) {
+    console.log("hi");
+    let inst = object.userData.json;
+    commandStack.push({
+        'funcName': 'transformObjectByUUID',
+        'args': [object.userData.key, {
+            'translate': [...inst.translate],
+            'scale': [...inst.scale],
+            'rotate': [...inst.rotate]
+        }, object.userData.roomId]
+    });
     synchronize_roomId(object);
     if(fastTimeLine.isActive()){
         fastTimeLine.seek(fastTimeLine.endTime());
@@ -429,15 +429,6 @@ const synchronize_json_object = function (object) {
     }
     fastTimeLine = gsap.timeline({repeat: 0}); 
     tCache.length = 0; 
-    let inst = object.userData.json;
-    commandStack.push({
-        'func': transformObjectByUUID,
-        'args': [object.userData.key, {
-            'translate': [...inst.translate],
-            'scale': [...inst.scale],
-            'rotate': [...inst.rotate]
-        }, true]
-    });
     inst.scale[0] = object.scale.x;
     inst.scale[1] = object.scale.y;
     inst.scale[2] = object.scale.z;
@@ -458,7 +449,7 @@ const synchronize_json_object = function (object) {
             'scale': inst.scale,
             'rotate': inst.rotate
         };
-        emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, false]);
+        emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, object.userData.roomId]);
     }
 };
 
@@ -761,15 +752,22 @@ function onDocumentMouseMove(event) {
     if(On_MAGEADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         tf.engine().startScope();
-        realTimeSingleCache.apply(null, [INSERT_OBJ['modelId']].concat(mageAddSingle()))
+        let args = mageAddSingle();
+        if(args !== undefined){
+            realTimeSingleCache.apply(null, [INSERT_OBJ['modelId']].concat(args));
+        }
+        
         tf.engine().endScope();
     }
     if(On_MAGEMOVE){
         tf.engine().startScope();
         let args = mageAddSingle();
-        transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position'); 
-        transformObject3DOnly(INTERSECT_OBJ.userData.key, [INTERSECT_OBJ.rotation.x, args[3], INTERSECT_OBJ.rotation.z], 'rotation'); 
-        transformObject3DOnly(INTERSECT_OBJ.userData.key, args[4], 'scale'); 
+        if(args !== undefined){
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position', true); 
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, args[3], 0], 'rotation', true); 
+            transformObject3DOnly(INTERSECT_OBJ.userData.key, args[4], 'scale', true); 
+        }
+        
         tf.engine().endScope();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {
@@ -860,16 +858,16 @@ const render_function = function(){
 
 const removeIntersectObject = function(){
     commandStack.push({
-        'func': addObjectByUUID,
+        'funcName': 'addObjectByUUID',
         'args': [
             INTERSECT_OBJ.userData.key, 
             INTERSECT_OBJ.userData.json.modelId, 
+            INTERSECT_OBJ.userData.json.roomId,
             {
                 'translate': [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 
                 'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z], 
                 'scale': [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z]
-            }, 
-            true
+            }
         ]
     });
     datguiObjectFolderRemove(INTERSECT_OBJ); 

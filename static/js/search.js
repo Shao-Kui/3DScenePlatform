@@ -1,21 +1,30 @@
-const clickCatalogItem = function (e) {
+const clickCatalogItem = function (e, d=undefined) {
     e.preventDefault();
+    if(d3.select(e.path[0].parentElement).attr('id') === 'scenePaletteGroup'){
+        INSERT_OBJ = {
+            "modelId": d.modelId,
+            "coarseSemantic": d.coarseSemantic, 
+            "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
+        };
+    }else{
+        INSERT_OBJ = {
+            "modelId": $(e.target).attr("objectName"),
+            "coarseSemantic": $(e.target).attr("coarseSemantic"), 
+            "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
+        };
+    }
     scene.remove(scene.getObjectByName(INSERT_NAME));
     // avoid confictions between ordinary insertions and the auxiliary mode; 
     if(!manager.renderManager.scene_json || AUXILIARY_MODE) return;
     if(e.type === 'contextmenu'){
         On_MAGEADD = true;
-        loadSingleObjectPrior($(e.target).attr("objectName"));
+        loadSingleObjectPrior(INSERT_OBJ.modelId);
     }else{
         On_ADD = true;
     }
     scenecanvas.style.cursor = "crosshair";
-    loadObjectToCache($(e.target).attr("modelId")); 
-    INSERT_OBJ = {
-        "modelId": $(e.target).attr("objectName"),
-        "coarseSemantic": $(e.target).attr("coarseSemantic"), 
-        "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
-    };
+    loadObjectToCache(INSERT_OBJ.modelId); 
+    
 }
 
 const clickTextureItem = function(e){

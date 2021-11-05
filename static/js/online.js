@@ -36,7 +36,7 @@ const socketInit = function(){
     socket.on("functionCall", (fname, arguments) => {
         let args = [], i = 0;
         while(arguments[i] !== undefined){args.push(arguments[i]); i++; }          
-        // console.log(fname, args);      
+        if(fname !== 'animateObject3DOnly'){console.log(fname, args);}    
         onlineFuncList[fname].apply(null, args);
     });
     socket.on("message", (arg) => {
@@ -98,7 +98,7 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
 
 const emitAnimationObject3DOnly = function(){
     if(tCache.length === 0) return; 
-    if(origin && onlineGroup !== 'OFFLINE'){
+    if(onlineGroup !== 'OFFLINE'){
         socket.emit('functionCall', 'animateObject3DOnly', [tCache], onlineGroup);
     }
     tCache.length = 0; 
@@ -110,19 +110,41 @@ const refreshRoomByID = function(roomId, objList, origin=true){
     if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('refreshRoomByID', [roomId, objList, false]);}
 }
 
-const transformObjectByUUID = function(uuid, transform, origin=true){
+var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+const animateObject3DOnly = function(transformations){
+    onlineAnimationTimeLine.kill()
+    onlineAnimationTimeLine = gsap.timeline({repeat: 0});
+    for(let i = 0; i < transformations.length; i++){
+        let t = transformations[i];
+        let object3d = manager.renderManager.instanceKeyCache[t.uuid]; 
+        if(t['smooth']){
+            gsap.to(object3d[t.mode], {
+                duration: 0.2,
+                x: t.xyz[0],
+                y: t.xyz[1],
+                z: t.xyz[2]
+            });
+        }else{
+            onlineAnimationTimeLine.to(object3d[t.mode], {
+                duration: t.duration,
+                x: t.xyz[0],
+                y: t.xyz[1],
+                z: t.xyz[2]
+            });
+        }
+        
+    }
+}
+
+const transformObjectByUUID = function(uuid, transform, roomID){
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
-    // set object3d first: 
-    console.log(transform);
     object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
     object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
     object3d.rotation.set(transform.rotate[0], transform.rotate[1], transform.rotate[2]);
     synchronizeObjectJsonByObject3D(object3d);
     // the core code for calculating orientations of objects; 
     if(AUXILIARY_MODE){auxiliaryMode();}
-    if(origin && onlineGroup !== 'OFFLINE'){
-        emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);
-    }
+    // if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('transformObjectByUUID', [uuid, transform, false]);}
 };
 
 const removeObjectByUUID = function(uuid, origin=true){
@@ -139,13 +161,13 @@ const removeObjectByUUID = function(uuid, origin=true){
     }
 }
 
-const addObjectByUUID = function(uuid, modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, origin=true){
+const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}){
     if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, transform, origin]);
+        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform]);
         return; 
     }
     // check room ID: 
-    let roomID = calculateRoomID(transform.translate); 
+    // if(!roomID){roomID = calculateRoomID(transform.translate);}
     let objToInsert = {
         "modelId": modelId,
         "coarseSemantic": gatheringObjCat[modelId], 
@@ -176,7 +198,7 @@ const addObjectByUUID = function(uuid, modelId, transform={'translate': [0,0,0],
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
     scene.add(object3d)
-    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectByUUID', [uuid, modelId, transform, false]);}
+    // if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);}
     return object3d;
 }
 
