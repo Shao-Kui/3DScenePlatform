@@ -412,7 +412,7 @@ const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false)
 };
 
 const synchronize_json_object = function (object) {
-    console.log("hi");
+    object.rotation.y = object.rotation.y % (Math.PI * 2);
     let inst = object.userData.json;
     commandStack.push({
         'funcName': 'transformObjectByUUID',
@@ -762,12 +762,18 @@ function onDocumentMouseMove(event) {
     if(On_MAGEMOVE){
         tf.engine().startScope();
         let args = mageAddSingle();
-        if(args !== undefined){
-            transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position', true); 
-            transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, args[3], 0], 'rotation', true); 
-            transformObject3DOnly(INTERSECT_OBJ.userData.key, args[4], 'scale', true); 
+        if(args != undefined){
+            args[3] = INTERSECT_OBJ.rotation.y - smallestSignedAngleBetween(INTERSECT_OBJ.rotation.y, args[3]);
+            if(args !== undefined){
+                transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position', true); 
+                if(args[5]){
+                    transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, args[3], 0], 'rotation', true); 
+                    if(args[5] === 'dom'){
+                        transformObject3DOnly(INTERSECT_OBJ.userData.key, args[4], 'scale', true);
+                    }
+                }
+            }
         }
-        
         tf.engine().endScope();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {

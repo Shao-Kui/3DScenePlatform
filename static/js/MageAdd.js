@@ -580,16 +580,15 @@ const mageAddAuto = function(samples){
 const loadSingleObjectPrior = function(modelId){
     let j = getDownloadSceneJson();
     j['tarObj'] = modelId;
+    mageAddSinglePrior.enabled = false;
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
         url: "/mageAddSingle",
         data: JSON.stringify(j),
         success: function (data) {
-            if(mageAddSinglePrior !== undefined){
-                mageAddSinglePrior.subTensor.dispose();
-                mageAddSinglePrior.domTensor.dispose();
-            }
+            mageAddSinglePrior.subTensor.dispose();
+            mageAddSinglePrior.domTensor.dispose();
             mageAddSinglePrior = JSON.parse(data);
             mageAddSinglePrior.subTensor = tf.tensor(mageAddSinglePrior.subPrior);
             mageAddSinglePrior.domTensor = tf.tensor(mageAddSinglePrior.domPrior);
@@ -601,14 +600,23 @@ const loadSingleObjectPrior = function(modelId){
                 mageAddSinglePrior.intersectObjList.filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
             }
             mageAddSinglePrior.modelId = modelId;
+            mageAddSinglePrior.enabled = true;
         }
     });
 }
 
-const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=""){
+const smallestSignedAngleBetween = function(x, y){
+    let a = (x-y+Math.PI) % (Math.PI * 2) - Math.PI;
+    let b = (y-x+Math.PI) % (Math.PI * 2) - Math.PI;
+    return Math.abs(a) < Math.abs(b) ? a : b;
+}
+
+const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1.0], mageAddDerive=false){
     if(objectCache[objname] === undefined){
         return false;
     }
+    let r = objectCache[objname].rotation.y;
+    theta = r - smallestSignedAngleBetween(r, theta);
     objectCache[objname].name = AUXILIARY_NAME;
     gsap.to(objectCache[objname].position, {
         duration: 0.2,
@@ -616,18 +624,23 @@ const realTimeSingleCache = function(objname, x, y, z, theta, scale=[1.0, 1.0, 1
         y: y,
         z: z
     });
-    gsap.to(objectCache[objname].rotation, {
-        duration: 0.2,
-        x: 0,
-        y: theta,
-        z: 0
-    });
-    gsap.to(objectCache[objname].scale, {
-        duration: 0.2,
-        x: scale[0],
-        y: scale[1],
-        z: scale[2]
-    });
+    if(mageAddDerive){
+        gsap.to(objectCache[objname].rotation, {
+            duration: 0.2,
+            x: 0,
+            y: theta,
+            z: 0
+        });
+        if(mageAddDerive === 'dom'){
+            gsap.to(objectCache[objname].scale, {
+                duration: 0.2,
+                x: scale[0],
+                y: scale[1],
+                z: scale[2]
+            });
+        }
+    }
+    
     // objectCache[objname].position.set(x, y, z);
     // objectCache[objname].rotation.set(0, theta, 0, 'XYZ');
     // objectCache[objname].scale.set(scale[0], scale[1], scale[2]);
@@ -686,14 +699,14 @@ const mageAddSingleCG = function(theIntersect){
         vecSub = tf.abs(tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([2], [1])).sub(minDis)).reshape([-1]);
         secVecSub = tf.transpose(tf.transpose(mageAddSinglePrior.domTensor).slice([6], [1])).reshape([-1]); 
     }else{
-        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]];
+        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0], false];
     }
     // filter out priors exceed the second nearest wall; 
     vecSub = vecSub.where(secVecSub.less(secMinDis), Infinity); 
     let index = tf.argMin(vecSub).arraySync();
     let threshold = 0.6; 
     if(vecSub.slice([index], [1]).arraySync()[0] >= threshold){
-        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0]];
+        return [theIntersect.point.x, theIntersect.point.y, theIntersect.point.z, 0, [1.0, 1.0, 1.0], false];
     }
     let theprior = mageAddSinglePrior.domPrior[index];
     return [theIntersect.point.x, 0, theIntersect.point.z, // x, y, z
@@ -704,13 +717,17 @@ const mageAddSingleCG = function(theIntersect){
 /*
 This function is a special version of 'MageAdd', where we try adding a single object. 
 */
-var mageAddSinglePrior = undefined; 
+var mageAddSinglePrior = {
+    subTensor: tf.tensor([]),
+    domTensor: tf.tensor([]),
+    enabled: false
+}; 
 const mageAddSingle = function(){
+    if(!mageAddSinglePrior.enabled){
+        return [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0], false];
+    }
     intersects = raycaster.intersectObjects(mageAddSinglePrior.intersectObjList, true);
     if (mageAddSinglePrior.intersectObjList.length > 0 && intersects.length > 0) {
-        if(mageAddSinglePrior === undefined){
-            return [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, [1.0, 1.0, 1.0]];
-        }
         let intersectPoint = tf.tensor([intersects[0].point.x, intersects[0].point.y, intersects[0].point.z]);
         let vecSub;
         // if auxiliaryPiror.tensor.shape[0] equals to 0, then no context exists; 
@@ -737,6 +754,6 @@ const mageAddSingle = function(){
         //     Y = intersects[0].point.y;
         // }
         return [intersects[0].point.x, Y, intersects[0].point.z, theprior[3], [1.0, 1.0, 1.0], 
-                mageAddDerive=`${mageAddSinglePrior.belonging[index]}-${mageAddSinglePrior.modelId}`];
+                `${mageAddSinglePrior.belonging[index]}-${mageAddSinglePrior.modelId}`];
     }
 }
