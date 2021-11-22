@@ -92,6 +92,12 @@ let refreshObjectFromCache = function(objToInsert){
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     // add reference from object3d to objectjson: 
     object3d.userData.json = objToInsert;
+    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp'].includes(object3d.userData.coarseSemantic)){
+        let light = new THREE.PointLight( 0xffffff, 5, 100 );
+        light.name = SEMANTIC_POINTLIGHT;
+        light.position.set(0,0,0);
+        object3d.add(light);
+    }
     scene.add(object3d)
     renderer.render(scene, camera);
     return object3d; 
@@ -612,6 +618,7 @@ var onClickObj = function (event) {
     } else {
         currentRoomId = undefined;
     }
+    mageAddSinglePrior.enabled = false;
     if(On_MAGEADD){
         On_MAGEADD = false;
         if(scene.getObjectByName(AUXILIARY_NAME)){
@@ -651,6 +658,13 @@ var onClickObj = function (event) {
     }
     if (On_MAGEMOVE) {
         On_MAGEMOVE = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        applyLayoutViewAdjust();
+        return;
+    }
+    if (On_CGSeries) {
+        On_CGSeries = false;
+        CGSERIES_GROUP.clear();
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         return;
@@ -736,6 +750,7 @@ function onDocumentMouseMove(event) {
         outlinePass.selectedObjects = []
     }  
     // currentMovedTimeStamp = moment();
+    tf.engine().startScope();
     if(On_ADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         if(intersects.length > 0){
@@ -751,16 +766,12 @@ function onDocumentMouseMove(event) {
     }
     if(On_MAGEADD && INSERT_OBJ.modelId in objectCache){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
-        tf.engine().startScope();
         let args = mageAddSingle();
         if(args !== undefined){
             realTimeSingleCache.apply(null, [INSERT_OBJ['modelId']].concat(args));
         }
-        
-        tf.engine().endScope();
     }
     if(On_MAGEMOVE){
-        tf.engine().startScope();
         let args = mageAddSingle();
         if(args != undefined){
             args[3] = INTERSECT_OBJ.rotation.y - smallestSignedAngleBetween(INTERSECT_OBJ.rotation.y, args[3]);
@@ -774,7 +785,9 @@ function onDocumentMouseMove(event) {
                 }
             }
         }
-        tf.engine().endScope();
+    }
+    if(On_CGSeries){
+        moveCGSeries();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {
         var rtt_pre = new THREE.Vector2();
@@ -819,10 +832,9 @@ function onDocumentMouseMove(event) {
         ], 'scale'); 
     }
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
-        tf.engine().startScope();
         auxiliaryMove();
-        tf.engine().endScope();
-    }   
+    }
+    tf.engine().endScope();
     updateMousePosition();
 };
 
@@ -1165,7 +1177,9 @@ const setting_up = function () {
                     let light = new THREE.PointLight( 0xffffff, 5, 100 );
                     light.name = SEMANTIC_POINTLIGHT;
                     light.position.set(0,0,0);
-                    light.castShadow = true;
+                    // light.castShadow = true;
+                    // light.shadow.mapSize.width = 16; // default
+                    // light.shadow.mapSize.height = 16; // default
                     object3d.add(light);
                 }
             });
@@ -1205,6 +1219,7 @@ const setting_up = function () {
     for (let i = 0; i < rapidSearches.length; i++) {
         rapidSearches[i].addEventListener('click', rapidSFunc, false);
     }
+    scene.add(CGSERIES_GROUP);
     onWindowResize();
     gameLoop();
 };

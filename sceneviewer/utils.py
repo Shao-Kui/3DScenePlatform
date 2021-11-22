@@ -1,54 +1,10 @@
 import numpy as np
 import sk
-from scipy.spatial.transform import Rotation as R
 from shapely.geometry.polygon import LineString, Point
 from sk import ASPECT
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 from scipy.interpolate import splprep,splev
-
-def preloadAABBs(scene):
-    if 'PerspectiveCamera' not in scene:
-        scene['PerspectiveCamera'] = {}
-        scene['PerspectiveCamera']['fov'] = sk.DEFAULT_FOV
-    if 'canvas' not in scene:
-        scene['canvas'] = {}
-    for room in scene['rooms']:
-        for obj in room['objList']:
-            if sk.objectInDataset(obj['modelId']):
-                AABB = sk.load_AABB(obj['modelId'])
-                if 'coarseSemantic' not in obj:
-                    obj['coarseSemantic'] = sk.getobjCat(obj['modelId'])
-            else:
-                if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
-                    AABB = obj['bbox']
-                else:
-                    continue
-            eightPoints = np.array([
-                [AABB['max'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['min'][2]],
-            ])
-            scale = np.array(obj['scale'])
-            rX = R.from_euler('x', obj['rotate'][0], degrees=False).as_matrix()
-            rY = R.from_euler('y', obj['rotate'][1], degrees=False).as_matrix()
-            rZ = R.from_euler('z', obj['rotate'][2], degrees=False).as_matrix()
-            rotate = rZ @ rY @ rX
-            translate = np.array(obj['translate'])
-            center = (np.array(AABB['max']) + np.array(AABB['min'])) / 2
-            center = rotate @ (center * scale) + translate
-            eightPoints = eightPoints * scale
-            eightPoints = rotate @ eightPoints.T
-            eightPoints = eightPoints.T + translate
-            obj['AABB'] = {
-                'eightPoints': eightPoints,
-                'center': center
-            }
 
 def findTheFrontFarestCorner(probe, floorMeta, floorPoly, pd):
     MAXLEN = -1

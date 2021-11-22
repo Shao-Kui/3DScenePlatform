@@ -452,3 +452,11 @@ def mageAddAuto():
     room_meta = room_meta[:, 0:2]
     samples = random_points_within(Polygon(room_meta), 500)
     return json.dumps(samples)
+
+@app_magic.route("/coherent_group_series", methods=['POST'])
+def coherent_group_series():
+    if not os.path.exists(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json'):
+        return json.dumps({})
+    with open(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json') as f:
+        cgseries = json.load(f)
+    return json.dumps(random.choice(cgseries))

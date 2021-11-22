@@ -757,3 +757,149 @@ const mageAddSingle = function(){
                 `${mageAddSinglePrior.belonging[index]}-${mageAddSinglePrior.modelId}`];
     }
 }
+
+var cgseries = {
+    anchorDises: tf.tensor([]),
+    depthDises: tf.tensor([]),
+    leftDises: tf.tensor([]),
+    rightDises: tf.tensor([]),
+    areas: tf.tensor([]),
+    configs: [],
+    enabled: false
+}
+
+const loadCGSeries = function(modelId){
+    let j = {
+        'domID': modelId
+    };
+    cgseries.enabled = false;
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/coherent_group_series",
+        data: JSON.stringify(j),
+        success: function (data) {
+            let newcgseries = JSON.parse(data);
+            if(!('configs' in newcgseries)){
+                cgseries.enabled = false;
+                On_CGSeries = false;
+                return
+            }
+            cgseries.anchorDises.dispose();
+            cgseries.depthDises.dispose();
+            cgseries.leftDises.dispose();
+            cgseries.rightDises.dispose();
+            cgseries.areas.dispose();  
+            cgseries = newcgseries;      
+            cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
+            cgseries.depthDises = tf.tensor(cgseries.depthDises);
+            cgseries.leftDises = tf.tensor(cgseries.leftDises);
+            cgseries.rightDises = tf.tensor(cgseries.rightDises);
+            cgseries.areas = tf.tensor(cgseries.areas);
+            // this may require a systematic optimization, since objList can be reduced to a single room;
+            cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
+            cgseries.object3ds = [];
+            CGSERIES_GROUP.clear();
+            CGSERIES_GROUP.scale.set(INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z);
+            cgseries.involvedObjects.forEach(o => {
+                loadObjectToCache(o, (modelId) => {
+                    let object3d = objectCache[modelId].clone();
+                    object3d.children.forEach(child => {
+                        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+                    });
+                    cgseries.object3ds.push(object3d);
+                    object3d.onUsed = false;
+                }, [o]);
+            });
+            cgseries.enabled = true;
+        }
+    });
+}
+
+const moveCGSeries = function(){
+    if(!cgseries.enabled){
+        return;
+    }
+    let intersects = raycaster.intersectObjects(cgseries.intersectObjList, true);
+    if(cgseries.intersectObjList.length > 0 && intersects.length > 0) {
+        let i = intersects[0];
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [i.point.x, i.point.y, i.point.z], 'position', true);
+        gsap.to(CGSERIES_GROUP.position, {duration: commonSmoothDuration, x: i.point.x, y: i.point.y, z: i.point.z});
+        let roomShape = tf.tensor(manager.renderManager.scene_json.rooms[i.object.parent.userData.roomId].roomShape);
+        let rsArray = manager.renderManager.scene_json.rooms[i.object.parent.userData.roomId].roomShape;
+        let roomOrient = manager.renderManager.scene_json.rooms[i.object.parent.userData.roomId].roomOrient;
+        let ftnw = findTheNearestWall(i, roomShape); 
+        let wallDistances = ftnw[1];
+        let wallIndex = ftnw[0][0];    
+        // This should be a weighted sum of energies. 
+        // Currently, we consider only areas. 
+        let scores = cgseries.areas; 
+        // left & right: 
+        let leftIndex = (wallIndex + 1) % rsArray.length;
+        let rightIndex = (wallIndex + rsArray.length - 1) % rsArray.length;
+        // depth: 
+        let _dli = (leftIndex + 1) % rsArray.length;
+        let _dri = (rightIndex  + rsArray.length - 1) % rsArray.length;
+        let vecAnchor =  new THREE.Vector2(rsArray[leftIndex][0], rsArray[leftIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
+        let vecLeft =  new THREE.Vector2(rsArray[_dli][0], rsArray[_dli][1]).sub(new THREE.Vector2(rsArray[leftIndex][0], rsArray[leftIndex][1]));
+        let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
+        let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
+        // filter out priors exceed the depth & left & right: 
+        console.log(wallIndex, depthIndex, leftIndex, rightIndex);
+        let constraints = cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1]))
+        .logicalAnd(cgseries.depthDises.less(wallDistances.slice([depthIndex], [1]))) 
+        .logicalAnd(cgseries.leftDises.less(wallDistances.slice([leftIndex], [1]))) 
+        .logicalAnd(cgseries.rightDises.less(wallDistances.slice([rightIndex], [1])));
+        scores = scores.where(constraints, -1); 
+        cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1])).print();
+        scores.print();
+        let index = tf.argMax(scores).arraySync();
+        if(scores.slice([index], [1]).arraySync()[0] < 0){
+            CGSERIES_GROUP.clear();
+            return;
+        }
+        let theprior = cgseries.configs[index];
+        let domOrient = theprior['anchorOri'] + roomOrient[wallIndex];
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, domOrient, 0], 'rotation', true); 
+        gsap.to(CGSERIES_GROUP.rotation, {duration: commonSmoothDuration, y: domOrient});
+        cgseries.object3ds.forEach(c => {c.onUsed = false;});
+        theprior.subPriors.forEach(p => {
+            // find a correspongding object w.r.t p: 
+            let corresObj;
+            p.allocated = false;
+            for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
+                if(CGSERIES_GROUP.children[i].onUsed || CGSERIES_GROUP.children[i].userData.modelId !== p.sub){
+                    continue
+                }
+                CGSERIES_GROUP.children[i].onUsed = true;
+                corresObj = CGSERIES_GROUP.children[i];
+                p.allocated = true;
+                break;
+            }
+            if(!p.allocated){
+            for(let i = 0; i < cgseries.object3ds.length; i++){
+                if(cgseries.object3ds[i].onUsed || cgseries.object3ds[i].userData.modelId !== p.sub){
+                    continue
+                }
+                cgseries.object3ds[i].onUsed = true;
+                corresObj = cgseries.object3ds[i];
+                CGSERIES_GROUP.add(corresObj);
+                p.allocated = true;
+                break;
+            }
+            }
+            if(p.allocated){
+                gsap.to(corresObj.position, {duration: commonSmoothDuration, x: p.translate[0], y: p.translate[1], z: p.translate[2]});
+                gsap.to(corresObj.rotation, {duration: commonSmoothDuration, y: p.orient});
+                gsap.to(corresObj.scale, {duration: commonSmoothDuration, x: p.scale[0], y: p.scale[1], z: p.scale[2]});
+            }
+            
+        });
+        for(let i = 0; i < cgseries.object3ds.length; i++){
+            // console.log(cgseries.object3ds[i].position, cgseries.object3ds[i].rotation);
+            if(!cgseries.object3ds[i].onUsed){
+                CGSERIES_GROUP.remove(cgseries.object3ds[i]);
+            }
+        }
+    }
+}

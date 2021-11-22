@@ -61,6 +61,7 @@
       var On_ADD = false;
       var On_MAGEADD = false;
       var On_MAGEMOVE = false;
+      var On_CGSeries = false;
       var On_SCALE = false;
       var On_xSCALE = false;
       var On_ySCALE = false;
@@ -75,6 +76,10 @@
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
+      const CGSERIES_TEMPGROUPNAME = "cgseries_temp_group";
+      const CGSERIES_GROUP = new THREE.Group();
+      CGSERIES_GROUP.name = CGSERIES_TEMPGROUPNAME;
+      const commonSmoothDuration = 0.2;
       var INTERSECT_OBJ;
       var INSERT_OBJ;
 
@@ -109,8 +114,6 @@
       var renderTime = 0.6;
       var axis;
 
-      var latent_space_mode;
-
       var stats;
       var datgui;
       var datgui_intersectfolder;
@@ -121,7 +124,6 @@
       const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
 
       $(document).ready(function () {
-        latent_space_mode = false;
         manager = new SceneController($("#ui")[0]);
         renderer = manager.renderManager.renderer;
         camera = manager.renderManager.camera;
