@@ -13,11 +13,12 @@ import os
 import networkx as nx
 from sceneviewer.constraints import theLawOfTheThird,layoutConstraint,numSeenObjs,isObjCovered,isProbeOutside
 from sceneviewer.constraints import tarWindoorArea2021,wallNormalOffset,isObjHalfCovered,secondNearestWallDis
-from sceneviewer.utils import preloadAABBs,findTheFrontFarestCorner,isObjectInSight
+from sceneviewer.utils import findTheFrontFarestCorner,isObjectInSight
 from sceneviewer.utils import isWindowOnWall,calWindoorArea,expandWallSeg,redundancyRemove
 from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget,hamiltonSmooth
 from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
 import shutil
+import random
 
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
     res_ratio_dom = json.load(f)
@@ -500,7 +501,7 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
 
 def autoViewRooms(scenejson, isPathTrancing=True):
     pt.SAVECONFIG = False
-    preloadAABBs(scenejson)
+    sk.preloadAABBs(scenejson)
     renderThreads = []
     for room in scenejson['rooms']:
         # we do not generating views in an empty room. 
@@ -777,14 +778,16 @@ def sceneViewerBatch():
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[701:800]
+    sjfilenames = sjfilenames[1000:1100]
     for sjfilename in sjfilenames:
         with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
             scenejson = json.load(f)
+        if os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
+            continue
         scenejson["PerspectiveCamera"] = {}
         scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
         scenejson["canvas"] = {}
-        preloadAABBs(scenejson)
+        sk.preloadAABBs(scenejson)
         print(f'Starting: {scenejson["origin"]}...')
         print(sjfilenames.index(sjfilename))
         renderThreads = autoViewRooms(scenejson)
@@ -793,7 +796,7 @@ def sceneViewerBatch():
 
 def autoViewRoom(room, scenejson):
     pt.SAVECONFIG = False
-    preloadAABBs(scenejson)
+    sk.preloadAABBs(scenejson)
     renderThreads = []
     pcams = autoViewOnePointPerspective(room, scenejson)
     for pcam in pcams:
@@ -828,109 +831,38 @@ if __name__ == "__main__":
     # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
     # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
-    # with open('./dataset/alilevel_door2021/1310949e-14c4-40fb-a410-e9973be8f50a.json') as f:
-    #    test_file = json.load(f)
-    #    preloadAABBs(test_file)
-    # autoViewRoom(test_file['rooms'][6], test_file)    
-    # autoViewRoom(test_file['rooms'][4], test_file)
-    # autoViewRoom(test_file['rooms'][5], test_file)
-    # autoViewRoom(test_file['rooms'][7], test_file)
-    # autoViewRoom(test_file['rooms'][3], test_file)
-
-    # sceneViewerBatch()
-
-    _batchList = [
-        '028448cc-806f-4f6f-81aa-68d5824f6c02',
-        '0338bdd5-e321-467e-a998-38f2218e2fdd',
-        '03ff3349-3ab0-45fd-ae99-53da3334cb69',
-        '03a73289-5269-42b1-af4b-f30056c97c64',
-        '04940635-c251-4356-968e-3b8d9fe93a4c',
-        "03b2259c-c24b-44a9-b055-2fe85137419a",
-        '0486afe9-e7ec-40d9-91e0-09513a96a80e',
-        '02a9b734-993c-496c-99e4-6458e35f9178',
-        "05d05b98-e95c-4671-935d-7af6a1468d07",
-        "071527d1-4cb5-47a9-abd0-b1d83bd3e286",
-        '1337c3b5-e8e8-4e2f-b7d5-f3aafdfd6f7b',
-        '12d084a8-6632-472a-af65-32e7109e5783',
-        '13da455c-9e07-43b2-9e3f-d6d04953ed73',
-        '13df5493-ce89-4506-b44e-79cf4cd70dcf',
-        '129008ef-715d-468c-afc5-ffe677749a7b',
-
-        '07199256-1340-4456-b395-51df1728a340',
-        '0734ff41-9567-4c61-9fe3-3fc4a1a4c859',
-        '07f02d16-a025-4bc4-a45d-5f487c545f49',
-        '080c76df-0abc-48e8-a165-8c2889728cdb',
-        '080f4008-d8fa-4c36-973e-43d105fba378',
-        '08892fe9-7514-4c4a-a518-ca0839ad6e0b',
-        '09da55e8-7969-4f80-bbbf-1b4450339558',
-        '0a048a26-4b3f-4d28-a92f-f81feacaec27',
-        '0b600c41-0c8e-42da-bd16-364f3775fc08',
-        '0a625f72-80fe-47aa-a5bd-4d41b98f2477',
-        '0c2cf150-5293-43d7-acbf-8c1b0a67070a',
-        '0c2871b9-8c04-4a17-b750-98ed1d3481f9',
-        '0c282c9e-45e5-4b9c-9f8b-dd03260f66f6',
-        '0c1558c3-0dbb-4bab-ac73-a60059bf29b6',
-        '0c0bfec0-4f44-496f-92f9-4c6c4822693c',
-        '0c026d68-32ff-40ba-8468-68c53fe83579',
-        '0bfc766b-76b6-483e-affa-1502e50d9245',
-        '0bf1e074-c12a-4299-9348-a7625db13fef',
-        '0bedeb9c-a14f-4b8f-9278-c113f396cd29',
-        '0be73303-6270-482d-be06-528c07da02fb',
-        '0bd6a397-9660-4769-bc08-84047dbd5b52',
-        '0bd6628a-d04c-4fd6-9dbb-78d983b590ad',
-        '0bd1cdea-366c-47b6-a65d-ee7ccde0aaa9',
-        '0bb97953-5e24-4874-a799-c78d1374c3f9',
-        '0bb42fe5-5bca-4154-b721-d9eb8370b947',
-        '0bae68bc-b465-4f11-9d52-ebf5b44b0100',
-        '0b9e6ebf-18b8-453f-8457-0b62adab1827',
-        '0b923d1a-d8af-497b-8482-acb8103a4eae',
-        '0b49b9ac-af46-4e0a-b60e-5f1cb0db54b1',
-        '0b324ba6-32f3-4ea8-b3d7-710bf86014dc',
-        '0b1bec4e-9607-499c-8a34-b78f114d6314',
-        '0b105b2a-e368-40ef-90a3-a4c422b915b4',
-        '0adfb786-3070-498b-a0a4-ed7b9b050931',
-        '0ad9d615-74b1-4537-8144-aa459ada39b6',
-        '0ad01ed9-1cf8-4cad-8cae-b7cca6ddaf11',
-        '0abea0c8-3398-4d26-b03d-9fb1fc9708a4',
-        '0abe65fc-108e-4f9b-a8ff-29758234b9ec',
-        '0aad3aa3-ec12-49a0-b7cf-548d42b0b12b',
-        '0aa05d5a-81d5-497b-832c-c90c3fe73a36',
-        '0a6cbc7a-613a-41c8-a52e-5b8491f898ce',
-        '0a625f72-80fe-47aa-a5bd-4d41b98f2477',
-        '0d2ade9f-c238-47b4-8b02-c0f2324e76be',
-        '0e75222c-2d88-401b-8f36-1510d06f6675',
-        '0d4aac61-f561-426e-9091-0a4a6625fcb5',
-        '0df95e6f-4f59-4f45-b883-2d9ac6a3dbad',
-        '0de4695f-4f6a-4b52-9a79-0a9685dc9880',
-        '0dce14f8-0700-474a-8ac4-d65fe9a2263d',
-        '0d7ded41-b1f0-4696-b8d4-4a97933d269c',
-        '1161ca83-eb14-4f54-9db7-979743710223',
-        '1406ae68-1301-4668-9e2b-eddd896d5842',
-        '13cdb804-7a94-4708-b89d-03f699fccf5c',
-        '1378067e-c594-41c1-995d-8f62cb257d45',
-        '13ca007f-c55b-489a-9f28-f3e5baffe5c9',
-        '1344f85d-7268-4d3a-b84a-a7cfb8c9e441'
-    ]
 
     batchList = [
-        'highres',
-        '1310949e-14c4-40fb-a410-e9973be8f50a',
-        '13c929aa-1a8b-47c0-9f34-273b45378dd0'
+        
     ]
 
     for origin in batchList:
         try:
-            # highResRendering(origin)
+            highResRendering(origin)
             pass
         except Exception as e:
             print(e)
 
     # for origin in os.listdir('./sceneviewer/results'):
-    #     shutil.copy(f'./sceneviewer/results/{origin}/showPcamInset2.png', f'C:/Users/ljm/Desktop/untitled3/supp2/{origin}.png')
+    #     if os.path.exists(f'./sceneviewer/results/{origin}/showPcamInset2.png'):
+    #         shutil.copy(f'./sceneviewer/results/{origin}/showPcamInset2.png', f'C:/Users/ljm/Desktop/untitled3/supp3/{origin}.png')
     # insetBatch(os.listdir('./sceneviewer/results'))
     # insetBatch(['03ff3349-3ab0-45fd-ae99-53da3334cb69'])
     # hamiltonBatch(batchList)
-    renderLabelledImages()
+    # renderLabelledImages()
+
+    # with open('./dataset/alilevel_door2021/162d9b31-fe63-48d6-8053-cff7527ab5e0.json') as f:
+    #    test_file = json.load(f)
+    #    sk.preloadAABBs(test_file)
+    # autoViewRoom(test_file['rooms'][2], test_file)    
+    # with open('./dataset/alilevel_door2021/162d9b31-fe63-48d6-8053-cff7527ab5e0.json') as f:
+    #    test_file = json.load(f)
+    #    sk.preloadAABBs(test_file)
+    # autoViewRoom(test_file['rooms'][2], test_file)
+    # autoViewRoom(test_file['rooms'][4], test_file)
+
+    # sceneViewerBatch()
+
     print("\r\n --- %s seconds --- \r\n" % (time.time() - start_time))
 
 @app_autoView.route("/bestviewroom/<roomId>", methods=['POST'])
@@ -941,7 +873,7 @@ def bestviewroom(roomId):
         except:
             return None
         pt.SAVECONFIG = False
-        preloadAABBs(flask.request.json)
+        sk.preloadAABBs(flask.request.json)
         pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json)
         return json.dumps(pcams[0], default=sk.jsonDumpsDefault)
 
@@ -953,7 +885,7 @@ def autoviewroom(roomId):
         except:
             return None
         pt.SAVECONFIG = False
-        preloadAABBs(flask.request.json)
+        sk.preloadAABBs(flask.request.json)
         pcams = autoViewOnePointPerspective(flask.request.json['rooms'][roomId], flask.request.json, scoreFunc=probabilityOPP2)
         """
         index = -1
@@ -1000,37 +932,49 @@ def autoviewroom(roomId):
 def autoviewByID():
     ret = []
     origin = flask.request.args.get('origin', default = "", type = str)
-    if not os.path.exists(f'./latentspace/autoview/{origin}'):
-        return []
-    filenames = os.listdir(f'./latentspace/autoview/{origin}')
+    dir1 = f'./sceneviewer/results/{origin}'
+    dir2 = f'./latentspace/autoview/{origin}'
+    if os.path.exists(dir1):
+        filenames = os.listdir(dir1)
+    else:
+        if not os.path.exists(dir2):
+            return []
+        else:
+            filenames = os.listdir(dir2)
     for filename in filenames:
         if '.json' not in filename:
             continue
-        with open(f'./latentspace/autoview/{origin}/{filename}') as f:
+        with open(f'{dir1}/{filename}') as f:
             pcam = json.load(f)
+        if 'identifier' not in pcam:
+            continue
         pcam['img'] = pcam['identifier'] + '.png'
         ret.append(pcam)
     return json.dumps(ret)
 
+allExistingResultsDir = os.listdir('./sceneviewer/results')
 @app_autoView.route('/autoviewMapping')
 def autoviewMapping():
-    imgnames = os.listdir('./sceneviewer/mapping')
     ret = []
-    for imgname in imgnames[0:5]:
-        if '.png' not in imgname:
+    selected = random.sample(allExistingResultsDir, 5) + ['03a73289-5269-42b1-af4b-f30056c97c64']
+    for origin in selected:
+        if not os.path.exists(f'./sceneviewer/results/{origin}/showPcamInset2.png'):
             continue
         t = {}
-        t['img'] = imgname
-        t['identifier'] = imgname.split('.')[0]
+        t['img'] = origin + '.png'
+        t['identifier'] = origin
         ret.append(t)
     return json.dumps(ret)
 
 @app_autoView.route("/autoviewimgs/<origin>/<identifier>")
 def autoviewimgs(origin, identifier):
     if origin == 'mapping':
-        return flask.send_from_directory(f'./sceneviewer/mapping', identifier + '.png')
+        return flask.send_file(f'./sceneviewer/results/{identifier}/showPcamInset2.png')
     else:
-        return flask.send_from_directory(f'./latentspace/autoview/{origin}', identifier + '.png')
+        if os.path.exists(f'./sceneviewer/results/{origin}/{identifier}.png'):
+            return flask.send_file(f'./sceneviewer/results/{origin}/{identifier}.png')
+        else:
+            return flask.send_file(f'./latentspace/autoview/{origin}/{identifier}.png')
 
 @app_autoView.route("/autoViewPath")
 def autoViewPath():

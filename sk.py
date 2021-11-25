@@ -61,6 +61,42 @@ def load_AABB(i):
     AABBcache[i] = AABB
     return AABBcache[i]
 
+def preloadAABB(obj):
+    if objectInDataset(obj['modelId']):
+        AABB = load_AABB(obj['modelId'])
+        if 'coarseSemantic' not in obj:
+            obj['coarseSemantic'] = getobjCat(obj['modelId'])
+    else:
+        if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
+            AABB = obj['bbox']
+        else:
+            return
+    eightPoints = np.array([
+        [AABB['max'][0], AABB['min'][1], AABB['max'][2]],
+        [AABB['min'][0], AABB['min'][1], AABB['max'][2]],
+        [AABB['min'][0], AABB['min'][1], AABB['min'][2]],
+        [AABB['max'][0], AABB['min'][1], AABB['min'][2]],
+        [AABB['max'][0], AABB['max'][1], AABB['max'][2]],
+        [AABB['min'][0], AABB['max'][1], AABB['max'][2]],
+        [AABB['min'][0], AABB['max'][1], AABB['min'][2]],
+        [AABB['max'][0], AABB['max'][1], AABB['min'][2]],
+    ])
+    scale = np.array(obj['scale'])
+    rX = R.from_euler('x', obj['rotate'][0], degrees=False).as_matrix()
+    rY = R.from_euler('y', obj['rotate'][1], degrees=False).as_matrix()
+    rZ = R.from_euler('z', obj['rotate'][2], degrees=False).as_matrix()
+    rotate = rZ @ rY @ rX
+    translate = np.array(obj['translate'])
+    center = (np.array(AABB['max']) + np.array(AABB['min'])) / 2
+    center = rotate @ (center * scale) + translate
+    eightPoints = eightPoints * scale
+    eightPoints = rotate @ eightPoints.T
+    eightPoints = eightPoints.T + translate
+    obj['AABB'] = {
+        'eightPoints': eightPoints,
+        'center': center
+    }
+
 def preloadAABBs(scene):
     if 'PerspectiveCamera' not in scene:
         scene['PerspectiveCamera'] = {}
@@ -69,40 +105,7 @@ def preloadAABBs(scene):
         scene['canvas'] = {}
     for room in scene['rooms']:
         for obj in room['objList']:
-            if objectInDataset(obj['modelId']):
-                AABB = load_AABB(obj['modelId'])
-                if 'coarseSemantic' not in obj:
-                    obj['coarseSemantic'] = getobjCat(obj['modelId'])
-            else:
-                if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
-                    AABB = obj['bbox']
-                else:
-                    continue
-            eightPoints = np.array([
-                [AABB['max'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['min'][2]],
-            ])
-            scale = np.array(obj['scale'])
-            rX = R.from_euler('x', obj['rotate'][0], degrees=False).as_matrix()
-            rY = R.from_euler('y', obj['rotate'][1], degrees=False).as_matrix()
-            rZ = R.from_euler('z', obj['rotate'][2], degrees=False).as_matrix()
-            rotate = rZ @ rY @ rX
-            translate = np.array(obj['translate'])
-            center = (np.array(AABB['max']) + np.array(AABB['min'])) / 2
-            center = rotate @ (center * scale) + translate
-            eightPoints = eightPoints * scale
-            eightPoints = rotate @ eightPoints.T
-            eightPoints = eightPoints.T + translate
-            obj['AABB'] = {
-                'eightPoints': eightPoints,
-                'center': center
-            }
+            preloadAABB(obj)
 
 def getWallHeight(meshPath):
     mesh = as_mesh(trimesh.load(meshPath))
@@ -306,24 +309,56 @@ def findNearestWalls(shape, p, isOrient=True):
     return _indicesList, distances, orients
 
 def extractGroup(objList, dom, modelIDs):
-    allObjs = [dom] + modelIDs
-    bbs = np.zeros(shape=(0,3))
     subs = []
-    res = {
-        'subPriors': [],
-        'objects': []
-    }
+    subPriors = []
     for obj in objList:
         if 'modelId' not in obj:
-            continue
-        if obj['modelId'] not in allObjs:
             continue
         if obj['modelId'] == dom:
             domObj = obj
         if obj['modelId'] in modelIDs:
             subs.append(obj)
-            res['objects'].append(obj['modelId'])
+    # sub-objects: 
+    for obj in subs:
+        # the relative transtormation should be sth like an identical matrix. 
+        relativeTranslate = np.array(obj['translate']) - np.array(domObj['translate'])
+        relativeTranslate = R.from_euler('y', -domObj['orient'], degrees=False).as_matrix() @ relativeTranslate # rotate this translation; 
+        relativeTranslate = relativeTranslate / np.array(domObj['scale'])
+        relativeScale = np.array(obj['scale']) / np.array(domObj['scale'])
+        relativeOrient = np.array(obj['orient']) - np.array(domObj['orient'])
+        subPriors.append({
+            'sub': obj['modelId'],
+            'translate': relativeTranslate.tolist(),
+            'orient': relativeOrient.tolist(),
+            'scale': relativeScale.tolist()
+        })
+    return [
+        generateGroup(subPriors, dom, [1,1,1]), 
+        generateGroup(subPriors, dom, [-1,1,1]), 
+        generateGroup(subPriors, dom, [-1,1,-1]), 
+        generateGroup(subPriors, dom, [1,1,-1])
+    ]
+
+def generateGroup(subPriors, domModelId, domScale=[1,1,1]):
+    res = {
+        'subPriors': subPriors.copy(),
+        'objects': [],
+        'domScale': domScale
+    }
+    bbs = np.zeros(shape=(0,3))
+    domObj = {'translate': [0,0,0], 'rotate': [0,0,0], 'orient': 0, 'scale': domScale, 'modelId': domModelId}
+    preloadAABB(domObj)
+    bbs = np.vstack((bbs, domObj['AABB']['eightPoints']))
+    for subPrior in subPriors:
+        obj = {
+            'translate': (np.array(subPrior['translate']) * np.array(domScale)).tolist(),
+            'rotate': [0,subPrior['orient'],0],
+            'scale': (np.array(subPrior['scale']) * np.array(domScale)).tolist(),
+            'modelId': subPrior['sub']
+        }
+        preloadAABB(obj)
         bbs = np.vstack((bbs, obj['AABB']['eightPoints']))
+        res['objects'].append(obj['modelId'])
     ma = np.max(bbs, axis=0)
     mi = np.min(bbs, axis=0)
     gbb = np.array([[ma[0], ma[2]], [mi[0], ma[2]], [mi[0], mi[2]], [ma[0], mi[2]]])
@@ -336,22 +371,9 @@ def extractGroup(objList, dom, modelIDs):
     res['depthDis'] = distances[(indicesList[0]+2)%4]
     res['leftDis'] = distances[(indicesList[0]+1)%4]
     res['rightDis'] = distances[(indicesList[0]+3)%4]
-    # area:
+    # constraints: area & #objects & ... :
     res['area'] = (ma[0] - mi[0]) * (ma[2] - mi[2])
-    # sub-objects: 
-    for obj in subs:
-        # the relative transtormation should be sth like an identical matrix. 
-        relativeTranslate = np.array(obj['translate']) - np.array(domObj['translate'])
-        relativeTranslate = R.from_euler('y', -domObj['orient'], degrees=False).as_matrix() @ relativeTranslate # rotate this translation; 
-        relativeTranslate = relativeTranslate / np.array(domObj['scale'])
-        relativeScale = np.array(obj['scale']) / np.array(domObj['scale'])
-        relativeOrient = np.array(obj['orient']) - np.array(domObj['orient'])
-        res['subPriors'].append({
-            'sub': obj['modelId'],
-            'translate': relativeTranslate.tolist(),
-            'orient': relativeOrient.tolist(),
-            'scale': relativeScale.tolist()
-        })
+    res['objNum'] = len(res['objects'])
     return res
 
 def getObjectsUpperLimit(l, k):
@@ -373,6 +395,7 @@ if __name__ == "__main__":
         'leftDises': [],
         'rightDises': [],
         'areas': [],
+        'objNums': [],
         'configs': [],
         'involvedObjects': [],
         'enabled': False
@@ -383,12 +406,13 @@ if __name__ == "__main__":
         with open(f'./layoutmethods/exp1/{filename}') as f:
             scenejson = json.load(f)
         preloadAABBs(scenejson)
-        results['configs'].append(extractGroup(scenejson['rooms'][0]['objList'], '7644', ['3699', '7836', '2740', '2565']))
+        results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], '7644', ['3699', '7836', '2740', '2565'])
     for config in results['configs']:
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
         results['leftDises'].append(config['leftDis'])
         results['rightDises'].append(config['rightDis'])
+        results['objNums'].append(config['objNum'])
         results['areas'].append(config['area'])
         results['involvedObjects'] = getObjectsUpperLimit(results['involvedObjects'], config['objects'])
     if not os.path.exists(f'./layoutmethods/cgseries/{results["domID"]}/'):
