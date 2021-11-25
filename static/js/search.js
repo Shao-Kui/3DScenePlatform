@@ -99,7 +99,8 @@ const clickTextSearchButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
-    var search_url = "/query2nd?kw=" + document.getElementById("searchinput").value;
+    var search_url = "/query2nd?kw=" + document.getElementById("searchinput").value
+    + `&num=${20}`;
     $.getJSON(search_url, function (data) {
         searchResults = data;
         searchResults.forEach(function (item) {
@@ -198,21 +199,31 @@ const clickAutoViewItem = function(e){
     viewTransform(pcam);
 }
 
+const sceneViewerMethod = function(ret){
+    ret.forEach(function (item) {
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.src = `/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier}`;
+        image.onload = function(){
+            iDiv.style.width = '120px';
+            iDiv.style.height = `${120 / (image.width / image.height)}px`;
+        };
+        iDiv.className = "catalogItem";
+        iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier})`;
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.addEventListener('click', clickAutoViewItem);
+        catalogItems.appendChild(iDiv);
+        $(iDiv).data('pcam', item);
+    });
+}
+
 const clickAutoViewButton = function () {
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
     let search_url = "/autoviewByID?origin=" + manager.renderManager.scene_json.origin;
     $.getJSON(search_url, function (data) {
-        searchResults = data;
-        searchResults.forEach(function (item) {
-            let iDiv = document.createElement('div');
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.img})`;
-            iDiv.addEventListener('click', clickAutoViewItem)
-            catalogItems.appendChild(iDiv);
-            $(iDiv).data('pcam', item);
-        });
+        sceneViewerMethod(data);
     });
 };
 
@@ -296,27 +307,16 @@ const clickAutoViewPath = function(){
 }
 
 const mappingHover = function(e){
-    const F = 0.65;
     let meta = $(e.target).data("meta");
     let image = floorPlanMapping.get(meta.identifier);
-    let mappingDisplay = document.getElementById('mappingDisplay');
-    let w, h;
-    // make the image being displayed inside the window. 
-    if($(window).height() >= $(window).width()){
-        w = $(window).width() * F;
-        h = w / (image.width / image.height);
-    }else{
-        h = $(window).height() * F;
-        w = h / (image.height / image.width)
-    }
-    image.style.height = `${h}px`;
-    image.style.width = `${w}px`;
-    mappingDisplay.style.height = `${h}px`;
-    mappingDisplay.style.width = `${w}px`;
-    mappingDisplay.style.top = `${($(window).height()-h)/2}px`;
-    mappingDisplay.style.left = `${($(window).width()-w)/2}px`;
-    mappingDisplay.appendChild(image);
-    mappingDisplay.style.display = 'inline-block';
+    let wh = getMappingWidthHeight(image);
+    let w = wh[0], h = wh[1];
+    $(`#grids-${meta.identifier}`).css('height', `${h}px`);
+    $(`#grids-${meta.identifier}`).css('width', `${w}px`);
+    $(`#grids-${meta.identifier} .cell`).css('height', `${h/nrs}px`);
+    $(`#grids-${meta.identifier} .cell`).css('width', `${w/ncs}px`);
+    $(`#grids-${meta.identifier}`).css('top', `${($(window).height()-h)/2}px`);
+    $(`#grids-${meta.identifier}`).css('left', `${($(window).width()-w)/2}px`);
 }
 
 const mappingLeave = function(e){
@@ -396,7 +396,7 @@ const clickAutoViewMapping = function(){
             iDiv.style.backgroundImage = `url(/autoviewimgs/mapping/${item.identifier})`;
             iDiv.style.backgroundSize = '100% 100%';
             iDiv.style.visibility = 'visible';
-            // iDiv.addEventListener('mouseover', mappingHover);
+            iDiv.addEventListener('mouseover', mappingHover);
             // iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
             iDiv.classList.add('tiler');
@@ -440,8 +440,8 @@ const clear_panel = function(){
 
 const searchPanelInitialization = function(){
     $("#searchbtn").click(clickTextSearchButton);
-    // $("#autoView").click(clickAutoViewButton);
-    $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
+    $("#autoView").click(clickAutoViewButton);
+    // $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
     $("#floorPlanbtn").click(() => {
@@ -469,28 +469,4 @@ const searchPanelInitialization = function(){
             });
         });
     })
-    /*
-    $("#rec_button").click(function () {
-        clear_panel();
-        Auto_Rec_Mode = true;
-        document.getElementById("rec_container").style.display = "block";
-        document.getElementById("rec_button").style.backgroundColor = '#9400D3';
-    });
-    $("#colla_button").click(function () {
-        clear_panel();
-        document.getElementById("drawing-canvas").style.display = "block";
-        document.getElementById("record_panel").style.display = "block";
-        document.getElementById("sketchsearchdiv").style.display = "flex";
-    });
-    $("#text_button").click(function () {
-        clear_panel();
-        document.getElementById("searchinput").style.display = "inline-block";
-        document.getElementById("searchbtn").style.display = "inline-block";
-    });
-    $("#sketch_button").click(function () {
-        clear_panel();
-        document.getElementById("drawing-canvas").style.display = "block";
-        document.getElementById("sketchsearchdiv").style.display = "flex";
-        document.getElementById("sketchsearchbtn").style.display = "block";
-    });*/
 }

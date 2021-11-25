@@ -51,21 +51,7 @@ const socketInit = function(){
         while (catalogItems.firstChild) {
             catalogItems.firstChild.remove();
         }
-        ret.forEach(function (item) {
-            let iDiv = document.createElement('div');
-            let image = new Image();
-            image.src = `/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier}`;
-            image.onload = function(){
-                iDiv.style.width = '120px';
-                iDiv.style.height = `${120 / (image.width / image.height)}px`;
-            };
-            iDiv.className = "catalogItem";
-            iDiv.style.backgroundImage = `url(/autoviewimgs/${manager.renderManager.scene_json.origin}/${item.identifier})`;
-            iDiv.style.backgroundSize = '100% 100%';
-            iDiv.addEventListener('click', clickAutoViewItem);
-            catalogItems.appendChild(iDiv);
-            $(iDiv).data('pcam', item);
-        });
+        sceneViewerMethod(ret);
     })
 }
 
