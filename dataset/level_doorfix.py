@@ -82,6 +82,26 @@ def areDoorsInRoom(level):
                     room['objList'].append(new_obj)
     return level_doorfix
 
+def refineRoomMeta(roomMeta):
+    J = None
+    for i in range(len(roomMeta)):
+        j = (i + 1) % len(roomMeta)
+        k = (j + 1) % len(roomMeta)
+        vec1 = roomMeta[i,0:2] - roomMeta[j,0:2]
+        vec2 = roomMeta[j,0:2] - roomMeta[k,0:2]
+        res = vec1.dot(vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+        if res > 0.95: # continuos wall detected
+            roomMeta[i, 2:4] = (roomMeta[i, 2:4] + roomMeta[j, 2:4])/2
+            J = j
+            break
+    if J is None:
+        return roomMeta
+    newRoomMeta = []
+    for i in range(len(roomMeta)):
+        if i != J:
+            newRoomMeta.append(roomMeta[i])
+    return refineRoomMeta(np.array(newRoomMeta))
+
 def areDoorsInRoom2021(level):
     level_doorfix = level.copy()
     for room in level_doorfix['rooms']:
@@ -98,6 +118,9 @@ def areDoorsInRoom2021(level):
             continue
         try:
             room_meta = p2d('.', 'room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+            # print('before', room_meta)
+            room_meta = refineRoomMeta(room_meta)
+            # print('after', room_meta)
             room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
             room['roomShape'] = room_meta[:, 0:2].tolist()
             room['roomNorm'] = room_meta[:, 2:4].tolist()
