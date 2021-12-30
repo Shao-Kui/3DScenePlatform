@@ -214,17 +214,16 @@ This repo will also be continuously updated, with more functions, features and o
 * The navigation of mini-map (Bottom-Left) is defunct currently. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai](shz@tsinghua.edu.cn) and Yuan Liang. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang is involved for the Unity-based client for VR. Tian-Xing Xu is involved for the format conversion of 3D-Front. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn) and Yuan Liang. Wei-Yu Xie is involved for voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang is involved for the Unity-based client for VR. Tian-Xing Xu is involved for the format conversion of 3D-Front. Xiang-Li Li is involved for sketch searching, refining datasets and dataset converting. 
 
-Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and [Song-Hai Zhang][songhai]. We also appreciate Kai Wang for the experiment. 
+Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
 
-The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], [Song-Hai Zhang][songhai]. 
+The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], Song-Hai Zhang. 
 # Copyright
 This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT security guaranteed if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
 
 [3dfront]:https://pages.tmall.com/wow/cab/tianchi/promotion/alibaba-3d-scene-dataset
 [threejsweb]:https://threejs.org/
-[songhai]:http://www.cs.tsinghua.edu.cn/publish/cs/4616/2013/20130424084609737896705/20130424084609737896705_.html
 [shaokui]:https://shao-kui.github.io/
 [GNUGPL3]:http://www.gnu.org/licenses/gpl-3.0.html
 [cvm2021]:http://iccvm.org/2021/
