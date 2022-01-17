@@ -81,6 +81,7 @@
       CGSERIES_GROUP.name = CGSERIES_TEMPGROUPNAME;
       const commonSmoothDuration = 0.2;
       var INTERSECT_OBJ;
+      var INTERSECT_WALL;
       var INSERT_OBJ;
 
       //Global variables, will be initialize only once.
@@ -333,6 +334,14 @@
                   </button>
               </div>
             </div>
+            
+            <div class="input-group input-group-lg py-2 px-3">
+              <input type="text" class="form-control" id="Username" placeholder="Username" aria-label="Username">
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="button" id="usercommitbtn">Commit</button>
+              </div>
+            </div>
+            
             <div class="input-group input-group-lg py-2 px-3">
               <input
                 class="form-control"
@@ -382,6 +391,8 @@
             <a class="text-muted" style="overflow-wrap: break-word"
               >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
             >
+          </div>
+          <div id="heatmap">
           </div>
         </div>
       </div>
