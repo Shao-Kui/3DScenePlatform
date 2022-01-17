@@ -335,12 +335,14 @@
               </div>
             </div>
             
-            <div class="input-group input-group-lg py-2 px-3">
-              <input type="text" class="form-control" id="Username" placeholder="Username" aria-label="Username">
-              <div class="input-group-append">
-                <button class="btn btn-outline-primary" type="button" id="usercommitbtn">Commit</button>
+            <form onsubmit="return false">
+              <div class="input-group input-group-lg py-2 px-3">
+                <input type="text" class="form-control" id="username" placeholder="Username" aria-label="Username" required>
+                <div class="input-group-append">
+                  <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">Commit</button>
+                </div>
               </div>
-            </div>
+            </form>
             
             <div class="input-group input-group-lg py-2 px-3">
               <input

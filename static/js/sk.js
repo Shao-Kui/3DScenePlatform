@@ -1215,6 +1215,21 @@ const setting_up = function () {
         }
     });
     
+    $("#usercommitchange_button").click(() => {
+        username = $("#username").val();
+        if (username != "") {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: `/usercommitchange/${username}`,
+                data: JSON.stringify(getDownloadSceneJson()),
+                success: function (msg) {
+                    console.log(msg);
+                }
+            });
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
