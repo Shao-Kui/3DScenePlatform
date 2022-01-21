@@ -833,7 +833,7 @@ if __name__ == "__main__":
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
 
     batchList = [
-        
+
     ]
 
     for origin in batchList:

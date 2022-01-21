@@ -22,6 +22,7 @@
     <script src="/static/3rdparty/three.js-r131/OutlinePass.js"></script>
     <script src="/static/3rdparty/three.js-r131/RenderPass.js"></script>
     <script src="/static/3rdparty/three.js-r131/ShaderPass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/FXAAShader.js"></script>
     <script src="/static/3rdparty/three.js-r131/CopyShader.js"></script>
     <script src="/static/3rdparty/three.js-r131/OrbitControls.js"></script>
     <script src="/static/3rdparty/three.js-r131/PointerLockControls.js"></script>
@@ -89,7 +90,7 @@
       var radial;
       var radial_scale;
       var renderer;
-      var composer, renderPass, outlinePass, outlinePass2; // Post-Processing. 
+      var composer, renderPass, outlinePass, outlinePass2, fxaaPass; // Post-Processing. 
       var camera;
       var scene;
       var orbitControls;

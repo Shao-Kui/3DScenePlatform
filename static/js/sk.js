@@ -92,8 +92,8 @@ let refreshObjectFromCache = function(objToInsert){
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     // add reference from object3d to objectjson: 
     object3d.userData.json = objToInsert;
-    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp'].includes(object3d.userData.coarseSemantic)){
-        let light = new THREE.PointLight( 0xffffff, 5, 100 );
+    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'chandelier'].includes(object3d.userData.coarseSemantic)){
+        let light = new THREE.PointLight( 0xffffff, 10, 100 );
         light.name = SEMANTIC_POINTLIGHT;
         light.position.set(0,0,0);
         object3d.add(light);
@@ -774,7 +774,8 @@ function onDocumentMouseMove(event) {
     if(On_MAGEMOVE){
         let args = mageAddSingle();
         if(args != undefined){
-            args[3] = INTERSECT_OBJ.rotation.y - smallestSignedAngleBetween(INTERSECT_OBJ.rotation.y, args[3]);
+            args[3] = Math.atan2(Math.sin(args[3]), Math.cos(args[3]));
+            // args[3] = INTERSECT_OBJ.rotation.y - smallestSignedAngleBetween(INTERSECT_OBJ.rotation.y, args[3]);
             if(args !== undefined){
                 transformObject3DOnly(INTERSECT_OBJ.userData.key, [args[0], args[1], args[2]], 'position', true); 
                 if(args[5]){
@@ -846,6 +847,9 @@ const onWindowResize = function(){
     $('#uibody').height($(document).height() - $('#menubar').outerHeight());
     $('#scenecanvas').width('100%'); 
     $('#scenecanvas').height($(document).height() - $('#menubar').outerHeight()); 
+
+    fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / (scenecanvas.clientWidth);
+	fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / (scenecanvas.clientHeight);
 }
 
 var saveFile = function (strData, filename) {

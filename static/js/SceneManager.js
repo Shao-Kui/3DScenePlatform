@@ -115,6 +115,7 @@ class SceneManager {
         this.refresh_wall_and_floor();
         this.refresh_instances();
         this.refresh_light();
+        this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg')
         if (refresh_camera) {
             this.refresh_camera();
         }
@@ -169,28 +170,18 @@ class SceneManager {
             traverseObjSetting(instance);
             self.scene.add(instance);
             if(suffix === 'f'){
-                instance.traverse(function(child){
-                    if(child instanceof THREE.Mesh){
-                        // child.material.color.setHex(0x8899AA);
-                        // child.material.map = texture;
-                        // child.material = material
-                    }
-                });
                 self.cwfCache.push(instance);
                 self.fCache.push(instance);
                 self.wfCache.push(instance);
             }
             if(suffix === 'w'){
-                instance.traverse(function(child){
-                    if(child instanceof THREE.Mesh){
-                        // child.material.color.setHex(0x8899AA);
-                    }
-                });
                 self.cwfCache.push(instance);
                 self.wfCache.push(instance);
                 self.wCache.push(instance); 
             }
-            instance
+            instance.children.forEach(c => {
+                c.material = self.defaultCWFMaterial;
+            });
         }, null, null, null, false);
     }
 
