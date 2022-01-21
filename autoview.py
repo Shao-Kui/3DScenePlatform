@@ -880,8 +880,13 @@ def bestviewroom(roomId):
 @app_autoView.route("/usercommitchange/<username>", methods=['POST'])
 def usercommitchange(username):
     if flask.request.method == 'POST':
-        print(flask.request.json)
-        print(username)
+        SAVE_COMMIT_PATH = './layoutmethods/cgAnnotation'
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        if not os.path.exists(f"{SAVE_COMMIT_PATH}/{username}"):
+            os.makedirs(f"{SAVE_COMMIT_PATH}/{username}")
+        with open(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json", 'w') as f:
+            json.dump(flask.request.json, f)
+        print(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json")
         return f'received user {username}\'s changes'
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])

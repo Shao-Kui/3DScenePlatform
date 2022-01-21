@@ -337,7 +337,7 @@
             
             <form onsubmit="return false">
               <div class="input-group input-group-lg py-2 px-3">
-                <input type="text" class="form-control" id="username" placeholder="Username" aria-label="Username" required>
+                <input type="text" class="form-control" id="username" placeholder="Username" aria-label="Username" pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" maxlength="10" required>
                 <div class="input-group-append">
                   <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">Commit</button>
                 </div>
@@ -393,8 +393,6 @@
             <a class="text-muted" style="overflow-wrap: break-word"
               >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
             >
-          </div>
-          <div id="heatmap">
           </div>
         </div>
       </div>

@@ -1217,7 +1217,8 @@ const setting_up = function () {
     
     $("#usercommitchange_button").click(() => {
         username = $("#username").val();
-        if (username != "") {
+        const regex = /^([\u3400-\u4DBF\u4E00-\u9FFF_\-a-zA-Z0-9]){1,10}$/;
+        if (regex.test(username)) {
             $.ajax({
                 type: "POST",
                 contentType: "application/json; charset=utf-8",
