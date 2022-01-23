@@ -992,11 +992,11 @@ const datguiObjectFolder = function(objmesh){
         'rotation': {'y': objmesh.rotation.y},
         'position': {'x': objmesh.position.x, 'y': objmesh.position.y, 'z': objmesh.position.z}
     };
-    let ctrlScaleX = datgui_intersectfolder.add(t.scale, 'x', 0.05, 3.0); 
+    let ctrlScaleX = datgui_intersectfolder.add(t.scale, 'x', 0.001, 3.0); 
     ctrlScaleX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-X';
-    let ctrlScaleY = datgui_intersectfolder.add(t.scale, 'y', 0.05, 3.0); 
+    let ctrlScaleY = datgui_intersectfolder.add(t.scale, 'y', 0.001, 3.0); 
     ctrlScaleY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Y';
-    let ctrlScaleZ = datgui_intersectfolder.add(t.scale, 'z', 0.05, 3.0); 
+    let ctrlScaleZ = datgui_intersectfolder.add(t.scale, 'z', 0.001, 3.0); 
     ctrlScaleZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Scale-Z';
     
     let ctrlOrient = datgui_intersectfolder.add(t.rotation, 'y', -3.15, 3.15, 0.01); 
