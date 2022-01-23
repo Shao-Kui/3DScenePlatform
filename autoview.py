@@ -877,6 +877,13 @@ def bestviewroom(roomId):
         pcams = autoViewOnePointPerspective(flask.request.json['rooms'][int(roomId)], flask.request.json)
         return json.dumps(pcams[0], default=sk.jsonDumpsDefault)
 
+@app_autoView.route("/usercommitchange/<username>", methods=['POST'])
+def usercommitchange(username):
+    if flask.request.method == 'POST':
+        print(flask.request.json)
+        print(username)
+        return f'received user {username}\'s changes'
+
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):
     if flask.request.method == 'POST':

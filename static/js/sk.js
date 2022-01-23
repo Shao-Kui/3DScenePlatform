@@ -599,9 +599,25 @@ const onClickIntersectObject = function(event){
         datguiObjectFolder(INTERSECT_OBJ);
         if($("#scenePaletteSVG").css('display') === 'block')
         {paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
+
+        if (INTERSECT_WALL != undefined)
+            unselectWall();
         return;
     }else{
         cancelClickingObject3D();
+        if (INTERSECT_WALL == undefined) {
+            var newWallCache = manager.renderManager.newWallCache;
+            intersects = raycaster.intersectObjects(newWallCache, true);
+            if (intersects.length > 0) {
+                INTERSECT_WALL = intersects[0].object;
+                if (INTERSECT_WALL.parent instanceof THREE.Group)
+                    INTERSECT_WALL = INTERSECT_WALL.parent;
+                console.log('intersect wall', INTERSECT_WALL);
+            }
+        } else {
+            if (INTERSECT_WALL != undefined)
+                unselectWall();
+        }
     }
 }
 
@@ -610,13 +626,13 @@ var onClickObj = function (event) {
     // do raycasting, judge whether or not users choose a new object; 
     camera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, camera);
-    var intersects = raycaster.intersectObjects(manager.renderManager.cwfCache, true);
+    var intersects = raycaster.intersectObjects(manager.renderManager.fCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) {
         currentRoomId = intersects[0].object.parent.userData.roomId;
         $('#tab_roomid').text(currentRoomId);
         $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[currentRoomId].roomTypes);        
     } else {
-        currentRoomId = undefined;
+        // currentRoomId = undefined;
     }
     mageAddSinglePrior.enabled = false;
     if(On_MAGEADD){
@@ -834,6 +850,12 @@ function onDocumentMouseMove(event) {
     }
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         auxiliaryMove();
+    }
+    if (INTERSECT_WALL != undefined) {
+        let ip = castMousePositionForWall();
+        if(ip){
+            transformWall(INTERSECT_WALL, [ip.x, ip.y, ip.z]); 
+        }
     }
     tf.engine().endScope();
     updateMousePosition();
@@ -1197,6 +1219,21 @@ const setting_up = function () {
         }
     });
     
+    $("#usercommitchange_button").click(() => {
+        username = $("#username").val();
+        if (username != "") {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: `/usercommitchange/${username}`,
+                data: JSON.stringify(getDownloadSceneJson()),
+                success: function (msg) {
+                    console.log(msg);
+                }
+            });
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1273,3 +1310,85 @@ var autocollapse = function (menu, maxHeight) {
     }
   }
 };
+
+const transformWall = function(wall, xyz){
+    let axis = wall.userData["axis"];
+    let groupId = wall.userData["groupId"];
+    let wg = manager.renderManager.wallGroup[groupId];
+    let range = wg.idxRange;
+    let pos = axis == "x" ? xyz[0] : xyz[2];
+    for (let i = range[0]; i < range[1]; ++i) {
+        if (axis == "x") {
+            manager.renderManager.newWallCache[i].position.x = pos;
+        } else {
+            manager.renderManager.newWallCache[i].position.z = pos;
+        }
+    }
+    let adjRoomShape = wg.adjRoomShape;
+    const rooms = manager.renderManager.scene_json.rooms;
+    for (let r of adjRoomShape) {
+        const roomShape = rooms[r[0]].roomShape;
+        for (let i of r[1][0]) {
+            if (axis == "x")
+                roomShape[i][0] = pos - wg.halfWidth;
+            else
+                roomShape[i][1] = pos - wg.halfWidth;
+        }
+        for (let i of r[1][1]) {
+            if (axis == "x")
+                roomShape[i][0] = pos + wg.halfWidth;
+            else
+                roomShape[i][1] = pos + wg.halfWidth;
+        }
+    }
+    // if (currentRoomId != undefined)
+    //     console.log(manager.renderManager.scene_json.rooms[currentRoomId].roomShape);
+};
+
+const castMousePositionForWall = function(){
+    let infFloor = manager.renderManager.infFloor;
+    intersects = raycaster.intersectObject(infFloor);
+    if(intersects.length > 0)
+        return intersects[0].point; 
+    else
+        return undefined; 
+}
+
+const unselectWall = function() {
+    let wall = INTERSECT_WALL;
+    let groupId = wall.userData["groupId"];
+    let wg = manager.renderManager.wallGroup[groupId];
+
+    let axis = wg.axis;
+    let wallPos = axis == "x" ? wall.position.x : wall.position.z;
+    
+    let adjFloor = wg.adjFloor;
+    const fCache = manager.renderManager.fCache;
+    for (let f of adjFloor) {
+        const pos = fCache[f[0]].children[0].geometry.attributes.position.array;
+        for (let i of f[1][0]) {
+            pos[i] = wallPos - wg.halfWidth;
+        }
+        for (let i of f[1][1]) {
+            pos[i] = wallPos + wg.halfWidth;
+        }
+        fCache[f[0]].children[0].geometry.attributes.position.needsUpdate = true;
+    }
+
+    let adjWall = wg.adjWall;
+    const nwCache = manager.renderManager.newWallCache;
+    for (let w of adjWall) {
+        const instance = nwCache[w[0]];
+        const offset = axis == "x" ? instance.position.x : instance.position.z;
+        const pos = instance.children[0].geometry.attributes.position.array;
+        for (let i of w[1][0]) {
+            pos[i] = wallPos - wg.halfWidth - offset;
+        }
+        for (let i of w[1][1]) {
+            pos[i] = wallPos + wg.halfWidth - offset;
+        }
+        instance.children[0].geometry.attributes.position.needsUpdate = true;
+    }
+
+    INTERSECT_WALL = undefined;
+}
