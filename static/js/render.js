@@ -22,8 +22,16 @@ var skyMaterialsCloudtop = [
     new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_lf.tga"), side: THREE.DoubleSide})
 ];
 
-var spotLight = new THREE.SpotLight( 0xffffff, 6);
-var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 9.3);
+const getMaterial = function(imgPath){
+    let texture = new THREE.TextureLoader().load(imgPath);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 1);
+    return new THREE.MeshPhongMaterial( { map: texture } );
+}
+
+var spotLight = new THREE.SpotLight(0xFFFFFF, 6);
+var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 8.3);
 
 var render_initialization = function () {
     //enabling shadow casting
@@ -32,14 +40,14 @@ var render_initialization = function () {
 
     //lighting and shadowing
     //0.9 is the stable lightness of ambient light after mid-term; 
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.6);
+    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.0);
     scene.add(ambientLight);
 
     //0.3 is the stable lightness of directional light after mid-term; 
     directionalLight.castShadow = true;
     directionalLight.position.set(0, 10, 0);
-    directionalLight.shadow.mapSize.width = 4096;
-    directionalLight.shadow.mapSize.height = 4096;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
     directionalLight.shadow.camera.near = 0.01;
     directionalLight.shadow.camera.far = 100;
     directionalLight.shadow.camera.left = -100;
@@ -55,8 +63,8 @@ var render_initialization = function () {
     spotLight.decay = 0;
     spotLight.distance = 0;
     spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 4096;
-    spotLight.shadow.mapSize.height = 4096;
+    spotLight.shadow.mapSize.width = 2048;
+    spotLight.shadow.mapSize.height = 2048;
     spotLight.shadow.camera.near = 0.01;
     spotLight.shadow.camera.far = 1000;
     // scene.add( spotLight );
@@ -93,6 +101,11 @@ var render_initialization = function () {
     outlinePass2.visibleEdgeColor.set("#3f3395");
     outlinePass2.hiddenEdgeColor.set("#000000");
     composer.addPass(outlinePass2);
+
+    fxaaPass = new THREE.ShaderPass( THREE.FXAAShader );
+    fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / (scenecanvas.clientWidth);
+	fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / (scenecanvas.clientHeight);
+    composer.addPass(fxaaPass);
 };
 
 
