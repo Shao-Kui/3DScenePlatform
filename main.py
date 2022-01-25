@@ -15,7 +15,7 @@ from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
-from sketch_retrieval.generate_descriptor import sketch_search
+from sketch_retrieval.generate_descriptor import sketch_search,sketch_search_non_suncg
 from main_audio import app_audio
 from main_magic import app_magic
 from autoview import app_autoView, autoViewsRes, autoViewRooms
@@ -86,6 +86,10 @@ def texture(id):
 def texture_(id):
     return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
 
+@app.route("/texture/maps/<id>")
+def texture_maps(id):
+    return flask.send_file(f"./dataset/texture/maps/{id}")
+
 """
 @app.route("/thumbnail/<id>/<int:view>")
 def thumbnail(id, view):
@@ -140,6 +144,7 @@ with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
 def query2nd():
     ret = []
     kw = flask.request.args.get('kw', default = "", type = str) # keyword
+    num = flask.request.args.get('num', default = 20, type = int) # keyword
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
         ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
     catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
@@ -147,8 +152,8 @@ def query2nd():
         cat = ChineseMapping[catMatches[0]]
         print(f'get query: {cat}. ')
         random.shuffle(sk.objListCat[cat])
-        if len(sk.objListCat[cat]) >= 20:
-            modelIds = sk.objListCat[cat][0:20]
+        if len(sk.objListCat[cat]) >= num:
+            modelIds = sk.objListCat[cat][0:num]
         else:
             modelIds = sk.objListCat[cat]
         ret += [{"name":modelId, "semantic":cat, "thumbnail":f"/thumbnail/{modelId}"} for modelId in modelIds]
@@ -244,6 +249,11 @@ def set_scene_configuration():
 def sketch():
     if request.method == 'POST':
         keyword = request.form.get('keyword')
+        if '&' in keyword:
+            k = int(keyword.split('&')[1])
+            keyword = keyword.split('&')[0]
+        else:
+            k = 20
         if keyword == 'unknown' or keyword == '' or keyword not in ChineseMapping:
             keyword = None
         else:
@@ -253,7 +263,10 @@ def sketch():
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-        results = sketch_search('./qs.png', k=20, classname=keyword)
+        if keyword is None:
+            results = sketch_search('./qs.png', k=k)
+        else:
+            results = sketch_search_non_suncg('./qs.png', k=k, classname=keyword)
         ret = [{"name":modelId, "semantic": sk.getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"} for modelId in results]
         return json.dumps(ret)
     return "Post image! "
@@ -462,9 +475,9 @@ def functionCallUnity(theJson):
     fname = theJson['fname']
     arguments = json.loads(theJson['arguments'])
     groupName = theJson['groupName']
-    if fname != 'animateObject3DOnly':
-        print(theJson['arguments'])
-        print(fname, arguments, groupName)
+    # if fname != 'animateObject3DOnly':
+    #     print(theJson['arguments'])
+    #     print(fname, arguments, groupName)
     if groupName not in onlineScenes:
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
@@ -474,12 +487,43 @@ def functionCallUnity(theJson):
 def functionCall(fname, arguments, groupName): 
 # def functionCall(fname, arguments): 
     # currently, we only allow a user exists in a single room; 
-    if fname != 'animateObject3DOnly':
-        print(fname, arguments, groupName)
+    # if fname != 'animateObject3DOnly':
+    #     print(fname, arguments, groupName)
     if groupName not in onlineScenes:
         emit('functionCall', {'error': "No Valid Scene Is Found. "}, room=groupName) 
         return
     emit('functionCall', (fname, arguments), room=groupName, include_self=False) 
+    if fname == 'addObjectByUUID':
+        emit('functionCallUnity', ({
+            'fname': 'addObjectByUUID',
+            'uuid': arguments[0],
+            'modelId': arguments[1],
+            'roomID': arguments[2],
+            'transform': arguments[3]
+        }), room=groupName, include_self=False)
+    if fname == 'removeObjectByUUID':
+        emit('functionCallUnity', ({
+            'fname': 'removeObjectByUUID',
+            'uuid': arguments[0]
+        }), room=groupName, include_self=False)
+    if fname == 'transformObjectByUUID':
+        emit('functionCallUnity', ({
+            'fname': 'transformObjectByUUID',
+            'uuid': arguments[0],
+            'transform': arguments[1],
+            'roomID': arguments[2]
+        }), room=groupName, include_self=False)
+    if fname == 'animateObject3DOnly':
+        emit('functionCallUnity', ({
+            'fname': 'animateObject3DOnly',
+            'transformations': arguments[0]
+        }), room=groupName, include_self=False)
+    if fname == 'refreshRoomByID':
+        emit('functionCallUnity', ({
+            'fname': 'refreshRoomByID',
+            'roomId': arguments[0],
+            'objList': arguments[1]
+        }), room=groupName, include_self=False)
 
 object3DControlledByList = {}
 @socketio.on('claimControlObject3D')

@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch
 import faiss
 import time
+import datetime
 import glob
 import os
 import json
@@ -50,8 +51,8 @@ def sketch_search(filename, k=20, classname=None):
     sketch_data = sketch_img.cuda(non_blocking=True)
     sketch_features, _ = net(sketch_data, None)
     detachedFeatures = sketch_features.detach().cpu().numpy()
-    end_time = time.time()
-    print("\r\n------- %s secondes --- \r\n" % (end_time - start_time))
+    # end_time = time.time()
+    # print("\r\n------- %s secondes --- \r\n" % (end_time - start_time))
     if classname is None:
         pred = models_index.search(detachedFeatures, k)[1]  # bs, 10
         pred = pred[0]
@@ -62,11 +63,13 @@ def sketch_search(filename, k=20, classname=None):
             pred = pred[0]
             res = []
             for i in pred:
-                if classname in sk.getObjCatsLG(model_names[i]):
+                if classname in sk.objCatList(model_names[i]):
                     res.append(model_names[i])
             if len(res) >= k:
                 break
         print(f'total iterations: {F}')
+    end_time = time.time()
+    print("\r\n-- %s secondes -- \r\n" % (end_time - start_time))
     return res
 
 def sketch_search_suncg(filename, k=20, classname=None):
@@ -89,7 +92,6 @@ def sketch_search_suncg(filename, k=20, classname=None):
 
 
 def sketch_search_non_suncg(filename, k=20, classname=None):
-
     sketch_aug = transforms.Compose([
         transforms.CenterCrop((224, 224)),
         transforms.ToTensor(),
@@ -97,14 +99,41 @@ def sketch_search_non_suncg(filename, k=20, classname=None):
                              std=[0.229, 0.224, 0.225])
     ])
     sketch_img = Image.open(filename).convert('RGB')
+    # start_time = time.time()
     sketch_img = sketch_aug(sketch_img)
     sketch_img = torch.stack([sketch_img])
     sketch_data = sketch_img.cuda(non_blocking=True)
     sketch_features, _ = net(sketch_data, None)
-    pred = non_suncg_models_index.search(
-        sketch_features.detach().cpu().numpy(), k)[1]  # bs, 10
-    pred = pred[0]
-    return [non_suncg_model_names[i] for i in pred]
+    if classname is None:
+        pred = non_suncg_models_index.search(sketch_features.detach().cpu().numpy(), k)[1]  # bs, 10
+        pred = pred[0]
+        res = [non_suncg_model_names[i] for i in pred]
+    else:
+        pred = non_suncg_models_index.search(sketch_features.detach().cpu().numpy(), 9996)[1]  # bs, 10
+        pred = pred[0]
+        res = []
+        for i in pred:
+            if non_suncg_model_names[i] not in sk.objCatList:
+                continue
+            if classname in sk.objCatList[non_suncg_model_names[i]]:
+                res.append(non_suncg_model_names[i])
+            if len(res) == k:
+                break
+    # end_time = time.time()
+    # print("\r\n-- %s secondes -- \r\n" % (end_time - start_time))
+    # now = datetime.datetime.now()
+    # dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    # cname = classname.replace('/', '')
+    # with open(f'./sketch_retrieval/log/{cname}-{dt_string}.json', 'w') as f:
+    #     json.dump({
+    #         'sketch_time': end_time - start_time,
+    #         'start_time': start_time,
+    #         'end_time': end_time,
+    #         'classname': classname,
+    #         'k': k,
+    #         'res': res
+    #     }, f)
+    return res
 
 
 def init_sketch_retrieval():
