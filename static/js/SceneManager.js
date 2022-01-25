@@ -137,7 +137,7 @@ class SceneManager {
         this.wfCache = []; 
         this.wCache = []; 
         this.newWallCache = []; 
-        this.useNewWall = false;
+        this.useNewWall = true;
         this.loadingManager = new THREE.LoadingManager(() => {
             if (this.useNewWall)
                 this.reconstructWalls();
@@ -175,15 +175,31 @@ class SceneManager {
             instance.receiveShadow = true;
             instance.name = meta;
             traverseObjSetting(instance);
-            self.scene.add(instance);
+            // self.scene.add(instance);
             if(suffix === 'f'){
+                instance.traverse(function(child){
+                    self.scene.add(instance);
+                    if(child instanceof THREE.Mesh){
+                        // child.material.color.setHex(0x8899AA);
+                        // child.material.map = texture;
+                        // child.material = material
+                    }
+                });
                 self.cwfCache.push(instance);
                 self.fCache.push(instance);
                 self.wfCache.push(instance);
             }
             if(suffix === 'w'){
-                self.cwfCache.push(instance);
-                self.wfCache.push(instance);
+                instance.traverse(function(child){
+                    if(child instanceof THREE.Mesh){
+                        // child.material.color.setHex(0x8899AA);
+                    }
+                });
+                if (self.useNewWall == false) {
+                    self.scene.add(instance);
+                    self.cwfCache.push(instance);
+                    self.wfCache.push(instance);
+                }
                 self.wCache.push(instance); 
             }
             instance.children.forEach(c => {
@@ -503,6 +519,9 @@ class SceneManager {
                 }
                 instance.position.setX(px);
                 instance.position.setZ(pz);
+                instance.children.forEach(c => {
+                    c.material = self.defaultCWFMaterial;
+                });
                 this.scene.add(instance);
                 this.newWallCache.push(instance);
                 this.cwfCache.push(instance);
@@ -565,8 +584,8 @@ class SceneManager {
             wg.adjWall = adjWall;
         }
         let geometry = new THREE.BoxGeometry(100, 0, 100);
-        const material = new THREE.MeshBasicMaterial();
-        this.infFloor = new THREE.Mesh(geometry, material);
+        // const material = new THREE.MeshBasicMaterial();
+        this.infFloor = new THREE.Mesh(geometry, self.defaultCWFMaterial);
     }
 }
 
