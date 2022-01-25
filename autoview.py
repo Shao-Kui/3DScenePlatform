@@ -887,7 +887,7 @@ def usercommitchange(username):
         with open(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json", 'w') as f:
             json.dump(flask.request.json, f)
         print(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json")
-        return f'received user {username}\'s changes'
+        return f'{username}/{timestr}'
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):

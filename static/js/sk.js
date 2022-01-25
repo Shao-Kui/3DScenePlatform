@@ -1229,7 +1229,8 @@ const setting_up = function () {
                 url: `/usercommitchange/${username}`,
                 data: JSON.stringify(getDownloadSceneJson()),
                 success: function (msg) {
-                    console.log(msg);
+                    $("#commitSuccessMessage").text("Your submission is received: "+msg)
+                    $('#commitSuccessModal').modal('show')
                 }
             });
         }
