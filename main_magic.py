@@ -416,6 +416,7 @@ def recommendation_ls_euclidean():
                     subeles += random.sample(objListCat[cat], 5)
                 else:
                     subeles += objListCat[cat]
+    # subeles += random.sample(objListCat['King-size Bed'], 1)
     for modelId in subeles:
         if modelId in name_to_ls:
             suncgid = modelId
@@ -455,8 +456,16 @@ def mageAddAuto():
 
 @app_magic.route("/coherent_group_series", methods=['POST'])
 def coherent_group_series():
-    if not os.path.exists(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json'):
+    if not os.path.exists(f'./layoutmethods/cgseries/{request.json["domID"]}/'):
         return json.dumps({})
-    with open(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json') as f:
-        cgseries = json.load(f)
-    return json.dumps(random.choice(cgseries))
+    else:
+        seriesNames = os.listdir(f'./layoutmethods/cgseries/{request.json["domID"]}/')
+        if len(seriesNames) == 0:
+            return json.dumps({})
+        else:
+            seriesName = random.choice(seriesNames)
+            with open(f'./layoutmethods/cgseries/{request.json["domID"]}/{seriesName}/result.json') as f:
+                return json.dumps(json.load(f))
+    # with open(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json') as f:
+    #     cgseries = json.load(f)
+    # return json.dumps(random.choice(cgseries))

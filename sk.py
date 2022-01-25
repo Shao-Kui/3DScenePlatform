@@ -386,10 +386,10 @@ def getObjectsUpperLimit(l, k):
         res.append(i)
     return res + l
 
-if __name__ == "__main__":
-    filenames = os.listdir('./layoutmethods/exp1')
+def cgs(domID, subIDs, seriesName):
+    filenames = os.listdir(f'./layoutmethods/cgseries/{domID}/{seriesName}') # init
     results = {
-        'domID': '7644',
+        'domID': domID,
         'anchorDises': [],
         'depthDises': [],
         'leftDises': [],
@@ -403,10 +403,10 @@ if __name__ == "__main__":
     for filename in filenames:
         if '.json' not in filename:
             continue
-        with open(f'./layoutmethods/exp1/{filename}') as f:
+        with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
             scenejson = json.load(f)
         preloadAABBs(scenejson)
-        results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], '7644', ['3699', '7836', '2740', '2565'])
+        results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], domID, subIDs) # e.g., '7644' ['3699', '7836', '2740', '2565']
     for config in results['configs']:
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
@@ -415,10 +415,65 @@ if __name__ == "__main__":
         results['objNums'].append(config['objNum'])
         results['areas'].append(config['area'])
         results['involvedObjects'] = getObjectsUpperLimit(results['involvedObjects'], config['objects'])
-    if not os.path.exists(f'./layoutmethods/cgseries/{results["domID"]}/'):
-        os.makedirs(f'./layoutmethods/cgseries/{results["domID"]}/')
-        with open(f'./layoutmethods/cgseries/{results["domID"]}/index.json', 'w') as f:
-            json.dump([results], f)
-    else:
-        with open(f'./layoutmethods/cgseries/{results["domID"]}/index.json', 'w') as f:
-            json.dump([results], f)
+    with open(f'./layoutmethods/cgseries/{results["domID"]}/{seriesName}/result.json', 'w') as f:
+        json.dump(results, f)
+    # if not os.path.exists(f'./layoutmethods/cgseries/{results["domID"]}.json'):
+    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'w') as f:
+    #         json.dump({seriesName: results}, f)
+    # else:
+    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'r') as f:
+    #         _t = json.load(f)
+    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'w') as f:
+    #         _t[seriesName] = results
+    #         json.dump(_t, f)
+
+def patternRefine():
+    ppris = os.listdir('./latentspace/pos-orient-4')
+    for ppri in ppris:
+        modelId = ppri.split('.')[0]
+        if getobjCat(modelId) == "Unknown Category":
+            continue
+        try:
+            bb = load_AABB(modelId)
+            with open(f'./latentspace/pos-orient-4/{ppri}') as f:
+                pri = json.load(f)
+        except:
+            continue
+        for cat in pri:
+            if getobjCat(modelId) == 'Coffee Table' and cat == 'Three-seat / Multi-seat Sofa':
+                pri[cat] = []
+                zlength = bb['max'][2]-bb['min'][2]
+                xlength = bb['max'][0]-bb['min'][0]
+                # -z
+                temp = -np.arange(zlength * 1.5, zlength * 3, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((np.full((l, 1),0), np.full((l, 1),0), temp.reshape(l, 1), np.full((l, 1),0))).tolist()
+                # z
+                temp = np.arange(zlength * 1.5, zlength * 3, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((np.full((l, 1),0), np.full((l, 1),0), temp.reshape(l, 1), np.full((l, 1),np.pi))).tolist()
+                # -x
+                temp = -np.arange(xlength * 1.5, xlength * 3, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((temp.reshape(l, 1), np.full((l, 1),0), np.full((l, 1),0), np.full((l, 1),np.pi/2))).tolist()
+                # x
+                temp = np.arange(xlength * 1.5, xlength * 3, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((temp.reshape(l, 1), np.full((l, 1),0), np.full((l, 1),0), np.full((l, 1),-np.pi/2))).tolist()       
+            if getobjCat(modelId) == 'Coffee Table' and cat == 'TV Stand':
+                pri[cat] = []
+                zlength = bb['max'][2]-bb['min'][2]
+                xlength = bb['max'][0]-bb['min'][0]
+                # -z
+                temp = -np.arange(zlength * 1.5, zlength * 4, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((np.full((l, 1),0), np.full((l, 1),0), temp.reshape(l, 1), np.full((l, 1),0))).tolist()
+                # z
+                temp = np.arange(zlength * 1.5, zlength * 4, 0.2)
+                l = temp.shape[0]
+                pri[cat] += np.hstack((np.full((l, 1),0), np.full((l, 1),0), temp.reshape(l, 1), np.full((l, 1),np.pi))).tolist()   
+            with open(f'./latentspace/pos-orient-4/{ppri}', 'w') as f:
+                json.dump(pri, f)
+
+if __name__ == "__main__":
+    cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
