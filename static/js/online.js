@@ -188,6 +188,10 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
     return object3d;
 }
 
+const transformRoomShape = function(roomID, wallID, pos, roomShape){
+    // Code for modifying room shapes
+}
+
 const onlineInitialization = function(){
     // try loading the online scene: 
     loadOnlineSceneJson();
@@ -198,6 +202,7 @@ const onlineInitialization = function(){
     onlineFuncList['addObjectByUUID'] = addObjectByUUID;
     onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
     onlineFuncList['refreshRoomByID'] = refreshRoomByID;
+    onlineFuncList['transformRoomShape'] = transformRoomShape;
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){

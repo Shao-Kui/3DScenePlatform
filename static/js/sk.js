@@ -748,7 +748,7 @@ function onDocumentMouseMove(event) {
     event.preventDefault();
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
-    instanceKeyCache = Object.values(instanceKeyCache);
+    instanceKeyCache = Object.values(instanceKeyCache).concat(manager.renderManager.newWallCache);
     let intersects = raycaster.intersectObjects(
         instanceKeyCache
         .concat(Object.values(manager.renderManager.fCache))
@@ -1345,6 +1345,8 @@ const transformWall = function(wall, xyz){
     }
     // if (currentRoomId != undefined)
     //     console.log(manager.renderManager.scene_json.rooms[currentRoomId].roomShape);
+    // let roomID = 
+    // emitFunctionCall('transformRoomShape', [roomID, wallID, pos, roomShape]);
 };
 
 const castMousePositionForWall = function(){
