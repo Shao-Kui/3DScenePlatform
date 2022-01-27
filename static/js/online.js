@@ -188,8 +188,24 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
     return object3d;
 }
 
-const transformRoomShape = function(roomID, wallID, pos, roomShape){
+const transformRoomShape = function(roomIDs, wallID, pos, roomShapes){
     // Code for modifying room shapes
+    const rooms = manager.renderManager.scene_json.rooms;
+    for (let i = 0; i < roomIDs.length; i++) {
+        const roomID = roomIDs[i];
+        rooms[roomID].roomShape = roomShapes[i];
+    }
+    let wg = manager.renderManager.wallGroup[wallID];
+    let axis = wg.axis;
+    let range = wg.idxRange;
+    for (let i = range[0]; i < range[1]; ++i) {
+        if (axis == "x") {
+            manager.renderManager.newWallCache[i].position.x = pos;
+        } else {
+            manager.renderManager.newWallCache[i].position.z = pos;
+        }
+    }
+    transformAdjWF(wg, axis, pos);
 }
 
 const onlineInitialization = function(){

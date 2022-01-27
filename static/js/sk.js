@@ -1345,8 +1345,6 @@ const transformWall = function(wall, xyz){
     }
     // if (currentRoomId != undefined)
     //     console.log(manager.renderManager.scene_json.rooms[currentRoomId].roomShape);
-    // let roomID = 
-    // emitFunctionCall('transformRoomShape', [roomID, wallID, pos, roomShape]);
 };
 
 const castMousePositionForWall = function(){
@@ -1358,23 +1356,16 @@ const castMousePositionForWall = function(){
         return undefined; 
 }
 
-const unselectWall = function() {
-    let wall = INTERSECT_WALL;
-    let groupId = wall.userData["groupId"];
-    let wg = manager.renderManager.wallGroup[groupId];
-
-    let axis = wg.axis;
-    let wallPos = axis == "x" ? wall.position.x : wall.position.z;
-    
+const transformAdjWF = function(wg, axis, pos) {
     let adjFloor = wg.adjFloor;
     const fCache = manager.renderManager.fCache;
     for (let f of adjFloor) {
-        const pos = fCache[f[0]].children[0].geometry.attributes.position.array;
+        const p = fCache[f[0]].children[0].geometry.attributes.position.array;
         for (let i of f[1][0]) {
-            pos[i] = wallPos - wg.halfWidth;
+            p[i] = pos - wg.halfWidth;
         }
         for (let i of f[1][1]) {
-            pos[i] = wallPos + wg.halfWidth;
+            p[i] = pos + wg.halfWidth;
         }
         fCache[f[0]].children[0].geometry.attributes.position.needsUpdate = true;
     }
@@ -1384,15 +1375,32 @@ const unselectWall = function() {
     for (let w of adjWall) {
         const instance = nwCache[w[0]];
         const offset = axis == "x" ? instance.position.x : instance.position.z;
-        const pos = instance.children[0].geometry.attributes.position.array;
+        const p = instance.children[0].geometry.attributes.position.array;
         for (let i of w[1][0]) {
-            pos[i] = wallPos - wg.halfWidth - offset;
+            p[i] = pos - wg.halfWidth - offset;
         }
         for (let i of w[1][1]) {
-            pos[i] = wallPos + wg.halfWidth - offset;
+            p[i] = pos + wg.halfWidth - offset;
         }
         instance.children[0].geometry.attributes.position.needsUpdate = true;
     }
+}
+
+const unselectWall = function() {
+    let wallID = INTERSECT_WALL.userData["groupId"];
+    let wg = manager.renderManager.wallGroup[wallID];
+    let axis = wg.axis;
+    let pos = axis == "x" ? INTERSECT_WALL.position.x : INTERSECT_WALL.position.z;
+
+    let roomIDs = [];
+    let roomShapes = [];
+    for (let r of wg.adjRoomShape) {
+        roomIDs.push(r[0]);
+        roomShapes.push(manager.renderManager.scene_json.rooms[r[0]].roomShape)
+    }
+    emitFunctionCall('transformRoomShape', [roomIDs, wallID, pos, roomShapes]);
+
+    transformAdjWF(wg, axis, pos);
 
     INTERSECT_WALL = undefined;
 }
