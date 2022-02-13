@@ -178,16 +178,18 @@ class SceneManager {
             // self.scene.add(instance);
             if(suffix === 'f'){
                 instance.traverse(function(child){
-                    self.scene.add(instance);
                     if(child instanceof THREE.Mesh){
                         // child.material.color.setHex(0x8899AA);
                         // child.material.map = texture;
                         // child.material = material
                     }
                 });
-                self.cwfCache.push(instance);
-                self.fCache.push(instance);
-                self.wfCache.push(instance);
+                if (self.useNewWall == false) {
+                    self.scene.add(instance);
+                    self.cwfCache.push(instance);
+                    self.fCache.push(instance);
+                    self.wfCache.push(instance);
+                }
             }
             if(suffix === 'w'){
                 instance.traverse(function(child){
@@ -385,6 +387,40 @@ class SceneManager {
                 min[1] = Math.min(min[1], roomShape[i][1]);
             }
             room["roomShapeBBox"] = {"max": max, "min": min}
+        });
+
+        rooms.forEach(room => {
+            const roomShape = room.roomShape;
+            var contour = [];
+            for (let v of roomShape) {
+                contour.push(new THREE.Vector2(v[0], v[1]));
+            }
+            var triangles = THREE.ShapeUtils.triangulateShape(contour, []);
+            const vertices = [];
+            const normal = [];
+            const geometry = new THREE.BufferGeometry();
+            for (let f of triangles) {
+                for (let i = 2; i >= 0; --i) {
+                    vertices.push(roomShape[f[i]][0]);
+                    vertices.push(0.0);
+                    vertices.push(roomShape[f[i]][1]);
+                    normal.push(0, 1, 0);
+                }
+            }
+            geometry.setAttribute( 'position', new THREE.BufferAttribute( Float32Array.from(vertices), 3 ) );
+            geometry.setAttribute( 'normal', new THREE.BufferAttribute( Float32Array.from(normal), 3 ) );
+            const mesh = new THREE.Mesh( geometry, self.defaultCWFMaterial);
+            let instance = new THREE.Group();
+            instance.add(mesh);
+            instance.userData = {"type": 'f', "roomId": room.roomId, "meta": "newFloor", "modelId": "newFloor"};
+            instance.castShadow = true;
+            instance.receiveShadow = true;
+            instance.name = "newFloor" + room.roomId;
+            traverseObjSetting(instance);
+            self.scene.add(instance);
+            self.cwfCache.push(instance);
+            self.fCache.push(instance);
+            self.wfCache.push(instance);
         });
 
         for (const axis of ["x", "z"]) {
