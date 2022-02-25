@@ -83,7 +83,12 @@ var radial_remove_control = function (event) {
 
 var radial_main_object_control = function (event) {
     MAIN_OBJ = INTERSECT_OBJ;
-    $("#mainObjLabel").text(`Main Object: ${MAIN_OBJ.userData.json.coarseSemantic} (${MAIN_OBJ.userData.modelId})`);
+    let mainObjId = MAIN_OBJ.userData.modelId;
+    $("#mainObjDiv").text(`Main Object: ${MAIN_OBJ.userData.json.modelId} (${MAIN_OBJ.userData.coarseSemantic})`);
+    if (USED_OBJ_LIST[mainObjId] == undefined)
+        $('#usedObjDiv').text('Used Object: ');
+    else
+        $('#usedObjDiv').text(`Used Object: ${USED_OBJ_LIST[mainObjId].filter((v, idx)=>{ return v != mainObjId}).join(', ')}`)
     transformControls.detach();
     toggles();
 };

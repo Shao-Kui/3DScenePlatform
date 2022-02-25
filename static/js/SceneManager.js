@@ -112,11 +112,11 @@ class SceneManager {
                 return true;
             }
         });
+        this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg');
         this.scene_json = scene_json;
         this.refresh_wall_and_floor();
         this.refresh_instances();
         this.refresh_light();
-        this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg')
         if (refresh_camera) {
             this.refresh_camera();
         }
@@ -136,16 +136,14 @@ class SceneManager {
         this.fCache = []; 
         this.wfCache = []; 
         this.wCache = []; 
-        this.newWallCache = []; 
+        this.newWallCache = [];
         this.useNewWall = true;
-        this.loadingManager = new THREE.LoadingManager(() => {
-            if (this.useNewWall)
-                this.reconstructWalls();
-        });
-        var self = this;
-        for (var i = 0; i < this.scene_json.rooms.length; i++) {
-            self.load_cwf_room_meta(this.scene_json.rooms[i])
-        }
+        if (this.useNewWall)
+            this.reconstructWalls();
+        // var self = this;
+        // for (var i = 0; i < this.scene_json.rooms.length; i++) {
+        //     self.load_cwf_room_meta(this.scene_json.rooms[i])
+        // }
     };
 
     load_cwf_room_meta = room => {
