@@ -4,7 +4,8 @@ var rad_items = [
     {className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
     {className: 'glyphicon glyphicon-resize-vertical', html: ''},
     {className: 'glyphicon glyphicon-repeat', html: ''},
-    {className: 'glyphicon glyphicon-remove', html: ''}
+    {className: 'glyphicon glyphicon-remove', html: ''},
+    {className: 'glyphicon glyphicon-flag', html: ''}
 ];
 
 var rad_scale_items = [
@@ -71,6 +72,13 @@ var radial_remove_control = function (event) {
     toggles();
 };
 
+var radial_main_object_control = function (event) {
+    MAIN_OBJ = INTERSECT_OBJ;
+    $("#mainObjLabel").text(`Main Object: ${MAIN_OBJ.userData.json.coarseSemantic} (${MAIN_OBJ.userData.modelId})`);
+    transformControls.detach();
+    toggles();
+};
+
 var radial_initialization = function(){
     radial = new Radial(rad_items, rad_options);
     menu = document.getElementById('menu2');
@@ -102,4 +110,20 @@ var radial_initialization = function(){
 
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
     radial_latentspace_button.addEventListener('click', radial_mage_control);
+    
+    var radial_main_object_button = document.getElementsByClassName("glyphicon-flag")[0];
+    radial_main_object_button.addEventListener('click', radial_main_object_control);
+
+    radial.show = function() {
+        var radial_main_object_button = document.getElementsByClassName("glyphicon-flag")[0];
+        if (INTERSECT_OBJ == MAIN_OBJ) {
+            radial_main_object_button.style.color = 'yellow';
+        } else {
+            radial_main_object_button.style.color = 'white';
+        }
+        var childs = this._container.getElementsByClassName('radial__item');
+        for(var i = 0; i < childs.length; i++) {
+            childs[i].classList.add("show");
+        }
+    }
 };

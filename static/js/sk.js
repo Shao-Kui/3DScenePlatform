@@ -1220,14 +1220,20 @@ const setting_up = function () {
     });
     
     $("#usercommitchange_button").click(() => {
+        if (MAIN_OBJ == undefined) {
+            console.log('Main Object undefined');
+            return;
+        }
         username = $("#username").val();
+        alipay = $("#alipay").val();
+        series = $("#series").val();
         const regex = /^([\u3400-\u4DBF\u4E00-\u9FFF_\-a-zA-Z0-9]){1,10}$/;
         if (regex.test(username)) {
             $.ajax({
                 type: "POST",
                 contentType: "application/json; charset=utf-8",
                 url: `/usercommitchange/${username}`,
-                data: JSON.stringify(getDownloadSceneJson()),
+                data: JSON.stringify({mainobj: MAIN_OBJ.userData.modelId, series: series, alipay: alipay, username: username, json: getDownloadSceneJson()}),
                 success: function (msg) {
                     $("#commitSuccessMessage").text("Your submission is received: "+msg)
                     $('#commitSuccessModal').modal('show')
