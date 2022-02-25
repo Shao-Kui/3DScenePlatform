@@ -84,6 +84,7 @@
       var INTERSECT_OBJ;
       var INTERSECT_WALL;
       var INSERT_OBJ;
+      var MAIN_OBJ;
 
       //Global variables, will be initialize only once.
       var manager;
@@ -336,14 +337,21 @@
               </div>
             </div>
             
+            <div class="py-2 px-3">
             <form onsubmit="return false">
-              <div class="input-group input-group-lg py-2 px-3">
-                <input type="text" class="form-control" id="username" placeholder="Username" aria-label="Username" pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" maxlength="10" required>
+              <div class="input-group input-group-lg py-1">
+                <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username" pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
+                <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+              </div>
+              <div class="input-group input-group-lg py-1">
+                <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
                 <div class="input-group-append">
                   <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">Commit</button>
                 </div>
               </div>
             </form>
+            <label id="mainObjLabel" style="float: left;">Main Object: Undefined</label>
+            </div>
 
             <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">

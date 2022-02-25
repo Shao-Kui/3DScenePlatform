@@ -880,14 +880,21 @@ def bestviewroom(roomId):
 @app_autoView.route("/usercommitchange/<username>", methods=['POST'])
 def usercommitchange(username):
     if flask.request.method == 'POST':
-        SAVE_COMMIT_PATH = './layoutmethods/cgAnnotation'
+        data = flask.request.json
+        scene_json = data['json']
+        main_obj = data['mainobj']
+        alipay = data['alipay']
+        series = data['series']
+        print(scene_json)
+        print(main_obj, alipay, username, series)
+        SAVE_COMMIT_PATH = f'./layoutmethods/cgseries/{main_obj}/{series}'
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        if not os.path.exists(f"{SAVE_COMMIT_PATH}/{username}"):
-            os.makedirs(f"{SAVE_COMMIT_PATH}/{username}")
-        with open(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json", 'w') as f:
-            json.dump(flask.request.json, f)
-        print(f"{SAVE_COMMIT_PATH}/{username}/{timestr}.json")
-        return f'{username}/{timestr}'
+        if not os.path.exists(f"{SAVE_COMMIT_PATH}"):
+            os.makedirs(f"{SAVE_COMMIT_PATH}")
+        with open(f"{SAVE_COMMIT_PATH}/{username}_{alipay}_{timestr}.json", 'w') as f:
+            json.dump(scene_json, f)
+        print(f"{SAVE_COMMIT_PATH}/{username}_{alipay}_{timestr}.json")
+        return f'{main_obj}/{series}/{username}_{alipay}_{timestr}'
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):

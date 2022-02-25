@@ -391,6 +391,7 @@ class SceneManager {
 
         rooms.forEach(room => {
             const roomShape = room.roomShape;
+            if (roomShape == undefined) return;
             var contour = [];
             for (let v of roomShape) {
                 contour.push(new THREE.Vector2(v[0], v[1]));
