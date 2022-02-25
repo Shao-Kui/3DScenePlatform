@@ -1,4 +1,5 @@
 var rad_items = [
+    {className: 'glyphicon glyphicon-tower', html: ''},
     {className: 'glyphicon glyphicon-star', html: ''},
     {className: 'glyphicon glyphicon-move', html: ''},
     {className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
@@ -29,8 +30,16 @@ var toggles = function () {
 };
 
 const radial_mage_control = function(event){
+    genFloorPlanWallTensors();
     loadSingleObjectPrior(INTERSECT_OBJ.userData.modelId);
     On_MAGEMOVE = true;
+    transformControls.detach();
+    toggles();
+}
+
+const radial_cgseries_control = function(event){
+    loadCGSeries(INTERSECT_OBJ.userData.modelId);
+    On_CGSeries = true;
     transformControls.detach();
     toggles();
 }
@@ -102,4 +111,6 @@ var radial_initialization = function(){
 
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
     radial_latentspace_button.addEventListener('click', radial_mage_control);
+
+    document.getElementsByClassName("glyphicon-tower")[0].addEventListener('click', radial_cgseries_control);
 };
