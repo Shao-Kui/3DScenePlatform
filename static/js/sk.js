@@ -901,6 +901,10 @@ const render_function = function(){
 }
 
 const removeIntersectObject = function(){
+    if (MAIN_OBJ != undefined && INTERSECT_OBJ.uuid == MAIN_OBJ.uuid) {
+        MAIN_OBJ = undefined;
+        $("#mainObjDiv").text("Main Object: None");
+    }
     commandStack.push({
         'funcName': 'addObjectByUUID',
         'args': [
@@ -1220,14 +1224,28 @@ const setting_up = function () {
     });
     
     $("#usercommitchange_button").click(() => {
+        if (MAIN_OBJ != undefined) {
+            let mainobjexists = false;
+            for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+                if (obj.modelId == MAIN_OBJ.userData.modelId) mainobjexists = true;
+            }
+            if (!mainobjexists) {
+                MAIN_OBJ = undefined;
+                $("#mainObjDiv").text("Main Object: None");
+            }
+        }
         if (MAIN_OBJ == undefined) {
-            console.log('Main Object undefined');
+            $('<div class="alert alert-danger">请选择主物体</div>')
+            .insertBefore('#mainObjDiv').delay(3000).fadeOut(()=>{
+                $(this).remove();
+            });
             return;
         }
+        
         username = $("#username").val();
         alipay = $("#alipay").val();
         series = $("#series").val();
-        const regex = /^([\u3400-\u4DBF\u4E00-\u9FFF_\-a-zA-Z0-9]){1,10}$/;
+        const regex = /^([\u3400-\u4DBF\u4E00-\u9FFF_\-a-zA-Z0-9]){1,30}$/;
         if (regex.test(username)) {
             $.ajax({
                 type: "POST",
@@ -1235,8 +1253,22 @@ const setting_up = function () {
                 url: `/usercommitchange/${username}`,
                 data: JSON.stringify({mainobj: MAIN_OBJ.userData.modelId, series: series, alipay: alipay, username: username, json: getDownloadSceneJson()}),
                 success: function (msg) {
-                    $("#commitSuccessMessage").text("Your submission is received: "+msg)
-                    $('#commitSuccessModal').modal('show')
+                    $('#commitSuccessMessage').text(`Your submission is received: ${msg}`);
+                    $('#commitSuccessModal').modal('show');
+                    let mainObjId = MAIN_OBJ.userData.modelId;
+                    if (mainObjId in USED_OBJ_LIST) {
+                        for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+                            if (!USED_OBJ_LIST[mainObjId].includes(obj.modelId))
+                                USED_OBJ_LIST[mainObjId].push(obj.modelId);
+                        }
+                    } else {
+                        USED_OBJ_LIST[mainObjId] = [];
+                        for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+                            USED_OBJ_LIST[mainObjId].push(obj.modelId);
+                        }
+                    }
+                    $('#usedObjDiv').text(`Used Object: ${USED_OBJ_LIST[mainObjId].filter((v, idx)=>{ return v != mainObjId}).join(', ')}`)
+                    window.sessionStorage.setItem('UsedObject', JSON.stringify(USED_OBJ_LIST));
                 }
             });
         }

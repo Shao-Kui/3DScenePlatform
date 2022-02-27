@@ -85,6 +85,8 @@
       var INTERSECT_WALL;
       var INSERT_OBJ;
       var MAIN_OBJ;
+      var USED_OBJ_LIST = window.sessionStorage.getItem('UsedObject');
+      USED_OBJ_LIST = USED_OBJ_LIST ? JSON.parse(USED_OBJ_LIST) : {};
 
       //Global variables, will be initialize only once.
       var manager;
@@ -350,7 +352,8 @@
                 </div>
               </div>
             </form>
-            <label id="mainObjLabel" style="float: left;">Main Object: Undefined</label>
+            <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
+            <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
             </div>
 
             <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
