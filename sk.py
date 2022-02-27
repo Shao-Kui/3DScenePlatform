@@ -386,6 +386,9 @@ def getObjectsUpperLimit(l, k):
         res.append(i)
     return res + l
 
+def cgDiff(results):
+    pass
+
 def cgs(domID, subIDs, seriesName):
     filenames = os.listdir(f'./layoutmethods/cgseries/{domID}/{seriesName}') # init
     results = {
@@ -400,6 +403,17 @@ def cgs(domID, subIDs, seriesName):
         'involvedObjects': [],
         'enabled': False
     }
+    if subIDs is None:
+        subIDs = []
+        for filename in filenames:
+            if '.json' not in filename:
+                continue
+            with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
+                scenejson = json.load(f)
+            for obj in scenejson['rooms'][0]['objList']:
+                if obj['modelId'] != domID and obj['modelId'] not in subIDs:
+                    subIDs.append(obj['modelId'])
+    print(subIDs)
     for filename in filenames:
         if '.json' not in filename:
             continue
@@ -407,6 +421,7 @@ def cgs(domID, subIDs, seriesName):
             scenejson = json.load(f)
         preloadAABBs(scenejson)
         results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], domID, subIDs) # e.g., '7644' ['3699', '7836', '2740', '2565']
+    cgDiff(results)
     for config in results['configs']:
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
@@ -476,4 +491,4 @@ def patternRefine():
                 json.dump(pri, f)
 
 if __name__ == "__main__":
-    cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
+    cgs('7644', None, 'init')
