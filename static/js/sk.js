@@ -815,9 +815,17 @@ function onDocumentMouseMove(event) {
         rtt_pre.sub(mouse.rotateBase);
         rtt_nxt.sub(mouse.rotateBase);
         // INTERSECT_OBJ.rotateY(rtt_nxt.angle() - rtt_pre.angle());
+        mouse.lastOrient = mouse.lastOrient + (rtt_nxt.angle() - rtt_pre.angle());
+        let resOri = mouse.lastOrient;
+        let angle = (mouse.lastOrient + (rtt_nxt.angle() - rtt_pre.angle())) % (Math.PI/2);
+        if(Math.abs(Math.PI/2 - angle) < Math.PI / 16){
+            resOri += Math.PI/2 - angle;
+        }else if(Math.abs(angle) < Math.PI / 16){
+            resOri -= angle;
+        }
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
-            INTERSECT_OBJ.rotation.y + (rtt_nxt.angle() - rtt_pre.angle()), 
+            resOri, 
             INTERSECT_OBJ.rotation.z
         ], 'rotation')
     }

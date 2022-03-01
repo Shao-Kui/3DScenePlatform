@@ -56,6 +56,7 @@ var radial_rotate_control = function (event) {
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     mouse.rotateBase = new THREE.Vector2();
     mouse.rotateBase.set(mouse.x, mouse.y);
+    mouse.lastOrient = INTERSECT_OBJ.rotation.y;
     On_ROTATE = true;
     transformControls.detach();
     toggles();
