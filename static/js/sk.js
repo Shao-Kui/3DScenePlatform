@@ -1414,6 +1414,7 @@ const transformAdjWF = function(wg, axis, pos) {
             p[i] = pos + wg.halfWidth;
         }
         fCache[f[0]].children[0].geometry.attributes.position.needsUpdate = true;
+        fCache[f[0]].children[0].geometry.computeBoundingSphere();
     }
 
     let adjWall = wg.adjWall;
@@ -1429,6 +1430,7 @@ const transformAdjWF = function(wg, axis, pos) {
             p[i] = pos + wg.halfWidth - offset;
         }
         instance.children[0].geometry.attributes.position.needsUpdate = true;
+        instance.children[0].geometry.computeBoundingSphere();
     }
 }
 

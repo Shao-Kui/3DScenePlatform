@@ -107,7 +107,8 @@ class SceneManager {
         this.scene_remove(function (userData) {
             if (userData.type === 'w' ||
                 userData.type === 'f' ||
-                userData.type === 'c'||
+                userData.type === 'd' ||
+                userData.type === 'c' ||
                 userData.type === 'object') {
                 return true;
             }
@@ -544,11 +545,12 @@ class SceneManager {
                     pz = (wg.z[1] + wg.z[0]) / 2;
                 }
                 let instance = new THREE.Group();
+                let roomHeight = 2.8
                 if (w.length == 2) {
-                    instance.add(this.genWallMesh(x, 2.6, z, 1.3));
+                    instance.add(this.genWallMesh(x, roomHeight, z, roomHeight/2));
                     instance.userData = {"type": "w", "axis": axis, "groupId": groupId, "index": curIdx};
                 } else {
-                    instance.add(this.genWallMesh(x, 2.6-w[3], z, (2.6-w[3])/2+w[3]));
+                    instance.add(this.genWallMesh(x, roomHeight-w[3], z, (roomHeight-w[3])/2+w[3]));
                     instance.add(this.genWallMesh(x, w[2], z, w[2] / 2));
                     instance.userData = {"type": "d", "axis": axis, "groupId": groupId, "index": curIdx};
                 }
