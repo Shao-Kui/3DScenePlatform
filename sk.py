@@ -452,15 +452,9 @@ class cgDiff:
                             if self.dp[0, Ga, Gb, r, s] == 0 or self.skip[Ga, Gb, r, s]:
                                 continue
                             self.dp[p, Ga, Gb, r, s] = self.dp[0, Ga, Gb, r, s] * np.sum(self.preComputedEdgeKernel[Ga, Gb, r, s] * self.dp[p-1, Ga, Gb])
-                            
-        self.graphKernel = np.zeros((maxP, self.nConfigs, self.nConfigs))
-        for p in range(maxP):
-            for Ga in range(self.nConfigs):
-                for Gb in range(self.nConfigs):
-                    for r in range(len(self.objects[Ga])):
-                        for s in range(len(self.objects[Gb])):
-                            self.graphKernel[p, Ga, Gb] += self.dp[p, Ga, Gb, r, s]
-                            
+                         
+        self.graphKernel = np.sum(self.dp, axis=(-2, -1))
+                        
         self.normalizedGraphKernel = np.zeros((maxP, self.nConfigs, self.nConfigs))
         for p in range(maxP):
             for Ga in range(self.nConfigs):
