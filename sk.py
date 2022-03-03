@@ -7,6 +7,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import torch
 from shapely.geometry.polygon import Polygon, LineString, Point
+import math
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -386,8 +387,123 @@ def getObjectsUpperLimit(l, k):
         res.append(i)
     return res + l
 
-def cgDiff(results):
-    pass
+class cgDiff:
+    def __init__(self, results):
+        with open('./dataset/objCatListAliv2.json') as f:
+            self.objCat = json.load(f)
+        self.configs = results['configs']
+        self.nConfigs = len(self.configs)
+        print(self.nConfigs)
+        domID = results['domID']
+        self.objects = []
+        for G in range(self.nConfigs):
+            self.objects.append([domID] + self.configs[G]['objects'])
+
+        self.neighbors = []
+        for G, cfg in enumerate(self.configs):
+            nObj = len(self.objects[G])
+            domScale = np.array(cfg['domScale'])
+            edges = []
+            for i in range(nObj-1):
+                e = cfg['subPriors'][i]['translate'] * domScale
+                e /= np.linalg.norm(e)
+                edges.append(e)
+            neighborG = [[[i+1, edges[i]] for i in range(nObj-1)]]
+            for i in range(nObj-1):
+                neighborG.append([[0, edges[i]]])
+            self.neighbors.append(neighborG)
+
+        maxObjNum = 6
+        self.preComputedEdgeKernel = np.zeros((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum, maxObjNum, maxObjNum))
+        self.skip = np.ones((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum), dtype=bool)
+        for Ga in range(self.nConfigs):
+            for Gb in range(self.nConfigs):
+                for r in range(len(self.objects[Ga])):
+                    for s in range(len(self.objects[Gb])):
+                        edgeKernel = np.zeros((maxObjNum, maxObjNum))
+                        for rprime, e in self.neighbors[Ga][r]:
+                            for sprime, f in self.neighbors[Gb][s]:
+                                k_edge = np.dot(e, f)
+                                if k_edge > 1e-6:
+                                    edgeKernel[rprime, sprime] = k_edge
+                                    self.skip[Ga, Gb, r, s] = False
+                        self.preComputedEdgeKernel[Ga, Gb, r, s] = edgeKernel
+
+        self.freq = np.zeros((self.nConfigs, maxObjNum))
+        for G in range(self.nConfigs):
+            for index, na in enumerate(self.objects[G]):
+                for nb in self.objects[G]:
+                    self.freq[G,index] += self.modelKernel(na, nb)
+                self.freq[G,index] = 1 / self.freq[G,index]
+                
+        maxP = 5
+        self.dp = np.zeros((maxP, self.nConfigs, self.nConfigs, maxObjNum, maxObjNum))
+        for Ga in range(self.nConfigs):
+            for Gb in range(self.nConfigs):
+                for r in range(len(self.objects[Ga])):
+                    for s in range(len(self.objects[Gb])):
+                        self.dp[0, Ga, Gb, r, s] = self.finalModelKernel(Ga, Gb, r, s)
+                        
+        for p in range(1, maxP):
+            for Ga in range(self.nConfigs):
+                for Gb in range(self.nConfigs):
+                    for r in range(len(self.objects[Ga])):
+                        for s in range(len(self.objects[Gb])):
+                            if self.dp[0, Ga, Gb, r, s] == 0 or self.skip[Ga, Gb, r, s]:
+                                continue
+                            self.dp[p, Ga, Gb, r, s] = self.dp[0, Ga, Gb, r, s] * np.sum(self.preComputedEdgeKernel[Ga, Gb, r, s] * self.dp[p-1, Ga, Gb])
+                            
+        self.graphKernel = np.zeros((maxP, self.nConfigs, self.nConfigs))
+        for p in range(maxP):
+            for Ga in range(self.nConfigs):
+                for Gb in range(self.nConfigs):
+                    for r in range(len(self.objects[Ga])):
+                        for s in range(len(self.objects[Gb])):
+                            self.graphKernel[p, Ga, Gb] += self.dp[p, Ga, Gb, r, s]
+                            
+        self.normalizedGraphKernel = np.zeros((maxP, self.nConfigs, self.nConfigs))
+        for p in range(maxP):
+            for Ga in range(self.nConfigs):
+                for Gb in range(self.nConfigs):
+                    self.normalizedGraphKernel[p, Ga, Gb] = self.graphKernel[p, Ga, Gb] / max(self.graphKernel[p, Ga, Ga], self.graphKernel[p, Gb, Gb])
+
+        self.graphDistance = np.sqrt(2 - 2 * self.normalizedGraphKernel)
+        results['silmilarity'] = self.graphDistance.tolist()
+
+    def k_iden(self, r, s):
+        # 1 if geo & texture else 0
+        return r == s
+
+    def k_tag(self, r, s):
+        if len(self.objCat[r]) == 0 or len(self.objCat[s]) == 0:
+            return 0
+        rCat = self.objCat[r][0].lower()
+        sCat = self.objCat[s][0].lower()
+        if rCat == sCat:
+            return 1
+        elif 'chair' in rCat and 'chair' in sCat:
+            return 0.5
+        elif 'sofa' in rCat and 'sofa' in sCat:
+            return 0.5
+        return 0
+
+    def k_geo(self, r, s):
+        return self.k_iden(r, s)
+        # TODO: 3D Zernike descriptor
+        # n = 100
+        # drs = zernikeDistance(r, s)
+        # k = 2 * drs / min(nthZernikeDistance(r, n), nthZernikeDistance(s, n))
+        # return math.exp(-(k ** 2))
+
+    def modelKernel(self, r, s):
+        k_node = 0.1 * self.k_iden(r, s) + 0.6 * self.k_tag(r, s) + 0.3 * self.k_geo(r, s)
+        return k_node
+
+    def finalModelKernel(self, Ga, Gb, r, s):
+        k_node = self.freq[Ga, r] * self.freq[Gb, s] * self.modelKernel(self.objects[Ga][r], self.objects[Gb][s])
+        if k_node < 1e-6:
+            k_node = 0
+        return k_node
 
 def cgs(domID, subIDs, seriesName):
     filenames = os.listdir(f'./layoutmethods/cgseries/{domID}/{seriesName}') # init
@@ -492,3 +608,6 @@ def patternRefine():
 
 if __name__ == "__main__":
     cgs('7644', None, 'init')
+    # with open('./layoutmethods/cgseries/7644/init/result.json') as f:
+    #     results = json.load(f)
+    # cgDiff(results)
