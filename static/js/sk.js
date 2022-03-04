@@ -565,6 +565,7 @@ const onTouchObj = function (event) {
 };
 
 const onClickIntersectObject = function(event){
+    duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);

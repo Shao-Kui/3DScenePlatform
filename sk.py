@@ -7,6 +7,9 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import torch
 from shapely.geometry.polygon import Polygon, LineString, Point
+import pathTracing as pt
+from datetime import datetime
+from itertools import chain, combinations
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -106,6 +109,12 @@ def preloadAABBs(scene):
     for room in scene['rooms']:
         for obj in room['objList']:
             preloadAABB(obj)
+
+# https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 def getWallHeight(meshPath):
     mesh = as_mesh(trimesh.load(meshPath))
@@ -314,6 +323,8 @@ def extractGroup(objList, dom, modelIDs):
     for obj in objList:
         if 'modelId' not in obj:
             continue
+        if not objectInDataset(obj['modelId']):
+            continue
         if obj['modelId'] == dom:
             domObj = obj
         if obj['modelId'] in modelIDs:
@@ -332,14 +343,73 @@ def extractGroup(objList, dom, modelIDs):
             'orient': relativeOrient.tolist(),
             'scale': relativeScale.tolist()
         })
-    return [
-        generateGroup(subPriors, dom, [1,1,1]), 
-        generateGroup(subPriors, dom, [-1,1,1]), 
-        generateGroup(subPriors, dom, [-1,1,-1]), 
-        generateGroup(subPriors, dom, [1,1,-1])
-    ]
+    subSetOfsubPriors = list(powerset(subPriors))
+    subSetOfsubPriors = subSetOfsubPriors[1:len(subSetOfsubPriors)]
+    res = []
+    for subSet in subSetOfsubPriors:
+        if len(subPriors) == len(list(subSet)):
+            res += [generateGroup(list(subSet), dom, [1,1,1], True)]
+        else:
+            res += [generateGroup(list(subSet), dom, [1,1,1], False)]
+        res += [
+            generateGroup(list(subSet), dom, [-1,1,1], False), 
+            generateGroup(list(subSet), dom, [-1,1,-1], False), 
+            generateGroup(list(subSet), dom, [1,1,-1], False)
+        ]
+    return res
 
-def generateGroup(subPriors, domModelId, domScale=[1,1,1]):
+def calCamUpVec(origin, target):
+    # calculate the 'up' vector via the normal of plane;    
+    upInit = np.array([0., 1., 0.])
+    normal = target - origin
+    normal = normal / np.linalg.norm(normal, ord=2)
+    up = upInit - np.sum(upInit * normal) * normal
+    up = up / np.linalg.norm(up, ord=2)
+    return up
+
+def cgRender(newObjList, ma, mi, viewAnchor):
+    now = datetime.now()
+    dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    casename = f"{'-'.join(map(lambda x: x['modelId'], newObjList))}-{dt_string}"
+    scenejson = {'rooms': [{'objList': newObjList, 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': casename}
+
+    mid = (ma + mi)/2
+    # calculating origin & target & up of the perspective camera:
+    # scenejson["PerspectiveCamera"]["target"] = [mid[0], 0, mid[2]]
+    # origin = mid + (mi - mid) * np.cos(np.pi / 4)
+    # r = np.linalg.norm(ma[[0,2]] - mi[[0,2]]) / 2
+    # scenejson["PerspectiveCamera"]["origin"] = [origin[0], r * np.cos(np.pi / 4), origin[2]]
+
+    # scenejson["PerspectiveCamera"]["target"] = [0,0,0]
+    # origin = anchorNorm * 2
+    # scenejson["PerspectiveCamera"]["origin"] = [origin[0], mid[1], origin[1]]
+
+    # print(ma, mi)
+    # vec = mid.copy()
+    # vec[1] = ma[1]
+    # vec = np.array([viewAnchor[0], ma[1], viewAnchor[1]]) - vec
+    # print(vec)
+    # vec = vec + vec * ((ma[1] - mi[1]) / np.tan(DEFAULT_FOV)) / np.linalg.norm(vec)
+    # vec[1] = ma[1]
+    # scenejson["PerspectiveCamera"]["origin"] = vec.tolist()
+    # tar = np.array([viewAnchor[0], ma[1] - ((ma[1] - mi[1]) / np.tan(DEFAULT_FOV)) * np.tan(DEFAULT_FOV/2), viewAnchor[1]])
+    # scenejson["PerspectiveCamera"]["target"] = tar.tolist()
+
+    diag_length = np.linalg.norm(ma - mi) * 0.69
+    center = (ma + mi)/2
+    # [0.7946, 0.1876, 0.5774]
+    # [-0.3035, 0.1876, 0.9342]
+    # [-0.1876, 0.7947, 0.5774]
+    # [0.4911, 0.7947, 0.3568]
+    origin = np.array([0.4911, 0.7947, 0.3568]) * diag_length + center
+    scenejson["PerspectiveCamera"]["origin"] = origin.tolist()
+    scenejson["PerspectiveCamera"]["target"] = center.tolist()
+
+    scenejson["PerspectiveCamera"]["up"] = calCamUpVec(np.array(scenejson["PerspectiveCamera"]["origin"]), np.array(scenejson["PerspectiveCamera"]["target"])).tolist()
+    scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
+    pt.pathTracing(scenejson, 4, f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
+
+def generateGroup(subPriors, domModelId, domScale=[1,1,1], isRender=False):
     res = {
         'subPriors': subPriors.copy(),
         'objects': [],
@@ -349,6 +419,8 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1]):
     domObj = {'translate': [0,0,0], 'rotate': [0,0,0], 'orient': 0, 'scale': domScale, 'modelId': domModelId}
     preloadAABB(domObj)
     bbs = np.vstack((bbs, domObj['AABB']['eightPoints']))
+    newObjList = [domObj]
+    objPolyUnion = Polygon(domObj['AABB']['eightPoints'][0:4][:,[0,2]])
     for subPrior in subPriors:
         obj = {
             'translate': (np.array(subPrior['translate']) * np.array(domScale)).tolist(),
@@ -358,6 +430,8 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1]):
         }
         preloadAABB(obj)
         bbs = np.vstack((bbs, obj['AABB']['eightPoints']))
+        newObjList.append(obj)
+        objPolyUnion = objPolyUnion.union(Polygon(obj['AABB']['eightPoints'][0:4][:,[0,2]]))
         res['objects'].append(obj['modelId'])
     ma = np.max(bbs, axis=0)
     mi = np.min(bbs, axis=0)
@@ -371,9 +445,13 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1]):
     res['depthDis'] = distances[(indicesList[0]+2)%4]
     res['leftDis'] = distances[(indicesList[0]+1)%4]
     res['rightDis'] = distances[(indicesList[0]+3)%4]
-    # constraints: area & #objects & ... :
+    # constraints: area & #objects & space utilization... :
     res['area'] = (ma[0] - mi[0]) * (ma[2] - mi[2])
     res['objNum'] = len(res['objects'])
+    res['spaceUtil'] = objPolyUnion.area / res['area']
+    # render groups: 
+    if isRender:
+        cgRender(newObjList, ma, mi, gbb[2])
     return res
 
 def getObjectsUpperLimit(l, k):
@@ -389,7 +467,13 @@ def getObjectsUpperLimit(l, k):
 def cgDiff(results):
     pass
 
+CURRENT_seriesName = None
+CURRENT_domID = None
 def cgs(domID, subIDs, seriesName):
+    global CURRENT_seriesName
+    global CURRENT_domID
+    CURRENT_seriesName = seriesName
+    CURRENT_domID = domID
     filenames = os.listdir(f'./layoutmethods/cgseries/{domID}/{seriesName}') # init
     results = {
         'domID': domID,
@@ -399,6 +483,7 @@ def cgs(domID, subIDs, seriesName):
         'rightDises': [],
         'areas': [],
         'objNums': [],
+        'spaceUtils': [],
         'configs': [],
         'involvedObjects': [],
         'enabled': False
@@ -410,6 +495,8 @@ def cgs(domID, subIDs, seriesName):
                 continue
             with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
                 scenejson = json.load(f)
+            if 'rooms' not in scenejson:
+                continue
             for obj in scenejson['rooms'][0]['objList']:
                 if obj['modelId'] != domID and obj['modelId'] not in subIDs:
                     subIDs.append(obj['modelId'])
@@ -419,6 +506,8 @@ def cgs(domID, subIDs, seriesName):
             continue
         with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
             scenejson = json.load(f)
+        if 'rooms' not in scenejson:
+            continue
         preloadAABBs(scenejson)
         results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], domID, subIDs) # e.g., '7644' ['3699', '7836', '2740', '2565']
     cgDiff(results)
@@ -429,6 +518,7 @@ def cgs(domID, subIDs, seriesName):
         results['rightDises'].append(config['rightDis'])
         results['objNums'].append(config['objNum'])
         results['areas'].append(config['area'])
+        results['spaceUtils'].append(config['spaceUtil'])
         results['involvedObjects'] = getObjectsUpperLimit(results['involvedObjects'], config['objects'])
     with open(f'./layoutmethods/cgseries/{results["domID"]}/{seriesName}/result.json', 'w') as f:
         json.dump(results, f)
@@ -491,4 +581,7 @@ def patternRefine():
                 json.dump(pri, f)
 
 if __name__ == "__main__":
-    cgs('7644', None, 'init')
+    # cgs('6453', None, '梳妆台哈哈')
+    # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
+    # cgs('7644', None, '系列啊')
+    cgs('5010', None, '灰色现代风')
