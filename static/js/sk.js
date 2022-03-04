@@ -1232,6 +1232,22 @@ const setting_up = function () {
     });
     
     $("#usercommitchange_button").click(() => {
+        username = $("#username").val();
+        alipay = $("#alipay").val();
+        series = $("#series").val();
+        if (username == "") {
+            alert("请填写支付宝用户名");
+            return;
+        }
+        if (alipay == "") {
+            alert("请填写支付宝账号");
+            return;
+        }
+        if (series == "") {
+            alert("请填写风格系列名");
+            return;
+        }
+
         if (MAIN_OBJ != undefined) {
             let mainobjexists = false;
             for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
@@ -1243,16 +1259,14 @@ const setting_up = function () {
             }
         }
         if (MAIN_OBJ == undefined) {
-            $('<div class="alert alert-danger">请选择主物体</div>')
-            .insertBefore('#mainObjDiv').delay(3000).fadeOut(()=>{
+            $('<div class="alert alert-danger">请点亮主物体上的小旗子按钮</div>')
+            .insertBefore('#mainObjDiv').delay(5000).fadeOut(()=>{
                 $(this).remove();
             });
+            alert("请选择主物体");
             return;
         }
         
-        username = $("#username").val();
-        alipay = $("#alipay").val();
-        series = $("#series").val();
         const regex = /^([\u3400-\u4DBF\u4E00-\u9FFF_\-a-zA-Z0-9]){1,30}$/;
         if (regex.test(username)) {
             $.ajax({
@@ -1261,7 +1275,8 @@ const setting_up = function () {
                 url: `/usercommitchange/${username}`,
                 data: JSON.stringify({mainobj: MAIN_OBJ.userData.modelId, series: series, alipay: alipay, username: username, json: getDownloadSceneJson()}),
                 success: function (msg) {
-                    $('#commitSuccessMessage').text(`Your submission is received: ${msg}`);
+                    let s = msg.split(' ');
+                    $('#commitSuccessMessage').html(`您的提交已收到：${s[1]}<br/>提交次数：${s[0]}`);
                     $('#commitSuccessModal').modal('show');
                     let mainObjId = MAIN_OBJ.userData.modelId;
                     if (mainObjId in USED_OBJ_LIST) {
@@ -1272,10 +1287,11 @@ const setting_up = function () {
                     } else {
                         USED_OBJ_LIST[mainObjId] = [];
                         for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
-                            USED_OBJ_LIST[mainObjId].push(obj.modelId);
+                            if (!USED_OBJ_LIST[mainObjId].includes(obj.modelId))
+                                USED_OBJ_LIST[mainObjId].push(obj.modelId);
                         }
                     }
-                    $('#usedObjDiv').text(`Used Object: ${USED_OBJ_LIST[mainObjId].filter((v, idx)=>{ return v != mainObjId}).join(', ')}`)
+                    $('#usedObjDiv').text(`Used Object: ${USED_OBJ_LIST[mainObjId].filter((v, idx)=>{ return v != mainObjId}).join(';')}`)
                     window.sessionStorage.setItem('UsedObject', JSON.stringify(USED_OBJ_LIST));
                 }
             });
