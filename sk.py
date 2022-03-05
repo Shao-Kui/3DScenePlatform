@@ -7,13 +7,10 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import torch
 from shapely.geometry.polygon import Polygon, LineString, Point
-<<<<<<< HEAD
 import pathTracing as pt
 from datetime import datetime
 from itertools import chain, combinations
-=======
 import math
->>>>>>> f6b56e4834755039d2a1592fe56ec09f7db077e9
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -695,6 +692,8 @@ def patternRefine():
 
 if __name__ == "__main__":
     # cgs('6453', None, '梳妆台哈哈')
-    # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
-    # cgs('7644', None, '系列啊')
+    cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
+    cgs('7644', None, '系列啊')
     cgs('5010', None, '灰色现代风')
+    cgs('5933', None, '灰色现代风')
+    cgs('6824', None, '灰色现代风')
