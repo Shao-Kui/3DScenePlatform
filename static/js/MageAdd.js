@@ -796,6 +796,8 @@ const loadCGSeries = function(modelId){
             cgseries.leftDises = tf.tensor(cgseries.leftDises);
             cgseries.rightDises = tf.tensor(cgseries.rightDises);
             cgseries.areas = tf.tensor(cgseries.areas);
+            cgseries.objNums = tf.tensor(cgseries.objNums);
+            cgseries.spaceUtils = tf.tensor(cgseries.spaceUtils);
             // this may require a systematic optimization, since objList can be reduced to a single room;
             cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
             cgseries.object3ds = [];
@@ -833,7 +835,8 @@ const moveCGSeries = function(){
         let wallIndex = ftnw[0][0];    
         // This should be a weighted sum of energies. 
         // Currently, we consider only areas. 
-        let scores = cgseries.areas; 
+        let scores = cgseries.areas.add(cgseries.objNums.mul(1)).add(cgseries.spaceUtils.mul(5)); 
+        // let scores = cgseries.spaceUtils;
         // left & right: 
         let leftIndex = (wallIndex + 1) % rsArray.length;
         let rightIndex = (wallIndex + rsArray.length - 1) % rsArray.length;
@@ -845,23 +848,28 @@ const moveCGSeries = function(){
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
         // filter out priors exceed the depth & left & right: 
-        console.log(wallIndex, depthIndex, leftIndex, rightIndex);
+        // console.log(wallIndex, depthIndex, leftIndex, rightIndex);
         let constraints = cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1]))
         .logicalAnd(cgseries.depthDises.less(wallDistances.slice([depthIndex], [1]))) 
         .logicalAnd(cgseries.leftDises.less(wallDistances.slice([leftIndex], [1]))) 
         .logicalAnd(cgseries.rightDises.less(wallDistances.slice([rightIndex], [1])));
         scores = scores.where(constraints, -1); 
-        cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1])).print();
-        scores.print();
+        // cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1])).print();
+        // scores.print();
         let index = tf.argMax(scores).arraySync();
         if(scores.slice([index], [1]).arraySync()[0] < 0){
             CGSERIES_GROUP.clear();
             return;
         }
+        // expanding factor: 
+        let ef = wallDistances.slice([wallIndex], [1]).div(cgseries.anchorDises.slice([index], [1])).arraySync();
+        ef = (ef > 1.5) ? 1.5 : ef;  
         let theprior = cgseries.configs[index];
         let domOrient = theprior['anchorOri'] + roomOrient[wallIndex];
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, domOrient, 0], 'rotation', true); 
         gsap.to(CGSERIES_GROUP.rotation, {duration: commonSmoothDuration, y: domOrient});
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, theprior['domScale'], 'scale', false); 
+        gsap.to(CGSERIES_GROUP.scale, {duration: commonSmoothDuration, x:theprior['domScale'][0], y:theprior['domScale'][1], z:theprior['domScale'][2]});
         cgseries.object3ds.forEach(c => {c.onUsed = false;});
         theprior.subPriors.forEach(p => {
             // find a correspongding object w.r.t p: 

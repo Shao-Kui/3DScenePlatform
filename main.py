@@ -387,12 +387,12 @@ def loadOnlineGroup(groupName):
                 with open(f'./examples/onlineScenes/{groupName}.json') as f:
                     onlineScenes[groupName] = json.load(f)
             except:
-                with open('./assets/demo.json') as f:
+                with open('./examples/initth.json') as f:
                     onlineScenes[groupName] = json.load(f)
             onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName]) 
             print('Returned the Cached Scene. ')
         else:
-            with open('./assets/demo.json') as f:
+            with open('./examples/initth.json') as f:
                 onlineScenes[groupName] = json.load(f)
             onlineScenes[groupName] = generateObjectsUUIDs(onlineScenes[groupName])
 

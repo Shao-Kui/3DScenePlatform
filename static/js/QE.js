@@ -110,6 +110,7 @@ const topdownview = function(){
 };
 
 var ctrlPressing = false;
+var duplicateTimes = 1;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
     switch ( event.keyCode ) {
@@ -157,6 +158,19 @@ const onKeyDown = function(event){
             break;
         case 17:
             ctrlPressing = true;
+            break;
+
+        case 68: // d
+            if(INTERSECT_OBJ === undefined){break;}
+            addObjectFromCache(
+                modelId=INTERSECT_OBJ.userData.modelId,
+                transform={
+                    'translate': [INTERSECT_OBJ.position.x+0.1*duplicateTimes, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+0.1*duplicateTimes], 
+                    'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
+                    'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z]
+                }
+            );
+            duplicateTimes += 1;
             break;
     }
     if(event.keyCode === 90 && ctrlPressing){
@@ -270,17 +284,17 @@ const firstPersonUpdate = function(){
         let camera_direction = firstPersonControls.getDirection(new THREE.Vector3());
         if ( fpctrl.moveForward || fpctrl.moveBackward ){
             camera.position.x += camera_direction.x * delta * fw;
-            // camera.position.y += camera_direction.y * delta * fw;
+            // camera.position.y += camera_direction.y * delta * fw; // Subnautica. 
             camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2;
             camera.position.z += camera_direction.z * delta * fw;
             orbitControls.target.x += camera_direction.x * delta * fw;
-            // orbitControls.target.y += camera_direction.y * delta * fw;
+            // orbitControls.target.y += camera_direction.y * delta * fw; // Subnautica. 
             orbitControls.target.z += camera_direction.z * delta * fw;
         }
         if ( fpctrl.moveLeft || fpctrl.moveRight ){
             let v = new THREE.Vector3().crossVectors(camera.up, camera_direction);
             camera.position.x += v.x * delta * lr;
-            // camera.position.y += v.y * delta * lr;
+            // camera.position.y += v.y * delta * lr; // Subnautica. 
             camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2;
             camera.position.z += v.z * delta * lr;
             orbitControls.target.x = camera_direction.x + camera.position.x;
@@ -288,8 +302,8 @@ const firstPersonUpdate = function(){
             orbitControls.target.y = camera_direction.y + camera.position.y;
         }
         if ( fpctrl.moveUp || fpctrl.moveDown ){
-            // camera.position.y += delta * ud;
-            // orbitControls.target.y = camera_direction.y + camera.position.y;
+            // camera.position.y += delta * ud; // Subnautica. 
+            // orbitControls.target.y = camera_direction.y + camera.position.y; // Subnautica. 
         }
     }
 };
