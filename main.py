@@ -272,6 +272,7 @@ def sketch():
     return "Post image! "
 
 # Audio Module. 
+'''
 from layoutmethods import parse
 from layoutmethods import speechRec as spr
 L = parse.LanguageAnalysis()
@@ -298,6 +299,7 @@ def voice():
     else:
         res['cat'] = 'unknown'
     return json.dumps(res)
+'''
 
 @app.route("/sklayout", methods=['POST', 'GET'])
 def sklayout():
