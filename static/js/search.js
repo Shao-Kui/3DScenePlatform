@@ -392,11 +392,11 @@ const clickAutoViewMapping = function(){
                 $(`#grids-${item.identifier}`).css('left', `${($(window).width()-w)/2}px`);
             };
             image.src = `/autoviewimgs/mapping/${item.identifier}`;
-            iDiv.className = "catalogItem";
+            iDiv.className = "mapping catalogItem";
             iDiv.style.backgroundImage = `url(/autoviewimgs/mapping/${item.identifier})`;
             iDiv.style.backgroundSize = '100% 100%';
             iDiv.style.visibility = 'visible';
-            iDiv.addEventListener('mouseover', mappingHover);
+            // iDiv.addEventListener('mouseover', mappingHover);
             // iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
             iDiv.classList.add('tiler');
@@ -422,6 +422,7 @@ const clickAutoViewMapping = function(){
             $(this).css('width', `${w/ncs}px`);
             $(this).parent().css('height', `${h}px`);
             $(this).parent().css('width', `${w}px`);
+            $(this).parent().css('pointer-events', 'none');
         })
     });
 };

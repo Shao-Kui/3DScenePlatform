@@ -31,6 +31,10 @@
     visibility:hidden;
 }
 
+.mapping.catalogItem:hover>.cell-grid {
+    visibility: visible;
+}
+
 .tiler .cell {
     pointer-events: none;
     opacity: 0;
