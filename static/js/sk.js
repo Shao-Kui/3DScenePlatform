@@ -810,13 +810,16 @@ function onDocumentMouseMove(event) {
         }
         let resDir = new THREE.Vector2(Math.sin(resOri), Math.cos(resOri));
         let oSet = Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
-        let closestDir = oSet.map(d => new THREE.Vector2(d.position.x - INTERSECT_OBJ.position.x, d.position.z - INTERSECT_OBJ.position.z).normalize())
-        .reduce(function(prev, curr) {
-            return (curr.dot(resDir) > prev.dot(resDir) ? curr : prev);
-        });
-        if(closestDir.dot(resDir) >= 0.975){
-            resOri = Math.atan2(closestDir.x, closestDir.y);
+        if(oSet.length > 0){
+            let closestDir = oSet.map(d => new THREE.Vector2(d.position.x - INTERSECT_OBJ.position.x, d.position.z - INTERSECT_OBJ.position.z).normalize())
+            .reduce(function(prev, curr) {
+                return (curr.dot(resDir) > prev.dot(resDir) ? curr : prev);
+            });
+            if(closestDir.dot(resDir) >= 0.975){
+                resOri = Math.atan2(closestDir.x, closestDir.y);
+            }
         }
+        
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
             resOri, 

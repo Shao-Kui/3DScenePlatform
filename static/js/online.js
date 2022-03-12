@@ -98,7 +98,7 @@ const refreshRoomByID = function(roomId, objList, origin=true){
 
 var onlineAnimationTimeLine = gsap.timeline({repeat: 0});
 const animateObject3DOnly = function(transformations){
-    onlineAnimationTimeLine.kill()
+    onlineAnimationTimeLine.kill();
     onlineAnimationTimeLine = gsap.timeline({repeat: 0});
     for(let i = 0; i < transformations.length; i++){
         let t = transformations[i];
@@ -123,6 +123,7 @@ const animateObject3DOnly = function(transformations){
 }
 
 const transformObjectByUUID = function(uuid, transform, roomID){
+    duplicateTimes = 1;
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
     object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
     object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
@@ -219,6 +220,7 @@ const onlineInitialization = function(){
     onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
     onlineFuncList['refreshRoomByID'] = refreshRoomByID;
     onlineFuncList['transformRoomShape'] = transformRoomShape;
+    onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){
