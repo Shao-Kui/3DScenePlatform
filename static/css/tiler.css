@@ -31,8 +31,16 @@
     visibility:hidden;
 }
 
-.mapping.catalogItem:hover>.cell-grid {
+.mapping.catalogItem>.cell-grid {
     visibility: visible;
+    transition: width 0.5s, height 0.5s, opacity 0.4s;
+    opacity: 0;
+    width: 0%;
+    height: 0%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 .tiler .cell {
