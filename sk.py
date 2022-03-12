@@ -11,6 +11,7 @@ import pathTracing as pt
 from datetime import datetime
 from itertools import chain, combinations
 import math
+import random
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -318,7 +319,8 @@ def findNearestWalls(shape, p, isOrient=True):
         orients = wn
     return _indicesList, distances, orients
 
-def extractGroup(objList, dom, modelIDs):
+def extractGroup(objList, dom, modelIDs, originIndex):
+    print(dom, modelIDs, originIndex)
     subs = []
     subPriors = []
     for obj in objList:
@@ -346,18 +348,21 @@ def extractGroup(objList, dom, modelIDs):
         })
     subSetOfsubPriors = list(powerset(subPriors))
     subSetOfsubPriors = subSetOfsubPriors[1:len(subSetOfsubPriors)]
+    if len(subSetOfsubPriors) > 75:
+        subSetOfsubPriors = random.sample(subSetOfsubPriors, 75) + subSetOfsubPriors[len(subSetOfsubPriors)-1:len(subSetOfsubPriors)]
     res = []
     for subSet in subSetOfsubPriors:
         if len(subPriors) == len(list(subSet)):
-            res += [generateGroup(list(subSet), dom, [1,1,1], True)]
+            originConfig = [generateGroup(list(subSet), dom, [1,1,1], originIndex, False)]
+            res += originConfig
         else:
-            res += [generateGroup(list(subSet), dom, [1,1,1], False)]
+            res += [generateGroup(list(subSet), dom, [1,1,1], originIndex, False)]
         res += [
-            generateGroup(list(subSet), dom, [-1,1,1], False), 
-            generateGroup(list(subSet), dom, [-1,1,-1], False), 
-            generateGroup(list(subSet), dom, [1,1,-1], False)
+            generateGroup(list(subSet), dom, [-1,1,1], originIndex, False), 
+            generateGroup(list(subSet), dom, [-1,1,-1], originIndex, False), 
+            generateGroup(list(subSet), dom, [1,1,-1], originIndex, False)
         ]
-    return res
+    return res, originConfig
 
 def calCamUpVec(origin, target):
     # calculate the 'up' vector via the normal of plane;    
@@ -368,34 +373,11 @@ def calCamUpVec(origin, target):
     up = up / np.linalg.norm(up, ord=2)
     return up
 
-def cgRender(newObjList, ma, mi, viewAnchor):
+def cgRender(newObjList, ma, mi):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = f"{'-'.join(map(lambda x: x['modelId'], newObjList))}-{dt_string}"
     scenejson = {'rooms': [{'objList': newObjList, 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': casename}
-
-    mid = (ma + mi)/2
-    # calculating origin & target & up of the perspective camera:
-    # scenejson["PerspectiveCamera"]["target"] = [mid[0], 0, mid[2]]
-    # origin = mid + (mi - mid) * np.cos(np.pi / 4)
-    # r = np.linalg.norm(ma[[0,2]] - mi[[0,2]]) / 2
-    # scenejson["PerspectiveCamera"]["origin"] = [origin[0], r * np.cos(np.pi / 4), origin[2]]
-
-    # scenejson["PerspectiveCamera"]["target"] = [0,0,0]
-    # origin = anchorNorm * 2
-    # scenejson["PerspectiveCamera"]["origin"] = [origin[0], mid[1], origin[1]]
-
-    # print(ma, mi)
-    # vec = mid.copy()
-    # vec[1] = ma[1]
-    # vec = np.array([viewAnchor[0], ma[1], viewAnchor[1]]) - vec
-    # print(vec)
-    # vec = vec + vec * ((ma[1] - mi[1]) / np.tan(DEFAULT_FOV)) / np.linalg.norm(vec)
-    # vec[1] = ma[1]
-    # scenejson["PerspectiveCamera"]["origin"] = vec.tolist()
-    # tar = np.array([viewAnchor[0], ma[1] - ((ma[1] - mi[1]) / np.tan(DEFAULT_FOV)) * np.tan(DEFAULT_FOV/2), viewAnchor[1]])
-    # scenejson["PerspectiveCamera"]["target"] = tar.tolist()
-
     diag_length = np.linalg.norm(ma - mi) * 0.69
     center = (ma + mi)/2
     # [0.7946, 0.1876, 0.5774]
@@ -410,7 +392,7 @@ def cgRender(newObjList, ma, mi, viewAnchor):
     scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
     pt.pathTracing(scenejson, 4, f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
 
-def generateGroup(subPriors, domModelId, domScale=[1,1,1], isRender=False):
+def generateGroup(subPriors, domModelId, domScale=[1,1,1], originIndex=-1, isRender=False):
     res = {
         'subPriors': subPriors.copy(),
         'objects': [],
@@ -449,10 +431,27 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1], isRender=False):
     # constraints: area & #objects & space utilization... :
     res['area'] = (ma[0] - mi[0]) * (ma[2] - mi[2])
     res['objNum'] = len(res['objects'])
+    res['catNum'] = len(list(dict.fromkeys(res['objects'])))
+    res['dpAnchor'] = 0.
+    res['dpLeft'] = 0.
+    res['dpRight'] = 0.
+    res['dpDepth'] = 0.
+    for o in newObjList:
+        if getobjCat(o['modelId']) in ['Wine Cabinet', 'Bookcase / jewelry Armoire', 'Drawer Chest / Corner cabinet', 'Wardrobe']:
+            il, _d, _o = findNearestWalls(gbb, np.array(o['translate'])[[0, 2]])
+            if il[0] == indicesList[0]:
+                res['dpAnchor'] = 1.
+            if il[0] == (indicesList[0]+1)%4:
+                res['dpLeft'] = 1.
+            if il[0] == (indicesList[0]+3)%4:
+                res['dpRight'] = 1.
+            if il[0] == (indicesList[0]+2)%4:
+                res['dpDepth'] = 1.
     res['spaceUtil'] = objPolyUnion.area / res['area']
+    res['originCG'] = originIndex
     # render groups: 
     if isRender:
-        cgRender(newObjList, ma, mi, gbb[2])
+        cgRender(newObjList, ma, mi)
     return res
 
 def getObjectsUpperLimit(l, k):
@@ -540,7 +539,7 @@ class cgDiff:
                     self.normalizedGraphKernel[p, Ga, Gb] = self.graphKernel[p, Ga, Gb] / max(self.graphKernel[p, Ga, Ga], self.graphKernel[p, Gb, Gb])
 
         self.graphDistance = np.sqrt(2 - 2 * self.normalizedGraphKernel)
-        results['silmilarity'] = self.graphDistance.tolist()
+        results['similarity'] = self.graphDistance.tolist()
 
     def k_iden(self, r, s):
         # 1 if geo & texture else 0
@@ -593,8 +592,15 @@ def cgs(domID, subIDs, seriesName):
         'rightDises': [],
         'areas': [],
         'objNums': [],
+        'catNums': [],
         'spaceUtils': [],
+        'dpAnchors' : [],
+        'dpLefts' : [],
+        'dpRights' : [],
+        'dpDepths' : [],
+        'originCGs': [],
         'configs': [],
+        # 'originConfigs': [],
         'involvedObjects': [],
         'enabled': False
     }
@@ -610,17 +616,28 @@ def cgs(domID, subIDs, seriesName):
             for obj in scenejson['rooms'][0]['objList']:
                 if obj['modelId'] != domID and obj['modelId'] not in subIDs:
                     subIDs.append(obj['modelId'])
-    print(subIDs)
+    cgIndex = 0
+    originConfigs = []
     for filename in filenames:
         if '.json' not in filename:
             continue
-        with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
-            scenejson = json.load(f)
+        try:
+            with open(f'./layoutmethods/cgseries/{domID}/{seriesName}/{filename}') as f:
+                scenejson = json.load(f)
+        except:
+            continue
         if 'rooms' not in scenejson:
             continue
         preloadAABBs(scenejson)
-        results['configs'] += extractGroup(scenejson['rooms'][0]['objList'], domID, subIDs) # e.g., '7644' ['3699', '7836', '2740', '2565']
-    cgDiff(results)
+        configs, originConfig = extractGroup(scenejson['rooms'][0]['objList'], domID, subIDs, cgIndex) # e.g., '7644' ['3699', '7836', '2740', '2565']
+        results['configs'] += configs
+        originConfigs += originConfig
+        cgIndex += 1
+    resultOrigin = {'domID': results['domID'], 'configs': originConfigs}
+    cgDiff(resultOrigin)
+    resultOrigin['similarity'] = np.array(resultOrigin['similarity'])
+    results['diffMatrix'] = resultOrigin['similarity'][(resultOrigin['similarity'].shape[0]-1)].tolist()
+    print(results['diffMatrix'])
     for config in results['configs']:
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
@@ -629,18 +646,15 @@ def cgs(domID, subIDs, seriesName):
         results['objNums'].append(config['objNum'])
         results['areas'].append(config['area'])
         results['spaceUtils'].append(config['spaceUtil'])
+        results['catNums'].append(config['catNum'])
+        results['dpAnchors'].append(config['dpAnchor'])
+        results['dpLefts'].append(config['dpLeft'])
+        results['dpRights'].append(config['dpRight'])
+        results['dpDepths'].append(config['dpDepth'])
+        results['originCGs'].append(config['originCG'])
         results['involvedObjects'] = getObjectsUpperLimit(results['involvedObjects'], config['objects'])
     with open(f'./layoutmethods/cgseries/{results["domID"]}/{seriesName}/result.json', 'w') as f:
         json.dump(results, f)
-    # if not os.path.exists(f'./layoutmethods/cgseries/{results["domID"]}.json'):
-    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'w') as f:
-    #         json.dump({seriesName: results}, f)
-    # else:
-    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'r') as f:
-    #         _t = json.load(f)
-    #     with open(f'./layoutmethods/cgseries/{results["domID"]}.json', 'w') as f:
-    #         _t[seriesName] = results
-    #         json.dump(_t, f)
 
 def patternRefine():
     ppris = os.listdir('./latentspace/pos-orient-4')
