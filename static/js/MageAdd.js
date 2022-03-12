@@ -772,6 +772,7 @@ var cgseries = {
     dpRights: tf.tensor([]),
     dpDepths: tf.tensor([]),
     originCGs: tf.tensor([]),
+    diffMatrix: tf.tensor([]),
     configs: [],
     enabled: false
 }
@@ -793,6 +794,7 @@ const loadCGSeries = function(modelId){
                 On_CGSeries = false;
                 return
             }
+            CGSERIES_GROUP.lastIndex = undefined;
             cgseries.anchorDises.dispose();
             cgseries.depthDises.dispose();
             cgseries.leftDises.dispose();
@@ -806,6 +808,7 @@ const loadCGSeries = function(modelId){
             cgseries.dpRights.dispose(); 
             cgseries.dpDepths.dispose(); 
             cgseries.originCGs.dispose(); 
+            cgseries.diffMatrix.dispose();
             cgseries = newcgseries;      
             cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
             cgseries.depthDises = tf.tensor(cgseries.depthDises);
@@ -819,7 +822,8 @@ const loadCGSeries = function(modelId){
             cgseries.dpLefts = tf.tensor(cgseries.dpLefts);
             cgseries.dpRights = tf.tensor(cgseries.dpRights);
             cgseries.dpDepths = tf.tensor(cgseries.dpDepths);
-            cgseries.originCGs = tf.tensor(cgseries.originCGs);
+            cgseries.originCGs = tf.tensor(cgseries.originCGs, [cgseries.originCGs.length], 'int32');
+            cgseries.diffMatrix = tf.tensor(cgseries.diffMatrix);
             // this may require a systematic optimization, since objList can be reduced to a single room;
             cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
             cgseries.object3ds = [];
@@ -857,8 +861,8 @@ const moveCGSeries = function(){
         let wallIndex = ftnw[0][0];    
         // This should be a weighted sum of energies. 
         // Currently, we consider only areas. 
-        let scores = cgseries.areas.add(cgseries.objNums.mul(1)).add(cgseries.spaceUtils.mul(5)); 
-        // let scores = cgseries.spaceUtils;
+        let scores = cgseries.areas.mul(1).add(cgseries.objNums.mul(1)).add(cgseries.catNums.mul(1)).add(cgseries.spaceUtils.mul(5)); 
+        // let scores = cgseries.objNums.mul(1);
         // left & right: 
         let leftIndex = (wallIndex + 1) % rsArray.length;
         let rightIndex = (wallIndex + rsArray.length - 1) % rsArray.length;
@@ -869,6 +873,19 @@ const moveCGSeries = function(){
         let vecLeft =  new THREE.Vector2(rsArray[_dli][0], rsArray[_dli][1]).sub(new THREE.Vector2(rsArray[leftIndex][0], rsArray[leftIndex][1]));
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
+        // Dependencies
+        scores = scores.add(tf.exp(wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises)).mul(cgseries.dpAnchors).mul(-1));
+        scores = scores.add(tf.exp(wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises)).mul(cgseries.dpDepths).mul(-1));
+        scores = scores.add(tf.exp(wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises)).mul(cgseries.dpLefts).mul(-1));
+        scores = scores.add(tf.exp(wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises)).mul(cgseries.dpRights).mul(-1));
+        // Smoothness
+        if(CGSERIES_GROUP.lastIndex){
+            let diffVec = cgseries.diffMatrix.slice([cgseries.configs[CGSERIES_GROUP.lastIndex].originCG], [1]).squeeze();
+            diffVec = diffVec.gather(cgseries.originCGs);
+            scores.add(diffVec.mul(-2))
+        }
+        
+
         // filter out priors exceed the depth & left & right: 
         // console.log(wallIndex, depthIndex, leftIndex, rightIndex);
         let constraints = cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1]))
@@ -879,8 +896,10 @@ const moveCGSeries = function(){
         // cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1])).print();
         // scores.print();
         let index = tf.argMax(scores).arraySync();
+        CGSERIES_GROUP.lastIndex = index;
         if(scores.slice([index], [1]).arraySync()[0] < 0){
             CGSERIES_GROUP.clear();
+            CGSERIES_GROUP.lastIndex = undefined;
             return;
         }
         // expanding factor: 
