@@ -24,11 +24,9 @@ const clickCatalogItem = function (e, d=undefined) {
     }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId); 
-    
 }
 
 const clickTextureItem = function(e){
-    console.log($(e.target));
     let texture = new THREE.TextureLoader().load($(e.target).data("imgpath"));
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -317,6 +315,7 @@ const mappingHover = function(e){
     $(`#grids-${meta.identifier} .cell`).css('width', `${w/ncs}px`);
     $(`#grids-${meta.identifier}`).css('top', `${($(window).height()-h)/2}px`);
     $(`#grids-${meta.identifier}`).css('left', `${($(window).width()-w)/2}px`);
+    console.log('Hovered')
 }
 
 const mappingLeave = function(e){
@@ -376,6 +375,9 @@ const clickAutoViewMapping = function(){
         while (catalogItems.firstChild) {
             catalogItems.firstChild.remove();
         }
+        // searchResults.push({
+        //     'identifier': '05d05b98-e95c-4671-935d-7af6a1468d07'
+        // })
         searchResults.forEach(function (item) {
             let iDiv = document.createElement('div');
             let image = new Image();
