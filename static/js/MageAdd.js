@@ -764,6 +764,14 @@ var cgseries = {
     leftDises: tf.tensor([]),
     rightDises: tf.tensor([]),
     areas: tf.tensor([]),
+    objNums: tf.tensor([]),
+    spaceUtils: tf.tensor([]),
+    catNums: tf.tensor([]),
+    dpAnchors: tf.tensor([]),
+    dpLefts: tf.tensor([]),
+    dpRights: tf.tensor([]),
+    dpDepths: tf.tensor([]),
+    originCGs: tf.tensor([]),
     configs: [],
     enabled: false
 }
@@ -790,6 +798,14 @@ const loadCGSeries = function(modelId){
             cgseries.leftDises.dispose();
             cgseries.rightDises.dispose();
             cgseries.areas.dispose();  
+            cgseries.objNums.dispose(); 
+            cgseries.spaceUtils.dispose(); 
+            cgseries.catNums.dispose(); 
+            cgseries.dpAnchors.dispose(); 
+            cgseries.dpLefts.dispose(); 
+            cgseries.dpRights.dispose(); 
+            cgseries.dpDepths.dispose(); 
+            cgseries.originCGs.dispose(); 
             cgseries = newcgseries;      
             cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
             cgseries.depthDises = tf.tensor(cgseries.depthDises);
@@ -798,6 +814,12 @@ const loadCGSeries = function(modelId){
             cgseries.areas = tf.tensor(cgseries.areas);
             cgseries.objNums = tf.tensor(cgseries.objNums);
             cgseries.spaceUtils = tf.tensor(cgseries.spaceUtils);
+            cgseries.catNums = tf.tensor(cgseries.catNums);
+            cgseries.dpAnchors = tf.tensor(cgseries.dpAnchors);
+            cgseries.dpLefts = tf.tensor(cgseries.dpLefts);
+            cgseries.dpRights = tf.tensor(cgseries.dpRights);
+            cgseries.dpDepths = tf.tensor(cgseries.dpDepths);
+            cgseries.originCGs = tf.tensor(cgseries.originCGs);
             // this may require a systematic optimization, since objList can be reduced to a single room;
             cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
             cgseries.object3ds = [];
@@ -910,4 +932,27 @@ const moveCGSeries = function(){
             }
         }
     }
+}
+
+const synchronize_coherentGroup = function(){
+    let oArray = [];
+    for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
+        let c = CGSERIES_GROUP.children[i];
+        let _x = c.position.x * CGSERIES_GROUP.scale.x, _y = c.position.y * CGSERIES_GROUP.scale.y, _z = c.position.z * CGSERIES_GROUP.scale.z;
+        let tx = Math.cos(CGSERIES_GROUP.rotation.y) * _x + Math.sin(CGSERIES_GROUP.rotation.y) * _z + CGSERIES_GROUP.position.x;
+        let ty = _y + CGSERIES_GROUP.position.y;
+        let tz = -Math.sin(CGSERIES_GROUP.rotation.y) * _x + Math.cos(CGSERIES_GROUP.rotation.y) * _z + CGSERIES_GROUP.position.z;
+        let rx = Math.sin(c.rotation.y) * CGSERIES_GROUP.scale.x;
+        let rz = Math.cos(c.rotation.y) * CGSERIES_GROUP.scale.z;
+        let o = {
+            'modelId': c.userData.modelId,
+            'transform': {
+                'translate': [tx, ty, tz],
+                'rotate': [0, Math.atan2(rx, rz) + CGSERIES_GROUP.rotation.y, 0],
+                'scale': [c.scale.x*CGSERIES_GROUP.scale.x, c.scale.y*CGSERIES_GROUP.scale.y, c.scale.z*CGSERIES_GROUP.scale.z]
+            }
+        }
+        oArray.push(o);
+    }
+    addObjectsFromCache(oArray);
 }

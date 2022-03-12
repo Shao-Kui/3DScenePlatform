@@ -122,51 +122,34 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         'funcName': 'removeObjectByUUID',
         'args': [uuid, true]
     });
-    /*if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectFromCache, anchorArgs=[modelId, transform, uuid, origin]);
-        return; 
-    }
-    // check room ID: 
-    let roomID = calculateRoomID(transform.translate); 
-    let objToInsert = {
-        "modelId": modelId,
-        "coarseSemantic": gatheringObjCat[modelId], 
-        "translate": transform.translate,
-        "scale": transform.scale,
-        "roomId": roomID,
-        "rotate": transform.rotate,
-        "orient": transform.rotate[1], 
-        // "key": serverUUIDs.pop(),
-        "key": uuid,
-        "mageAddDerive": objectCache[modelId].userData.mageAddDerive
-    };
-    let object3d = objectCache[modelId].clone();
-    object3d.name = undefined;
-    object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
-    object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
-    object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
-    object3d.userData = {
-        "type": 'object',
-        "key": objToInsert.key,
-        "roomId": roomID,
-        "modelId": modelId,
-        "coarseSemantic": gatheringObjCat[modelId]
-    };
-    object3d.children.forEach(child => {
-        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
-    });
-    manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
-    manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
-    // manager.renderManager.refresh_instances();
-    object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
-    scene.add(object3d)
-    renderer.render(scene, camera);
-    if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectFromCache', [modelId, transform, uuid, false]);}*/
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     return object3d; 
 };
+
+const addObjectsFromCache = function(oArray){
+    loadMoreServerUUIDs(oArray.length);
+    let uuids = [];
+    console.log(oArray)
+    oArray.forEach(o => {
+        let uuid = serverUUIDs.pop(); // For object, pop a new uuid. 
+        let roomID = calculateRoomID(o.transform.translate);
+        addObjectByUUID(uuid, o.modelId, roomID, o.transform);
+        emitFunctionCall('addObjectByUUID', [uuid, o.modelId, roomID, o.transform]);
+        uuids.push(uuid);
+    });
+    commandStack.push({
+        'funcName': 'removeObjectsByUUID',
+        'args': [uuids]
+    });
+};
+
+const removeObjectsByUUID = function(uuids){
+    uuids.forEach(uuid => {
+        removeObjectByUUID(uuid, true);
+    })
+}
 
 const door_mageAdd_set = []; 
 const window_factor = 0.5; 
@@ -681,8 +664,9 @@ var onClickObj = function (event) {
     }
     if (On_CGSeries) {
         On_CGSeries = false;
-        CGSERIES_GROUP.clear();
         synchronize_json_object(INTERSECT_OBJ);
+        synchronize_coherentGroup();
+        CGSERIES_GROUP.clear();
         applyLayoutViewAdjust();
         return;
     }
