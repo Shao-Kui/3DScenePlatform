@@ -34,6 +34,19 @@ const transformControlsConfig = function(){
             return;
         }
         if(transformControls.mode === 'translate'){
+            let oSet = Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
+            let closestX = oSet.map(d => d.position.x).reduce(function(prev, curr) {
+                return (Math.abs(curr - INTERSECT_OBJ.position.x) < Math.abs(prev - INTERSECT_OBJ.position.x) ? curr : prev);
+            });
+            if(Math.abs(closestX - INTERSECT_OBJ.position.x) < 0.25){
+                INTERSECT_OBJ.position.x = closestX;
+            }
+            let closestZ = oSet.map(d => d.position.z).reduce(function(prev, curr) {
+                return (Math.abs(curr - INTERSECT_OBJ.position.z) < Math.abs(prev - INTERSECT_OBJ.position.z) ? curr : prev);
+            });
+            if(Math.abs(closestZ - INTERSECT_OBJ.position.z) < 0.25){
+                INTERSECT_OBJ.position.z = closestZ;
+            }
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 'position');
         }else if(transformControls.mode === 'rotate'){
