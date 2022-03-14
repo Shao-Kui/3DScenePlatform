@@ -490,7 +490,7 @@ class cgDiff:
                 neighborG.append([[0, edges[i]]])
             self.neighbors.append(neighborG)
 
-        maxObjNum = 6
+        maxObjNum = 20
         self.preComputedEdgeKernel = np.zeros((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum, maxObjNum, maxObjNum))
         self.skip = np.ones((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum), dtype=bool)
         for Ga in range(self.nConfigs):
@@ -637,7 +637,7 @@ def cgs(domID, subIDs, seriesName):
     cgDiff(resultOrigin)
     resultOrigin['similarity'] = np.array(resultOrigin['similarity'])
     results['diffMatrix'] = resultOrigin['similarity'][(resultOrigin['similarity'].shape[0]-1)].tolist()
-    print(results['diffMatrix'])
+    # print(results['diffMatrix'])
     for config in results['configs']:
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
