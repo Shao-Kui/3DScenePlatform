@@ -1228,6 +1228,8 @@ const setting_up = function () {
         }
     });
     
+    initAttributes();
+
     $("#usercommitchange_button").click(() => {
         username = $("#username").val();
         alipay = $("#alipay").val();
@@ -1464,4 +1466,32 @@ const unselectWall = function() {
     transformAdjWF(wg, axis, pos);
 
     INTERSECT_WALL = undefined;
+}
+
+const initAttributes = function() {
+    $('#attrArea').val(0.1).trigger('input');
+    $('#attrNumOfObjects').val(0.2).trigger('input');
+    $('#attrObjRichness').val(0.3).trigger('input');
+    $('#attrSpaceUtilization').val(0.4).trigger('input');
+    $('#attrDependency').val(0.5).trigger('input');
+    $('#attrSmoothness').val(0.6).trigger('input');
+    
+    $('#attrArea').on('change', ()=>{
+        console.log('attrArea', $('#attrArea').val());
+    });
+    $('#attrNumOfObjects').on('change', ()=>{
+        console.log('attrNumOfObjects', $('#attrNumOfObjects').val());
+    });
+    $('#attrObjRichness').on('change', ()=>{
+        console.log('attrObjRichness', $('#attrObjRichness').val());
+    });
+    $('#attrSpaceUtilization').on('change', ()=>{
+        console.log('attrSpaceUtilization', $('#attrSpaceUtilization').val());
+    });
+    $('#attrDependency').on('change', ()=>{
+        console.log('attrDependency', $('#attrDependency').val());
+    });
+    $('#attrSmoothness').on('change', ()=>{
+        console.log('attrSmoothness', $('#attrSmoothness').val());
+    });
 }
