@@ -470,15 +470,16 @@ class cgDiff:
             self.objCat = json.load(f)
         self.configs = results['configs']
         self.nConfigs = len(self.configs)
-        print(self.nConfigs)
         domID = results['domID']
         self.objects = []
         for G in range(self.nConfigs):
             self.objects.append([domID] + self.configs[G]['objects'])
 
+        maxObjNum = 6
         self.neighbors = []
         for G, cfg in enumerate(self.configs):
             nObj = len(self.objects[G])
+            maxObjNum = max(maxObjNum, nObj)
             domScale = np.array(cfg['domScale'])
             edges = []
             for i in range(nObj-1):
@@ -490,7 +491,6 @@ class cgDiff:
                 neighborG.append([[0, edges[i]]])
             self.neighbors.append(neighborG)
 
-        maxObjNum = 6
         self.preComputedEdgeKernel = np.zeros((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum, maxObjNum, maxObjNum))
         self.skip = np.ones((self.nConfigs, self.nConfigs, maxObjNum, maxObjNum), dtype=bool)
         for Ga in range(self.nConfigs):
@@ -538,7 +538,7 @@ class cgDiff:
                 for Gb in range(self.nConfigs):
                     self.normalizedGraphKernel[p, Ga, Gb] = self.graphKernel[p, Ga, Gb] / max(self.graphKernel[p, Ga, Ga], self.graphKernel[p, Gb, Gb])
 
-        self.graphDistance = np.sqrt(2 - 2 * self.normalizedGraphKernel)
+        self.graphDistance = np.sqrt(2 - 2 * np.clip(self.normalizedGraphKernel, None, 1.0))
         results['similarity'] = self.graphDistance.tolist()
 
     def k_iden(self, r, s):
