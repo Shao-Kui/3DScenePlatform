@@ -652,8 +652,19 @@ def cgs(domID, subIDs, seriesName):
         results['dpDepths'].append(config['dpDepth'])
         results['originCGs'].append(config['originCG'])
         results['involvedObjects'] = getObjectsUpperLimit(results['involvedObjects'], config['objects'])
+    results['areas'] = listNormalization(results['areas'])
+    results['objNums'] = listNormalization(results['objNums'])
+    results['catNums'] = listNormalization(results['catNums'])
+    results['spaceUtils'] = listNormalization(results['spaceUtils'])
+    results['diffMatrix'] = listNormalization(results['diffMatrix'])
     with open(f'./layoutmethods/cgseries/{results["domID"]}/{seriesName}/result.json', 'w') as f:
         json.dump(results, f)
+
+def listNormalization(l):
+    l = np.array(l)
+    l = l - np.min(l)
+    l = l / np.max(l)
+    return l.tolist()
 
 def patternRefine():
     ppris = os.listdir('./latentspace/pos-orient-4')
@@ -704,9 +715,12 @@ def patternRefine():
                 json.dump(pri, f)
 
 if __name__ == "__main__":
-    # cgs('6453', None, '梳妆台哈哈')
+    cgs('6453', None, '梳妆台哈哈')
     cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
     cgs('7644', None, '系列啊')
     cgs('5010', None, '灰色现代风')
     cgs('5933', None, '灰色现代风')
     cgs('6824', None, '灰色现代风')
+
+    cgs('8185', None, '灰色现代风')
+    cgs('10198', None, '灰色现代风')

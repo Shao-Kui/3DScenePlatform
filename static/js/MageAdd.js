@@ -861,7 +861,11 @@ const moveCGSeries = function(){
         let wallIndex = ftnw[0][0];    
         // This should be a weighted sum of energies. 
         // Currently, we consider only areas. 
-        let scores = cgseries.areas.mul(1).add(cgseries.objNums.mul(1)).add(cgseries.catNums.mul(1)).add(cgseries.spaceUtils.mul(5)); 
+        let scores = 
+        cgseries.areas.mul(CGSERIES_GROUP.attrArea)
+        .add(cgseries.objNums.mul(CGSERIES_GROUP.attrNum))
+        .add(cgseries.catNums.mul(CGSERIES_GROUP.attrCat))
+        .add(cgseries.spaceUtils.mul(CGSERIES_GROUP.attrSU));
         // let scores = cgseries.objNums.mul(1);
         // left & right: 
         let leftIndex = (wallIndex + 1) % rsArray.length;
@@ -874,15 +878,15 @@ const moveCGSeries = function(){
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
         // Dependencies
-        scores = scores.add(tf.exp(wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises)).mul(cgseries.dpAnchors).mul(-1));
-        scores = scores.add(tf.exp(wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises)).mul(cgseries.dpDepths).mul(-1));
-        scores = scores.add(tf.exp(wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises)).mul(cgseries.dpLefts).mul(-1));
-        scores = scores.add(tf.exp(wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises)).mul(cgseries.dpRights).mul(-1));
+        scores = scores.add(tf.exp(wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises)).mul(cgseries.dpAnchors).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises)).mul(cgseries.dpDepths).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises)).mul(cgseries.dpLefts).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises)).mul(cgseries.dpRights).mul(-CGSERIES_GROUP.attrD));
         // Smoothness
         if(CGSERIES_GROUP.lastIndex){
             let diffVec = cgseries.diffMatrix.slice([cgseries.configs[CGSERIES_GROUP.lastIndex].originCG], [1]).squeeze();
             diffVec = diffVec.gather(cgseries.originCGs);
-            scores.add(diffVec.mul(-2))
+            scores.add(diffVec.mul(-CGSERIES_GROUP.attrS))
         }
         
 

@@ -35,7 +35,7 @@ const transformControlsConfig = function(){
         }
         if(transformControls.mode === 'translate'){
             let oSet = Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
-            if(oSet.length > 0){
+            if(oSet.length > 0 && pressedKeys[17]){
                 let closestX = oSet.map(d => d.position.x).reduce(function(prev, curr) {
                     return (Math.abs(curr - INTERSECT_OBJ.position.x) < Math.abs(prev - INTERSECT_OBJ.position.x) ? curr : prev);
                 });
@@ -128,6 +128,7 @@ var ctrlPressing = false;
 var duplicateTimes = 1;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
+    pressedKeys[event.keyCode] = true;
     switch ( event.keyCode ) {
         case 81: // Q
             Q_DOWN = true;
@@ -198,6 +199,7 @@ const onKeyDown = function(event){
 };
 
 var onKeyUp = function (event) {
+    pressedKeys[event.keyCode] = false;
     switch ( event.keyCode ) {
         case 81: // Q
             Q_DOWN = false;

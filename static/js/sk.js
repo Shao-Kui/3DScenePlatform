@@ -1469,29 +1469,42 @@ const unselectWall = function() {
 }
 
 const initAttributes = function() {
-    $('#attrArea').val(0.1).trigger('input');
-    $('#attrNumOfObjects').val(0.2).trigger('input');
-    $('#attrObjRichness').val(0.3).trigger('input');
-    $('#attrSpaceUtilization').val(0.4).trigger('input');
-    $('#attrDependency').val(0.5).trigger('input');
-    $('#attrSmoothness').val(0.6).trigger('input');
+    CGSERIES_GROUP.attrArea = 0.5
+    CGSERIES_GROUP.attrNum = 0.5
+    CGSERIES_GROUP.attrCat = 0.5
+    CGSERIES_GROUP.attrSU = 0.5
+    CGSERIES_GROUP.attrD = 0.5
+    CGSERIES_GROUP.attrS = 0.5
+
+    $('#attrArea').val(CGSERIES_GROUP.attrArea).trigger('input');
+    $('#attrNumOfObjects').val(CGSERIES_GROUP.attrNum).trigger('input');
+    $('#attrObjRichness').val(CGSERIES_GROUP.attrCat).trigger('input');
+    $('#attrSpaceUtilization').val(CGSERIES_GROUP.attrSU).trigger('input');
+    $('#attrDependency').val(CGSERIES_GROUP.attrD).trigger('input');
+    $('#attrSmoothness').val(CGSERIES_GROUP.attrS).trigger('input');
     
     $('#attrArea').on('change', ()=>{
-        console.log('attrArea', $('#attrArea').val());
+        // console.log('attrArea', $('#attrArea').val());
+        CGSERIES_GROUP.attrArea = +$('#attrArea').val();
     });
     $('#attrNumOfObjects').on('change', ()=>{
-        console.log('attrNumOfObjects', $('#attrNumOfObjects').val());
+        // console.log('attrNumOfObjects', $('#attrNumOfObjects').val());
+        CGSERIES_GROUP.attrNum = +$('#attrNumOfObjects').val();
     });
     $('#attrObjRichness').on('change', ()=>{
-        console.log('attrObjRichness', $('#attrObjRichness').val());
+        // console.log('attrObjRichness', $('#attrObjRichness').val());
+        CGSERIES_GROUP.attrCat = +$('#attrObjRichness').val();
     });
     $('#attrSpaceUtilization').on('change', ()=>{
-        console.log('attrSpaceUtilization', $('#attrSpaceUtilization').val());
+        // console.log('attrSpaceUtilization', $('#attrSpaceUtilization').val());
+        CGSERIES_GROUP.attrSU = +$('#attrSpaceUtilization').val();
     });
     $('#attrDependency').on('change', ()=>{
-        console.log('attrDependency', $('#attrDependency').val());
+        // console.log('attrDependency', $('#attrDependency').val());
+        CGSERIES_GROUP.attrD = +$('#attrDependency').val();
     });
     $('#attrSmoothness').on('change', ()=>{
-        console.log('attrSmoothness', $('#attrSmoothness').val());
+        // console.log('attrSmoothness', $('#attrSmoothness').val());
+        CGSERIES_GROUP.attrS = +$('#attrSmoothness').val();
     });
 }
