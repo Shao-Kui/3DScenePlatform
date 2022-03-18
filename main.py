@@ -169,6 +169,14 @@ def query2nd():
         'sofa_small', 'speaker', 'Stove', 'Stovetop', 'table', 'table1', 'TableAngular', 'Table_Black', 'Table_original', 
         'Table_White', 'toilet', 'Trash', 'tv', 'tv_table', 'wall_lighter', 'washbasin', 'Washer', 'word_table', 'work_chair']
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in xiaoyiids1]
+    if kw == '灰色现代风':
+        greyMordenStyle = ['2624','1456','1138','3740','6129','8829','6855','7735','2715','3088','7209,1394','1806','5933','3232','4455',
+        '5253','6096','1993','8983','10198','10855','2043','9767','8185','5010','7763','10414','1830','1288','10053','5218','10480','9018',
+        '8760','2560','3585','9886','4522','10952','2504','3337','1023','2611','3911','10364','6892','3163','9112','6824','7781']
+        ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in greyMordenStyle]
+    if kw == 'cgs':
+        cgseriesDom = os.listdir('./layoutmethods/cgseries')
+        ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in cgseriesDom]
     return json.dumps(ret)
 
 ROOMDIR = "room2021"
