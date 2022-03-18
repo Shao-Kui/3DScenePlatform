@@ -20,6 +20,7 @@ file_loader = FileSystemLoader('./')
 env = Environment(loader=file_loader)
 template = env.get_template('./assets/pathTracingTemplate.xml')
 cameraType="perspective" # spherical
+emitter="constant"
 num_samples = 64
 r_dir = 'batch'
 wallMaterial = True
@@ -63,8 +64,8 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         autoPerspectiveCamera(scenejson)
     if 'canvas' not in scenejson:
         scenejson['canvas'] = {}
-        scenejson['canvas']['width'] = "1309"
-        scenejson['canvas']['height'] = "809"
+        scenejson['canvas']['width'] = "1920"
+        scenejson['canvas']['height'] = "1080"
     if 'focalLength' not in scenejson['PerspectiveCamera']:
         scenejson['PerspectiveCamera']['focalLength'] = 35
     scenejson['PerspectiveCamera']['focalLength'] = f"{scenejson['PerspectiveCamera']['focalLength']}mm"
@@ -99,7 +100,8 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         PI=np.pi, 
         sampleCount=sampleCount, 
         cameraType=cameraType,
-        wallMaterial=wallMaterial
+        wallMaterial=wallMaterial,
+        emitter=emitter
     )
     if not os.path.exists(casename):
         os.makedirs(casename)

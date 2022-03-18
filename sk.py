@@ -380,6 +380,9 @@ def cgRender(newObjList, ma, mi, originIndex):
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = f"{originIndex}-{'-'.join(map(lambda x: x['modelId'], newObjList))}"
     scenejson = {'rooms': [{'objList': newObjList, 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': casename}
+    # if os.path.exists(f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png"):
+    #     return
+    print(f"Rendring - {CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
     diag_length = np.linalg.norm(ma - mi) * 0.69
     center = (ma + mi)/2
     # [0.7946, 0.1876, 0.5774]
@@ -389,9 +392,9 @@ def cgRender(newObjList, ma, mi, originIndex):
     origin = np.array([0.4911, 0.7947, 0.3568]) * diag_length + center
     scenejson["PerspectiveCamera"]["origin"] = origin.tolist()
     scenejson["PerspectiveCamera"]["target"] = center.tolist()
-
     scenejson["PerspectiveCamera"]["up"] = calCamUpVec(np.array(scenejson["PerspectiveCamera"]["origin"]), np.array(scenejson["PerspectiveCamera"]["target"])).tolist()
     scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
+    pt.emitter = 'sky'
     try:
         pt.pathTracing(scenejson, 16, f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
     except Exception as e:
@@ -740,5 +743,5 @@ if __name__ == "__main__":
     # cgs('8185', None, '灰色现代风')
     # cgs('10198', None, '灰色现代风')
     # cgs('5810', None, '新中式简约风')
-    # cgs('1133', None, '小太阳-灰色奢华土豪')
-    cgsBatch()
+    cgs('1133', None, 'rkx-优雅田园风')
+    # cgsBatch()
