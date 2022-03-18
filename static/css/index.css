@@ -206,3 +206,8 @@ a.dropdown-toggle, a.dropdown-toggle:hover, a.dropdown-toggle:focus {
   color: #5a5a5a;
   text-decoration: none;
 }
+
+.attrSliderText {
+    font-size: 20px;
+    color:black;
+}

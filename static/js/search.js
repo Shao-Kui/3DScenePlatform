@@ -24,11 +24,9 @@ const clickCatalogItem = function (e, d=undefined) {
     }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId); 
-    
 }
 
 const clickTextureItem = function(e){
-    console.log($(e.target));
     let texture = new THREE.TextureLoader().load($(e.target).data("imgpath"));
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -311,18 +309,24 @@ const mappingHover = function(e){
     let image = floorPlanMapping.get(meta.identifier);
     let wh = getMappingWidthHeight(image);
     let w = wh[0], h = wh[1];
-    $(`#grids-${meta.identifier}`).css('height', `${h}px`);
-    $(`#grids-${meta.identifier}`).css('width', `${w}px`);
+    let scale = 1
+    if (w > $(window).width() * 0.80) {
+        scale = $(window).width() * 0.80 / w
+    }
+    $(`#grids-${meta.identifier}`).css('height', `${h*scale}px`);
+    $(`#grids-${meta.identifier}`).css('width', `${w*scale}px`);
+    $(`#grids-${meta.identifier}`).css('opacity', '1');
     $(`#grids-${meta.identifier} .cell`).css('height', `${h/nrs}px`);
     $(`#grids-${meta.identifier} .cell`).css('width', `${w/ncs}px`);
-    $(`#grids-${meta.identifier}`).css('top', `${($(window).height()-h)/2}px`);
-    $(`#grids-${meta.identifier}`).css('left', `${($(window).width()-w)/2}px`);
+    // $(`#grids-${meta.identifier}`).css('top', `${($(window).height()-h)/2}px`);
+    // $(`#grids-${meta.identifier}`).css('left', `${($(window).width()-w)/2}px`);
 }
 
 const mappingLeave = function(e){
-    let mappingDisplay = document.getElementById('mappingDisplay');
-    mappingDisplay.firstChild.remove();
-    mappingDisplay.style.display = 'none';
+    let meta = $(e.target).data("meta");
+    $(`#grids-${meta.identifier}`).css('height', '0px');
+    $(`#grids-${meta.identifier}`).css('width', '0px');
+    $(`#grids-${meta.identifier}`).css('opacity', '0');
 }
 
 const mappingClick = function(e){
@@ -376,28 +380,31 @@ const clickAutoViewMapping = function(){
         while (catalogItems.firstChild) {
             catalogItems.firstChild.remove();
         }
+        // searchResults.push({
+        //     'identifier': '05d05b98-e95c-4671-935d-7af6a1468d07'
+        // })
         searchResults.forEach(function (item) {
             let iDiv = document.createElement('div');
             let image = new Image();
             image.onload = function(){
                 iDiv.style.width = `${$(window).width() * 0.10}px`;
                 iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
-                let wh = getMappingWidthHeight(image);
-                let w = wh[0], h = wh[1];
-                $(`#grids-${item.identifier}`).css('height', `${h}px`);
-                $(`#grids-${item.identifier}`).css('width', `${w}px`);
-                $(`#grids-${item.identifier} .cell`).css('height', `${h/nrs}px`);
-                $(`#grids-${item.identifier} .cell`).css('width', `${w/ncs}px`);
-                $(`#grids-${item.identifier}`).css('top', `${($(window).height()-h)/2}px`);
-                $(`#grids-${item.identifier}`).css('left', `${($(window).width()-w)/2}px`);
+                // let wh = getMappingWidthHeight(image);
+                // let w = wh[0], h = wh[1];
+                // $(`#grids-${item.identifier}`).css('height', `${h}px`);
+                // $(`#grids-${item.identifier}`).css('width', `${w}px`);
+                // $(`#grids-${item.identifier} .cell`).css('height', `${h/nrs}px`);
+                // $(`#grids-${item.identifier} .cell`).css('width', `${w/ncs}px`);
+                // $(`#grids-${item.identifier}`).css('top', `${($(window).height()-h)/2}px`);
+                // $(`#grids-${item.identifier}`).css('left', `${($(window).width()-w)/2}px`);
             };
             image.src = `/autoviewimgs/mapping/${item.identifier}`;
-            iDiv.className = "catalogItem";
+            iDiv.className = "mapping catalogItem";
             iDiv.style.backgroundImage = `url(/autoviewimgs/mapping/${item.identifier})`;
             iDiv.style.backgroundSize = '100% 100%';
             iDiv.style.visibility = 'visible';
             iDiv.addEventListener('mouseover', mappingHover);
-            // iDiv.addEventListener('mouseout', mappingLeave);
+            iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
             iDiv.classList.add('tiler');
             catalogItems.appendChild(iDiv);
@@ -415,13 +422,13 @@ const clickAutoViewMapping = function(){
             let meta = $(this).parent().parent().data("meta");
             $(this).parent().attr('id', `grids-${meta.identifier}`);
             $(this).attr('id', `grid-${meta.identifier}`);
-            let image = floorPlanMapping.get(meta.identifier);
-            let wh = getMappingWidthHeight(image);
-            let w = wh[0], h = wh[1];
-            $(this).css('height', `${h/nrs}px`);
-            $(this).css('width', `${w/ncs}px`);
-            $(this).parent().css('height', `${h}px`);
-            $(this).parent().css('width', `${w}px`);
+            // let image = floorPlanMapping.get(meta.identifier);
+            // let wh = getMappingWidthHeight(image);
+            // let w = wh[0], h = wh[1];
+            // $(this).css('height', `${h/nrs}px`);
+            // $(this).css('width', `${w/ncs}px`);
+            // $(this).parent().css('height', `${h}px`);
+            // $(this).parent().css('width', `${w}px`);
         })
     });
 };

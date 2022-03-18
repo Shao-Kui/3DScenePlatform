@@ -34,6 +34,21 @@ const transformControlsConfig = function(){
             return;
         }
         if(transformControls.mode === 'translate'){
+            let oSet = Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
+            if(oSet.length > 0 && pressedKeys[17]){
+                let closestX = oSet.map(d => d.position.x).reduce(function(prev, curr) {
+                    return (Math.abs(curr - INTERSECT_OBJ.position.x) < Math.abs(prev - INTERSECT_OBJ.position.x) ? curr : prev);
+                });
+                if(Math.abs(closestX - INTERSECT_OBJ.position.x) < 0.25){
+                    INTERSECT_OBJ.position.x = closestX;
+                }
+                let closestZ = oSet.map(d => d.position.z).reduce(function(prev, curr) {
+                    return (Math.abs(curr - INTERSECT_OBJ.position.z) < Math.abs(prev - INTERSECT_OBJ.position.z) ? curr : prev);
+                });
+                if(Math.abs(closestZ - INTERSECT_OBJ.position.z) < 0.25){
+                    INTERSECT_OBJ.position.z = closestZ;
+                }
+            }
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 'position');
         }else if(transformControls.mode === 'rotate'){
@@ -113,6 +128,7 @@ var ctrlPressing = false;
 var duplicateTimes = 1;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
+    pressedKeys[event.keyCode] = true;
     switch ( event.keyCode ) {
         case 81: // Q
             Q_DOWN = true;
@@ -183,6 +199,7 @@ const onKeyDown = function(event){
 };
 
 var onKeyUp = function (event) {
+    pressedKeys[event.keyCode] = false;
     switch ( event.keyCode ) {
         case 81: // Q
             Q_DOWN = false;

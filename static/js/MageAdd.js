@@ -764,6 +764,15 @@ var cgseries = {
     leftDises: tf.tensor([]),
     rightDises: tf.tensor([]),
     areas: tf.tensor([]),
+    objNums: tf.tensor([]),
+    spaceUtils: tf.tensor([]),
+    catNums: tf.tensor([]),
+    dpAnchors: tf.tensor([]),
+    dpLefts: tf.tensor([]),
+    dpRights: tf.tensor([]),
+    dpDepths: tf.tensor([]),
+    originCGs: tf.tensor([]),
+    diffMatrix: tf.tensor([]),
     configs: [],
     enabled: false
 }
@@ -785,11 +794,21 @@ const loadCGSeries = function(modelId){
                 On_CGSeries = false;
                 return
             }
+            CGSERIES_GROUP.lastIndex = undefined;
             cgseries.anchorDises.dispose();
             cgseries.depthDises.dispose();
             cgseries.leftDises.dispose();
             cgseries.rightDises.dispose();
             cgseries.areas.dispose();  
+            cgseries.objNums.dispose(); 
+            cgseries.spaceUtils.dispose(); 
+            cgseries.catNums.dispose(); 
+            cgseries.dpAnchors.dispose(); 
+            cgseries.dpLefts.dispose(); 
+            cgseries.dpRights.dispose(); 
+            cgseries.dpDepths.dispose(); 
+            cgseries.originCGs.dispose(); 
+            cgseries.diffMatrix.dispose();
             cgseries = newcgseries;      
             cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
             cgseries.depthDises = tf.tensor(cgseries.depthDises);
@@ -798,6 +817,13 @@ const loadCGSeries = function(modelId){
             cgseries.areas = tf.tensor(cgseries.areas);
             cgseries.objNums = tf.tensor(cgseries.objNums);
             cgseries.spaceUtils = tf.tensor(cgseries.spaceUtils);
+            cgseries.catNums = tf.tensor(cgseries.catNums);
+            cgseries.dpAnchors = tf.tensor(cgseries.dpAnchors);
+            cgseries.dpLefts = tf.tensor(cgseries.dpLefts);
+            cgseries.dpRights = tf.tensor(cgseries.dpRights);
+            cgseries.dpDepths = tf.tensor(cgseries.dpDepths);
+            cgseries.originCGs = tf.tensor(cgseries.originCGs, [cgseries.originCGs.length], 'int32');
+            cgseries.diffMatrix = tf.tensor(cgseries.diffMatrix);
             // this may require a systematic optimization, since objList can be reduced to a single room;
             cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
             cgseries.object3ds = [];
@@ -835,8 +861,12 @@ const moveCGSeries = function(){
         let wallIndex = ftnw[0][0];    
         // This should be a weighted sum of energies. 
         // Currently, we consider only areas. 
-        let scores = cgseries.areas.add(cgseries.objNums.mul(1)).add(cgseries.spaceUtils.mul(5)); 
-        // let scores = cgseries.spaceUtils;
+        let scores = 
+        cgseries.areas.mul(CGSERIES_GROUP.attrArea)
+        .add(cgseries.objNums.mul(CGSERIES_GROUP.attrNum))
+        .add(cgseries.catNums.mul(CGSERIES_GROUP.attrCat))
+        .add(cgseries.spaceUtils.mul(CGSERIES_GROUP.attrSU));
+        // let scores = cgseries.objNums.mul(1);
         // left & right: 
         let leftIndex = (wallIndex + 1) % rsArray.length;
         let rightIndex = (wallIndex + rsArray.length - 1) % rsArray.length;
@@ -847,6 +877,19 @@ const moveCGSeries = function(){
         let vecLeft =  new THREE.Vector2(rsArray[_dli][0], rsArray[_dli][1]).sub(new THREE.Vector2(rsArray[leftIndex][0], rsArray[leftIndex][1]));
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
+        // Dependencies
+        scores = scores.add(tf.exp(wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises)).mul(cgseries.dpAnchors).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises)).mul(cgseries.dpDepths).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises)).mul(cgseries.dpLefts).mul(-CGSERIES_GROUP.attrD));
+        scores = scores.add(tf.exp(wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises)).mul(cgseries.dpRights).mul(-CGSERIES_GROUP.attrD));
+        // Smoothness
+        if(CGSERIES_GROUP.lastIndex){
+            let diffVec = cgseries.diffMatrix.slice([cgseries.configs[CGSERIES_GROUP.lastIndex].originCG], [1]).squeeze();
+            diffVec = diffVec.gather(cgseries.originCGs);
+            scores.add(diffVec.mul(-CGSERIES_GROUP.attrS))
+        }
+        
+
         // filter out priors exceed the depth & left & right: 
         // console.log(wallIndex, depthIndex, leftIndex, rightIndex);
         let constraints = cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1]))
@@ -857,8 +900,10 @@ const moveCGSeries = function(){
         // cgseries.anchorDises.less(wallDistances.slice([wallIndex], [1])).print();
         // scores.print();
         let index = tf.argMax(scores).arraySync();
+        CGSERIES_GROUP.lastIndex = index;
         if(scores.slice([index], [1]).arraySync()[0] < 0){
             CGSERIES_GROUP.clear();
+            CGSERIES_GROUP.lastIndex = undefined;
             return;
         }
         // expanding factor: 
@@ -910,4 +955,27 @@ const moveCGSeries = function(){
             }
         }
     }
+}
+
+const synchronize_coherentGroup = function(){
+    let oArray = [];
+    for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
+        let c = CGSERIES_GROUP.children[i];
+        let _x = c.position.x * CGSERIES_GROUP.scale.x, _y = c.position.y * CGSERIES_GROUP.scale.y, _z = c.position.z * CGSERIES_GROUP.scale.z;
+        let tx = Math.cos(CGSERIES_GROUP.rotation.y) * _x + Math.sin(CGSERIES_GROUP.rotation.y) * _z + CGSERIES_GROUP.position.x;
+        let ty = _y + CGSERIES_GROUP.position.y;
+        let tz = -Math.sin(CGSERIES_GROUP.rotation.y) * _x + Math.cos(CGSERIES_GROUP.rotation.y) * _z + CGSERIES_GROUP.position.z;
+        let rx = Math.sin(c.rotation.y) * CGSERIES_GROUP.scale.x;
+        let rz = Math.cos(c.rotation.y) * CGSERIES_GROUP.scale.z;
+        let o = {
+            'modelId': c.userData.modelId,
+            'transform': {
+                'translate': [tx, ty, tz],
+                'rotate': [0, Math.atan2(rx, rz) + CGSERIES_GROUP.rotation.y, 0],
+                'scale': [c.scale.x*CGSERIES_GROUP.scale.x, c.scale.y*CGSERIES_GROUP.scale.y, c.scale.z*CGSERIES_GROUP.scale.z]
+            }
+        }
+        oArray.push(o);
+    }
+    addObjectsFromCache(oArray);
 }
