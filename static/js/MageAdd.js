@@ -774,6 +774,7 @@ var cgseries = {
     dpDepths: tf.tensor([]),
     originCGs: tf.tensor([]),
     diffMatrix: tf.tensor([]),
+    scaleOri: tf.tensor([]),
     configs: [],
     enabled: false
 }
@@ -795,6 +796,7 @@ const loadCGSeries = function(modelId){
                 On_CGSeries = false;
                 return
             }
+            INTERSECT_OBJ.scale.set(Math.abs(INTERSECT_OBJ.scale.x),Math.abs(INTERSECT_OBJ.scale.y),Math.abs(INTERSECT_OBJ.scale.z))
             CGSERIES_GROUP.lastIndex = undefined;
             cgseries.anchorOris.dispose();
             cgseries.anchorDises.dispose();
@@ -811,6 +813,7 @@ const loadCGSeries = function(modelId){
             cgseries.dpDepths.dispose(); 
             cgseries.originCGs.dispose(); 
             cgseries.diffMatrix.dispose();
+            cgseries.scaleOri.dispose();
             cgseries = newcgseries;   
             cgseries.anchorOris = tf.tensor(cgseries.anchorOris);
             cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
@@ -833,10 +836,24 @@ const loadCGSeries = function(modelId){
             CGSERIES_GROUP.clear();
             CGSERIES_GROUP.domCurrentScale = INTERSECT_OBJ.scale.clone();
             CGSERIES_GROUP.scale.set(INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z);
-            cgseries.anchorDises = cgseries.anchorDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
-            cgseries.depthDises = cgseries.depthDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
-            cgseries.leftDises = cgseries.leftDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
-            cgseries.rightDises = cgseries.rightDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
+            let _a = cgseries.anchorDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+            let _d = cgseries.depthDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+
+            let _l = cgseries.leftDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+            let _r = cgseries.rightDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+
+            cgseries.anchorDises = _a.where(_a.less(_l), _l);
+            cgseries.anchorDises = cgseries.anchorDises.where(_a.less(_r), _r);
+            cgseries.depthDises = _d.where(_a.less(_l), _r);
+            cgseries.depthDises = cgseries.depthDises.where(_a.less(_r), _l);
+            cgseries.leftDises = _l.where(_a.less(_l), _d);
+            cgseries.leftDises = cgseries.leftDises.where(_a.less(_r), _a);
+            cgseries.rightDises = _r.where(_a.less(_l), _a);
+            cgseries.rightDises = cgseries.rightDises.where(_a.less(_r), _d);
+            cgseries.scaleOri = tf.fill([cgseries.anchorDises.shape[0]], 0);
+            cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_l), Math.PI/2);
+            cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_r), -Math.PI/2);
+
             cgseries.involvedObjects.forEach(o => {
                 loadObjectToCache(o, (modelId) => {
                     let object3d = objectCache[modelId].clone();
@@ -927,11 +944,13 @@ const moveCGSeries = function(){
             CGSERIES_GROUP.lastIndex = undefined;
             return;
         }
+        // console.log('alrd', cgseries.anchorDises.slice([index], [1]).arraySync()[0],cgseries.leftDises.slice([index], [1]).arraySync()[0],cgseries.rightDises.slice([index], [1]).arraySync()[0],cgseries.depthDises.slice([index], [1]).arraySync()[0])
+        // console.log('wall', wallDistances.slice([wallIndex], [1]).arraySync()[0],wallDistances.slice([leftIndex], [1]).arraySync()[0],wallDistances.slice([rightIndex], [1]).arraySync()[0],wallDistances.slice([depthIndex], [1]).arraySync()[0])
         // expanding factor: 
         let ef = wallDistances.slice([wallIndex], [1]).div(cgseries.anchorDises.slice([index], [1])).arraySync();
         ef = (ef > 1.5) ? 1.5 : ef;  
         let theprior = cgseries.configs[index];
-        let domOrient = theprior['anchorOri'] + roomOrient[wallIndex];
+        let domOrient = theprior['anchorOri'] + roomOrient[wallIndex] + cgseries.scaleOri.slice([index], [1]).arraySync()[0];
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, domOrient, 0], 'rotation', true); 
         gsap.to(CGSERIES_GROUP.rotation, {duration: commonSmoothDuration, y: domOrient});
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [theprior['domScale'][0] * CGSERIES_GROUP.domCurrentScale.x, theprior['domScale'][1] * CGSERIES_GROUP.domCurrentScale.y, theprior['domScale'][2] * CGSERIES_GROUP.domCurrentScale.z], 'scale', false); 
