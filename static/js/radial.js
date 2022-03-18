@@ -3,7 +3,7 @@ var rad_items = [
     {className: 'glyphicon glyphicon-star', html: ''},
     {className: 'glyphicon glyphicon-move', html: ''},
     {className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
-    {className: 'glyphicon glyphicon-resize-vertical', html: ''},
+    //{className: 'glyphicon glyphicon-resize-vertical', html: ''},
     {className: 'glyphicon glyphicon-repeat', html: ''},
     {className: 'glyphicon glyphicon-remove', html: ''},
     {className: 'glyphicon glyphicon-flag', html: ''}
@@ -28,6 +28,7 @@ var rad_options = {
 var toggles = function () {
     radial.toggle();
     isToggle = !isToggle;
+    duplicateTimes = 1;
 };
 
 const radial_mage_control = function(event){
@@ -76,7 +77,7 @@ var radial_scale_control = function(event){
     toggles();
 };
 
-var radial_remove_control = function (event) {
+const radial_remove_control = function (event) {
     removeIntersectObject();
     transformControls.detach();
     toggles();
@@ -117,8 +118,8 @@ var radial_initialization = function(){
     var radial_remove_button = document.getElementsByClassName("glyphicon-remove")[0];
     radial_remove_button.addEventListener('click', radial_remove_control);
 
-    var radial_lift_button = document.getElementsByClassName("glyphicon-resize-vertical")[0];
-    radial_lift_button.addEventListener('click', radial_lift_control);
+    // var radial_lift_button = document.getElementsByClassName("glyphicon-resize-vertical")[0];
+    // radial_lift_button.addEventListener('click', radial_lift_control);
 
     var radial_scale_button = document.getElementsByClassName("glyphicon-fullscreen")[0];
     radial_scale_button.addEventListener('click', radial_scale_control);

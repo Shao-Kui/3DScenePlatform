@@ -112,6 +112,7 @@
       var searchResults;
       var currentRoomId;
       var orthline;
+      const pressedKeys = [];
 
       var skyBox;
       var lx_level;
@@ -326,78 +327,78 @@
 
           <div>
             <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#attributeSliderDiv" role="button" aria-expanded="false" aria-controls="attributeSliderBarDiv">
-              属性滑动栏
+              Attribute Slider
             </a>
 
             <div class="collapse container" id="attributeSliderDiv">
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrArea" class="form-label">Area</label>
+                  <label for="attrArea" class="form-label attrSliderText">Area</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrArea" oninput="attrValArea.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText">
                   <span id="attrValArea"></span>
                 </div>
               </div>
               
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrNumOfObjects" class="form-label">Num of Objects</label>
+                  <label for="attrNumOfObjects" class="form-label attrSliderText">#Objects</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrNumOfObjects" oninput="attrValNumOfObjects.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText">
                   <span id="attrValNumOfObjects"></span>
                 </div>
               </div>
               
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrObjRichness" class="form-label">Object Richness</label>
+                  <label for="attrObjRichness" class="form-label attrSliderText">Richness</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrObjRichness" oninput="attrValObjRichness.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText" >
                   <span id="attrValObjRichness"></span>
                 </div>
               </div>
               
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrSpaceUtilization" class="form-label">Space Utilization</label>
+                  <label for="attrSpaceUtilization" class="form-label attrSliderText">Utilization</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSpaceUtilization" oninput="attrValSpaceUtilization.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText">
                   <span id="attrValSpaceUtilization"></span>
                 </div>
               </div>
               
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrDependency" class="form-label">Dependency</label>
+                  <label for="attrDependency" class="form-label attrSliderText">Dependency</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrDependency" oninput="attrValDependency.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText">
                   <span id="attrValDependency"></span>
                 </div>
               </div>
               
               <div class="row align-items-center">
                 <div class="col-4">
-                  <label for="attrSmoothness" class="form-label">Smoothness</label>
+                  <label for="attrSmoothness" class="form-label attrSliderText">Smoothness</label>
                 </div>
                 <div class="col-6">
                   <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSmoothness" oninput="attrValSmoothness.innerText=value">
                 </div>
-                <div class="col-2">
+                <div class="col-2 attrSliderText">
                   <span id="attrValSmoothness"></span>
                 </div>
               </div>

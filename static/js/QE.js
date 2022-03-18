@@ -175,6 +175,10 @@ const onKeyDown = function(event){
         case 17:
             ctrlPressing = true;
             break;
+        case 46:
+            if(INTERSECT_OBJ === undefined){break;}
+            radial_remove_control();
+            break;
 
         case 68: // d
             if(INTERSECT_OBJ === undefined){break;}
