@@ -759,6 +759,7 @@ const mageAddSingle = function(){
 }
 
 var cgseries = {
+    anchorOris: tf.tensor([]),
     anchorDises: tf.tensor([]),
     depthDises: tf.tensor([]),
     leftDises: tf.tensor([]),
@@ -795,6 +796,7 @@ const loadCGSeries = function(modelId){
                 return
             }
             CGSERIES_GROUP.lastIndex = undefined;
+            cgseries.anchorOris.dispose();
             cgseries.anchorDises.dispose();
             cgseries.depthDises.dispose();
             cgseries.leftDises.dispose();
@@ -809,7 +811,8 @@ const loadCGSeries = function(modelId){
             cgseries.dpDepths.dispose(); 
             cgseries.originCGs.dispose(); 
             cgseries.diffMatrix.dispose();
-            cgseries = newcgseries;      
+            cgseries = newcgseries;   
+            cgseries.anchorOris = tf.tensor(cgseries.anchorOris);
             cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
             cgseries.depthDises = tf.tensor(cgseries.depthDises);
             cgseries.leftDises = tf.tensor(cgseries.leftDises);
@@ -828,7 +831,12 @@ const loadCGSeries = function(modelId){
             cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
             cgseries.object3ds = [];
             CGSERIES_GROUP.clear();
+            CGSERIES_GROUP.domCurrentScale = INTERSECT_OBJ.scale.clone();
             CGSERIES_GROUP.scale.set(INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z);
+            cgseries.anchorDises = cgseries.anchorDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
+            cgseries.depthDises = cgseries.depthDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
+            cgseries.leftDises = cgseries.leftDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
+            cgseries.rightDises = cgseries.rightDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(CGSERIES_GROUP.scale.x), 2))))
             cgseries.involvedObjects.forEach(o => {
                 loadObjectToCache(o, (modelId) => {
                     let object3d = objectCache[modelId].clone();
@@ -926,8 +934,8 @@ const moveCGSeries = function(){
         let domOrient = theprior['anchorOri'] + roomOrient[wallIndex];
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [0, domOrient, 0], 'rotation', true); 
         gsap.to(CGSERIES_GROUP.rotation, {duration: commonSmoothDuration, y: domOrient});
-        transformObject3DOnly(INTERSECT_OBJ.userData.key, theprior['domScale'], 'scale', false); 
-        gsap.to(CGSERIES_GROUP.scale, {duration: commonSmoothDuration, x:theprior['domScale'][0], y:theprior['domScale'][1], z:theprior['domScale'][2]});
+        transformObject3DOnly(INTERSECT_OBJ.userData.key, [theprior['domScale'][0] * CGSERIES_GROUP.domCurrentScale.x, theprior['domScale'][1] * CGSERIES_GROUP.domCurrentScale.y, theprior['domScale'][2] * CGSERIES_GROUP.domCurrentScale.z], 'scale', false); 
+        gsap.to(CGSERIES_GROUP.scale, {duration: commonSmoothDuration, x:theprior['domScale'][0] * CGSERIES_GROUP.domCurrentScale.x, y:theprior['domScale'][1] * CGSERIES_GROUP.domCurrentScale.y, z:theprior['domScale'][2] * CGSERIES_GROUP.domCurrentScale.z});
         cgseries.object3ds.forEach(c => {c.onUsed = false;});
         theprior.subPriors.forEach(p => {
             // find a correspongding object w.r.t p: 
@@ -972,6 +980,7 @@ const moveCGSeries = function(){
 
 const synchronize_coherentGroup = function(){
     let oArray = [];
+    let theprior = cgseries.configs[CGSERIES_GROUP.lastIndex];
     for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
         let c = CGSERIES_GROUP.children[i];
         let _x = c.position.x * CGSERIES_GROUP.scale.x, _y = c.position.y * CGSERIES_GROUP.scale.y, _z = c.position.z * CGSERIES_GROUP.scale.z;
@@ -980,12 +989,17 @@ const synchronize_coherentGroup = function(){
         let tz = -Math.sin(CGSERIES_GROUP.rotation.y) * _x + Math.cos(CGSERIES_GROUP.rotation.y) * _z + CGSERIES_GROUP.position.z;
         let rx = Math.sin(c.rotation.y) * CGSERIES_GROUP.scale.x;
         let rz = Math.cos(c.rotation.y) * CGSERIES_GROUP.scale.z;
+        let theta = Math.atan2(rx, rz);
+        // let sz = Math.cos(Math.PI/2 - theta) * CGSERIES_GROUP.scale.x + Math.cos(theta) * CGSERIES_GROUP.scale.z;
+        // let sx = Math.cos(theta) * CGSERIES_GROUP.scale.x + Math.cos(Math.PI/2 - theta) * CGSERIES_GROUP.scale.z;
+        let sz = Math.sqrt(Math.pow(CGSERIES_GROUP.scale.z * Math.cos(theta), 2) + Math.pow(CGSERIES_GROUP.scale.x * Math.sin(theta), 2))
+        let sx = Math.sqrt(Math.pow(CGSERIES_GROUP.scale.z * Math.sin(theta),2) + Math.pow(CGSERIES_GROUP.scale.x * Math.cos(theta),2))
         let o = {
             'modelId': c.userData.modelId,
             'transform': {
                 'translate': [tx, ty, tz],
                 'rotate': [0, Math.atan2(rx, rz) + CGSERIES_GROUP.rotation.y, 0],
-                'scale': [c.scale.x*CGSERIES_GROUP.scale.x, c.scale.y*CGSERIES_GROUP.scale.y, c.scale.z*CGSERIES_GROUP.scale.z]
+                'scale': [c.scale.x*sx*(CGSERIES_GROUP.scale.x/Math.abs(CGSERIES_GROUP.scale.x)), c.scale.y*CGSERIES_GROUP.scale.y, c.scale.z*sz*(CGSERIES_GROUP.scale.z/Math.abs(CGSERIES_GROUP.scale.z))]
             }
         }
         oArray.push(o);

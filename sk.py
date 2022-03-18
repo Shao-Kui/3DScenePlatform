@@ -586,6 +586,7 @@ def cgs(domID, subIDs, seriesName):
     filenames = os.listdir(f'./layoutmethods/cgseries/{domID}/{seriesName}') # init
     results = {
         'domID': domID,
+        'anchorOris': [],
         'anchorDises': [],
         'depthDises': [],
         'leftDises': [],
@@ -638,6 +639,7 @@ def cgs(domID, subIDs, seriesName):
     resultOrigin['similarity'] = np.array(resultOrigin['similarity'])
     results['diffMatrix'] = resultOrigin['similarity'][(resultOrigin['similarity'].shape[0]-1)].tolist()
     for config in results['configs']:
+        results['anchorOris'].append(config['anchorOri'])
         results['anchorDises'].append(config['anchorDis'])
         results['depthDises'].append(config['depthDis'])
         results['leftDises'].append(config['leftDis'])
@@ -715,12 +717,13 @@ def patternRefine():
                 json.dump(pri, f)
 
 if __name__ == "__main__":
-    cgs('6453', None, '梳妆台哈哈')
-    cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
-    cgs('7644', None, '系列啊')
-    cgs('5010', None, '灰色现代风')
-    cgs('5933', None, '灰色现代风')
-    cgs('6824', None, '灰色现代风')
+    # cgs('6453', None, '梳妆台哈哈')
+    # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
+    # cgs('7644', None, '系列啊')
+    # cgs('5010', None, '灰色现代风')
+    # cgs('5933', None, '灰色现代风')
+    # cgs('6824', None, '灰色现代风')
 
-    cgs('8185', None, '灰色现代风')
-    cgs('10198', None, '灰色现代风')
+    # cgs('8185', None, '灰色现代风')
+    # cgs('10198', None, '灰色现代风')
+    cgs('10909', None, '童话治愈风')
