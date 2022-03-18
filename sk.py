@@ -310,7 +310,7 @@ def findNearestWalls(shape, p, isOrient=True):
     if len(_indicesList) < 1:
         print('Fatal Error! None-Closed Curve. ')
     # calculate normals:
-    # calculate the wall orient; 
+    # calculate the wall orient
     wn = (shape - shapeEnd)[:, [1,0]]
     wn[:, 1] = -wn[:, 1]
     if isOrient:
@@ -336,7 +336,7 @@ def extractGroup(objList, dom, modelIDs, originIndex):
     for obj in subs:
         # the relative transtormation should be sth like an identical matrix. 
         relativeTranslate = np.array(obj['translate']) - np.array(domObj['translate'])
-        relativeTranslate = R.from_euler('y', -domObj['orient'], degrees=False).as_matrix() @ relativeTranslate # rotate this translation; 
+        relativeTranslate = R.from_euler('y', -domObj['orient'], degrees=False).as_matrix() @ relativeTranslate # rotate this translation
         relativeTranslate = relativeTranslate / np.array(domObj['scale'])
         relativeScale = np.array(obj['scale']) / np.array(domObj['scale'])
         relativeOrient = np.array(obj['orient']) - np.array(domObj['orient'])
@@ -350,10 +350,12 @@ def extractGroup(objList, dom, modelIDs, originIndex):
     subSetOfsubPriors = subSetOfsubPriors[1:len(subSetOfsubPriors)]
     if len(subSetOfsubPriors) > 75:
         subSetOfsubPriors = random.sample(subSetOfsubPriors, 75) + subSetOfsubPriors[len(subSetOfsubPriors)-1:len(subSetOfsubPriors)]
+    if len(subSetOfsubPriors) == 0:
+        return [], []
     res = []
     for subSet in subSetOfsubPriors:
         if len(subPriors) == len(list(subSet)):
-            originConfig = [generateGroup(list(subSet), dom, [1,1,1], originIndex, False)]
+            originConfig = [generateGroup(list(subSet), dom, [1,1,1], originIndex, True)]
             res += originConfig
         else:
             res += [generateGroup(list(subSet), dom, [1,1,1], originIndex, False)]
@@ -365,7 +367,7 @@ def extractGroup(objList, dom, modelIDs, originIndex):
     return res, originConfig
 
 def calCamUpVec(origin, target):
-    # calculate the 'up' vector via the normal of plane;    
+    # calculate the 'up' vector via the normal of plane 
     upInit = np.array([0., 1., 0.])
     normal = target - origin
     normal = normal / np.linalg.norm(normal, ord=2)
@@ -373,10 +375,10 @@ def calCamUpVec(origin, target):
     up = up / np.linalg.norm(up, ord=2)
     return up
 
-def cgRender(newObjList, ma, mi):
+def cgRender(newObjList, ma, mi, originIndex):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
-    casename = f"{'-'.join(map(lambda x: x['modelId'], newObjList))}-{dt_string}"
+    casename = f"{originIndex}-{'-'.join(map(lambda x: x['modelId'], newObjList))}"
     scenejson = {'rooms': [{'objList': newObjList, 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': casename}
     diag_length = np.linalg.norm(ma - mi) * 0.69
     center = (ma + mi)/2
@@ -390,7 +392,10 @@ def cgRender(newObjList, ma, mi):
 
     scenejson["PerspectiveCamera"]["up"] = calCamUpVec(np.array(scenejson["PerspectiveCamera"]["origin"]), np.array(scenejson["PerspectiveCamera"]["target"])).tolist()
     scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
-    pt.pathTracing(scenejson, 4, f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
+    try:
+        pt.pathTracing(scenejson, 16, f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png")
+    except Exception as e:
+        print(e)
 
 def generateGroup(subPriors, domModelId, domScale=[1,1,1], originIndex=-1, isRender=False):
     res = {
@@ -437,7 +442,7 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1], originIndex=-1, isRen
     res['dpRight'] = 0.
     res['dpDepth'] = 0.
     for o in newObjList:
-        if getobjCat(o['modelId']) in ['Wine Cabinet', 'Bookcase / jewelry Armoire', 'Drawer Chest / Corner cabinet', 'Wardrobe']:
+        if getobjCat(o['modelId']) in ['Shelf', 'Children Cabinet', 'Wine Cabinet', 'Bookcase / jewelry Armoire', 'Drawer Chest / Corner cabinet', 'Wardrobe', 'Dressing Table']:
             il, _d, _o = findNearestWalls(gbb, np.array(o['translate'])[[0, 2]])
             if il[0] == indicesList[0]:
                 res['dpAnchor'] = 1.
@@ -451,7 +456,7 @@ def generateGroup(subPriors, domModelId, domScale=[1,1,1], originIndex=-1, isRen
     res['originCG'] = originIndex
     # render groups: 
     if isRender:
-        cgRender(newObjList, ma, mi)
+        cgRender(newObjList, ma, mi, originIndex)
     return res
 
 def getObjectsUpperLimit(l, k):
@@ -663,7 +668,7 @@ def cgs(domID, subIDs, seriesName):
 def listNormalization(l):
     l = np.array(l)
     l = l - np.min(l)
-    l = l / np.max(l)
+    l = l / (np.max(l) + 0.00005)
     return l.tolist()
 
 def patternRefine():
@@ -714,13 +719,24 @@ def patternRefine():
             with open(f'./latentspace/pos-orient-4/{ppri}', 'w') as f:
                 json.dump(pri, f)
 
-if __name__ == "__main__":
-    cgs('6453', None, '梳妆台哈哈')
-    cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
-    cgs('7644', None, '系列啊')
-    cgs('5010', None, '灰色现代风')
-    cgs('5933', None, '灰色现代风')
-    cgs('6824', None, '灰色现代风')
+def cgsBatch():
+    domObjectNames = os.listdir('./layoutmethods/cgseries')
+    for domObjectName in domObjectNames:
+        seriesNames = os.listdir(f'./layoutmethods/cgseries/{domObjectName}')
+        for serseriesName in seriesNames:
+            if os.path.exists(f'./layoutmethods/cgseries/{domObjectName}/{serseriesName}/result.json'):
+                continue
+            cgs(domObjectName, None, serseriesName)
 
-    cgs('8185', None, '灰色现代风')
-    cgs('10198', None, '灰色现代风')
+if __name__ == "__main__":
+    # cgs('6453', None, '梳妆台哈哈')
+    # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
+    # cgs('7644', None, '系列啊')
+    # cgs('5010', None, '灰色现代风')
+    # cgs('5933', None, '灰色现代风')
+    # cgs('6824', None, '灰色现代风')
+    # cgs('8185', None, '灰色现代风')
+    # cgs('10198', None, '灰色现代风')
+    # cgs('5810', None, '新中式简约风')
+    # cgs('1133', None, '小太阳-灰色奢华土豪')
+    cgsBatch()
