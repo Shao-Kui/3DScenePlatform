@@ -954,6 +954,11 @@ const onRightClickObj = function(event){
         auxiliary_remove();
         On_MAGEADD = false;
         return;
+    }if (On_CGSeries) {
+        On_CGSeries = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        CGSERIES_GROUP.clear();
+        return;
     }
 }
 
@@ -1012,14 +1017,11 @@ const datguiObjectFolder = function(objmesh){
     ctrlOrient.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Orient';
 
     let rbb = manager.renderManager.scene_json.rooms[objmesh.userData.roomId].bbox; 
-    let ctrlPosX = datgui_intersectfolder.add(t.position, 'x', 
-    rbb.min[0], rbb.max[0]); 
+    let ctrlPosX = datgui_intersectfolder.add(t.position, 'x', rbb.min[0], rbb.max[0]); 
     ctrlPosX.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-X';
-    let ctrlPosY = datgui_intersectfolder.add(t.position, 'y', 
-    rbb.min[1], rbb.max[1]); 
+    let ctrlPosY = datgui_intersectfolder.add(t.position, 'y', 0, rbb.max[1]); 
     ctrlPosY.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Y';
-    let ctrlPosZ = datgui_intersectfolder.add(t.position, 'z', 
-    rbb.min[2], rbb.max[2]); 
+    let ctrlPosZ = datgui_intersectfolder.add(t.position, 'z', rbb.min[2], rbb.max[2]); 
     ctrlPosZ.domElement.parentElement.getElementsByClassName('property-name')[0].textContent = 'Pos-Z';
 
     ctrlPosX.onChange(controllerOnChangeGen('position', 'x', objmesh)); 

@@ -878,10 +878,23 @@ const moveCGSeries = function(){
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
         // Dependencies
-        scores = scores.add(tf.exp(wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises)).mul(cgseries.dpAnchors).mul(-CGSERIES_GROUP.attrD));
-        scores = scores.add(tf.exp(wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises)).mul(cgseries.dpDepths).mul(-CGSERIES_GROUP.attrD));
-        scores = scores.add(tf.exp(wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises)).mul(cgseries.dpLefts).mul(-CGSERIES_GROUP.attrD));
-        scores = scores.add(tf.exp(wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises)).mul(cgseries.dpRights).mul(-CGSERIES_GROUP.attrD));
+        let wdt = 0.3;
+        let _addiff = wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises);
+        _addiff = _addiff.where(_addiff.less(wdt), 1.0);
+        _addiff = _addiff.where(_addiff.greater(wdt), 0.0);
+        scores = scores.add(_addiff.mul(cgseries.dpAnchors).mul(-CGSERIES_GROUP.attrD));
+        let _dpdiff = wallDistances.slice([depthIndex], [1]).sub(cgseries.depthDises);
+        _dpdiff = _dpdiff.where(_dpdiff.less(wdt), 1.0);
+        _dpdiff = _dpdiff.where(_dpdiff.greater(wdt), 0.0);
+        scores = scores.add(_dpdiff.mul(cgseries.dpDepths).mul(-CGSERIES_GROUP.attrD));
+        let _lfdiff = wallDistances.slice([leftIndex], [1]).sub(cgseries.leftDises);
+        _lfdiff = _lfdiff.where(_lfdiff.less(wdt), 1.0);
+        _lfdiff = _lfdiff.where(_lfdiff.greater(wdt), 0.0);
+        scores = scores.add(_lfdiff.mul(cgseries.dpLefts).mul(-CGSERIES_GROUP.attrD));
+        let _rtdiff = wallDistances.slice([rightIndex], [1]).sub(cgseries.rightDises);
+        _rtdiff = _rtdiff.where(_rtdiff.less(wdt), 1.0);
+        _rtdiff = _rtdiff.where(_rtdiff.greater(wdt), 0.0);
+        scores = scores.add(_rtdiff.mul(cgseries.dpRights).mul(-CGSERIES_GROUP.attrD));
         // Smoothness
         if(CGSERIES_GROUP.lastIndex){
             let diffVec = cgseries.diffMatrix.slice([cgseries.configs[CGSERIES_GROUP.lastIndex].originCG], [1]).squeeze();
