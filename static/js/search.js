@@ -370,8 +370,8 @@ const layoutviewadjust_control = function(){
     }
 }
 
-const nrs = 1;
-const ncs = 1;
+const nrs = 3;
+const ncs = 3;
 const floorPlanMapping = new Map();
 const clickAutoViewMapping = function(){
     let search_url = "/autoviewMapping";
@@ -429,6 +429,73 @@ const clickAutoViewMapping = function(){
             // $(this).css('width', `${w/ncs}px`);
             // $(this).parent().css('height', `${h}px`);
             // $(this).parent().css('width', `${w}px`);
+        })
+    });
+};
+
+const cgsPreview = new Map();
+const clickCGSPreview = function(){
+    if(INTERSECT_OBJ === undefined){
+        return;
+    }
+    let search_url = `/availableCGS/${INTERSECT_OBJ.userData.modelId}`;
+    $.getJSON(search_url, function (searchResults) {
+        cgsPreview.clear();
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        searchResults.forEach(function (item) {
+            let iDiv = document.createElement('div');
+            let image = new Image();
+            image.onload = function(){
+                iDiv.style.width = `${$(window).width() * 0.10}px`;
+                iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+            };
+            image.src = `/cgsPreview/${INTERSECT_OBJ.userData.modelId}/${item}`;
+            iDiv.className = "mapping catalogItem";
+            iDiv.style.backgroundImage = `url(/cgsPreview/${INTERSECT_OBJ.userData.modelId}/${item})`;
+            iDiv.style.backgroundSize = '100% 100%';
+            iDiv.style.visibility = 'visible';
+            iDiv.addEventListener('mouseover', function(e){
+                let meta = $(e.target).data("meta");
+                let image = cgsPreview.get(meta);
+                let wh = getMappingWidthHeight(image);
+                let w = wh[0], h = wh[1];
+                let scale = 1
+                if (w > $(window).width() * 0.80) {
+                    scale = $(window).width() * 0.80 / w
+                }
+                $(`#grids-${meta}`).css('height', `${h*scale}px`);
+                $(`#grids-${meta}`).css('width', `${w*scale}px`);
+                $(`#grids-${meta}`).css('opacity', '1');
+                $(`#grids-${meta} .cell`).css('height', `${h/nrs}px`);
+                $(`#grids-${meta} .cell`).css('width', `${w/ncs}px`);
+            });
+            iDiv.addEventListener('mouseout', function(e){
+                let meta = $(e.target).data("meta");
+                $(`#grids-${meta}`).css('height', '0px');
+                $(`#grids-${meta}`).css('width', '0px');
+                $(`#grids-${meta}`).css('opacity', '0');
+            });
+            iDiv.addEventListener('click', function(e){
+                loadCGSeries(INTERSECT_OBJ.userData.modelId, $(e.target).data("meta"));
+            });
+            iDiv.classList.add('tiler');
+            catalogItems.appendChild(iDiv);
+            $(iDiv).data('meta', item);
+            cgsPreview.set(item, image);
+        });
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta}`);
+            $(this).attr('id', `grid-${meta}`);
         })
     });
 };

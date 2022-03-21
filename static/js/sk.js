@@ -235,8 +235,8 @@ function detectCollisionCubes(object1, object2){
     box1.applyMatrix4(object1.matrixWorld);
     let box2 = object2.geometry.boundingBox.clone();
     box2.applyMatrix4(object2.matrixWorld);
-    box1.expandByScalar(-0.06);
-    box2.expandByScalar(-0.06);
+    box1.expandByScalar(0.06);
+    box2.expandByScalar(0.06);
     return box1.intersectsBox(box2);
 }
 
@@ -808,9 +808,10 @@ function onDocumentMouseMove(event) {
         }else if(Math.abs(angle) < Math.PI / 16){
             resOri -= angle;
         }
+
         let resDir = new THREE.Vector2(Math.sin(resOri), Math.cos(resOri));
         let oSet = Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.key !== INTERSECT_OBJ.userData.key);
-        if(oSet.length > 0){
+        if(oSet.length > 0 && pressedKeys[17]){
             let closestDir = oSet.map(d => new THREE.Vector2(d.position.x - INTERSECT_OBJ.position.x, d.position.z - INTERSECT_OBJ.position.z).normalize())
             .reduce(function(prev, curr) {
                 return (curr.dot(resDir) > prev.dot(resDir) ? curr : prev);
