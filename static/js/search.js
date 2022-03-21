@@ -21,6 +21,7 @@ const clickCatalogItem = function (e, d=undefined) {
         loadSingleObjectPrior(INSERT_OBJ.modelId);
     }else{
         On_ADD = true;
+        timeCounter.addStart = moment();
     }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId); 

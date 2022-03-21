@@ -690,6 +690,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 		// Prevent the browser from scrolling.
 
 		event.preventDefault();
+		timeCounter.navigateStart = moment();
 		scenecanvas.addEventListener('click', onClickObj);
         if (isToggle) {
             radial.toggle();
@@ -799,8 +800,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		if ( scope.enabled === false ) return;
 
+		timeCounter.navigate += moment.duration(moment().diff(timeCounter.navigateStart)).asSeconds();
 		handleMouseUp( event );
-
 		document.removeEventListener( 'mousemove', onMouseMove, false );
 		document.removeEventListener( 'mouseup', onMouseUp, false );
 
@@ -810,18 +811,17 @@ THREE.OrbitControls = function ( object, domElement ) {
 	}
 
 	function onMouseWheel( event ) {
-
 		if ( scope.enabled === false || scope.enableZoom === false || ( state !== STATE.NONE && state !== STATE.ROTATE ) ) return;
-
+		if(moment.duration(moment().diff(timeCounter.navigateStart)).asSeconds() > 1.5){
+			timeCounter.navigateStart = moment();
+		}
 		event.preventDefault();
 		event.stopPropagation();
-
 		scope.dispatchEvent( startEvent );
-
 		handleMouseWheel( event );
-
 		scope.dispatchEvent( endEvent );
-
+		timeCounter.navigate += moment.duration(moment().diff(timeCounter.navigateStart)).asSeconds();
+		timeCounter.navigateStart = moment();
 	}
 
 	function onKeyDown( event ) {

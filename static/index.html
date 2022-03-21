@@ -123,6 +123,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, total: 0}
 
       // this variable is used for determining the collaborative group a user belonging to;
       const onlineGroup = "{{ onlineGroup }}";
@@ -270,6 +271,13 @@
               class="btn btn-outline-dark m-1 btn-responsive"
             >
               ScenePalette
+            </button>
+            <button
+              id="operationTimer"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Timer
             </button>
           </div>
           <div class="py-1 px-0">

@@ -2,7 +2,7 @@ var rad_items = [
     {className: 'glyphicon glyphicon-tower', html: ''},
     {className: 'glyphicon glyphicon-star', html: ''},
     {className: 'glyphicon glyphicon-move', html: ''},
-    {className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
+    //{className: 'glyphicon glyphicon-fullscreen', html: ''}, // scale
     //{className: 'glyphicon glyphicon-resize-vertical', html: ''},
     {className: 'glyphicon glyphicon-repeat', html: ''},
     {className: 'glyphicon glyphicon-remove', html: ''},
@@ -40,6 +40,7 @@ const radial_mage_control = function(event){
 }
 
 const radial_cgseries_control = function(event){
+    timeCounter.cgsStart = moment();
     loadCGSeries(INTERSECT_OBJ.userData.modelId);
     On_CGSeries = true;
     transformControls.detach();
@@ -48,6 +49,7 @@ const radial_cgseries_control = function(event){
 }
 
 var radial_move_control = function (event) {
+    timeCounter.moveStart = moment();
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     On_MOVE = true;
     transformControls.detach();
@@ -55,6 +57,7 @@ var radial_move_control = function (event) {
 };
 
 var radial_rotate_control = function (event) {
+    timeCounter.rotateStart = moment();
     datguiObjectFolderRemove(INTERSECT_OBJ); 
     mouse.rotateBase = new THREE.Vector2();
     mouse.rotateBase.set(mouse.x, mouse.y);
@@ -122,8 +125,8 @@ var radial_initialization = function(){
     // var radial_lift_button = document.getElementsByClassName("glyphicon-resize-vertical")[0];
     // radial_lift_button.addEventListener('click', radial_lift_control);
 
-    var radial_scale_button = document.getElementsByClassName("glyphicon-fullscreen")[0];
-    radial_scale_button.addEventListener('click', radial_scale_control);
+    // var radial_scale_button = document.getElementsByClassName("glyphicon-fullscreen")[0];
+    // radial_scale_button.addEventListener('click', radial_scale_control);
 
     var radial_latentspace_button = document.getElementsByClassName("glyphicon-star")[0];
     radial_latentspace_button.addEventListener('click', radial_mage_control);
