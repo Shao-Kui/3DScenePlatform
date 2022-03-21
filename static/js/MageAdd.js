@@ -956,37 +956,56 @@ const moveCGSeries = function(){
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [theprior['domScale'][0] * CGSERIES_GROUP.domCurrentScale.x, theprior['domScale'][1] * CGSERIES_GROUP.domCurrentScale.y, theprior['domScale'][2] * CGSERIES_GROUP.domCurrentScale.z], 'scale', false); 
         gsap.to(CGSERIES_GROUP.scale, {duration: commonSmoothDuration, x:theprior['domScale'][0] * CGSERIES_GROUP.domCurrentScale.x, y:theprior['domScale'][1] * CGSERIES_GROUP.domCurrentScale.y, z:theprior['domScale'][2] * CGSERIES_GROUP.domCurrentScale.z});
         cgseries.object3ds.forEach(c => {c.onUsed = false;});
+        CGSERIES_GROUP.clear();
+        let rid = calculateRoomID([CGSERIES_GROUP.position.x, CGSERIES_GROUP.position.y, CGSERIES_GROUP.position.z]);
+        let potentialCollisionObjects = door_mageAdd_set.concat(Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.json.roomId === rid));
+        // find a correspongding object w.r.t the prior: 
         theprior.subPriors.forEach(p => {
-            // find a correspongding object w.r.t p: 
+            if(!(p.sub in objectCache)){
+                return;
+            }
             let corresObj;
             p.allocated = false;
-            for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
-                if(CGSERIES_GROUP.children[i].onUsed || CGSERIES_GROUP.children[i].userData.modelId !== p.sub){
-                    continue
+            // detect potential collisions:  
+            let tarObj = objectCache[p.sub];
+            tarObj.position.set(p.translate[0], p.translate[1], p.translate[2]);tarObj.rotation.set(0,p.orient,0);tarObj.scale.set(p.scale[0], p.scale[1], p.scale[2]);
+            tarObj.applyMatrix4(CGSERIES_GROUP.matrix);
+            for(let i = 0; i < potentialCollisionObjects.length; i++){
+                let objmesh = potentialCollisionObjects[i];
+                if(detectCollisionGroups(tarObj, objmesh)){
+                    return false;
                 }
-                CGSERIES_GROUP.children[i].onUsed = true;
-                corresObj = CGSERIES_GROUP.children[i];
-                p.allocated = true;
-                break;
             }
+            // for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
+            //     if(CGSERIES_GROUP.children[i].onUsed || CGSERIES_GROUP.children[i].userData.modelId !== p.sub){
+            //         continue
+            //     }
+            //     CGSERIES_GROUP.children[i].onUsed = true;
+            //     corresObj = CGSERIES_GROUP.children[i];
+            //     p.allocated = true;
+            //     break;
+            // }
             if(!p.allocated){
-            for(let i = 0; i < cgseries.object3ds.length; i++){
-                if(cgseries.object3ds[i].onUsed || cgseries.object3ds[i].userData.modelId !== p.sub){
-                    continue
+                let theI = -1;
+                let minLength = 100000;
+                for(let i = 0; i < cgseries.object3ds.length; i++){
+                    if(cgseries.object3ds[i].onUsed || cgseries.object3ds[i].userData.modelId !== p.sub){
+                        continue
+                    }
+                    let minL = new THREE.Vector3(p.translate[0], p.translate[1], p.translate[2]).sub(cgseries.object3ds[i].position).length()
+                    if(minL < minLength){
+                        theI = i;
+                        minLength = minL;
+                    }
                 }
-                cgseries.object3ds[i].onUsed = true;
-                corresObj = cgseries.object3ds[i];
+                cgseries.object3ds[theI].onUsed = true;
+                corresObj = cgseries.object3ds[theI];
                 CGSERIES_GROUP.add(corresObj);
                 p.allocated = true;
-                break;
             }
-            }
-            if(p.allocated){
-                gsap.to(corresObj.position, {duration: commonSmoothDuration, x: p.translate[0], y: p.translate[1], z: p.translate[2]});
-                gsap.to(corresObj.rotation, {duration: commonSmoothDuration, y: p.orient});
-                gsap.to(corresObj.scale, {duration: commonSmoothDuration, x: p.scale[0], y: p.scale[1], z: p.scale[2]});
-            }
-            
+            gsap.to(corresObj.position, {duration: commonSmoothDuration, x: p.translate[0], y: p.translate[1], z: p.translate[2]});
+            gsap.to(corresObj.rotation, {duration: commonSmoothDuration, y: p.orient});
+            gsap.to(corresObj.scale, {duration: commonSmoothDuration, x: p.scale[0], y: p.scale[1], z: p.scale[2]});
         });
         for(let i = 0; i < cgseries.object3ds.length; i++){
             // console.log(cgseries.object3ds[i].position, cgseries.object3ds[i].rotation);
@@ -999,7 +1018,6 @@ const moveCGSeries = function(){
 
 const synchronize_coherentGroup = function(){
     let oArray = [];
-    let theprior = cgseries.configs[CGSERIES_GROUP.lastIndex];
     for(let i = 0; i < CGSERIES_GROUP.children.length; i++){
         let c = CGSERIES_GROUP.children[i];
         let _x = c.position.x * CGSERIES_GROUP.scale.x, _y = c.position.y * CGSERIES_GROUP.scale.y, _z = c.position.z * CGSERIES_GROUP.scale.z;
