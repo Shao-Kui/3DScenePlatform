@@ -885,7 +885,7 @@ def usercommitchange(username):
         main_obj = data['mainobj']
         alipay = data['alipay']
         series = data['series']
-        SAVE_COMMIT_PATH = f'./layoutmethods/cgseries/{main_obj}/{series}'
+        SAVE_COMMIT_PATH = f'./layoutmethods/cgseries/{main_obj}/{username}-{series}'
         timestr = time.strftime("%Y%m%d-%H%M%S")
         if not os.path.exists(f"{SAVE_COMMIT_PATH}"):
             os.makedirs(f"{SAVE_COMMIT_PATH}")

@@ -1,6 +1,6 @@
 from operator import mod
 from types import MethodType
-from flask import Blueprint, request
+from flask import Blueprint, request, send_file
 import numpy as np
 import os
 import json
@@ -454,6 +454,25 @@ def mageAddAuto():
     samples = random_points_within(Polygon(room_meta), 500)
     return json.dumps(samples)
 
+@app_magic.route("/availableCGS/<domObjName>", methods=['GET'])
+def availableCGS(domObjName):
+    return json.dumps(os.listdir(f'./layoutmethods/cgseries/{domObjName}/'))
+
+@app_magic.route("/cgsPreview/<domObjName>/<seriesName>", methods=['GET'])
+def cgsPreview(domObjName, seriesName):
+    ls = os.listdir(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/')
+    imageNames = []
+    for l in ls:
+        if '.png' in l:
+            imageNames.append(l)
+    res = max(imageNames, key=lambda x:len(x)) 
+    return send_file(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/{res}')
+
+@app_magic.route("/getCGS/<domObjName>/<seriesName>", methods=['GET'])
+def getCGS(domObjName, seriesName):
+    with open(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/result.json') as f:
+        return json.dumps(json.load(f)) 
+
 @app_magic.route("/coherent_group_series", methods=['POST'])
 def coherent_group_series():
     if not os.path.exists(f'./layoutmethods/cgseries/{request.json["domID"]}/'):
@@ -463,7 +482,10 @@ def coherent_group_series():
         if len(seriesNames) == 0:
             return json.dumps({})
         else:
-            seriesName = random.choice(seriesNames)
+            if 'seriesName' in request.json:
+                seriesName = request.json['seriesName']
+            else:
+                seriesName = random.choice(seriesNames)
             with open(f'./layoutmethods/cgseries/{request.json["domID"]}/{seriesName}/result.json') as f:
                 return json.dumps(json.load(f))
     # with open(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json') as f:

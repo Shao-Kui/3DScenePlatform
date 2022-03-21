@@ -44,6 +44,7 @@ const radial_cgseries_control = function(event){
     On_CGSeries = true;
     transformControls.detach();
     toggles();
+    clickCGSPreview();
 }
 
 var radial_move_control = function (event) {

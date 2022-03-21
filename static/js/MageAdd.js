@@ -779,94 +779,100 @@ var cgseries = {
     enabled: false
 }
 
-const loadCGSeries = function(modelId){
+const refreshCGS = function (data) {
+    let newcgseries = JSON.parse(data);
+    if(!('configs' in newcgseries)){
+        cgseries.enabled = false;
+        On_CGSeries = false;
+        return
+    }
+    INTERSECT_OBJ.scale.set(Math.abs(INTERSECT_OBJ.scale.x),Math.abs(INTERSECT_OBJ.scale.y),Math.abs(INTERSECT_OBJ.scale.z))
+    CGSERIES_GROUP.lastIndex = undefined;
+    cgseries.anchorOris.dispose();
+    cgseries.anchorDises.dispose();
+    cgseries.depthDises.dispose();
+    cgseries.leftDises.dispose();
+    cgseries.rightDises.dispose();
+    cgseries.areas.dispose();  
+    cgseries.objNums.dispose(); 
+    cgseries.spaceUtils.dispose(); 
+    cgseries.catNums.dispose(); 
+    cgseries.dpAnchors.dispose(); 
+    cgseries.dpLefts.dispose(); 
+    cgseries.dpRights.dispose(); 
+    cgseries.dpDepths.dispose(); 
+    cgseries.originCGs.dispose(); 
+    cgseries.diffMatrix.dispose();
+    cgseries.scaleOri.dispose();
+    cgseries = newcgseries;   
+    cgseries.anchorOris = tf.tensor(cgseries.anchorOris);
+    cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
+    cgseries.depthDises = tf.tensor(cgseries.depthDises);
+    cgseries.leftDises = tf.tensor(cgseries.leftDises);
+    cgseries.rightDises = tf.tensor(cgseries.rightDises);
+    cgseries.areas = tf.tensor(cgseries.areas);
+    cgseries.objNums = tf.tensor(cgseries.objNums);
+    cgseries.spaceUtils = tf.tensor(cgseries.spaceUtils);
+    cgseries.catNums = tf.tensor(cgseries.catNums);
+    cgseries.dpAnchors = tf.tensor(cgseries.dpAnchors);
+    cgseries.dpLefts = tf.tensor(cgseries.dpLefts);
+    cgseries.dpRights = tf.tensor(cgseries.dpRights);
+    cgseries.dpDepths = tf.tensor(cgseries.dpDepths);
+    cgseries.originCGs = tf.tensor(cgseries.originCGs, [cgseries.originCGs.length], 'int32');
+    cgseries.diffMatrix = tf.tensor(cgseries.diffMatrix);
+    // this may require a systematic optimization, since objList can be reduced to a single room;
+    cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
+    cgseries.object3ds = [];
+    CGSERIES_GROUP.clear();
+    CGSERIES_GROUP.domCurrentScale = INTERSECT_OBJ.scale.clone();
+    CGSERIES_GROUP.scale.set(INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z);
+    let _a = cgseries.anchorDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+    let _d = cgseries.depthDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+
+    let _l = cgseries.leftDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+    let _r = cgseries.rightDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
+
+    cgseries.anchorDises = _a.where(_a.less(_l), _l);
+    cgseries.anchorDises = cgseries.anchorDises.where(_a.less(_r), _r);
+    cgseries.depthDises = _d.where(_a.less(_l), _r);
+    cgseries.depthDises = cgseries.depthDises.where(_a.less(_r), _l);
+    cgseries.leftDises = _l.where(_a.less(_l), _d);
+    cgseries.leftDises = cgseries.leftDises.where(_a.less(_r), _a);
+    cgseries.rightDises = _r.where(_a.less(_l), _a);
+    cgseries.rightDises = cgseries.rightDises.where(_a.less(_r), _d);
+    cgseries.scaleOri = tf.fill([cgseries.anchorDises.shape[0]], 0);
+    cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_l), Math.PI/2);
+    cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_r), -Math.PI/2);
+
+    cgseries.involvedObjects.forEach(o => {
+        loadObjectToCache(o, (modelId) => {
+            let object3d = objectCache[modelId].clone();
+            object3d.children.forEach(child => {
+                if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+            });
+            cgseries.object3ds.push(object3d);
+            object3d.onUsed = false;
+        }, [o]);
+    });
+    cgseries.enabled = true;
+}
+
+const loadCGSeries = function(modelId, seriesName=undefined){
     let j = {
         'domID': modelId
     };
     cgseries.enabled = false;
+    if(seriesName){
+        j['seriesName'] = seriesName
+    }
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
         url: "/coherent_group_series",
         data: JSON.stringify(j),
-        success: function (data) {
-            let newcgseries = JSON.parse(data);
-            if(!('configs' in newcgseries)){
-                cgseries.enabled = false;
-                On_CGSeries = false;
-                return
-            }
-            INTERSECT_OBJ.scale.set(Math.abs(INTERSECT_OBJ.scale.x),Math.abs(INTERSECT_OBJ.scale.y),Math.abs(INTERSECT_OBJ.scale.z))
-            CGSERIES_GROUP.lastIndex = undefined;
-            cgseries.anchorOris.dispose();
-            cgseries.anchorDises.dispose();
-            cgseries.depthDises.dispose();
-            cgseries.leftDises.dispose();
-            cgseries.rightDises.dispose();
-            cgseries.areas.dispose();  
-            cgseries.objNums.dispose(); 
-            cgseries.spaceUtils.dispose(); 
-            cgseries.catNums.dispose(); 
-            cgseries.dpAnchors.dispose(); 
-            cgseries.dpLefts.dispose(); 
-            cgseries.dpRights.dispose(); 
-            cgseries.dpDepths.dispose(); 
-            cgseries.originCGs.dispose(); 
-            cgseries.diffMatrix.dispose();
-            cgseries.scaleOri.dispose();
-            cgseries = newcgseries;   
-            cgseries.anchorOris = tf.tensor(cgseries.anchorOris);
-            cgseries.anchorDises = tf.tensor(cgseries.anchorDises);
-            cgseries.depthDises = tf.tensor(cgseries.depthDises);
-            cgseries.leftDises = tf.tensor(cgseries.leftDises);
-            cgseries.rightDises = tf.tensor(cgseries.rightDises);
-            cgseries.areas = tf.tensor(cgseries.areas);
-            cgseries.objNums = tf.tensor(cgseries.objNums);
-            cgseries.spaceUtils = tf.tensor(cgseries.spaceUtils);
-            cgseries.catNums = tf.tensor(cgseries.catNums);
-            cgseries.dpAnchors = tf.tensor(cgseries.dpAnchors);
-            cgseries.dpLefts = tf.tensor(cgseries.dpLefts);
-            cgseries.dpRights = tf.tensor(cgseries.dpRights);
-            cgseries.dpDepths = tf.tensor(cgseries.dpDepths);
-            cgseries.originCGs = tf.tensor(cgseries.originCGs, [cgseries.originCGs.length], 'int32');
-            cgseries.diffMatrix = tf.tensor(cgseries.diffMatrix);
-            // this may require a systematic optimization, since objList can be reduced to a single room;
-            cgseries.intersectObjList = Object.values(manager.renderManager.fCache);
-            cgseries.object3ds = [];
-            CGSERIES_GROUP.clear();
-            CGSERIES_GROUP.domCurrentScale = INTERSECT_OBJ.scale.clone();
-            CGSERIES_GROUP.scale.set(INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z);
-            let _a = cgseries.anchorDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
-            let _d = cgseries.depthDises.mul(tf.sqrt(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
-
-            let _l = cgseries.leftDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
-            let _r = cgseries.rightDises.mul(tf.sqrt(tf.pow(tf.sin(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.z), 2).add(tf.pow(tf.cos(cgseries.anchorOris).mul(INTERSECT_OBJ.scale.x), 2))));
-
-            cgseries.anchorDises = _a.where(_a.less(_l), _l);
-            cgseries.anchorDises = cgseries.anchorDises.where(_a.less(_r), _r);
-            cgseries.depthDises = _d.where(_a.less(_l), _r);
-            cgseries.depthDises = cgseries.depthDises.where(_a.less(_r), _l);
-            cgseries.leftDises = _l.where(_a.less(_l), _d);
-            cgseries.leftDises = cgseries.leftDises.where(_a.less(_r), _a);
-            cgseries.rightDises = _r.where(_a.less(_l), _a);
-            cgseries.rightDises = cgseries.rightDises.where(_a.less(_r), _d);
-            cgseries.scaleOri = tf.fill([cgseries.anchorDises.shape[0]], 0);
-            cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_l), Math.PI/2);
-            cgseries.scaleOri = cgseries.scaleOri.where(_a.less(_r), -Math.PI/2);
-
-            cgseries.involvedObjects.forEach(o => {
-                loadObjectToCache(o, (modelId) => {
-                    let object3d = objectCache[modelId].clone();
-                    object3d.children.forEach(child => {
-                        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
-                    });
-                    cgseries.object3ds.push(object3d);
-                    object3d.onUsed = false;
-                }, [o]);
-            });
-            cgseries.enabled = true;
-        }
+        success: refreshCGS
     });
+    
 }
 
 const moveCGSeries = function(){
@@ -903,7 +909,7 @@ const moveCGSeries = function(){
         let vecRight =  new THREE.Vector2(rsArray[rightIndex][0], rsArray[rightIndex][1]).sub(new THREE.Vector2(rsArray[wallIndex][0], rsArray[wallIndex][1]));
         let depthIndex = ( vecAnchor.cross(vecLeft) > vecAnchor.cross(vecRight) ) ? _dli : _dri;
         // Dependencies
-        let wdt = 0.3;
+        let wdt = 0.25;
         let _addiff = wallDistances.slice([wallIndex], [1]).sub(cgseries.anchorDises);
         _addiff = _addiff.where(_addiff.less(wdt), 1.0);
         _addiff = _addiff.where(_addiff.greater(wdt), 0.0);
@@ -958,7 +964,7 @@ const moveCGSeries = function(){
         cgseries.object3ds.forEach(c => {c.onUsed = false;});
         CGSERIES_GROUP.clear();
         let rid = calculateRoomID([CGSERIES_GROUP.position.x, CGSERIES_GROUP.position.y, CGSERIES_GROUP.position.z]);
-        let potentialCollisionObjects = door_mageAdd_set.concat(Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.json.roomId === rid));
+        let potentialCollisionObjects = door_mageAdd_set.concat(Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.json.roomId === rid && d.userData.key !== INTERSECT_OBJ.userData.key));
         // find a correspongding object w.r.t the prior: 
         theprior.subPriors.forEach(p => {
             if(!(p.sub in objectCache)){
