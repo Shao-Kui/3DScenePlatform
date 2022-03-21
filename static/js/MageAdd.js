@@ -964,7 +964,7 @@ const moveCGSeries = function(){
         cgseries.object3ds.forEach(c => {c.onUsed = false;});
         CGSERIES_GROUP.clear();
         let rid = calculateRoomID([CGSERIES_GROUP.position.x, CGSERIES_GROUP.position.y, CGSERIES_GROUP.position.z]);
-        let potentialCollisionObjects = door_mageAdd_set.concat(Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.json.roomId === rid));
+        let potentialCollisionObjects = door_mageAdd_set.concat(Object.values(manager.renderManager.instanceKeyCache).filter(d => d.userData.json.roomId === rid && d.userData.key !== INTERSECT_OBJ.userData.key));
         // find a correspongding object w.r.t the prior: 
         theprior.subPriors.forEach(p => {
             if(!(p.sub in objectCache)){
