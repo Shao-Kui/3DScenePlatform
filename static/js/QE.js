@@ -25,8 +25,17 @@ const transformControlsConfig = function(){
             radial.toggle();
             isToggle = !isToggle;
         }
-        if(!event.value){
+        if(event.value){
+            timeCounter.maniStart = moment();
+        }else{
             synchronize_json_object(INTERSECT_OBJ);
+            if(transformControls.mode === 'translate'){
+                timeCounter.move += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+            }else if(transformControls.mode === 'rotate'){
+                timeCounter.rotate += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+            }else if(transformControls.mode === 'scale'){
+                timeCounter.scale += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+            }
         }
     });
     transformControls.addEventListener('change', function (event) {
@@ -191,6 +200,8 @@ const onKeyDown = function(event){
                 }
             );
             duplicateTimes += 1;
+            timeCounter.add += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+            timeCounter.maniStart = moment();
             break;
     }
     if(event.keyCode === 90 && ctrlPressing){

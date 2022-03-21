@@ -40,6 +40,7 @@ const radial_mage_control = function(event){
 }
 
 const radial_cgseries_control = function(event){
+    timeCounter.cgsStart = moment();
     loadCGSeries(INTERSECT_OBJ.userData.modelId);
     On_CGSeries = true;
     transformControls.detach();

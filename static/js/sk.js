@@ -235,8 +235,8 @@ function detectCollisionCubes(object1, object2){
     box1.applyMatrix4(object1.matrixWorld);
     let box2 = object2.geometry.boundingBox.clone();
     box2.applyMatrix4(object2.matrixWorld);
-    box1.expandByScalar(-0.06);
-    box2.expandByScalar(-0.06);
+    box1.expandByScalar(0.06);
+    box2.expandByScalar(0.06);
     return box1.intersectsBox(box2);
 }
 
@@ -520,12 +520,14 @@ const onTouchObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
+        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         return;
     }
     if (On_MOVE) {
         On_MOVE = false;
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
+        timeCounter.move += moment.duration(moment().diff(timeCounter.moveStart)).asSeconds();
         return;
     }
     if (On_LIFT) {
@@ -542,6 +544,7 @@ const onTouchObj = function (event) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
+        timeCounter.rotate += moment.duration(moment().diff(timeCounter.rotateStart)).asSeconds();
         return;
     }
     onClickIntersectObject(event.changedTouches[0]);
@@ -553,6 +556,8 @@ const onClickIntersectObject = function(event){
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        // start to count time consumed. 
+        timeCounter.maniStart = moment();
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 claimControlObject3D(INTERSECT_OBJ.userData.key, true);
@@ -648,12 +653,14 @@ var onClickObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
+        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         return;
     }
     if (On_MOVE) {
         On_MOVE = false;
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
+        timeCounter.move += moment.duration(moment().diff(timeCounter.moveStart)).asSeconds();
         return;
     }
     if (On_MAGEMOVE) {
@@ -668,6 +675,7 @@ var onClickObj = function (event) {
         synchronize_coherentGroup();
         CGSERIES_GROUP.clear();
         applyLayoutViewAdjust();
+        timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         return;
     }
     if (On_LIFT) {
@@ -684,8 +692,8 @@ var onClickObj = function (event) {
         On_ROTATE = false;
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
+        timeCounter.rotate += moment.duration(moment().diff(timeCounter.rotateStart)).asSeconds();
         return;
-
     }
 
     if(scene.getObjectByName(AUXILIARY_NAME)){
@@ -930,12 +938,15 @@ const removeIntersectObject = function(){
     applyLayoutViewAdjust();
     removeObjectByUUID(INTERSECT_OBJ.userData.key);
     INTERSECT_OBJ = undefined;
+    timeCounter.remove += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+    timeCounter.maniStart = moment();
 }
 
 const onAddOff = function(){
     scenecanvas.style.cursor = "auto";
     scene.remove(scene.getObjectByName(INSERT_NAME)); 
     On_ADD = false; 
+    timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
 }; 
 
 const onRightClickObj = function(event){
@@ -958,6 +969,7 @@ const onRightClickObj = function(event){
         On_CGSeries = false;
         synchronize_json_object(INTERSECT_OBJ);
         CGSERIES_GROUP.clear();
+        timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         return;
     }
 }
@@ -985,6 +997,14 @@ const encodePerspectiveCamera = function(sceneJson){
 
 const datguiFolders = {} // (TBD) a dat.gui folder list for multiple objects; dat.gui in the online mode; 
 const controllerOnChangeGen = function(mode, axis, objmesh){
+    if(mode == 'position'){
+        timeCounter.move += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+    }else if(mode == 'rotation'){
+        timeCounter.rotate += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+    }else if(mode == 'scale'){
+        timeCounter.scale += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
+    }
+    timeCounter.maniStart = moment();
     return v => {
         transformObject3DOnly(objmesh.userData.key, [
             (axis === 'x') ? v : objmesh[mode].x,
@@ -1192,6 +1212,20 @@ const setting_up = function () {
         }else{
             $("#scenePaletteSVG").css('display', 'block');
         }
+    });
+    timeCounter.totalStart = moment();
+    $("#operationTimer").click(function(){
+        timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
+        console.log(timeCounter.total);
+        timeCounter.navigate = 0;
+        timeCounter.move = 0;
+        timeCounter.rotate = 0;
+        timeCounter.scale = 0;
+        timeCounter.cgs = 0;
+        timeCounter.total = 0;
+        timeCounter.add = 0;
+        timeCounter.remove = 0;
+        timeCounter.totalStart = moment();
     });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
