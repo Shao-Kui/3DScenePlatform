@@ -847,6 +847,7 @@ const refreshCGS = function (data) {
     cgseries.involvedObjects.forEach(o => {
         loadObjectToCache(o, (modelId) => {
             let object3d = objectCache[modelId].clone();
+            object3d.position.set(0,0,0);object3d.rotation.set(0,0,0);object3d.scale.set(1,1,1);
             object3d.children.forEach(child => {
                 if(child.material.origin_mtr) child.material = child.material.origin_mtr;
             });

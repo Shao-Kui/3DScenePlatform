@@ -118,6 +118,7 @@ const calculateRoomID = function(translate){
 let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!uuid) uuid = THREE.MathUtils.generateUUID();
     commandStack.push({
         'funcName': 'removeObjectByUUID',
         'args': [uuid, true]
@@ -134,6 +135,9 @@ const addObjectsFromCache = function(oArray){
     console.log(oArray)
     oArray.forEach(o => {
         let uuid = serverUUIDs.pop(); // For object, pop a new uuid. 
+        if(!uuid){
+            uuid = THREE.MathUtils.generateUUID();
+        }
         let roomID = calculateRoomID(o.transform.translate);
         addObjectByUUID(uuid, o.modelId, roomID, o.transform);
         emitFunctionCall('addObjectByUUID', [uuid, o.modelId, roomID, o.transform]);
