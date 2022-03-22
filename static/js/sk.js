@@ -292,6 +292,17 @@ const detectCollisionWall = function(wallMeta, object){
     return false;
 }
 
+const updateTimerTab = function(){
+    $('#tab_Navigate').text(timeCounter.navigate.toFixed(3));
+    $('#tab_Add').text(timeCounter.add.toFixed(3));
+    $('#tab_Remove').text(timeCounter.remove.toFixed(3));
+    $('#tab_Move').text(timeCounter.move.toFixed(3));
+    $('#tab_Rotate').text(timeCounter.rotate.toFixed(3));
+    $('#tab_Scale').text(timeCounter.scale.toFixed(3));
+    $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
+    $('#tab_Total').text(timeCounter.total.toFixed(3));
+}
+
 const gameLoop = function () {
     stats.begin();
     render_update();
@@ -547,6 +558,7 @@ const onTouchObj = function (event) {
         timeCounter.rotate += moment.duration(moment().diff(timeCounter.rotateStart)).asSeconds();
         return;
     }
+    updateTimerTab();
     onClickIntersectObject(event.changedTouches[0]);
 };
 
@@ -611,6 +623,7 @@ const onClickIntersectObject = function(event){
 }
 
 var onClickObj = function (event) {
+    updateTimerTab();
     scenecanvas.style.cursor = "auto";
     // do raycasting, judge whether or not users choose a new object; 
     camera.updateMatrixWorld();
@@ -722,6 +735,7 @@ var onClickObj = function (event) {
         }
         return; 
     }
+    updateTimerTab();
     onClickIntersectObject(event);
 };
 
@@ -941,6 +955,7 @@ const removeIntersectObject = function(){
     INTERSECT_OBJ = undefined;
     timeCounter.remove += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
     timeCounter.maniStart = moment();
+    updateTimerTab();
 }
 
 const onAddOff = function(){
@@ -973,6 +988,7 @@ const onRightClickObj = function(event){
         timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         return;
     }
+    updateTimerTab();
 }
 
 const onWheel = function(event){
@@ -1217,7 +1233,17 @@ const setting_up = function () {
     timeCounter.totalStart = moment();
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
-        console.log(timeCounter.total);
+        updateTimerTab();
+        console.log(`
+        timeCounter.navigate - ${timeCounter.navigate}\r\n
+        timeCounter.add - ${timeCounter.add}\r\n
+        timeCounter.remove - ${timeCounter.remove}\r\n
+        timeCounter.move - ${timeCounter.move}\r\n
+        timeCounter.rotate - ${timeCounter.rotate}\r\n
+        timeCounter.scale - ${timeCounter.scale}\r\n
+        timeCounter.cgs - ${timeCounter.cgs}\r\n
+        timeCounter.total - ${timeCounter.total}
+        `);
         timeCounter.navigate = 0;
         timeCounter.move = 0;
         timeCounter.rotate = 0;

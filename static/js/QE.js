@@ -36,6 +36,7 @@ const transformControlsConfig = function(){
             }else if(transformControls.mode === 'scale'){
                 timeCounter.scale += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
             }
+            timeCounter.maniStart = moment();
         }
     });
     transformControls.addEventListener('change', function (event) {

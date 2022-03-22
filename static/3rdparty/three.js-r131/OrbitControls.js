@@ -828,8 +828,12 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		if ( scope.enabled === false || scope.enableKeys === false || scope.enablePan === false ) return;
 
+        if(moment.duration(moment().diff(timeCounter.navigateStart)).asSeconds() > 1.5){
+			timeCounter.navigateStart = moment();
+		}
 		handleKeyDown( event );
-
+        timeCounter.navigate += moment.duration(moment().diff(timeCounter.navigateStart)).asSeconds();
+		timeCounter.navigateStart = moment();
 	}
 
 	function onTouchStart( event ) {
