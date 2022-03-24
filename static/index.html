@@ -85,8 +85,8 @@
       var INTERSECT_WALL;
       var INSERT_OBJ;
       var MAIN_OBJ;
-      var USED_OBJ_LIST = window.sessionStorage.getItem('UsedObject');
-      USED_OBJ_LIST = USED_OBJ_LIST ? JSON.parse(USED_OBJ_LIST) : {};
+      var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
+      var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
 
       //Global variables, will be initialize only once.
       var manager;
@@ -258,6 +258,10 @@
                     Collaborative Search
                 </button>
             </div-->
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" value="" id="useNewWallCheckBox">
+              <label class="form-check-label" for="useNewWallCheckBox">Movable Wall</label>
+            </div>
           <div class="py-1 px-0">
             <button
               id="autoView"
@@ -487,7 +491,7 @@
             <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
             <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
             </div>
-
+            
             <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">

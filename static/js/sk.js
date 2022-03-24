@@ -1295,6 +1295,13 @@ const setting_up = function () {
         }
     });
     
+    $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
+    $("#useNewWallCheckBox").click(() => {
+        window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
+        USE_NEW_WALL = !USE_NEW_WALL;
+        console.log('clicked USE_NEW_WALL', USE_NEW_WALL);
+        manager.renderManager.refresh_scene(manager.renderManager.scene_json, false);
+    })
     initAttributes();
 
     $("#usercommitchange_button").click(() => {
@@ -1388,7 +1395,11 @@ const setting_up = function () {
         $('#searchbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
-        rapidSearches[i].addEventListener('click', rapidSFunc, false);
+        if(rapidSearches[i].textContent.includes('CGS-')){
+            rapidSearches[i].addEventListener('click', cgsSFunc, false);
+        }else{
+            rapidSearches[i].addEventListener('click', rapidSFunc, false);
+        }
     }
     scene.add(CGSERIES_GROUP);
     onWindowResize();

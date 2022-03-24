@@ -178,12 +178,12 @@ def query2nd():
         cgseriesDom = os.listdir('./layoutmethods/cgseries')
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in cgseriesDom]
     if kw == 'CGS-床':
-        ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in ['1034','1035','1040','1050',
+        ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in ['1034','1040','1050',
         '1217','1238','1262','1305','1397','1409','1526','1677','3169','4338','4478','4912','5010','5259','5312','5608','6200','6313',
         '9226','9416','9778']]
     if kw == 'CGS-茶几':
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in ['1023','1025','1049',
-        '1240','1359','1394','1484','1806','1830','1908','10126','10198','10216','10487','10512','10909','2624','2919','4314','5810',
+        '1240','1359','1394','1484','1806','1830','1908','10126','10198','10216','10487','10909','2624','2919','4314',
         '5933','7644','7896','8493','9532']]
     if kw == 'CGS-餐桌':
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in ['1041','1133','1198','1993'
