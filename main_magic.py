@@ -468,6 +468,28 @@ def cgsPreview(domObjName, seriesName):
     res = max(imageNames, key=lambda x:len(x)) 
     return send_file(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/{res}')
 
+CGSList_Bed = []
+for cgsdom in ['1034','1040','1050','1217','1238','1262','1305','1397','1409','1526','1677','3169','4338','4478','4912','5010','5259','5312','5608','6200','6313','9226','9416','9778']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Bed.append({'dom': cgsdom, 'series': cgsseries})
+CGSList_Cof = []
+for cgsdom in ['1023','1025','1049','1240','1359','1394','1484','1806','1830','1908','10126','10198','10216','10487','10909','2624','2919','4314','5933','7644','7896','8493','9532']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Cof.append({'dom': cgsdom, 'series': cgsseries})
+CGSList_Din = []
+for cgsdom in ['1041','1133','1198','1993','10568','2096','3118','3429','4839','6824','8983','9363','9704']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Din.append({'dom': cgsdom, 'series': cgsseries})
+@app_magic.route("/getCGSCat/<cat>", methods=['GET'])
+def getCGSCat(cat):
+    if cat == 'CGS-床':
+        return json.dumps(CGSList_Bed) 
+    elif cat == 'CGS-茶几':
+        return json.dumps(CGSList_Cof)
+    elif cat == 'CGS-餐桌':
+        return json.dumps(CGSList_Din)
+    return json.dumps([])
+
 @app_magic.route("/getCGS/<domObjName>/<seriesName>", methods=['GET'])
 def getCGS(domObjName, seriesName):
     with open(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/result.json') as f:

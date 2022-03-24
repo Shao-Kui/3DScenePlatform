@@ -371,8 +371,8 @@ const layoutviewadjust_control = function(){
     }
 }
 
-const nrs = 3;
-const ncs = 3;
+const nrs = 1;
+const ncs = 1;
 const floorPlanMapping = new Map();
 const clickAutoViewMapping = function(){
     let search_url = "/autoviewMapping";
@@ -434,70 +434,118 @@ const clickAutoViewMapping = function(){
     });
 };
 
+const showLargerCGSPreview = function(e){
+    e.preventDefault();
+    let meta = $(e.target).data("meta");
+    let image = cgsPreview.get(meta);
+    let wh = getMappingWidthHeight(image);
+    let w = wh[0], h = wh[1];
+    let scale = 1
+    if (w > $(window).width() * 0.80) {
+        scale = $(window).width() * 0.80 / w
+    }
+    $(`#grids-${meta}`).css('height', `${h*scale}px`);
+    $(`#grids-${meta}`).css('width', `${w*scale}px`);
+    $(`#grids-${meta}`).css('opacity', '1');
+    $(`#grids-${meta} .cell`).css('height', `${h/nrs}px`);
+    $(`#grids-${meta} .cell`).css('width', `${w/ncs}px`);
+}
+
+const hideLargerCGSPreview = function(e){
+    let meta = $(e.target).data("meta");
+    $(`#grids-${meta}`).css('height', '0px');
+    $(`#grids-${meta}`).css('width', '0px');
+    $(`#grids-${meta}`).css('opacity', '0');
+}
+
+const getOnLoadImage = function(src, iDiv){
+    let image = new Image();
+    image.onload = function(){
+        iDiv.style.width = `${$(window).width() * 0.10}px`;
+        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+    };
+    image.src = src;
+    return image;
+}
+
+const createSplittingDiv = function(imgsrc){
+    let iDiv = document.createElement('div');
+    iDiv.className = "mapping catalogItem";
+    iDiv.style.backgroundImage = `url(${imgsrc})`;
+    iDiv.style.backgroundSize = '100% 100%';
+    iDiv.style.visibility = 'visible';
+    iDiv.addEventListener('contextmenu', showLargerCGSPreview);
+    iDiv.addEventListener('mouseout', hideLargerCGSPreview);
+    iDiv.classList.add('tiler');
+    catalogItems.appendChild(iDiv);
+    return iDiv;
+}
+
+const CGSSplittingInit = function(){
+    Splitting({
+        target: '.tiler',
+        by: 'cells',
+        rows: nrs,
+        columns: ncs,
+        image: true
+    });
+    $('.tiler .cell-grid .cell').each(function(){
+        let meta = $(this).parent().parent().data("meta");
+        $(this).parent().attr('id', `grids-${meta}`);
+        $(this).attr('id', `grid-${meta}`);
+    })
+}
+
+const cgsPreviewClear = function(){
+    cgsPreview.clear();
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+}
+
 const cgsPreview = new Map();
+
+const cgsSFunc = function(){
+    if(On_CGSeries){
+        On_CGSeries = false;
+        synchronize_json_object(INTERSECT_OBJ);
+        CGSERIES_GROUP.clear();
+        timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
+    }
+    let search_url = `/getCGSCat/${this.textContent}`;
+    $.getJSON(search_url, function (searchResults) {
+        cgsPreviewClear();
+        searchResults.forEach(function (item) {
+            let imgsrc = `/cgsPreview/${item.dom}/${item.series}`
+            let iDiv = createSplittingDiv(imgsrc);
+            let image = getOnLoadImage(imgsrc, iDiv);
+            iDiv.setAttribute('objectName', item.dom);
+            $(iDiv).data('meta', `${item.dom}-${item.series}`);
+            cgsPreview.set(`${item.dom}-${item.series}`, image);
+            iDiv.addEventListener('click', clickCatalogItem);
+        });
+        CGSSplittingInit();
+    })
+}
+
 const clickCGSPreview = function(){
     if(INTERSECT_OBJ === undefined){
         return;
     }
     let search_url = `/availableCGS/${INTERSECT_OBJ.userData.modelId}`;
     $.getJSON(search_url, function (searchResults) {
-        cgsPreview.clear();
-        while (catalogItems.firstChild) {
-            catalogItems.firstChild.remove();
-        }
+        cgsPreviewClear();
         searchResults.forEach(function (item) {
-            let iDiv = document.createElement('div');
-            let image = new Image();
-            image.onload = function(){
-                iDiv.style.width = `${$(window).width() * 0.10}px`;
-                iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
-            };
-            image.src = `/cgsPreview/${INTERSECT_OBJ.userData.modelId}/${item}`;
-            iDiv.className = "mapping catalogItem";
-            iDiv.style.backgroundImage = `url(/cgsPreview/${INTERSECT_OBJ.userData.modelId}/${item})`;
-            iDiv.style.backgroundSize = '100% 100%';
-            iDiv.style.visibility = 'visible';
-            iDiv.addEventListener('mouseover', function(e){
-                let meta = $(e.target).data("meta");
-                let image = cgsPreview.get(meta);
-                let wh = getMappingWidthHeight(image);
-                let w = wh[0], h = wh[1];
-                let scale = 1
-                if (w > $(window).width() * 0.80) {
-                    scale = $(window).width() * 0.80 / w
-                }
-                $(`#grids-${meta}`).css('height', `${h*scale}px`);
-                $(`#grids-${meta}`).css('width', `${w*scale}px`);
-                $(`#grids-${meta}`).css('opacity', '1');
-                $(`#grids-${meta} .cell`).css('height', `${h/nrs}px`);
-                $(`#grids-${meta} .cell`).css('width', `${w/ncs}px`);
-            });
-            iDiv.addEventListener('mouseout', function(e){
-                let meta = $(e.target).data("meta");
-                $(`#grids-${meta}`).css('height', '0px');
-                $(`#grids-${meta}`).css('width', '0px');
-                $(`#grids-${meta}`).css('opacity', '0');
-            });
+            let imgsrc = `/cgsPreview/${INTERSECT_OBJ.userData.modelId}/${item}`
+            let iDiv = createSplittingDiv(imgsrc);
+            let image = getOnLoadImage(imgsrc, iDiv);
+            $(iDiv).data('meta', item);
+            cgsPreview.set(item, image);
             iDiv.addEventListener('click', function(e){
                 loadCGSeries(INTERSECT_OBJ.userData.modelId, $(e.target).data("meta"));
             });
-            iDiv.classList.add('tiler');
-            catalogItems.appendChild(iDiv);
-            $(iDiv).data('meta', item);
-            cgsPreview.set(item, image);
         });
-        Splitting({
-            target: '.tiler',
-            by: 'cells',
-            rows: nrs,
-            columns: ncs,
-            image: true
-        });
-        $('.tiler .cell-grid .cell').each(function(){
-            let meta = $(this).parent().parent().data("meta");
-            $(this).parent().attr('id', `grids-${meta}`);
-            $(this).attr('id', `grid-${meta}`);
-        })
+        CGSSplittingInit();
     });
 };
 

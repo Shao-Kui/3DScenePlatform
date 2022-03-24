@@ -1388,7 +1388,11 @@ const setting_up = function () {
         $('#searchbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
-        rapidSearches[i].addEventListener('click', rapidSFunc, false);
+        if(rapidSearches[i].textContent.includes('CGS-')){
+            rapidSearches[i].addEventListener('click', cgsSFunc, false);
+        }else{
+            rapidSearches[i].addEventListener('click', rapidSFunc, false);
+        }
     }
     scene.add(CGSERIES_GROUP);
     onWindowResize();
