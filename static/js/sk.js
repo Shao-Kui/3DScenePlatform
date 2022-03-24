@@ -1295,6 +1295,13 @@ const setting_up = function () {
         }
     });
     
+    $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
+    $("#useNewWallCheckBox").click(() => {
+        window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
+        USE_NEW_WALL = !USE_NEW_WALL;
+        console.log('clicked USE_NEW_WALL', USE_NEW_WALL);
+        manager.renderManager.refresh_scene(manager.renderManager.scene_json, false);
+    })
     initAttributes();
 
     $("#usercommitchange_button").click(() => {
