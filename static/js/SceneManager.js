@@ -138,13 +138,13 @@ class SceneManager {
         this.wfCache = []; 
         this.wCache = []; 
         this.newWallCache = [];
-        this.useNewWall = true;
+        this.useNewWall = USE_NEW_WALL;
         if (this.useNewWall)
             this.reconstructWalls();
-        // var self = this;
-        // for (var i = 0; i < this.scene_json.rooms.length; i++) {
-        //     self.load_cwf_room_meta(this.scene_json.rooms[i])
-        // }
+        var self = this;
+        for (var i = 0; i < this.scene_json.rooms.length; i++) {
+            self.load_cwf_room_meta(this.scene_json.rooms[i])
+        }
     };
 
     load_cwf_room_meta = room => {
