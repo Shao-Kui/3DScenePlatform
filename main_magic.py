@@ -456,7 +456,10 @@ def mageAddAuto():
 
 @app_magic.route("/availableCGS/<domObjName>", methods=['GET'])
 def availableCGS(domObjName):
-    return json.dumps(os.listdir(f'./layoutmethods/cgseries/{domObjName}/'))
+    if os.path.exists(f'./layoutmethods/cgseries/{domObjName}/'):
+        return json.dumps(os.listdir(f'./layoutmethods/cgseries/{domObjName}/'))
+    else:
+        return json.dumps([])
 
 @app_magic.route("/cgsPreview/<domObjName>/<seriesName>", methods=['GET'])
 def cgsPreview(domObjName, seriesName):
