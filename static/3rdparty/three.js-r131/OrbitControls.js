@@ -692,6 +692,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 		event.preventDefault();
 		timeCounter.navigateStart = moment();
 		scenecanvas.addEventListener('click', onClickObj);
+        scenecanvas.addEventListener('contextmenu', onRightClickObj);
         if (isToggle) {
             radial.toggle();
             isToggle = !isToggle;
@@ -765,7 +766,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		event.preventDefault();
 		scenecanvas.removeEventListener('click', onClickObj);
-
+        scenecanvas.removeEventListener('contextmenu', onRightClickObj);
 		switch ( state ) {
 
 			case STATE.ROTATE:

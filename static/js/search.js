@@ -540,9 +540,15 @@ const clickCGSPreview = function(){
             let iDiv = createSplittingDiv(imgsrc);
             let image = getOnLoadImage(imgsrc, iDiv);
             $(iDiv).data('meta', item);
+            iDiv.setAttribute('objectName', INTERSECT_OBJ.userData.modelId);
             cgsPreview.set(item, image);
             iDiv.addEventListener('click', function(e){
-                loadCGSeries(INTERSECT_OBJ.userData.modelId, $(e.target).data("meta"));
+                if(On_CGSeries){
+                    loadCGSeries(INTERSECT_OBJ.userData.modelId, $(e.target).data("meta"));
+                }else{
+                    clickCatalogItem(e)
+                }
+                
             });
         });
         CGSSplittingInit();
