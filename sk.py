@@ -1,4 +1,5 @@
 from typing import Union
+from unittest import case
 from numpy.core.fromnumeric import shape
 import trimesh
 import os
@@ -10,7 +11,7 @@ from shapely.geometry.polygon import Polygon, LineString, Point
 import pathTracing as pt
 from datetime import datetime
 from itertools import chain, combinations
-import math
+import time
 import random
 
 AABBcache = {}
@@ -320,7 +321,6 @@ def findNearestWalls(shape, p, isOrient=True):
     return _indicesList, distances, orients
 
 def extractGroup(objList, dom, modelIDs, originIndex):
-    print(dom, modelIDs, originIndex)
     subs = []
     subPriors = []
     for obj in objList:
@@ -346,8 +346,12 @@ def extractGroup(objList, dom, modelIDs, originIndex):
             'orient': relativeOrient.tolist(),
             'scale': relativeScale.tolist()
         })
-    subSetOfsubPriors = list(powerset(subPriors))
-    subSetOfsubPriors = subSetOfsubPriors[1:len(subSetOfsubPriors)]
+    if len(subPriors) > 25:
+        subSetOfsubPriors = [subPriors]
+    else:
+        subSetOfsubPriors = list(powerset(subPriors))
+        subSetOfsubPriors = subSetOfsubPriors[1:len(subSetOfsubPriors)]
+    print(dom, modelIDs, originIndex, len(subSetOfsubPriors))
     if len(subSetOfsubPriors) > 75:
         subSetOfsubPriors = random.sample(subSetOfsubPriors, 75) + subSetOfsubPriors[len(subSetOfsubPriors)-1:len(subSetOfsubPriors)]
     if len(subSetOfsubPriors) == 0:
@@ -379,6 +383,8 @@ def cgRender(newObjList, ma, mi, originIndex):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = f"{originIndex}-{'-'.join(map(lambda x: x['modelId'], newObjList))}"
+    if len(casename) > 130:
+        casename = casename[0:130] + 'c'
     scenejson = {'rooms': [{'objList': newObjList, 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': casename}
     # if os.path.exists(f"./layoutmethods/cgseries/{CURRENT_domID}/{CURRENT_seriesName}/{casename}.png"):
     #     return
@@ -587,6 +593,7 @@ class cgDiff:
 CURRENT_seriesName = None
 CURRENT_domID = None
 def cgs(domID, subIDs, seriesName):
+    pt.SAVECONFIG = False
     global CURRENT_seriesName
     global CURRENT_domID
     CURRENT_seriesName = seriesName
@@ -734,6 +741,7 @@ def cgsBatch():
             cgs(domObjectName, None, serseriesName)
 
 if __name__ == "__main__":
+    start_time = time.time()
     # cgs('6453', None, '梳妆台哈哈')
     # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
     # cgs('7644', None, '系列啊')
@@ -743,5 +751,9 @@ if __name__ == "__main__":
     # cgs('8185', None, '灰色现代风')
     # cgs('10198', None, '灰色现代风')
     # cgs('5810', None, '新中式简约风')
-    cgs('1133', None, 'rkx-优雅田园风')
-    # cgsBatch()
+    # cgs('1133', None, 'rkx-优雅田园风')
+    cgsBatch()
+    # cgs('5010', None, '李雪晴-灰色现代风')
+    print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
+    # cgs('1133', None, '小太阳-灰色奢华土豪')
+    
