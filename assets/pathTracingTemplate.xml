@@ -83,6 +83,20 @@
     {%- endif %}
 </shape>    
 {% endfor %}
+{% for obj in scenejson.newroomobjlist %}
+<shape type="rectangle">
+    <transform name="toWorld">
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
+        <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
+        <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
+        <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
+        <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
+    </transform>
+    <bsdf type="twosided">
+        <bsdf type="roughdiffuse"></bsdf>
+    </bsdf>
+</shape>  
+{% endfor %}
 {% for obj in scenejson.renderobjlist %}
 <shape type="obj">
     <transform name="toWorld">

@@ -20,12 +20,13 @@ file_loader = FileSystemLoader('./')
 env = Environment(loader=file_loader)
 template = env.get_template('./assets/pathTracingTemplate.xml')
 cameraType="perspective" # spherical
-emitter="constant"
+emitter="sky"
 num_samples = 64
 r_dir = 'batch'
 wallMaterial = True
 REMOVELAMP = False
 SAVECONFIG = True
+USENEWWALL = False
 
 def autoPerspectiveCamera(scenejson):
     bbox = scenejson['rooms'][0]['bbox']
@@ -76,15 +77,34 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson["pcam"]["up"] = ', '.join([str(i) for i in scenejson["PerspectiveCamera"]["up"]])
     scenejson['renderobjlist'] = []
     scenejson['renderroomobjlist'] = []
+    scenejson['newroomobjlist'] = []
     for room in scenejson['rooms']:
-        for cwf in ['w', 'f']:
-            if os.path.exists(f'./dataset/room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
-                scenejson['renderroomobjlist'].append({
-                    'modelPath': f'../../room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj',
-                    'translate': [0,0,0],
-                    'rotate': [0,0,0],
-                    'scale': [1,1,1]
+        if USENEWWALL:
+            for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
+                next = room['roomShape'][(index+1)%len(room['roomShape'])]
+                xScale = np.linalg.norm(np.array(next) - np.array(pre)) / 2
+                yScale = 2
+                pos = (np.array(next) + np.array(pre)) / 2
+                scenejson['newroomobjlist'].append({
+                    'translate': [pos[0], yScale, pos[1]],
+                    'rotate': [0, room['roomOrient'][index], 0],
+                    'scale': [xScale,yScale,1]
                 })
+            # add the floor: 
+            ma = np.max(room['roomShape'], axis=0)
+            mi = np.min(room['roomShape'], axis=0)
+            pos = (ma + mi) / 2
+            scale = (ma - mi) / 2
+            scenejson['newroomobjlist'].append({'translate': [pos[0],0,pos[1]],'rotate': [np.pi/2, 0, 0],'scale': [scale[0],scale[1],1]})
+        else:
+            for cwf in ['w', 'f']:
+                if os.path.exists(f'./dataset/room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
+                    scenejson['renderroomobjlist'].append({
+                        'modelPath': f'../../room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj',
+                        'translate': [0,0,0],
+                        'rotate': [0,0,0],
+                        'scale': [1,1,1]
+                    })
         for obj in room['objList']:
             if 'inDatabase' in obj:
                 if not obj['inDatabase']:
@@ -198,7 +218,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -214,6 +234,8 @@ if __name__ == "__main__":
         elif opt in ("--wm"):
             wallMaterial = bool(int(arg))
             print(wallMaterial)
+        elif opt in ("--newwall"):
+            USENEWWALL = bool(int(arg))
         elif opt in ("--task"):
             # defaultTast = getattr(__name__, arg)
             defaultTast = globals()[arg]
