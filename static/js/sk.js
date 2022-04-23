@@ -108,7 +108,11 @@ const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
     let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache, true);
     if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) { 
-        return intersects[0].object.parent.userData.roomId;
+        if(intersects[0].object.parent.userData.roomId === undefined){
+            return 0;
+        }else{
+            return intersects[0].object.parent.userData.roomId;
+        }
     }
     else{
         return 0; 
@@ -306,6 +310,21 @@ const updateTimerTab = function(){
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
+
+const toScreenPosition = function(obj, camera){
+    let vector = new THREE.Vector3();
+    let widthHalf = 0.5 * renderer.getContext().canvas.width;
+    let heightHalf = 0.5 * renderer.getContext().canvas.height;
+    obj.updateMatrixWorld();
+    vector.setFromMatrixPosition(obj.matrixWorld);
+    vector.project(camera);
+    vector.x = ( vector.x * widthHalf ) + widthHalf + $(scenecanvas).offset().left;
+    vector.y = - ( vector.y * heightHalf ) + heightHalf + $(scenecanvas).offset().top;
+    return { 
+        x: vector.x,
+        y: vector.y
+    };
+};
 
 const gameLoop = function () {
     stats.begin();
@@ -566,6 +585,24 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
+const setNewIntersectObj = function(event){
+    claimControlObject3D(INTERSECT_OBJ.userData.key, false);
+    transformControls.attach(INTERSECT_OBJ);
+    $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
+    $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
+    $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
+    $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
+    let radialPos = toScreenPosition(INTERSECT_OBJ, camera);
+    menu.style.left = (radialPos.x - 63) + "px";
+    menu.style.top = (radialPos.y - 63) + "px";
+    if ((!isToggle) && event.pointerType === "mouse") {
+        radial.toggle();
+        isToggle = !isToggle;
+    }
+    datguiObjectFolder(INTERSECT_OBJ);
+    if($("#scenePaletteSVG").css('display') === 'block'){paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
+}
+
 const onClickIntersectObject = function(event){
     duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
@@ -589,22 +626,9 @@ const onClickIntersectObject = function(event){
             cancelClickingObject3D();return; 
         }
         INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
-        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
-        transformControls.attach(INTERSECT_OBJ);
-        $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
-        $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);   
-        $('#tab_roomid').text(INTERSECT_OBJ.userData.roomId);
-        $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId].roomTypes);   
+        setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
-        if ((!isToggle) && event.pointerType === "mouse") {
-            radial.toggle();
-            isToggle = !isToggle;
-        }
-        datguiObjectFolder(INTERSECT_OBJ);
-        if($("#scenePaletteSVG").css('display') === 'block')
-        {paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
-
         if (INTERSECT_WALL != undefined)
             unselectWall();
         return;

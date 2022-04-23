@@ -192,10 +192,10 @@ const onKeyDown = function(event){
 
         case 68: // d
             if(INTERSECT_OBJ === undefined){break;}
-            addObjectFromCache(
+            let newINTERSECT_OBJ = addObjectFromCache(
                 modelId=INTERSECT_OBJ.userData.modelId,
                 transform={
-                    'translate': [INTERSECT_OBJ.position.x+0.1*duplicateTimes, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+0.1*duplicateTimes], 
+                    'translate': [INTERSECT_OBJ.position.x+0.1, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+0.1], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
                     'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z]
                 }
@@ -203,6 +203,11 @@ const onKeyDown = function(event){
             duplicateTimes += 1;
             timeCounter.add += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
             timeCounter.maniStart = moment();
+            // swap the control to the new inserted object. 
+            claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+            synchronize_json_object(INTERSECT_OBJ);
+            INTERSECT_OBJ = newINTERSECT_OBJ;
+            setNewIntersectObj();
             break;
     }
     if(event.keyCode === 90 && ctrlPressing){
