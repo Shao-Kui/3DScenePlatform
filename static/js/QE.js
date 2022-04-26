@@ -61,9 +61,12 @@ const transformControlsConfig = function(){
             }
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z], 'position');
+            gsap.to(GTRANS_GROUP.position, {duration: commonSmoothDuration, x: INTERSECT_OBJ.position.x, y: INTERSECT_OBJ.position.y, z: INTERSECT_OBJ.position.z});
         }else if(transformControls.mode === 'rotate'){
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z], 'rotation');
+            GTRANS_GROUP.rotation.set(INTERSECT_OBJ.rotation.x, GTRANS_GROUP.rotation.y, INTERSECT_OBJ.rotation.z)
+            gsap.to(GTRANS_GROUP.rotation, {duration: commonSmoothDuration, y: INTERSECT_OBJ.rotation.y});
         }else if(transformControls.mode === 'scale'){
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z], 'scale');
