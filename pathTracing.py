@@ -98,9 +98,9 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             scenejson['newroomobjlist'].append({'translate': [pos[0],0,pos[1]],'rotate': [np.pi/2, 0, 0],'scale': [scale[0],scale[1],1]})
         else:
             for cwf in ['w', 'f']:
-                if os.path.exists(f'./dataset/room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
+                if os.path.exists(f'./dataset/room2021/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
                     scenejson['renderroomobjlist'].append({
-                        'modelPath': f'../../room/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj',
+                        'modelPath': f'../../room2021/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj',
                         'translate': [0,0,0],
                         'rotate': [0,0,0],
                         'scale': [1,1,1]

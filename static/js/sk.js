@@ -1,10 +1,16 @@
 const objectCache = {}; 
+const objectLoadingQueue = {};
 const gatheringObjCat = {}; 
 let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
     if(modelId in objectCache){
         anchor.apply(null, anchorArgs);
         return;
     }
+    if(modelId in objectLoadingQueue){
+        objectLoadingQueue[modelId].push({'modelId': modelId, 'anchor': anchor, 'anchorArgs': anchorArgs});
+        return;
+    }
+    objectLoadingQueue[modelId] = [];
     let mtlurl = `/mtl/${modelId}`;
     let meshurl = `/mesh/${modelId}`;
     let objLoader = new THREE.OBJLoader();
@@ -35,7 +41,12 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
             });
             traverseMtlToOppacity(instance);
             objectCache[modelId] = instance;
-            anchor.apply(null, anchorArgs);;
+            anchor.apply(null, anchorArgs);
+            while(objectLoadingQueue[modelId].length){
+                let _f = objectLoadingQueue[modelId].pop();
+                _f.anchor.apply(null, _f.anchorArgs);
+            }
+            delete objectLoadingQueue.modelId;
         });
     });
 };
@@ -100,7 +111,6 @@ let refreshObjectFromCache = function(objToInsert){
     }
     object3d.name = objToInsert.key;
     scene.add(object3d)
-    renderer.render(scene, camera);
     return object3d; 
 }
 
