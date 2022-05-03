@@ -1,14 +1,46 @@
+const canvasForImage = document.createElement('canvas');
+const decideTransparencyByTexture = function(m, g){
+    canvasForImage.width = m.map.image.width;
+    canvasForImage.height = m.map.image.height;
+    canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
+    let alpha = canvasForImage.getContext('2d').getImageData(
+        m.map.image.width * g.attributes.uv.array[0],
+        m.map.image.height * (1 - g.attributes.uv.array[1]),
+        1,1
+    ).data[3]
+    if(alpha < 255){
+        m.transparent = true;
+    }else{
+        m.transparent = false;
+    }
+}
+const checkTextureOpacity = function(m, g){
+    if(!m){
+        return;
+    }
+    if(!m.map){
+        return;
+    }
+    if(!m.map.image){
+        setTimeout(checkTextureOpacity, 3000, m, g);
+        return;
+    }else{
+        decideTransparencyByTexture(m, g);
+    }
+}
 const traverseObjSetting = function (object) {
     if(object instanceof THREE.Mesh){
         object.castShadow = true;
         object.receiveShadow = true;
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
+                checkTextureOpacity(object.material[i], object.geometry)
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
+            checkTextureOpacity(object.material, object.geometry)
             if(object.material.transparent){
                 object.castShadow = false;
             }
