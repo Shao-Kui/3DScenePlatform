@@ -1,11 +1,12 @@
 const canvasForImage = document.createElement('canvas');
-const decideTransparencyByTexture = function(m, g){
+const decideTransparencyByTexture = function(m, g, offset=0){
+    if(m.transparent || (!g.attributes.uv)){return;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
     let alpha = canvasForImage.getContext('2d').getImageData(
-        m.map.image.width * g.attributes.uv.array[0],
-        m.map.image.height * (1 - g.attributes.uv.array[1]),
+        m.map.image.width * g.attributes.uv.array[0 + offset*2],
+        m.map.image.height * (1 - g.attributes.uv.array[1 + offset*2]),
         1,1
     ).data[3]
     if(alpha < 255){
@@ -14,33 +15,55 @@ const decideTransparencyByTexture = function(m, g){
         m.transparent = false;
     }
 }
+const decideTransparencyByTextureArray = function(m, g){
+    if(Array.isArray(m)){
+        for(let i = 0; i < g.groups.length; i++){
+            decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start);
+        }
+    }else{
+        decideTransparencyByTexture(m, g, 0)
+    }
+}
 const checkTextureOpacity = function(m, g){
     if(!m){
         return;
     }
-    if(!m.map){
-        return;
-    }
-    if(!m.map.image){
-        setTimeout(checkTextureOpacity, 3000, m, g);
-        return;
+    if(Array.isArray(m)){
+        for(let i = 0; i < m.length; i++){
+            if(!m[i].map){
+                return;
+            }
+            if(!m[i].map.image){
+                setTimeout(checkTextureOpacity, 3000, m, g);
+                return;
+            }else{
+                decideTransparencyByTextureArray(m, g);
+            }
+        }
     }else{
-        decideTransparencyByTexture(m, g);
+        if(!m.map){
+            return;
+        }
+        if(!m.map.image){
+            setTimeout(checkTextureOpacity, 3000, m, g);
+            return;
+        }else{
+            decideTransparencyByTextureArray(m, g);
+        }
     }
 }
 const traverseObjSetting = function (object) {
     if(object instanceof THREE.Mesh){
         object.castShadow = true;
         object.receiveShadow = true;
+        checkTextureOpacity(object.material, object.geometry);
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
-                checkTextureOpacity(object.material[i], object.geometry)
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
-            checkTextureOpacity(object.material, object.geometry)
             if(object.material.transparent){
                 object.castShadow = false;
             }
