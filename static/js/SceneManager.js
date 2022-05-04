@@ -1,6 +1,6 @@
 const canvasForImage = document.createElement('canvas');
 const decideTransparencyByTexture = function(m, g, offset=0){
-    if(m.transparent || (!g.attributes.uv)){return;}
+    if(m.transparent || (!g.attributes.uv)){return true;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
@@ -8,20 +8,26 @@ const decideTransparencyByTexture = function(m, g, offset=0){
         m.map.image.width * g.attributes.uv.array[0 + offset*2],
         m.map.image.height * (1 - g.attributes.uv.array[1 + offset*2]),
         1,1
-    ).data[3]
-    if(alpha < 255){
-        m.transparent = true;
+    ).data
+    if(alpha[3] < 255){
+        return true;
     }else{
-        m.transparent = false;
+        return false;
     }
 }
 const decideTransparencyByTextureArray = function(m, g){
     if(Array.isArray(m)){
         for(let i = 0; i < g.groups.length; i++){
-            decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start);
+            let t1 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start + g.groups[i].count-1);
+            let t2 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start);
+            m[g.groups[i].materialIndex].transparent = t1 || t2;
         }
     }else{
-        decideTransparencyByTexture(m, g, 0)
+        let t1 = decideTransparencyByTexture(m, g, 0);
+        let t2;
+        if(g.attributes.uv){t2 = decideTransparencyByTexture(m, g, g.attributes.uv.count-1);}
+        else{t2 = false;}
+        m.transparent = t1 || t2;
     }
 }
 const checkTextureOpacity = function(m, g){
