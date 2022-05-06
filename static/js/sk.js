@@ -29,16 +29,31 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
             instance.castShadow = true;
             instance.receiveShadow = true;
             instance.coarseAABB = new THREE.Box3().setFromObject(instance);
+            instance.boundingBox = {'min': new THREE.Vector3(Infinity, Infinity, Infinity), 'max': new THREE.Vector3(-Infinity, -Infinity, -Infinity)};
             traverseObjSetting(instance);
             if('geometry' in instance){
                 instance.geometry.computeBoundingBox();
+                instance.boundingBox = instance.geometry.boundingBox;
             }
             instance.children.forEach(child => {
                 if(child.material.newmtr_lowopa !== undefined) child.material = child.material.newmtr_lowopa;
                 if('geometry' in child){
                     child.geometry.computeBoundingBox();
+                    if(child.geometry.boundingBox.max.x > instance.boundingBox.max.x){instance.boundingBox.max.x = child.geometry.boundingBox.max.x;}
+                    if(child.geometry.boundingBox.max.y > instance.boundingBox.max.y){instance.boundingBox.max.y = child.geometry.boundingBox.max.y;}
+                    if(child.geometry.boundingBox.max.z > instance.boundingBox.max.z){instance.boundingBox.max.z = child.geometry.boundingBox.max.z;}
+                    if(child.geometry.boundingBox.min.x < instance.boundingBox.min.x){instance.boundingBox.min.x = child.geometry.boundingBox.min.x;}
+                    if(child.geometry.boundingBox.min.y < instance.boundingBox.min.y){instance.boundingBox.min.y = child.geometry.boundingBox.min.y;}
+                    if(child.geometry.boundingBox.min.z < instance.boundingBox.min.z){instance.boundingBox.min.z = child.geometry.boundingBox.min.z;}
                 }
             });
+            let associatedBox = new THREE.Mesh(new THREE.BoxGeometry(
+                instance.boundingBox.max.x - instance.boundingBox.min.x, 
+                instance.boundingBox.max.y - instance.boundingBox.min.y, 
+                instance.boundingBox.max.z - instance.boundingBox.min.z
+            ), new THREE.MeshPhongMaterial({color: 0xffffff}));
+            associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
+            instance.associatedBox = associatedBox;
             traverseMtlToOppacity(instance);
             objectCache[modelId] = instance;
             anchor.apply(null, anchorArgs);
@@ -85,7 +100,16 @@ const traverseMtlToOppacity = function (object) {
 
 let refreshObjectFromCache = function(objToInsert){
     if(!(objToInsert.modelId in objectCache)) return;
-    let object3d = objectCache[objToInsert.modelId].clone();
+    let object3dFull = objectCache[objToInsert.modelId].clone();
+    let object3d;
+    if(manager.renderManager.islod){
+        object3d = new THREE.LOD();
+        object3d.addLevel(new THREE.Group(), 40);
+        object3d.addLevel(objectCache[objToInsert.modelId].associatedBox.clone(), 10);
+        object3d.addLevel(object3dFull, 0);
+    }else{
+        object3d = object3dFull;
+    }
     object3d.name = undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
@@ -97,7 +121,7 @@ let refreshObjectFromCache = function(objToInsert){
         "modelId": objToInsert.modelId,
         "coarseSemantic": objToInsert.coarseSemantic
     };
-    object3d.children.forEach(child => {
+    object3dFull.children.forEach(child => {
         if(child.material.origin_mtr) child.material = child.material.origin_mtr;
     });
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
@@ -846,7 +870,10 @@ function onDocumentMouseMove(event) {
         $('#tab_Y').text(intersects[0].point.y.toFixed(3));
         $('#tab_Z').text(intersects[0].point.z.toFixed(3));
     }
-    if (instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(intersects[0].object.parent)) {
+    if(manager.renderManager.islod){
+        outlinePass.selectedObjects = [];
+    }
+    else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(intersects[0].object.parent)) {
         outlinePass.selectedObjects = [intersects[0].object.parent, GTRANS_GROUP];
     }else{
         outlinePass.selectedObjects = [GTRANS_GROUP]
@@ -1375,6 +1402,11 @@ const setting_up = function () {
         window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
         USE_NEW_WALL = !USE_NEW_WALL;
         console.log('clicked USE_NEW_WALL', USE_NEW_WALL);
+        manager.renderManager.refresh_scene(manager.renderManager.scene_json, false);
+    })
+    $("#lodCheckBox").click(() => {
+        manager.renderManager.islod = $("#lodCheckBox").prop('checked');
+        manager.renderManager.scene_json.islod = $("#lodCheckBox").prop('checked');
         manager.renderManager.refresh_scene(manager.renderManager.scene_json, false);
     })
     initAttributes();

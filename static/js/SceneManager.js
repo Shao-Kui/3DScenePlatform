@@ -1,6 +1,8 @@
 const canvasForImage = document.createElement('canvas');
 const decideTransparencyByTexture = function(m, g, offset=0){
-    if(m.transparent || (!g.attributes.uv)){return true;}
+    if(m.transparent){return true;}
+    if(!g.attributes.uv){return false;}
+    if(!m.map){return false;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
@@ -19,15 +21,35 @@ const decideTransparencyByTextureArray = function(m, g){
     if(Array.isArray(m)){
         for(let i = 0; i < g.groups.length; i++){
             let t1 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start + g.groups[i].count-1);
-            let t2 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start);
-            m[g.groups[i].materialIndex].transparent = t1 || t2;
+            let t2 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start + Math.trunc(g.groups[i].count/2));
+            let t3 = decideTransparencyByTexture(m[g.groups[i].materialIndex], g, g.groups[i].start);
+            m[g.groups[i].materialIndex].transparent = t1 || t2 || t3;
+            
+            // m[g.groups[i].materialIndex].transparent = false;
+            // for(let i = g.groups[i].start; i < g.groups[i].start + g.groups[i].count; i = i + 1){
+            //     m[g.groups[i].materialIndex].transparent = m[g.groups[i].materialIndex].transparent || decideTransparencyByTexture(m[g.groups[i].materialIndex], g, i);
+            //     if(m[g.groups[i].materialIndex].transparent = m[g.groups[i].materialIndex].transparent){
+            //         break;
+            //     }
+            // }
         }
     }else{
         let t1 = decideTransparencyByTexture(m, g, 0);
-        let t2;
-        if(g.attributes.uv){t2 = decideTransparencyByTexture(m, g, g.attributes.uv.count-1);}
-        else{t2 = false;}
-        m.transparent = t1 || t2;
+        let t2 = false, t3 = false, t4 = false;
+        if(g.attributes.uv){
+            t2 = decideTransparencyByTexture(m, g, Math.trunc(g.attributes.uv.count/2));
+            t3 = decideTransparencyByTexture(m, g, g.attributes.uv.count-1);
+            t4 = decideTransparencyByTexture(m, g, Math.trunc(g.attributes.uv.count * 0.7));
+        }
+        m.transparent = t1 || t2 || t3 || t4;
+
+        // m.transparent = false;
+        // for(let i = 0; i < g.attributes.uv.count; i = i + 1){
+        //     m.transparent = m.transparent || decideTransparencyByTexture(m, g, i);
+        //     if(m.transparent){
+        //         break;
+        //     }
+        // }
     }
 }
 const checkTextureOpacity = function(m, g){
@@ -37,7 +59,7 @@ const checkTextureOpacity = function(m, g){
     if(Array.isArray(m)){
         for(let i = 0; i < m.length; i++){
             if(!m[i].map){
-                return;
+                continue;
             }
             if(!m[i].map.image){
                 setTimeout(checkTextureOpacity, 3000, m, g);
@@ -165,6 +187,15 @@ class SceneManager {
 
     refresh_scene = (scene_json, refresh_camera = false) => {
         console.log('called refresh scene! ');
+        outlinePass.selectedObjects = [];
+        outlinePass2.selectedObjects = [];
+        if(scene_json.islod){
+            this.islod = true;
+            $("#lodCheckBox").prop('checked', true);
+        }else{
+            this.islod = false;
+            $("#lodCheckBox").prop('checked', false);
+        }
         this.scene_remove(function (userData) {
             if (userData.type === 'w' ||
                 userData.type === 'f' ||

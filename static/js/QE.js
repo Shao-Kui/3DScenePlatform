@@ -354,6 +354,9 @@ const firstPersonLockFunction = function(){
 }
 
 const firstPersonOn = function(){
+    if(!manager.renderManager.scene_json.coarseWallHeight){
+        manager.renderManager.scene_json.coarseWallHeight = 2.6
+    }
     camera.position.y = manager.renderManager.scene_json.coarseWallHeight / 2; 
     orbitControls.enabled = false;
     fpCtrlMode = true;

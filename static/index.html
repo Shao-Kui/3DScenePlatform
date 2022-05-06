@@ -78,9 +78,11 @@
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
       const CGSERIES_TEMPGROUPNAME = "cgseries_temp_group";
+      const GTRANS_TEMPGROUPNAME = "gtrans_temp_group"
       const CGSERIES_GROUP = new THREE.Group();
       const GTRANS_GROUP = new THREE.Group();
       CGSERIES_GROUP.name = CGSERIES_TEMPGROUPNAME;
+      GTRANS_GROUP.name = GTRANS_TEMPGROUPNAME;
       const commonSmoothDuration = 0.2;
       var INTERSECT_OBJ;
       var INTERSECT_WALL;
@@ -263,6 +265,10 @@
               <input class="form-check-input" type="checkbox" value="" id="useNewWallCheckBox">
               <label class="form-check-label" for="useNewWallCheckBox">Movable Wall</label>
             </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" value="" id="lodCheckBox">
+                <label class="form-check-label" for="lodCheckBox">LoD</label>
+              </div>
           <div class="py-1 px-0">
             <button
               id="autoView"

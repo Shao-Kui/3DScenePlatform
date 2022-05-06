@@ -69,6 +69,9 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
     if(!(objKey in manager.renderManager.instanceKeyCache)){
         return; 
     }
+    if(manager.renderManager.islod){
+        return;
+    }
     if(isRelease){
         manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = undefined;
         let index = outlinePass2.selectedObjects.indexOf(manager.renderManager.instanceKeyCache[objKey]);
