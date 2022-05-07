@@ -10,6 +10,7 @@ import getopt
 import numpy as np
 import sk
 import uuid
+from itertools import combinations
 # the following code is for backend-rendering. 
 # from celery import Celery
 # app = Celery('tasks', backend='rpc://', broker='pyamqp://')
@@ -54,6 +55,104 @@ def autoPerspectiveCamera(scenejson):
 # @app.task
 # def pathTracingPara(scenejson, sampleCount=64, dst=None):
 #     return pathTracing(scenejson=scenejson, sampleCount=sampleCount, dst=dst)
+def wallSplitByWindoors(wallPlane, block):
+    # try clipping the wall plane into 4 parts;
+    res = []
+    dots = np.dot(wallPlane['norm'], np.identity(3))
+    ignoreAxis = np.argmax(np.abs(dots))
+    if ignoreAxis != 1:
+        if block['bbox']['max'][2 - ignoreAxis] > wallPlane['bbox']['max'][2 - ignoreAxis] or block['bbox']['max'][2 - ignoreAxis] < wallPlane['bbox']['min'][2 - ignoreAxis]:
+            return [wallPlane]     
+        if block['bbox']['min'][2 - ignoreAxis] > wallPlane['bbox']['max'][2 - ignoreAxis] or block['bbox']['min'][2 - ignoreAxis] < wallPlane['bbox']['min'][2 - ignoreAxis]:
+            return [wallPlane]  
+    for clippingAxis in [0, 1, 2]:
+        if clippingAxis == ignoreAxis:
+            continue
+        dmax = wallPlane['bbox']['max'][clippingAxis] - wallPlane['bbox']['min'][clippingAxis]
+        d1 = wallPlane['bbox']['max'][clippingAxis] - block['bbox']['max'][clippingAxis]
+        d2 = block['bbox']['min'][clippingAxis] - wallPlane['bbox']['min'][clippingAxis]
+        if d1 > 0. and d1 < dmax:
+            if clippingAxis == 1:
+                bbox = {
+                    'max': np.array([0, wallPlane['bbox']['max'][1], 0]),
+                    'min': np.array([0, block['bbox']['max'][1], 0])
+                }
+                bbox['max'][2 - ignoreAxis] = block['bbox']['max'][2 - ignoreAxis]
+                bbox['min'][2 - ignoreAxis] = block['bbox']['min'][2 - ignoreAxis]
+                derive = 'top'
+            else:
+                bbox = {
+                    'max': np.array([0, wallPlane['bbox']['max'][1], 0]),
+                    'min': np.array([0, wallPlane['bbox']['min'][1], 0])
+                }
+                bbox['max'][clippingAxis] = wallPlane['bbox']['max'][clippingAxis]
+                bbox['min'][clippingAxis] = block['bbox']['max'][clippingAxis]
+                derive = 'right'
+            bbox['max'][ignoreAxis] = wallPlane['bbox']['max'][ignoreAxis]
+            bbox['min'][ignoreAxis] = wallPlane['bbox']['min'][ignoreAxis]
+            ma = np.array([bbox['max'][0], bbox['max'][2]])
+            mi = np.array([bbox['min'][0], bbox['min'][2]])
+            if np.linalg.norm(ma - wallPlane['pre']) < np.linalg.norm(mi - wallPlane['pre']):
+                pre = ma
+                next = mi
+            else:
+                pre = mi
+                next = ma
+            res.append({
+                'pre': pre,
+                'next': next,
+                'tl': np.array([pre[0], bbox['max'][1], pre[1]]), # top-left
+                'bbox': bbox,
+                'norm': wallPlane['norm'].copy(),
+                'orient': wallPlane['orient'],
+                'derive': derive
+            })
+        if d2 > 0. and d2 < dmax:
+            if clippingAxis == 1:
+                bbox = {
+                    'max': np.array([0, block['bbox']['min'][1], 0]),
+                    'min': np.array([0, wallPlane['bbox']['min'][1], 0])
+                }
+                bbox['max'][2 - ignoreAxis] = block['bbox']['max'][2 - ignoreAxis]
+                bbox['min'][2 - ignoreAxis] = block['bbox']['min'][2 - ignoreAxis]
+                derive = 'bottom'
+            else:
+                bbox = {
+                    'max': np.array([0, wallPlane['bbox']['max'][1], 0]),
+                    'min': np.array([0, wallPlane['bbox']['min'][1], 0])
+                }
+                bbox['max'][clippingAxis] = block['bbox']['min'][clippingAxis]
+                bbox['min'][clippingAxis] = wallPlane['bbox']['min'][clippingAxis]
+                derive = 'left'
+            bbox['max'][ignoreAxis] = wallPlane['bbox']['max'][ignoreAxis]
+            bbox['min'][ignoreAxis] = wallPlane['bbox']['min'][ignoreAxis]
+            ma = np.array([bbox['max'][0], bbox['max'][2]])
+            mi = np.array([bbox['min'][0], bbox['min'][2]])
+            if np.linalg.norm(ma - wallPlane['pre']) < np.linalg.norm(mi - wallPlane['pre']):
+                pre = ma
+                next = mi
+            else:
+                pre = mi
+                next = ma
+            res.append({
+                'pre': pre,
+                'next': next,
+                'tl': np.array([pre[0], bbox['max'][1], pre[1]]), # top-left
+                'bbox': bbox,
+                'norm': wallPlane['norm'].copy(),
+                'orient': wallPlane['orient'],
+                'derive': derive
+            })
+    if len(res) == 0:
+        return [wallPlane]
+    else:
+        return res    
+
+def isCubeIntersectsWithPlane(wallPlane, cubelinePairs):
+    for cubelinePair in cubelinePairs:
+        if sk.isSegIntersectsWithPlane(wallPlane['tl'], wallPlane['norm'], cubelinePair[0], cubelinePair[1]):
+            return True
+    return False
 
 def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
@@ -78,19 +177,75 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson['renderobjlist'] = []
     scenejson['renderroomobjlist'] = []
     scenejson['newroomobjlist'] = []
+    blocks = []
+    for room in scenejson['rooms']:
+        for obj in room['objList']:
+            if 'coarseSemantic' in obj:
+                if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
+                    blocks.append(obj)
     for room in scenejson['rooms']:
         if USENEWWALL:
+            # for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
+            #     next = room['roomShape'][(index+1)%len(room['roomShape'])]
+            #     xScale = np.linalg.norm(np.array(next) - np.array(pre)) / 2
+            #     yScale = 2
+            #     pos = (np.array(next) + np.array(pre)) / 2
+
+            #     scenejson['newroomobjlist'].append({
+            #         'translate': [pos[0], yScale, pos[1]],
+            #         'rotate': [0, room['roomOrient'][index], 0],
+            #         'scale': [xScale,yScale,1]
+            #     })
+            initialWallPlanes = []
             for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
                 next = room['roomShape'][(index+1)%len(room['roomShape'])]
-                xScale = np.linalg.norm(np.array(next) - np.array(pre)) / 2
-                yScale = 2
-                pos = (np.array(next) + np.array(pre)) / 2
-                scenejson['newroomobjlist'].append({
-                    'translate': [pos[0], yScale, pos[1]],
-                    'rotate': [0, room['roomOrient'][index], 0],
-                    'scale': [xScale,yScale,1]
+                initialWallPlanes.append({
+                    'pre': np.array(pre), 
+                    'next': np.array(next),
+                    'tl': np.array([pre[0], 2.6, pre[1]]), # top-left
+                    'tr': np.array([next[0], 2.6, next[1]]), # top-right
+                    'bl': np.array([pre[0], 0., pre[1]]), # bottom-left
+                    'br': np.array([next[0], 0., next[1]]), # bottom-right
+                    'bbox': {
+                        'max': np.array([np.max([pre[0], next[0]]), 2.6, np.max([pre[1], next[1]])]),
+                        'min': np.array([np.min([pre[0], next[0]]), 0.0, np.min([pre[1], next[1]])])
+                    },
+                    'norm': np.array([room['roomNorm'][index][0], 0., room['roomNorm'][index][1]]),
+                    'orient': room['roomOrient'][index]
                 })
-            # add the floor: 
+            for block in blocks:
+                eightPoints = np.array([
+                    [block['bbox']['max'][0], block['bbox']['min'][1], block['bbox']['max'][2]],
+                    [block['bbox']['min'][0], block['bbox']['min'][1], block['bbox']['max'][2]],
+                    [block['bbox']['min'][0], block['bbox']['min'][1], block['bbox']['min'][2]],
+                    [block['bbox']['max'][0], block['bbox']['min'][1], block['bbox']['min'][2]],
+                    [block['bbox']['max'][0], block['bbox']['max'][1], block['bbox']['max'][2]],
+                    [block['bbox']['min'][0], block['bbox']['max'][1], block['bbox']['max'][2]],
+                    [block['bbox']['min'][0], block['bbox']['max'][1], block['bbox']['min'][2]],
+                    [block['bbox']['max'][0], block['bbox']['max'][1], block['bbox']['min'][2]],
+                ])
+                cubelinePairs = list(combinations(eightPoints, 2))
+                nextWallPlanes = []
+                while len(initialWallPlanes) != 0:
+                    wallPlane = initialWallPlanes.pop()
+                    if isCubeIntersectsWithPlane(wallPlane, cubelinePairs):
+                        nextWallPlanes += wallSplitByWindoors(wallPlane, block)
+                    else:
+                        nextWallPlanes.append(wallPlane)
+                initialWallPlanes = nextWallPlanes
+                nextWallPlanes = []
+            for wallPlane in initialWallPlanes:
+                pos = (wallPlane['bbox']['max'] + wallPlane['bbox']['min'])/2
+                xScale = np.linalg.norm(wallPlane['next'] - wallPlane['pre']) / 2
+                scenejson['newroomobjlist'].append({
+                    'translate': pos.tolist(),
+                    'rotate': [0, wallPlane['orient'], 0],
+                    'scale': [
+                        xScale, 
+                        (wallPlane['bbox']['max'][1] - wallPlane['bbox']['min'][1])/2, 
+                        1
+                    ]
+                })
             ma = np.max(room['roomShape'], axis=0)
             mi = np.min(room['roomShape'], axis=0)
             pos = (ma + mi) / 2
@@ -147,6 +302,7 @@ def batch():
             try:
                 casename = pathTracing(json.load(f), sampleCount=num_samples)
             except Exception as e:
+                print(e)
                 continue
             # copy rendered imgs to the rdir: 
             pngfilename = filename.replace('.json', '.png')
