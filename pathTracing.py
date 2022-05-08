@@ -11,6 +11,7 @@ import numpy as np
 import sk
 import uuid
 from itertools import combinations
+from shapely.geometry.polygon import Polygon, Point
 # the following code is for backend-rendering. 
 # from celery import Celery
 # app = Celery('tasks', backend='rpc://', broker='pyamqp://')
@@ -158,7 +159,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
-    # print(casename)
+    print(casename)
 
     if 'PerspectiveCamera' not in scenejson:
         autoPerspectiveCamera(scenejson)
@@ -246,11 +247,60 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                         1
                     ]
                 })
-            ma = np.max(room['roomShape'], axis=0)
-            mi = np.min(room['roomShape'], axis=0)
-            pos = (ma + mi) / 2
-            scale = (ma - mi) / 2
-            scenejson['newroomobjlist'].append({'translate': [pos[0],0,pos[1]],'rotate': [np.pi/2, 0, 0],'scale': [scale[0],scale[1],1]})
+            roomDiag = np.linalg.norm(np.max(room['roomShape'], axis=0) - np.min(room['roomShape'], axis=0))
+            roomShape = room['roomShape'].copy()
+            roomNorm = room['roomNorm'].copy()
+            if not sk.checkClockwise(roomShape):
+                roomShape.reverse()
+                roomNorm.reverse()
+            i = 1
+            print(room['roomId'], roomShape)
+            while len(roomShape) != 0:
+                print(roomShape)
+                p0 = np.array(roomShape[i-1])
+                p1 = np.array(roomShape[i])
+                p2 = np.array(roomShape[i+1])
+                n0 = np.array(roomNorm[i-1]) * roomDiag
+                n1 = np.array(roomNorm[i]) * roomDiag
+                if not sk.isTwoLineSegCross(p0, p0 + n0, p2, p2 + n1):
+                    i += 1
+                    continue
+                _p = sk.twoInfLineIntersection(p0, p0 + n0, p2, p2 + n1)
+                ma = np.max([p0, p1, p2, _p], axis=0)
+                mi = np.min([p0, p1, p2, _p], axis=0)
+                pos = (ma + mi) / 2
+                scale = (ma - mi) / 2
+                scenejson['newroomobjlist'].append({'translate': [pos[0],0,pos[1]],'rotate': [np.pi/2, 0, 0],'scale': [scale[0],scale[1],1]})
+                if len(roomShape) == 4:
+                    break
+                polygon = Polygon([p0, p1, p2, _p])
+                # p2 next;
+                if np.dot(np.array(roomNorm[i+1]), n0) < 0:
+                    testlist = [i+3]
+                else:
+                    testlist = []
+                roomShape.insert((i-1+len(roomShape)) % len(roomShape), _p)
+                newroomShape = []
+                testlist += [i-1, i, i+1, i+2]
+                for _index, p in zip(range(len(roomShape)), roomShape):
+                    _ip = (_index + len(roomShape) - 1) % len(roomShape)
+                    _in = (_index + 1) % len(roomShape)
+                    if polygon.covers(Point(p)):
+                        
+                        if _ip in testlist and _in in testlist:
+                            print('covered', p, _ip, _in)
+                            continue
+                    newroomShape.append(p)
+                roomShape = newroomShape
+                if not sk.checkClockwise(roomShape):
+                    roomShape.reverse()
+                # recalculated roomNorm;
+                wallSecIndices = np.arange(1, len(roomShape)).tolist() + [0]
+                rv = np.array(roomShape)[:] - np.array(roomShape)[wallSecIndices]
+                normals = rv[:, [1,0]]
+                normals[:, 1] = -normals[:, 1]
+                roomNorm = normals.tolist()
+                i = 1              
         else:
             for cwf in ['w', 'f']:
                 if os.path.exists(f'./dataset/room2021/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):

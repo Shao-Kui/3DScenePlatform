@@ -170,6 +170,41 @@ def isLineIntersectsWithEdges(line, floorMeta, isDebug=False):
             return True
     return False
 
+def checkClockwise(points):
+    res = 0
+    for i in range(len(points)):
+        a = np.array(points[i])
+        b = np.array(points[(i+1)%len(points)])
+        c = np.array(points[(i+2)%len(points)])
+        res += 0.5 * ((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]))
+    if res > 0:
+        return True
+    else:
+        return False
+
+def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
+    x1 = p1[0]
+    y1 = p1[1]
+    x2 = p2[0]
+    y2 = p2[1]
+    x3 = p3[0]
+    y3 = p3[1]
+    x4 = p4[0]
+    y4 = p4[1]
+    D = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
+    if isDebug:
+        print(D)
+    if np.abs(D) < 0.0001:
+        return None
+    px = ( (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4) ) / D
+    py = ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / D
+    return [px, py]
+
+def isTwoLineSegCross(p1, p2, p3, p4):
+    l1 = LineString((p1, p2))
+    l2 = LineString((p3, p4))
+    return l1.crosses(l2)
+
 def pointToLineDistance(point, p1, p2):
     return np.linalg.norm(np.cross(p2-p1, p1-point)) / np.linalg.norm(p2-p1)
 
@@ -861,7 +896,7 @@ if __name__ == "__main__":
     # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
     # renderModel20('coffee01')
-    renderModel20('vegetable07')
+    renderModel20('drinks05')
     # renderModel20('shoecounter01')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     # cgs('1133', None, '小太阳-灰色奢华土豪')
