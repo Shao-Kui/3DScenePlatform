@@ -1,3 +1,5 @@
+from base64 import encode
+from re import L
 from typing import Union
 from unittest import case
 from numpy.core.fromnumeric import shape
@@ -17,7 +19,7 @@ import random
 AABBcache = {}
 ASPECT = 16 / 9
 DEFAULT_FOV = 75
-with open('./dataset/objCatListAliv2.json') as f:
+with open('./dataset/objCatListLG.json') as f:
     objCatList = json.load(f)
 with open('./dataset/objListCataAliv2.json') as f:
     objListCat = json.load(f)
@@ -33,6 +35,10 @@ def as_mesh(scene_or_mesh):
             mesh = None  # empty scene
         else:
             # we lose texture information here
+            # for g in scene_or_mesh.geometry.values():
+            #     if g.faces.shape[1] != 3:
+            #         print(g.faces.shape)
+            #         print(g.vertices)
             mesh = trimesh.util.concatenate(
                 tuple(trimesh.Trimesh(vertices=g.vertices, faces=g.faces)
                     for g in scene_or_mesh.geometry.values()))
@@ -170,6 +176,16 @@ def pointToLineDistance(point, p1, p2):
 def isPointBetweenLineSeg(point, p1, p2):
     s = np.dot(p2 - p1, point - p1) / np.linalg.norm(p2 - p1)
     if 0 < s and s < np.linalg.norm(p2 - p1):
+        return True
+    else:
+        return False
+
+def isSegIntersectsWithPlane(p, norm, l0, l1):
+    # we assume that the points and norms are in 3D;
+    # We assuem that the vectors are in Numpy.ndarray form; 
+    dot1 = np.dot(l0 - p, norm)
+    dot2 = np.dot(l1 - p, norm)
+    if dot1 * dot2 <= 0:
         return True
     else:
         return False
@@ -652,7 +668,8 @@ def cgs(domID, subIDs, seriesName):
     resultOrigin = {'domID': results['domID'], 'configs': originConfigs}
     cgDiff(resultOrigin)
     resultOrigin['similarity'] = np.array(resultOrigin['similarity'])
-    results['diffMatrix'] = resultOrigin['similarity'][(resultOrigin['similarity'].shape[0]-1)].tolist()
+    # results['diffMatrix'] = resultOrigin['similarity'][(resultOrigin['similarity'].shape[0]-1)].tolist()
+    results['diffMatrix'] = (resultOrigin['similarity'][1] / np.max(resultOrigin['similarity'][1])).tolist()
     for config in results['configs']:
         results['anchorOris'].append(config['anchorOri'])
         results['anchorDises'].append(config['anchorDis'])
@@ -740,6 +757,93 @@ def cgsBatch():
                 continue
             cgs(domObjectName, None, serseriesName)
 
+def cgsUSRenderBatch():
+    root = 'H:/D3UserStudy/static/planner'
+    pt.SAVECONFIG = True
+    pt.emitter = 'sky'
+    subjectNames = os.listdir(root)
+    with open('H:/D3UserStudy/static/quiz/quizplanner-template.json') as f:
+        quizplanner = json.load(f)
+        questionTemp = quizplanner['quizlist'][0]
+        quizplanner['quizlist'] = []
+    qid = 0
+    for sname in subjectNames:
+        fileNames = os.listdir(f'{root}/{sname}/')
+        renderlist = []
+        for fname in fileNames:
+            if '.json' in fname:
+                try:
+                    with open(f'{root}/{sname}/{fname}') as f:
+                        sj = json.load(f)
+                        sj["originFname"] = fname.split(".")[0]
+                        renderlist.append(sj)
+                except:
+                    continue
+        if len(renderlist) == 0:
+            continue
+        for sj in renderlist:
+            sj['PerspectiveCamera'] = renderlist[0]['PerspectiveCamera']
+            sj["canvas"] = {"width": 1920,"height": 1080}
+            print('Rendrring ' + f'{root}/{sname}/pt{sj["originFname"]}.png')
+            if not os.path.exists(f'{root}/{sname}/pt{sj["originFname"]}.png'):
+            # if True:
+                pt.pathTracing(sj, 64, f'{root}/{sname}/pt{sj["originFname"]}.png')
+        if len(renderlist) == 2:
+            quizplanner['quizlist'].append(questionTemp.copy())
+            quizplanner['quizlist'][qid]['userName'] = sname
+            quizplanner['quizlist'][qid]['id'] = qid
+            qid += 1
+    with open('H:/D3UserStudy/static/quiz/quizplanner.json', 'w') as f:
+        json.dump(quizplanner, f)
+
+def analyzeAnswerPlanner():
+    jsonNames = os.listdir('H:/D3UserStudy/answer-planner')
+    tra = 0
+    our = 0
+    nts = 0
+    for jName in jsonNames:
+        with open(f'H:/D3UserStudy/answer-planner/{jName}', encoding='utf-8') as f:
+            j = json.load(f)
+        for q in j['quizlist']:
+            if q['answer'] == 1:
+                tra += 1
+            if q['answer'] == 2:
+                our += 1
+            if q['answer'] == 'notsure':
+                nts += 1
+    print('Tra: ' + str(tra / (tra + our + nts)))
+    print('Our: ' + str(our / (tra + our + nts)))
+    print('Nts: ' + str(nts / (tra + our + nts)))
+
+icosavn = np.loadtxt("./assets/icosavn", dtype=np.float)
+# icosavn = torch.from_numpy(icosavn).float().to("cuda")
+def renderModel20(objname):
+    pt.SAVECONFIG = False
+    obj = {'translate': [0,0,0],'rotate': [0,0,0],'scale': [1,1,1],'modelId': objname}
+    AABB = load_AABB(objname)
+    objpath = f'./dataset/object/{objname}/{objname}.obj'
+    mesh = as_mesh(trimesh.load(objpath))
+    vertices = np.array(mesh.vertices)
+    max_p = np.array(AABB['max'])
+    min_p = np.array(AABB['min'])
+    diag_length = np.linalg.norm(max_p - min_p)
+    center = np.mean(vertices, axis=0)
+    camera_positions = icosavn * diag_length + center
+    with open('./examples/initth.json') as f:
+        scenejson = json.load(f)
+    for i, camera_position in zip(range(len(camera_positions)), camera_positions):
+        scenejson = {'rooms': [{'objList': [obj], 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': ''}
+        scenejson['canvas'] = {'height': 384, 'width': 384}
+        origin = camera_position
+        scenejson["PerspectiveCamera"]["origin"] = origin.tolist()
+        scenejson["PerspectiveCamera"]["target"] = center.tolist()
+        scenejson["PerspectiveCamera"]["up"] = [0,1,0]
+        scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
+        scenejson
+        if not os.path.exists(f'./dataset/object/{objname}/render20'):
+            os.makedirs(f'./dataset/object/{objname}/render20')
+        pt.pathTracing(scenejson, 16, f'./dataset/object/{objname}/render20/render-{objname}-{i}.png')
+
 if __name__ == "__main__":
     start_time = time.time()
     # cgs('6453', None, '梳妆台哈哈')
@@ -752,8 +856,13 @@ if __name__ == "__main__":
     # cgs('10198', None, '灰色现代风')
     # cgs('5810', None, '新中式简约风')
     # cgs('1133', None, 'rkx-优雅田园风')
-    cgsBatch()
+    # analyzeAnswerPlanner()
+    # cgsBatch()
+    # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
+    # renderModel20('coffee01')
+    renderModel20('vegetable07')
+    # renderModel20('shoecounter01')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     # cgs('1133', None, '小太阳-灰色奢华土豪')
     
