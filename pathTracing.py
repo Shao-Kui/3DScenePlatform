@@ -159,8 +159,6 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
-    print(casename)
-
     if 'PerspectiveCamera' not in scenejson:
         autoPerspectiveCamera(scenejson)
     if 'canvas' not in scenejson:
@@ -254,9 +252,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 roomShape.reverse()
                 roomNorm.reverse()
             i = 1
-            print(room['roomId'], roomShape)
             while len(roomShape) != 0:
-                print(roomShape)
                 p0 = np.array(roomShape[i-1])
                 p1 = np.array(roomShape[i])
                 p2 = np.array(roomShape[i+1])
@@ -286,9 +282,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                     _ip = (_index + len(roomShape) - 1) % len(roomShape)
                     _in = (_index + 1) % len(roomShape)
                     if polygon.covers(Point(p)):
-                        
                         if _ip in testlist and _in in testlist:
-                            print('covered', p, _ip, _in)
                             continue
                     newroomShape.append(p)
                 roomShape = newroomShape
