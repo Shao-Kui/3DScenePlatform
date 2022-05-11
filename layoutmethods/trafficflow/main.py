@@ -1398,7 +1398,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
     return [net, emptyCenters]
 
 
-def iter(choice: int, context: list, space: TwoDimSpace, trial: int):
+def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list, trial: int):
     net = context[choice][0]
     bestNet = context[choice][1]
     patternList = context[choice][2]
@@ -1412,7 +1412,7 @@ def iter(choice: int, context: list, space: TwoDimSpace, trial: int):
     sinceLastBest = context[choice][10]
     bestWallPatterns = context[choice][11]
 
-    for i in range(nowIterRound, nowIterRound + 1000):
+    for i in range(nowIterRound, nowIterRound + PROCESS_ITER_ROUND ):
         if i % PLOT_INTERVAL == 0:
             visualizeSpace(space, patternList, buildWallPatterns(patternList, space),
                            'tmp_results/result_' + str(trial * SET_NUMBER + choice) + '_' + (str)(i) + '.png')
@@ -1431,6 +1431,9 @@ def iter(choice: int, context: list, space: TwoDimSpace, trial: int):
             # print(successCount)
             # print(successRate)
 
+        if LOGGING and i % LOG_INTERVAL == 0 and i > 0:
+            np.save('log_models/' + (str)(SET_NUMBER) + '_' + (str)(choice) + '_' + (str)(i) + '.npy',
+                    np.array([spaceControlPoints, deepcopy(context[choice])], dtype=object))
         totalcostList.append(totalcost)
 
         if totalcost < bestCost:  # save the best result
@@ -1715,7 +1718,7 @@ def iter(choice: int, context: list, space: TwoDimSpace, trial: int):
                         patternList = lastList
                         net = lastNet
 
-    nowIterRound += 1000
+    nowIterRound += PROCESS_ITER_ROUND 
     context[choice] = [
         net, bestNet, patternList, bestList, totalcost, bestCost, totalcostList, nowIterRound, bestIterRound,
         actionProbabilities, sinceLastBest, bestWallPatterns
@@ -1761,7 +1764,7 @@ if __name__ == '__main__':
     assert PROCESS_NUM <= SET_NUMBER
 
     allTrialsCount = TRIALS * AVG_ITER_ROUND * SET_NUMBER
-    with tqdm(total=allTrialsCount / 1000) as bar:
+    with tqdm(total=allTrialsCount / PROCESS_ITER_ROUND ) as bar:
         for trial in range(TRIALS):
             manager = Manager()
             context = manager.list([[] for i in range(SET_NUMBER)])
@@ -1844,11 +1847,11 @@ if __name__ == '__main__':
                 #         contextCount = newContextCount
                 #         break
                 sleep(0.001)
-                indexList=[]
+                indexList = []
                 for i in range(PROCESS_NUM):
                     if (processPool[i] == None) or (not processPool[i].is_alive()):
                         indexList.append(i)
-                
+
                 if len(indexList) == 0:
                     continue
                 if totalCount % 5000 == 0 and totalCount > 0:  # save the experiment context to model
@@ -1858,7 +1861,7 @@ if __name__ == '__main__':
                 for index in indexList:
                     processNumber[index] = -1
                     choice = -1
-                    val = 1000
+                    val = 10000
                     vals = []
                     for i in range(SET_NUMBER):  # UCT choose policy
                         vals.append(context[i][5])
@@ -1876,14 +1879,13 @@ if __name__ == '__main__':
                             val = contextVal
                     if choice == -1:
                         continue
-                    p = Process(target=iter, args=(choice, context, deepcopy(space), trial))
+                    p = Process(target=iter, args=(choice, context, deepcopy(space),spaceControlPoints, trial))
                     processPool[index] = p
                     processNumber[index] = choice
                     p.start()
-                    contextCount[choice] += 1000
-                    totalCount += 1000
+                    contextCount[choice] += PROCESS_ITER_ROUND 
+                    totalCount += PROCESS_ITER_ROUND
                     bar.update(1)
-                
 
                 # totalVal = 0
                 # maxVal = 0
@@ -1897,7 +1899,7 @@ if __name__ == '__main__':
                 #       (str)(round(maxVal, 2)))
                 # print(vals)
 
-            transform(trial,0)
+            transform(trial)
             print('trial ' + (str)(trial) + ' ends')
 
     movebest()
