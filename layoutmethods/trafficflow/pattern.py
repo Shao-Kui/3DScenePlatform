@@ -14,7 +14,7 @@ import sys
 from params import *
 from numba import jit
 from multiprocessing import Process, Manager
-from time import sleep
+from time import sleep,time
 
 
 class Node:

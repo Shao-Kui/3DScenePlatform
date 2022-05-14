@@ -1,4 +1,5 @@
 import json
+
 from pattern import *
 from params import *
 from shelfmodels import *
@@ -16,8 +17,17 @@ origin = 'result'
 id = "10000"
 
 
-def transformSingle(patternList: list, wallPatternList: list, space: TwoDimSpace, xlow: float, xhigh: float,
-                    zlow: float, zhigh: float, xlen: float, zlen: float, name: str):
+def transformSingle(patternList: list,
+                    wallPatternList: list,
+                    space: TwoDimSpace,
+                    xlow: float,
+                    xhigh: float,
+                    zlow: float,
+                    zhigh: float,
+                    xlen: float,
+                    zlen: float,
+                    name: str,
+                    vary=True):
     modelChoices = []
 
     # set basic contents
@@ -86,7 +96,7 @@ def transformSingle(patternList: list, wallPatternList: list, space: TwoDimSpace
     for shelf in shelfs:
         width, length = 0.0, 0.0
         xtrans, ztrans = 0.0, 0.0
-        model = allModels[shelf.model]
+        model = allModels[shelf.model] if vary else cake02
         obj = {}
         obj['modelId'] = model.name
         obj['roomId'] = 0
@@ -205,7 +215,7 @@ def transformSingle(patternList: list, wallPatternList: list, space: TwoDimSpace
     return out
 
 
-def transformLog(setNum: int, index: int):
+def transformLog(setNum: int, index: int, render=True):
     random.seed()
     for i in range(len(allModels)):
         allModels[i].id = i
@@ -227,29 +237,34 @@ def transformLog(setNum: int, index: int):
             bestList = context[3]
             bestWallList = context[11]
             name = 'log_scenes/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round)
-            scenes.append(transformSingle(bestList, bestWallList, space, xlow, xhigh, zlow, zhigh, xlen, zlen, name))
+            if os.path.exists('log_models/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round + 1000) + '.npy'):
+                scenes.append(
+                    transformSingle(bestList, bestWallList, space, xlow, xhigh, zlow, zhigh, xlen, zlen, name, False))
+            else:
+                scenes.append(transformSingle(bestList, bestWallList, space, xlow, xhigh, zlow, zhigh, xlen, zlen,
+                                              name))
         else:
             break
         round += 1000
-    os.chdir('../../')
-    print('log pt start')
-    for i in range(len(scenes)):
-        round = i * 1000 + 1000
-        pt.SAVECONFIG = False
-        pt.USENEWWALL = True
-        pt.cameraType = 'perspective'
-        pt.pathTracing(
-            scenes[i], 64,
-            'layoutmethods/trafficflow/log_images/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round) + '.png')
-        pt.cameraType = 'orthographic'
-        pt.pathTracing(
-            scenes[i], 64, 'layoutmethods/trafficflow/log_images/' + (str)(setNum) + '_' + (str)(index) + '_' +
-            (str)(round) + '_orth.png')
-        print('log pt ' + (str)(round))
-    os.chdir('layoutmethods/trafficflow/')
+    if render:
+        os.chdir('../../')
+        print('log render start')
+        for i in tqdm(range(len(scenes))):
+            round = i * 1000 + 1000
+            pt.SAVECONFIG = False
+            pt.USENEWWALL = True
+            pt.cameraType = 'perspective'
+            pt.pathTracing(
+                scenes[i], 64, 'layoutmethods/trafficflow/log_images/' + (str)(setNum) + '_' + (str)(index) + '_' +
+                (str)(round) + '.png')
+            pt.cameraType = 'orthographic'
+            pt.pathTracing(
+                scenes[i], 64, 'layoutmethods/trafficflow/log_images/' + (str)(setNum) + '_' + (str)(index) + '_' +
+                (str)(round) + '_orth.png')
+        os.chdir('layoutmethods/trafficflow/')
 
 
-def transform(trial: int):
+def transform(trial: int, render=True):
     random.seed()
 
     for i in range(len(allModels)):
@@ -272,29 +287,31 @@ def transform(trial: int):
             name = 'scenes/' + origin + (str)(trial * TARGET_NUMBER + i)
             scenes.append(transformSingle(bestList, bestWallList, space, xlow, xhigh, zlow, zhigh, xlen, zlen, name))
 
-        os.chdir('../../')
-        print('pt start')
-        for i in range(TARGET_NUMBER):
-            pt.SAVECONFIG = False
-            pt.USENEWWALL = True
-            pt.cameraType = 'perspective'
-            pt.pathTracing(scenes[i], 4,
-                           'layoutmethods/trafficflow/images/images_' + (str)(trial * TARGET_NUMBER + i) + '.png')
-            pt.cameraType = 'orthographic'
-            pt.pathTracing(scenes[i], 4,
-                           'layoutmethods/trafficflow/images/images_' + (str)(trial * TARGET_NUMBER + i) + '_orth.png')
-            print('pt ' + (str)(trial * TARGET_NUMBER + i))
-        os.chdir('layoutmethods/trafficflow/')
+        if render:
+            os.chdir('../../')
+            print('render trial ' + (str)(trial) + ' start')
+            for i in tqdm(range(TARGET_NUMBER)):
+                pt.SAVECONFIG = False
+                pt.USENEWWALL = True
+                pt.cameraType = 'perspective'
+                pt.pathTracing(scenes[i], 4,
+                               'layoutmethods/trafficflow/images/images_' + (str)(trial * TARGET_NUMBER + i) + '.png')
+                pt.cameraType = 'orthographic'
+                pt.pathTracing(
+                    scenes[i], 4,
+                    'layoutmethods/trafficflow/images/images_' + (str)(trial * TARGET_NUMBER + i) + '_orth.png')
+            os.chdir('layoutmethods/trafficflow/')
     else:
         print("no model available")
 
 
 if __name__ == '__main__':
-    inp=input('choice:')
+    inp = input('choice:')
     if 'log' in inp:
-        setNum=input('setNum:')
-        index=input('index:')
-        transformLog(setNum,index)
+        setNum = input('setNum:')
+        index = input('index:')
+        transformLog(setNum, index)
     else:
-        trial=input('trial:')
-        transform(trial)
+        # trial = input('trial:')
+        for i in range(1, 5):
+            transform(i, False)

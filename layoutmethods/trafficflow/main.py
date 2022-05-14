@@ -1042,7 +1042,8 @@ def buildNet(patternList: list, space: TwoDimSpace):
             nods = []
             nowNode = columns[nowCol].vector[0]
             cur = 0  # 0 for column, 1 for row, 2 for incline
-            while True:
+            success=False
+            for k in range(200):
                 if cur == 0:
                     columnFlags[nowCol] = True
                     col = columns[nowCol]
@@ -1086,6 +1087,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                     else:
                         cur = 0
                     if cur == 0 and nowCol == origin:  # a circle
+                        success=True
                         break
                 else:
                     inc = inclines[nowIncline]
@@ -1111,8 +1113,11 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             nowIncline = nodes[nowNode].incline1
                         cur = 2
                     if cur == 0 and nowCol == origin:  # a circle
+                        success=True
                         break
-
+            if not success:
+                print('fail in ring, pid:'+(str)(os.getpid()))
+                continue
             if len(nowPoints) < 3:  # actually a point
                 continue
 
@@ -1851,20 +1856,21 @@ if __name__ == '__main__':
                 for i in range(PROCESS_NUM):
                     if (processPool[i] == None) or (not processPool[i].is_alive()):
                         indexList.append(i)
+                        processPool[i]=None
+                        processNumber[i] = -1
 
                 if len(indexList) == 0:
                     continue
-                if totalCount % 5000 == 0 and totalCount > 0:  # save the experiment context to model
+                if totalCount % 10000 == 0 and totalCount > 0:  # save the experiment context to model
                     fullResult = [spaceControlPoints, deepcopy(context), contextCount, totalCount]
                     np.save('models/full' + (str)(SET_NUMBER) + '_' + (str)(trial) + '.npy',
-                            np.array(fullResult, dtype=object))
+                            np.array(fullResult, dtype=object)) 
                 for index in indexList:
-                    processNumber[index] = -1
                     choice = -1
                     val = 10000
                     vals = []
                     for i in range(SET_NUMBER):  # UCT choose policy
-                        vals.append(context[i][5])
+                        # vals.append(context[i][5])
                         if i in processNumber:
                             continue
                         if contextCount[i] == 0:
@@ -1886,7 +1892,6 @@ if __name__ == '__main__':
                     contextCount[choice] += PROCESS_ITER_ROUND 
                     totalCount += PROCESS_ITER_ROUND
                     bar.update(1)
-
                 # totalVal = 0
                 # maxVal = 0
                 # minVal = 100
@@ -1898,8 +1903,12 @@ if __name__ == '__main__':
                 # print('avg:' + (str)(round(totalVal / len(vals), 2)) + ' min:' + (str)(round(minVal, 2)) + ' max:' +
                 #       (str)(round(maxVal, 2)))
                 # print(vals)
-
-            transform(trial)
             print('trial ' + (str)(trial) + ' ends')
-
-    movebest()
+        
+        movebest()
+        if not LOGGING:
+            print('all trials end, start pt')
+            for trial in range(TRIALS):
+                transform(trial)
+                
+    print('end')
