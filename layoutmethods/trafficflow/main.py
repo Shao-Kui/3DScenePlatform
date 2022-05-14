@@ -171,7 +171,7 @@ def getLongestPathLength(fullnet: nx.Graph, shouldPrint=False):
             nowLength = 0
             for i in range(len(mainPath) - 1):
                 nowLength += fullnet[mainPath[i]][mainPath[i + 1]]['length']
-            if nowLength < maxLength + DELTA:
+            if nowLength < maxLength + EPS:
                 break
             else:
                 maxLength = nowLength
@@ -219,7 +219,7 @@ def getLongestPathLength(fullnet: nx.Graph, shouldPrint=False):
         nowLength = 0
         for i in range(len(mainPath) - 1):
             nowLength += spanningTree[mainPath[i]][mainPath[i + 1]]['length']
-        if nowLength < maxLength + DELTA:
+        if nowLength < maxLength + EPS:
             return [nowLength, spanningTree]
         else:
             maxLength = nowLength
@@ -320,9 +320,6 @@ def checkBoundary(pattern: Pattern, space: TwoDimSpace):
     """check if a pattern is completely in the space and not too close to the boundary"""
     if isinstance(pattern, EmptyPattern):
         return pattern.boundbox.intersects(space.boundbox) and (not pattern.boundbox.intersects(space.boundary))
-    elif isinstance(pattern, WebPattern) or isinstance(pattern, StarPattern):
-        return pattern.boundbox.intersects(space.boundbox) and (not pattern.boundbox.intersects(
-            space.boundary)) and pattern.boundbox.distance(space.boundary) > SPACE_BUFFER - SHELF_MAX_WIDTH
     return pattern.boundbox.intersects(space.boundbox) and (not pattern.boundbox.intersects(
         space.boundary)) and pattern.boundbox.distance(space.boundary) > SPACE_BUFFER
 
@@ -344,7 +341,7 @@ def ifLineIntersect(min1: float, max1: float, min2: float, max2: float):
 
 
 def lineIntersect(min1: float, max1: float, min2: float, max2: float):
-    if max1 > min2 + DELTA and max2 > min1 + DELTA:
+    if max1 > min2 + EPS and max2 > min1 + EPS:
         return [max(min1, min2), min(max1, max2)]
     return [None, None]
 
@@ -354,36 +351,94 @@ def buildWallPatterns(patternList: list, space: TwoDimSpace):
     for k in range(len(patternList)):
         pattern = patternList[k]
         type = pattern.type
-        if type == WEB or type == STAR or type == EMPTY:
-            continue
+        prows, pcols = [], []
         xmin, xmax, ymin, ymax = pattern.boundbox.bounds[0] + ROAD_WIDTH / 2, pattern.boundbox.bounds[
             2] - ROAD_WIDTH / 2, pattern.boundbox.bounds[1] + ROAD_WIDTH / 2, pattern.boundbox.bounds[3] - ROAD_WIDTH / 2
+        if type == EMPTY:
+            continue
+        elif isinstance(pattern, WebPattern):
+            angle = (pattern.outNum - 2) * pi / (2 * pattern.outNum)
+            bx = pattern.centerPoint[0]
+            by = pattern.centerPoint[1]
+            length = pattern.length
+            ro = pattern.rotate
+            if pattern.outNum == 3 or pattern.outNum == 5:
+                if abs(ro) < EPS:
+                    pcols.append([by - length * cos(angle), by + length * cos(angle), bx - length * sin(angle)])
+                elif abs(ro - pi) < EPS:
+                    pcols.append([by - length * cos(angle), by + length * cos(angle), bx + length * sin(angle)])
+                elif abs(ro - pi / 2) < EPS:
+                    prows.append([bx - length * cos(angle), bx + length * cos(angle), by - length * sin(angle)])
+                else:
+                    prows.append([bx - length * cos(angle), bx + length * cos(angle), by + length * sin(angle)])
+            elif pattern.outNum == 4:
+                if abs(ro - pi / 4) < EPS:
+                    prows = [[xmin, xmax, ymin], [xmin, xmax, ymax]]
+                    pcols = [[ymin, ymax, xmin], [ymin, ymax, xmax]]
+            elif pattern.outNum == 6:
+                if abs(ro) < EPS:
+                    prows.append([bx - length * cos(angle), bx + length * cos(angle), by - length * sin(angle)])
+                    prows.append([bx - length * cos(angle), bx + length * cos(angle), by + length * sin(angle)])
+                else:
+                    pcols.append([by - length * cos(angle), by + length * cos(angle), bx - length * sin(angle)])
+                    pcols.append([by - length * cos(angle), by + length * cos(angle), bx + length * sin(angle)])
+        elif isinstance(pattern, StarPattern):
+            bx = pattern.centerPoint[0]
+            by = pattern.centerPoint[1]
+            length = pattern.length
+            width = (ROAD_WIDTH + SHELF_MAX_WIDTH * 4) / 2
+            ro = pattern.rotate
+            if pattern.outNum == 3 or pattern.outNum == 5:
+                if abs(ro) < EPS:
+                    pcols.append([by - width, by + width, bx + length])
+                elif abs(ro - pi) < EPS:
+                    pcols.append([by - width, by + width, bx - length])
+                elif abs(ro - pi / 2) < EPS:
+                    prows.append([bx - width, bx + width, by + length])
+                else:
+                    prows.append([bx - width, bx + width, by - length])
+            elif pattern.outNum == 4:
+                if abs(ro) < EPS:
+                    pcols.append([by - width, by + width, bx + length])
+                    pcols.append([by - width, by + width, bx - length])
+                    prows.append([bx - width, bx + width, by + length])
+                    prows.append([bx - width, bx + width, by - length])
+            elif pattern.outNum == 6:
+                if abs(ro) < EPS:
+                    prows.append([bx - width, bx + width, by + length])
+                    prows.append([bx - width, bx + width, by - length])
+                else:
+                    pcols.append([by - width, by + width, bx + length])
+                    pcols.append([by - width, by + width, bx - length])
+        else:
+            prows = [[xmin, xmax, ymin], [xmin, xmax, ymax]]
+            pcols = [[ymin, ymax, xmin], [ymin, ymax, xmax]]
         for i in range(len(space.columns)):
             col = space.columns[i]
-            line = LineString([(col.x, col.ymin), (col.x, col.ymax)])
-            dis = pattern.boundbox.distance(line)
-            if dis > SPACE_BUFFER + ROAD_WIDTH / 4:
-                continue
-            if ifLineIntersect(col.ymin, col.ymax, ymin, ymax):
-                interval = lineIntersect(col.ymin, col.ymax, ymin, ymax)
-                length = interval[1] - interval[0]
-                center = np.array([col.x + SHELF_MAX_WIDTH / 2,
-                                   (interval[1] + interval[0]) / 2]) if col.towards == X_POS else np.array(
-                                       [col.x - SHELF_MAX_WIDTH / 2, (interval[1] + interval[0]) / 2])
-                wallPatterns.append(WallPattern(center, length, type, 1, col.towards, k))
+            for pcol in pcols:
+                dis = abs(col.x - pcol[2])
+                if dis > SPACE_BUFFER + ROAD_WIDTH * 3 / 4:
+                    continue
+                if ifLineIntersect(col.ymin, col.ymax, pcol[0], pcol[1]):
+                    interval = lineIntersect(col.ymin, col.ymax, pcol[0], pcol[1])
+                    length = interval[1] - interval[0]
+                    center = np.array([col.x + SHELF_MAX_WIDTH / 2,
+                                       (interval[1] + interval[0]) / 2]) if col.towards == X_POS else np.array(
+                                           [col.x - SHELF_MAX_WIDTH / 2, (interval[1] + interval[0]) / 2])
+                    wallPatterns.append(WallPattern(center, length, type, 1, col.towards, k))
         for i in range(len(space.rows)):
             row = space.rows[i]
-            line = LineString([(row.xmin, row.y), (row.xmax, row.y)])
-            dis = pattern.boundbox.distance(line)
-            if dis > SPACE_BUFFER + ROAD_WIDTH / 4:
-                continue
-            if ifLineIntersect(row.xmin, row.xmax, xmin, xmax):
-                interval = lineIntersect(row.xmin, row.xmax, xmin, xmax)
-                length = interval[1] - interval[0]
-                center = np.array([
-                    (interval[1] + interval[0]) / 2, row.y + SHELF_MAX_WIDTH / 2
-                ]) if row.towards == Y_POS else np.array([(interval[1] + interval[0]) / 2, row.y - SHELF_MAX_WIDTH / 2])
-                wallPatterns.append(WallPattern(center, length, type, 0, row.towards, k))
+            for prow in prows:
+                dis = abs(row.y - prow[2])
+                if dis > SPACE_BUFFER + ROAD_WIDTH * 3 / 4:
+                    continue
+                if ifLineIntersect(row.xmin, row.xmax, prow[0], prow[1]):
+                    interval = lineIntersect(row.xmin, row.xmax, prow[0], prow[1])
+                    length = interval[1] - interval[0]
+                    center = np.array([(interval[1] + interval[0]) / 2, row.y + SHELF_MAX_WIDTH / 2
+                                       ]) if row.towards == Y_POS else np.array([(interval[1] + interval[0]) /
+                                                                                 2, row.y - SHELF_MAX_WIDTH / 2])
+                    wallPatterns.append(WallPattern(center, length, type, 0, row.towards, k))
     return wallPatterns
 
 
@@ -857,12 +912,12 @@ def buildNet(patternList: list, space: TwoDimSpace):
             if outNum == 3:
                 addIncline(inclines, nodes, incBase, newBase, newBase + 1)
                 addIncline(inclines, nodes, incBase + 1, newBase + 1, newBase + 2)
-                if abs(rotate) < pi / 180 or abs(rotate - pi) < pi / 180:
+                if abs(rotate) < EPS or abs(rotate - pi) < EPS:
                     addColumn(columns, nodes, colBase, newBase + 1, newBase + 2)
                 else:
                     addRow(rows, nodes, rowBase, newBase + 1, newBase + 2)
             elif outNum == 4:
-                if abs(rotate) < pi / 180:
+                if abs(rotate) < EPS:
                     for i in range(4):
                         addIncline(inclines, nodes, incBase + i, newBase + i, newBase + (i + 1) % 4)
                 else:
@@ -875,7 +930,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                 addIncline(inclines, nodes, incBase + 1, newBase + 1, newBase + 2)
                 addIncline(inclines, nodes, incBase + 2, newBase + 3, newBase + 4)
                 addIncline(inclines, nodes, incBase + 3, newBase + 4, newBase)
-                if abs(rotate) < pi / 180 or abs(rotate - pi) < pi / 180:
+                if abs(rotate) < EPS or abs(rotate - pi) < EPS:
                     addColumn(columns, nodes, colBase, newBase + 2, newBase + 3)
                 else:
                     addRow(rows, nodes, rowBase, newBase + 2, newBase + 3)
@@ -884,7 +939,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                 addIncline(inclines, nodes, incBase + 1, newBase + 2, newBase + 3)
                 addIncline(inclines, nodes, incBase + 2, newBase + 3, newBase + 4)
                 addIncline(inclines, nodes, incBase + 3, newBase + 5, newBase)
-                if abs(rotate) < pi / 180:
+                if abs(rotate) < EPS:
                     addRow(rows, nodes, rowBase, newBase + 1, newBase + 2)
                     addRow(rows, nodes, rowBase + 1, newBase + 4, newBase + 5)
                 else:
@@ -933,7 +988,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
             if outNum == 3:
                 for i in range(2, 10):
                     addIncline(inclines, nodes, incBase + i - 2, newBase + i, newBase + i + 1)
-                if abs(rotate) < pi / 180 or abs(rotate - pi) < pi / 180:
+                if abs(rotate) < EPS or abs(rotate - pi) < EPS:
                     addColumn3(columns, nodes, colBase, newBase + 11, newBase, newBase + 1)
                     addRow(rows, nodes, rowBase, newBase + 1, newBase + 2)
                     addRow(rows, nodes, rowBase + 1, newBase + 10, newBase + 11)
@@ -942,7 +997,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                     addColumn(columns, nodes, colBase, newBase + 1, newBase + 2)
                     addColumn(columns, nodes, colBase + 1, newBase + 10, newBase + 11)
             elif outNum == 4:
-                if abs(rotate) < pi / 180:
+                if abs(rotate) < EPS:
                     for i in range(2):
                         addColumn(columns, nodes, colBase + 3 * i, newBase + i * 8 + 2, newBase + i * 8 + 3)
                         addColumn(columns, nodes, colBase + 3 * i + 1, newBase + i * 8 + 5, newBase + i * 8 + 6)
@@ -958,7 +1013,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
             elif outNum == 5:
                 for i in range(2, 18):
                     addIncline(inclines, nodes, incBase + i - 2, newBase + i, newBase + i + 1)
-                if abs(rotate) < pi / 180 or abs(rotate - pi) < pi / 180:
+                if abs(rotate) < EPS or abs(rotate - pi) < EPS:
                     addColumn3(columns, nodes, colBase, newBase + 19, newBase, newBase + 1)
                     addRow(rows, nodes, rowBase, newBase + 1, newBase + 2)
                     addRow(rows, nodes, rowBase + 1, newBase + 18, newBase + 19)
@@ -971,7 +1026,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                     addIncline(inclines, nodes, incBase + i - 2, newBase + i, newBase + i + 1)
                 for i in range(14, 22):
                     addIncline(inclines, nodes, incBase + i - 6, newBase + i, newBase + i + 1)
-                if abs(rotate) < pi / 180:
+                if abs(rotate) < EPS:
                     addColumn3(columns, nodes, colBase, newBase + 23, newBase, newBase + 1)
                     addColumn3(columns, nodes, colBase + 1, newBase + 11, newBase + 12, newBase + 13)
                     addRow(rows, nodes, rowBase, newBase + 1, newBase + 2)
@@ -1042,7 +1097,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
             nods = []
             nowNode = columns[nowCol].vector[0]
             cur = 0  # 0 for column, 1 for row, 2 for incline
-            success=False
+            success = False
             for k in range(200):
                 if cur == 0:
                     columnFlags[nowCol] = True
@@ -1087,7 +1142,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                     else:
                         cur = 0
                     if cur == 0 and nowCol == origin:  # a circle
-                        success=True
+                        success = True
                         break
                 else:
                     inc = inclines[nowIncline]
@@ -1113,10 +1168,10 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             nowIncline = nodes[nowNode].incline1
                         cur = 2
                     if cur == 0 and nowCol == origin:  # a circle
-                        success=True
+                        success = True
                         break
             if not success:
-                print('fail in ring, pid:'+(str)(os.getpid()))
+                print('fail in ring, pid:' + (str)(os.getpid()))
                 continue
             if len(nowPoints) < 3:  # actually a point
                 continue
@@ -1377,10 +1432,10 @@ def buildNet(patternList: list, space: TwoDimSpace):
         n1, n2 = None, None
         mindis = 10000
         for edge in net.edges:
-            if net[edge[0]][edge[1]]['length'] < DELTA:
+            if net[edge[0]][edge[1]]['length'] < EPS:
                 n1 = edge[0]
                 n2 = edge[1]
-                mindis = DELTA
+                mindis = EPS
                 break
             elif net[edge[0]][edge[1]]['length'] < mindis:
                 n1 = edge[0]
@@ -1403,7 +1458,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
     return [net, emptyCenters]
 
 
-def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list, trial: int):
+def iter(choice: int, context: list, space: TwoDimSpace, spaceControlPoints: list, trial: int):
     net = context[choice][0]
     bestNet = context[choice][1]
     patternList = context[choice][2]
@@ -1417,7 +1472,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
     sinceLastBest = context[choice][10]
     bestWallPatterns = context[choice][11]
 
-    for i in range(nowIterRound, nowIterRound + PROCESS_ITER_ROUND ):
+    for i in range(nowIterRound, nowIterRound + PROCESS_ITER_ROUND):
         if i % PLOT_INTERVAL == 0:
             visualizeSpace(space, patternList, buildWallPatterns(patternList, space),
                            'tmp_results/result_' + str(trial * SET_NUMBER + choice) + '_' + (str)(i) + '.png')
@@ -1431,7 +1486,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
             visualizeAll(space, bestList, buildWallPatterns(bestList, space), bestNet, bestCost, bestIterRound,
                          'tmp_results/result_' + str(trial * SET_NUMBER + choice) + '_' + 'tmpbest_all.png')
             # for i in range(len(actionProbabilities)):
-            #     successRate[i] = successCount[i] / max(DELTA, chooseCount[i])
+            #     successRate[i] = successCount[i] / max(EPS, chooseCount[i])
             # print(chooseCount)
             # print(successCount)
             # print(successRate)
@@ -1497,17 +1552,17 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                 pattern = patternList[patternChoice]
                 if isinstance(pattern, LinePattern):
                     pattern.length += LINE_RESIZE_DELTA * np.random.standard_normal()
-                    pattern.length = max(pattern.length, DELTA)
+                    pattern.length = max(pattern.length, EPS)
                 elif isinstance(pattern, GridPattern):
                     randNum = random.randint(0, 3)
                     if randNum < 2:
                         pattern.orient = 1 - pattern.orient
                     elif randNum == 2:
                         pattern.width += GRID_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.width = max(pattern.width, DELTA)
+                        pattern.width = max(pattern.width, EPS)
                     else:
                         pattern.height += GRID_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.height = max(pattern.height, DELTA)
+                        pattern.height = max(pattern.height, EPS)
                 elif isinstance(pattern, WebPattern) or isinstance(pattern, StarPattern):
                     randNum = random.randint(0, 4)
                     if randNum < 3:
@@ -1516,7 +1571,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                             length = pattern.length + WEB_RESIZE_DELTA * np.random.standard_normal()
                         else:
                             length = pattern.length + STAR_RESIZE_DELTA * np.random.standard_normal()
-                        length = max(length, DELTA)
+                        length = max(length, EPS)
                         pattern.length = length
                     elif randNum == 3:
                         outNums = [3, 4, 5, 6]
@@ -1532,7 +1587,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                         else:
                             angles = [0, pi / 2]
                         for i in range(len(angles)):
-                            if abs(angles[i] - pattern.rotate) < pi / 180:
+                            if abs(angles[i] - pattern.rotate) < EPS:
                                 angles.remove(angles[i])
                                 break
                         pattern.rotate = angles[random.randint(0, len(angles) - 1)]
@@ -1547,7 +1602,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                         else:
                             angles = [0, pi / 2]
                         for i in range(len(angles)):
-                            if abs(angles[i] - pattern.rotate) < pi / 180:
+                            if abs(angles[i] - pattern.rotate) < EPS:
                                 angles.remove(angles[i])
                                 break
                         pattern.rotate = angles[random.randint(0, len(angles) - 1)]
@@ -1556,19 +1611,19 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                     randNum = random.randint(0, 4) if pattern.doubleLayer else random.randint(0, 3)
                     if randNum < 2:
                         pattern.width += ROUND_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.width = max(pattern.width, DELTA)
+                        pattern.width = max(pattern.width, EPS)
                     elif randNum < 4:
                         pattern.height += ROUND_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.height = max(pattern.height, DELTA)
+                        pattern.height = max(pattern.height, EPS)
                     else:
                         pattern.inStyle = 1 - pattern.inStyle
                 elif isinstance(pattern, EmptyPattern):
                     if random.randint(0, 1) == 0:
                         pattern.width += EMPTY_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.width = max(pattern.width, DELTA)
+                        pattern.width = max(pattern.width, EPS)
                     else:
                         pattern.height += EMPTY_RESIZE_DELTA * np.random.standard_normal()
-                        pattern.height = max(pattern.height, DELTA)
+                        pattern.height = max(pattern.height, EPS)
 
                 pattern.update()
                 valid = pattern.acceptable() and checkBoundary(pattern, space) and checkIntersect(pattern, patternList)
@@ -1611,10 +1666,10 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
             elif patternChoice == 1:
                 if random.randint(0, 1) == 0:
                     patternList.append(
-                        GridPattern(centerPoint, SHELF_MAX_LENGTH * 2, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, 0))
+                        GridPattern(centerPoint, SHELF_MAX_LENGTH * 2, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, 0))
                 else:
                     patternList.append(
-                        GridPattern(centerPoint, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, SHELF_MAX_LENGTH * 2, 0))
+                        GridPattern(centerPoint, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, SHELF_MAX_LENGTH * 2, 0))
             elif patternChoice == 2:
                 patternList.append(WebPattern(centerPoint, 4, sqrt(2) * (ROAD_WIDTH + SHELF_MIN_LENGTH), pi / 4))
             elif patternChoice == 3:
@@ -1622,10 +1677,10 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                                                0))
             elif patternChoice == 4:
                 patternList.append(
-                    RoundPattern(centerPoint, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA,
-                                 SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+                    RoundPattern(centerPoint, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS,
+                                 SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
             else:
-                patternList.append(EmptyPattern(centerPoint, ROAD_WIDTH + DELTA, ROAD_WIDTH + DELTA))
+                patternList.append(EmptyPattern(centerPoint, ROAD_WIDTH + EPS, ROAD_WIDTH + EPS))
 
             pattern = patternList[len(patternList) - 1]
             pattern.update()
@@ -1723,7 +1778,7 @@ def iter(choice: int, context: list, space: TwoDimSpace,spaceControlPoints:list,
                         patternList = lastList
                         net = lastNet
 
-    nowIterRound += PROCESS_ITER_ROUND 
+    nowIterRound += PROCESS_ITER_ROUND
     context[choice] = [
         net, bestNet, patternList, bestList, totalcost, bestCost, totalcostList, nowIterRound, bestIterRound,
         actionProbabilities, sinceLastBest, bestWallPatterns
@@ -1740,18 +1795,13 @@ def contextCostCmp(context1: list, context2: list):
 
 if __name__ == '__main__':
     # prepare
-    spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 20), p(0, 20)], p(0, 10), p(30, 10), p(1, 0), p(-1, 0)]
-    # spaceControlPoints = [[
-    #     p(0, 0), p(30, 0),
-    #     p(30, 15),
-    #     p(15, 15),
-    #     p(15, 30),
-    #     p(0, 30)
-    # ],
-    #                       p(7.5, 30),
-    #                       p(30, 7.5),
-    #                       p(0, -1),
-    #                       p(-1, 0)]
+    # spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 20), p(0, 20)], p(0, 10), p(30, 10), p(1, 0), p(-1, 0)]
+    spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 15), p(15, 15),
+                           p(15, 30), p(0, 30)],
+                          p(7.5, 30),
+                          p(30, 7.5),
+                          p(0, -1),
+                          p(-1, 0)]
     space = TwoDimSpace(spaceControlPoints[0], spaceControlPoints[1], spaceControlPoints[2], spaceControlPoints[3],
                         spaceControlPoints[4])
 
@@ -1765,11 +1815,11 @@ if __name__ == '__main__':
     for i in range(1, len(actionProbabilities)):
         actionProbabilities[i] += actionProbabilities[i - 1]
     standardProbabilities = deepcopy(actionProbabilities)
-    assert abs(actionProbabilities[len(actionProbabilities) - 1] - 1) < DELTA
+    assert abs(actionProbabilities[len(actionProbabilities) - 1] - 1) < EPS
     assert PROCESS_NUM <= SET_NUMBER
 
     allTrialsCount = TRIALS * AVG_ITER_ROUND * SET_NUMBER
-    with tqdm(total=allTrialsCount / PROCESS_ITER_ROUND ) as bar:
+    with tqdm(total=allTrialsCount / PROCESS_ITER_ROUND) as bar:
         for trial in range(TRIALS):
             manager = Manager()
             context = manager.list([[] for i in range(SET_NUMBER)])
@@ -1856,7 +1906,7 @@ if __name__ == '__main__':
                 for i in range(PROCESS_NUM):
                     if (processPool[i] == None) or (not processPool[i].is_alive()):
                         indexList.append(i)
-                        processPool[i]=None
+                        processPool[i] = None
                         processNumber[i] = -1
 
                 if len(indexList) == 0:
@@ -1864,7 +1914,7 @@ if __name__ == '__main__':
                 if totalCount % 10000 == 0 and totalCount > 0:  # save the experiment context to model
                     fullResult = [spaceControlPoints, deepcopy(context), contextCount, totalCount]
                     np.save('models/full' + (str)(SET_NUMBER) + '_' + (str)(trial) + '.npy',
-                            np.array(fullResult, dtype=object)) 
+                            np.array(fullResult, dtype=object))
                 for index in indexList:
                     choice = -1
                     val = 10000
@@ -1885,11 +1935,11 @@ if __name__ == '__main__':
                             val = contextVal
                     if choice == -1:
                         continue
-                    p = Process(target=iter, args=(choice, context, deepcopy(space),spaceControlPoints, trial))
+                    p = Process(target=iter, args=(choice, context, deepcopy(space), spaceControlPoints, trial))
                     processPool[index] = p
                     processNumber[index] = choice
                     p.start()
-                    contextCount[choice] += PROCESS_ITER_ROUND 
+                    contextCount[choice] += PROCESS_ITER_ROUND
                     totalCount += PROCESS_ITER_ROUND
                     bar.update(1)
                 # totalVal = 0
@@ -1904,11 +1954,11 @@ if __name__ == '__main__':
                 #       (str)(round(maxVal, 2)))
                 # print(vals)
             print('trial ' + (str)(trial) + ' ends')
-        
+
         movebest()
         if not LOGGING:
             print('all trials end, start pt')
             for trial in range(TRIALS):
-                transform(trial)
-                
+                transform(trial, False)
+
     print('end')

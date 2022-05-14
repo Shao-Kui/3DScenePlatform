@@ -14,11 +14,10 @@ import sys
 from params import *
 from numba import jit
 from multiprocessing import Process, Manager
-from time import sleep,time
+from time import sleep, time
 
 
 class Node:
-
     def __init__(self, x: float, y: float, number: int):
         self.x = x
         self.y = y
@@ -30,7 +29,6 @@ class Node:
 
 
 class SpaceColumn:
-
     def __init__(self, x: float, ymin: float, ymax: float, towards: int):
         self.x = x
         self.ymin = ymin
@@ -39,7 +37,6 @@ class SpaceColumn:
 
 
 class SpaceRow:
-
     def __init__(self, y: float, xmin: float, xmax: float, towards: int):
         self.y = y
         self.xmin = xmin
@@ -48,7 +45,6 @@ class SpaceRow:
 
 
 class Column:
-
     def __init__(self, vector: list, x: float, ymin: float, ymax: float, number: int):
         self.vector = vector
         self.x = x
@@ -58,7 +54,6 @@ class Column:
 
 
 class Row:
-
     def __init__(self, vector: list, y: float, xmin: float, xmax: float, number: int):
         self.vector = vector
         self.y = y
@@ -68,7 +63,6 @@ class Row:
 
 
 class Incline:
-
     def __init__(self, vector: list, number: int):
         self.vector = vector
         self.number = number
@@ -108,7 +102,6 @@ def rowNumberCmp(row1: Row, row2: Row):
 
 class Shelf:
     """a shelf"""
-
     def __init__(self, group: int, x: float, y: float, xl: float, yl: float, towards: int, rotate=0.0):
         self.x = x
         self.y = y
@@ -172,7 +165,6 @@ class Shelf:
 
 class TwoDimSpace:
     """the space with an entrance and an exit"""
-
     def __init__(self, pointList: list, entrancePoint: np.ndarray, exitPoint: np.ndarray, entranceNorm: np.ndarray,
                  exitNorm: np.ndarray):
         self.pointList = pointList
@@ -189,32 +181,32 @@ class TwoDimSpace:
         for i in range(len(pointList)):
             p1 = Point(pointList[i])
             p2 = Point(pointList[(i + 1) % len(pointList)])
-            if abs(p1.x - p2.x) < DELTA:  # column
+            if abs(p1.x - p2.x) < EPS:  # column
                 ymin = min(p1.y, p2.y)
                 ymax = max(p1.y, p2.y)
                 towards = X_POS if p1.y > p2.y else X_NEG
-                if abs(p1.x - entrance.x) < DELTA:
+                if abs(p1.x - entrance.x) < EPS:
                     if entrance.y - ROAD_WIDTH * 0.75 > ymin:
                         self.columns.append(SpaceColumn(p1.x, ymin, entrance.y - ROAD_WIDTH * 0.75, towards))
                     if entrance.y + ROAD_WIDTH * 0.75 < ymax:
                         self.columns.append(SpaceColumn(p1.x, entrance.y + ROAD_WIDTH * 0.75, ymax, towards))
-                elif abs(p1.x - exit.x) < DELTA:
+                elif abs(p1.x - exit.x) < EPS:
                     if exit.y - ROAD_WIDTH * 0.75 > ymin:
                         self.columns.append(SpaceColumn(p1.x, ymin, exit.y - ROAD_WIDTH * 0.75, towards))
                     if exit.y + ROAD_WIDTH * 0.75 < ymax:
                         self.columns.append(SpaceColumn(p1.x, exit.y + ROAD_WIDTH * 0.75, ymax, towards))
                 else:
                     self.columns.append(SpaceColumn(p1.x, ymin, ymax, towards))
-            elif abs(p1.y - p2.y) < DELTA:  # row
+            elif abs(p1.y - p2.y) < EPS:  # row
                 xmin = min(p1.x, p2.x)
                 xmax = max(p1.x, p2.x)
                 towards = Y_POS if p1.x < p2.x else Y_NEG
-                if abs(p1.y - entrance.y) < DELTA:
+                if abs(p1.y - entrance.y) < EPS:
                     if entrance.x - ROAD_WIDTH * 0.75 > xmin:
                         self.rows.append(SpaceRow(p1.y, xmin, entrance.x - ROAD_WIDTH * 0.75, towards))
                     if entrance.x + ROAD_WIDTH * 0.75 < xmax:
                         self.rows.append(SpaceRow(p1.y, entrance.x + ROAD_WIDTH * 0.75, xmax, towards))
-                elif abs(p1.y - exit.y) < DELTA:
+                elif abs(p1.y - exit.y) < EPS:
                     if exit.x - ROAD_WIDTH * 0.75 > xmin:
                         self.rows.append(SpaceRow(p1.y, xmin, exit.x - ROAD_WIDTH * 0.75, towards))
                     if exit.x + ROAD_WIDTH * 0.75 < xmax:
@@ -261,7 +253,6 @@ class TwoDimSpace:
 
 class Pattern:
     """base class for all patterns"""
-
     def __init__(self, centerPoint: np.ndarray, type: int, boundbox):
         self.centerPoint = centerPoint
         self.type = type
@@ -313,7 +304,6 @@ class Pattern:
 
 class LinePattern(Pattern):
     """a line-shaped space"""
-
     def __init__(self, centerPoint: np.ndarray, length: float, orient: int):
         Pattern.__init__(self, centerPoint, LINE, None)
         self.length = length
@@ -361,21 +351,21 @@ class LinePattern(Pattern):
         patternChoice = random.randint(0, 2)
         if patternChoice == 0:  # change to grid pattern
             if self.orient == 0:
-                return GridPattern(self.centerPoint, self.length, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, 0)
+                return GridPattern(self.centerPoint, self.length, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, 0)
             else:
-                return GridPattern(self.centerPoint, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, self.length, 1)
+                return GridPattern(self.centerPoint, ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, self.length, 1)
         elif patternChoice == 1:  # change to round pattern
             if self.orient == 0:
-                return RoundPattern(self.centerPoint, max(self.length, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA),
-                                    ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + DELTA)
+                return RoundPattern(self.centerPoint, max(self.length, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS),
+                                    ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + EPS)
             else:
-                return RoundPattern(self.centerPoint, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + DELTA,
-                                    max(self.length, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+                return RoundPattern(self.centerPoint, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + EPS,
+                                    max(self.length, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
         else:  # change to empty pattern
             if self.orient == 0:
-                return EmptyPattern(self.centerPoint, self.length, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + DELTA)
+                return EmptyPattern(self.centerPoint, self.length, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + EPS)
             else:
-                return EmptyPattern(self.centerPoint, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + DELTA, self.length)
+                return EmptyPattern(self.centerPoint, ROAD_WIDTH + SHELF_MAX_WIDTH * 4 + EPS, self.length)
 
     def adjust(self):
         self.adjustmentCost = 0
@@ -414,7 +404,6 @@ class LinePattern(Pattern):
 
 class GridPattern(Pattern):
     """a grid-shaped space"""
-
     def __init__(self, centerPoint: np.ndarray, width: float, height: float, orient: int):
         Pattern.__init__(self, centerPoint, GRID, None)
         self.width = width
@@ -465,8 +454,8 @@ class GridPattern(Pattern):
         elif patternChoice == 2:  # change to star pattern
             return StarPattern(self.centerPoint, 4, min(self.width / 2, self.height / 2), 0)
         elif patternChoice == 3:  # change to round pattern
-            return RoundPattern(self.centerPoint, max(self.width, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA),
-                                max(self.height, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+            return RoundPattern(self.centerPoint, max(self.width, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS),
+                                max(self.height, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
         else:  # change to empty pattern
             return EmptyPattern(self.centerPoint, self.width, self.height)
 
@@ -549,7 +538,6 @@ class GridPattern(Pattern):
 
 class StarPattern(Pattern):
     """a star-shaped space"""
-
     def __init__(self, centerPoint: np.ndarray, outNum: int, length: float, rotate: float):
         Pattern.__init__(self, centerPoint, STAR, None)
         self.outNum = outNum
@@ -593,7 +581,6 @@ class StarPattern(Pattern):
             plt.fill([point[0] for point in points], [point[1] for point in points], color=ROAD_COLOR)
 
     def randomChange(self, space: TwoDimSpace):
-        bias = max(SPACE_BUFFER - self.boundbox.distance(space.boundary) + DELTA, 0)
         patternChoice = random.randint(0, 4)
         width = self.boundbox.bounds[2] - self.boundbox.bounds[0]
         height = self.boundbox.bounds[3] - self.boundbox.bounds[1]
@@ -601,21 +588,21 @@ class StarPattern(Pattern):
                         (self.boundbox.bounds[3] + self.boundbox.bounds[1]) / 2)
         if patternChoice == 0:  # change to line pattern
             if width > height:
-                return LinePattern(centerPoint, width - bias * 2, 0)
+                return LinePattern(centerPoint, width , 0)
             else:
-                return LinePattern(centerPoint, height - bias * 2, 1)
+                return LinePattern(centerPoint, height , 1)
         elif patternChoice == 1:  # change to grid pattern
             if random.randint(0, 1) == 0:
-                return GridPattern(centerPoint, width - bias * 2,
-                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, height - bias * 2), 0)
+                return GridPattern(centerPoint, width ,
+                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, height ), 0)
             else:
-                return GridPattern(centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, width - bias * 2),
-                                   height - bias * 2, 1)
+                return GridPattern(centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, width ),
+                                   height , 1)
         elif patternChoice == 2:  # change to web pattern
             return WebPattern(self.centerPoint, self.outNum, self.length, self.rotate)
         elif patternChoice == 3:  # change to round pattern
-            return RoundPattern(centerPoint, max(width - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA),
-                                max(height - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+            return RoundPattern(centerPoint, max(width , SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS),
+                                max(height , SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
         else:  # change to empty pattern
             return EmptyPattern(centerPoint, width, height)
 
@@ -658,7 +645,6 @@ class StarPattern(Pattern):
 
 class WebPattern(Pattern):
     """a web-shaped space"""
-
     def __init__(self, centerPoint: np.ndarray, outNum: int, length: float, rotate: float):  # rotate is in radian
         Pattern.__init__(self, centerPoint, WEB, None)
         self.outNum = outNum
@@ -709,7 +695,6 @@ class WebPattern(Pattern):
                          color=ROAD_COLOR)
 
     def randomChange(self, space: TwoDimSpace):
-        bias = max(SPACE_BUFFER - self.boundbox.distance(space.boundary) + DELTA, 0)
         patternChoice = random.randint(0, 4)
         width = self.boundbox.bounds[2] - self.boundbox.bounds[0]
         height = self.boundbox.bounds[3] - self.boundbox.bounds[1]
@@ -717,21 +702,21 @@ class WebPattern(Pattern):
                         (self.boundbox.bounds[3] + self.boundbox.bounds[1]) / 2)
         if patternChoice == 0:  # change to line pattern
             if width > height:
-                return LinePattern(centerPoint, width - bias * 2, 0)
+                return LinePattern(centerPoint, width , 0)
             else:
-                return LinePattern(centerPoint, height - bias * 2, 1)
+                return LinePattern(centerPoint, height, 1)
         elif patternChoice == 1:  # change to grid pattern
             if random.randint(0, 1) == 0:
-                return GridPattern(centerPoint, width - bias * 2,
-                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, height - bias * 2), 0)
+                return GridPattern(centerPoint, width ,
+                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, height ), 0)
             else:
-                return GridPattern(centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, width - bias * 2),
-                                   height - bias * 2, 1)
+                return GridPattern(centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, width ),
+                                   height , 1)
         elif patternChoice == 2:  # change to star pattern
             return StarPattern(self.centerPoint, self.outNum, self.length, self.rotate)
         elif patternChoice == 3:  # change to round pattern
-            return RoundPattern(centerPoint, max(width - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA),
-                                max(height - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+            return RoundPattern(centerPoint, max(width, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS),
+                                max(height , SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
         else:  # change to empty pattern
             return EmptyPattern(centerPoint, width, height)
 
@@ -763,7 +748,6 @@ class WebPattern(Pattern):
 
 class RoundPattern(Pattern):
     """an round-shaped space"""
-
     def __init__(self, centerPoint: np.ndarray, width: float, height: float):
         Pattern.__init__(self, centerPoint, ROUND, None)
         self.width = width
@@ -799,9 +783,9 @@ class RoundPattern(Pattern):
         elif patternChoice == 1:  # change to grid pattern
             if random.randint(0, 1) == 0:
                 return GridPattern(self.centerPoint, self.width,
-                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, self.height), 0)
+                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, self.height), 0)
             else:
-                return GridPattern(self.centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, self.width),
+                return GridPattern(self.centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, self.width),
                                    self.height, 1)
         elif patternChoice == 2:  # change to web pattern
             return WebPattern(self.centerPoint, 4, min(self.width / sqrt(2), self.height / sqrt(2)), pi / 4)
@@ -979,7 +963,6 @@ class RoundPattern(Pattern):
 
 class EmptyPattern(Pattern):
     """an empty space, mainly for flexibility"""
-
     def __init__(self, centerPoint: np.ndarray, width: float, height: float):
         Pattern.__init__(self, centerPoint, EMPTY, None)
         self.width = width
@@ -1011,7 +994,7 @@ class EmptyPattern(Pattern):
                  color=EMPTY_SPACE_COLOR)
 
     def randomChange(self, space: TwoDimSpace):
-        bias = max(SPACE_BUFFER - self.boundbox.distance(space.boundary) + DELTA, 0)
+        bias = max(SPACE_BUFFER - self.boundbox.distance(space.boundary) + EPS, 0)
         patternChoice = random.randint(0, 4)
         if patternChoice == 0:  # change to line pattern
             if self.width > self.height:
@@ -1021,9 +1004,9 @@ class EmptyPattern(Pattern):
         elif patternChoice == 1:  # change to grid pattern
             if random.randint(0, 1) == 0:
                 return GridPattern(self.centerPoint, self.width - bias * 2,
-                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA, self.height - bias * 2), 0)
+                                   max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS, self.height - bias * 2), 0)
             else:
-                return GridPattern(self.centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + DELTA,
+                return GridPattern(self.centerPoint, max(ROAD_WIDTH + SHELF_MIN_WIDTH * 4 + EPS,
                                                          self.width - bias * 2), self.height - bias * 2, 1)
         elif patternChoice == 2:  # change to web pattern
             return WebPattern(self.centerPoint, 4,
@@ -1032,8 +1015,8 @@ class EmptyPattern(Pattern):
             return StarPattern(self.centerPoint, 4, min((self.width - bias * 2) / 2, (self.height - bias * 2) / 2), 0)
         else:  # change to round pattern
             return RoundPattern(self.centerPoint,
-                                max(self.width - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA),
-                                max(self.height - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + DELTA))
+                                max(self.width - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS),
+                                max(self.height - bias * 2, SHELF_MIN_LENGTH + SHELF_MAX_WIDTH * 2 + EPS))
 
     def adjust(self):
         self.adjustmentCost = 0
@@ -1044,7 +1027,6 @@ class EmptyPattern(Pattern):
 
 class WallPattern:
     """the pattern adjacent to walls"""
-
     def __init__(self, centerPoint: np.ndarray, length: float, type: int, orient: int, towards: int, follow: int):
         self.centerPoint = centerPoint
         self.length = length
@@ -1158,11 +1140,9 @@ def linearShelfLayout(group: list,
                 numbers = [group[0] for i in range(split)] + [group[0] + 1 for i in range(split, num)]
                 addition = 2
             else:
-                split1 = (int)(num / 3)
-                split2 = (int)(num * 2 / 3)
-                numbers = [group[0] for i in range(split1)] + [group[0] + 1 for i in range(split1, split2)
-                                                               ] + [group[0] + 2 for i in range(split2, num)]
-                addition = 3
+                addition = (int)((num + 3) / 4)
+                split = (int)((num + addition - 1) / addition)
+                numbers = [group[0] + (int)(i / split) for i in range(num)]
             for i in range(num):
                 shelfs.append(Shelf(numbers[i], xbase + length / 2 + (length + buf) * i, ybase, length, w, towards))
             group[0] += addition
@@ -1182,11 +1162,9 @@ def linearShelfLayout(group: list,
                 numbers = [group[0] for i in range(split)] + [group[0] + 1 for i in range(split, num)]
                 addition = 2
             else:
-                split1 = (int)(num / 3)
-                split2 = (int)(num * 2 / 3)
-                numbers = [group[0] for i in range(split1)] + [group[0] + 1 for i in range(split1, split2)
-                                                               ] + [group[0] + 2 for i in range(split2, num)]
-                addition = 3
+                addition = (int)((num + 3) / 4)
+                split = (int)((num + addition - 1) / addition)
+                numbers = [group[0] + (int)(i / split) for i in range(num)]
             for i in range(num):
                 shelfs.append(Shelf(numbers[i], xbase, ybase + length / 2 + (length + buf) * i, w, length, towards))
             group[0] += addition
@@ -1208,11 +1186,9 @@ def linearShelfLayout(group: list,
                 numbers = [group[0] for i in range(split)] + [group[0] + 1 for i in range(split, num)]
                 addition = 2
             else:
-                split1 = (int)(num / 3)
-                split2 = (int)(num * 2 / 3)
-                numbers = [group[0] for i in range(split1)] + [group[0] + 1 for i in range(split1, split2)
-                                                               ] + [group[0] + 2 for i in range(split2, num)]
-                addition = 3
+                addition = (int)((num + 3) / 4)
+                split = (int)((num + addition - 1) / addition)
+                numbers = [group[0] + (int)(i / split) for i in range(num)]
             for i in range(num):
                 shelfs.append(
                     Shelf(numbers[i], xb + vec(length / 2 + (length + buf) * i, rotate - pi / 2)[0],

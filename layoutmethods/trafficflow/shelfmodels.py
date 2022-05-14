@@ -180,3 +180,4 @@ lessChoices = [vendors, meats, containers, housekeepings]
 moreChoices = [snacks, cakes, fruits, vegetables, grains, drinks, shirts]
 
 door = Model('cgaxis_models_32_24', 2.535636, 0.620525, 2.499879, 0.0, 5.000000000143778e-07, 5.5e-05)
+shelf01=Model('shelf01',1.2000004,0.6000004,2.0,0.0,0.0,-6.123234e-17)

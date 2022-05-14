@@ -86,17 +86,27 @@ def transformSingle(patternList: list,
                     shelfs.append(shelf)
 
     for wpattern in wallPatternList:
+
+        groups = [[] for k in range(10)]
+        for shelf in wpattern.shelfs:
+            groups[shelf.group].append(shelf)
+        groupCount = 0
+        for group in groups:
+            if len(group) > 0:
+                groupCount += 1
         modelGroup = modelChoices[wpattern.follow]
         modelGroupLen = len(modelGroup)
         random.shuffle(modelGroup)
-        for shelf in wpattern.shelfs:
-            shelf.model = modelGroup[k % modelGroupLen].id
-            shelfs.append(shelf)
+        for k in range(len(groups)):
+            if len(groups[k]) > 0:
+                for shelf in groups[k]:
+                    shelf.model = modelGroup[k % modelGroupLen].id
+                    shelfs.append(shelf)
 
     for shelf in shelfs:
         width, length = 0.0, 0.0
         xtrans, ztrans = 0.0, 0.0
-        model = allModels[shelf.model] if vary else cake02
+        model = allModels[shelf.model] if vary else shelf01
         obj = {}
         obj['modelId'] = model.name
         obj['roomId'] = 0
@@ -310,8 +320,8 @@ if __name__ == '__main__':
     if 'log' in inp:
         setNum = input('setNum:')
         index = input('index:')
-        transformLog(setNum, index)
+        transformLog(setNum, index, False)
     else:
         # trial = input('trial:')
-        for i in range(1, 5):
+        for i in range(0, TRIALS):
             transform(i, False)
