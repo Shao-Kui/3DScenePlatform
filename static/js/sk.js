@@ -164,6 +164,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     });
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
+    object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     return object3d; 
 };
@@ -195,7 +196,8 @@ const removeObjectsByUUID = function(uuids){
 }
 
 const door_mageAdd_set = []; 
-const window_factor = 0.5; 
+// const window_factor = 0.5; 
+const window_factor = 0; 
 const _addDoor_mageAdd = (doorMeta) => {
     if(doorMeta.bbox === undefined){
         return;
@@ -206,7 +208,8 @@ const _addDoor_mageAdd = (doorMeta) => {
         worldBbox.max[1] - worldBbox.min[1], 
         worldBbox.max[2] - worldBbox.min[2]
     ]).arraySync(); 
-    let scale = [1,1,1]; scale[_minIndex] = 6; 
+    // let scale = [1,1,1]; scale[_minIndex] = 6; 
+    let scale = [1,1,1]; scale[_minIndex] = 1; 
     if(doorMeta.coarseSemantic === 'Window' || doorMeta.coarseSemantic === 'window'){
         scale[1] *= (1.0 - window_factor); 
     }
@@ -543,6 +546,21 @@ var findGroundTranslation = function () {
     return pos;
 }
 
+const releaseGTRANSChildrens = function(){
+    let released = [];
+    while(GTRANS_GROUP.children.length != 0){
+        let c = GTRANS_GROUP.children[0];
+        c.updateWorldMatrix(true, true);
+        let m = c.matrixWorld.clone();
+        scene.add(c);
+        c.position.set(0,0,0);c.rotation.set(0,0,0);c.scale.set(1,1,1);
+        c.applyMatrix4(m)
+        synchronize_json_object(c);
+        released.push(c.name);
+    }
+    return released;
+}
+
 const cancelClickingObject3D = function(){
     // synchronize data to scene json; 
     if(INTERSECT_OBJ) if(INTERSECT_OBJ.userData.key) claimControlObject3D(INTERSECT_OBJ.userData.key, true); 
@@ -555,6 +573,7 @@ const cancelClickingObject3D = function(){
         radial.toggle();
         isToggle = !isToggle;
     }
+    releaseGTRANSChildrens();
 }
 
 var onTouchTimes = 1;
@@ -620,7 +639,7 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
-const setNewIntersectObj = function(event){
+const setNewIntersectObj = function(event = undefined){
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     transformControls.attach(INTERSECT_OBJ);
     $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
@@ -630,12 +649,44 @@ const setNewIntersectObj = function(event){
     let radialPos = toScreenPosition(INTERSECT_OBJ, camera);
     menu.style.left = (radialPos.x - 63) + "px";
     menu.style.top = (radialPos.y - 63) + "px";
-    if ((!isToggle) && event.pointerType === "mouse") {
-        radial.toggle();
-        isToggle = !isToggle;
+    if(event){
+        if((!isToggle) && event.pointerType === "mouse"){
+            radial.toggle();
+            isToggle = !isToggle;
+        }
     }
     datguiObjectFolder(INTERSECT_OBJ);
     if($("#scenePaletteSVG").css('display') === 'block'){paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
+}
+
+const addToGTRANS = function(so){
+    if(GTRANS_GROUP.getObjectByName(so.userData.key)){
+        return;
+    }
+    let orientDom = Math.atan2(Math.sin(INTERSECT_OBJ.rotation.y), Math.cos(INTERSECT_OBJ.rotation.x) * Math.cos(INTERSECT_OBJ.rotation.y));
+    let orientSub = Math.atan2(Math.sin(so.rotation.y), Math.cos(so.rotation.x) * Math.cos(so.rotation.y));
+    GTRANS_GROUP.position.set(INTERSECT_OBJ.position.x,INTERSECT_OBJ.position.y,INTERSECT_OBJ.position.z);
+    GTRANS_GROUP.rotation.set(INTERSECT_OBJ.rotation.x,INTERSECT_OBJ.rotation.y,INTERSECT_OBJ.rotation.z);
+    // GTRANS_GROUP.scale.set(INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z);
+    // GTRANS_GROUP.rotation.set(0, 0, 0);
+    GTRANS_GROUP.scale.set(1, 1, 1);
+    
+    // let mw = INTERSECT_OBJ.matrixWorld.clone().invert().multiply(intersects[0].object.parent.matrixWorld.clone());
+    let relativeTranslate = so.position.clone().sub(INTERSECT_OBJ.position);
+    let rotationY = new THREE.Matrix4().makeRotationY(-orientDom);
+    relativeTranslate.applyMatrix4(rotationY);
+    // relativeTranslate.divide(INTERSECT_OBJ.scale);
+    // let relativeScale = so.scale.clone().divide(INTERSECT_OBJ.scale);
+    // let rx = Math.sin(orientSub - orientDom) * INTERSECT_OBJ.scale.x;
+    // let rz = Math.cos(orientSub - orientDom) * INTERSECT_OBJ.scale.z;
+    // let theta = Math.atan2(rx, rz);
+    // let sz = Math.sqrt(Math.pow(INTERSECT_OBJ.scale.z * Math.cos(theta), 2) + Math.pow(INTERSECT_OBJ.scale.x * Math.sin(theta), 2));
+    // let sx = Math.sqrt(Math.pow(INTERSECT_OBJ.scale.z * Math.sin(theta), 2) + Math.pow(INTERSECT_OBJ.scale.x * Math.cos(theta), 2));
+    so.position.set(relativeTranslate.x, relativeTranslate.y, relativeTranslate.z);
+    so.rotation.set(0, orientSub - orientDom, 0);
+    // so.scale.set(so.scale.x / sx, relativeScale.y, so.scale.z / sz);
+    // so.scale.set(1, relativeScale.y, 1);
+    GTRANS_GROUP.add(so);
 }
 
 const onClickIntersectObject = function(event){
@@ -649,36 +700,10 @@ const onClickIntersectObject = function(event){
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 if(pressedKeys[16]){// entering group transformation mode: 
-                    if(GTRANS_GROUP.getObjectByName(intersects[0].object.parent.userData.key)){
-                        return;
-                    }
-                    let so = intersects[0].object.parent;
-                    let orientDom = Math.atan2(Math.sin(INTERSECT_OBJ.rotation.y), Math.cos(INTERSECT_OBJ.rotation.x) * Math.cos(INTERSECT_OBJ.rotation.y));
-                    let orientSub = Math.atan2(Math.sin(so.rotation.y), Math.cos(so.rotation.x) * Math.cos(so.rotation.y));
-                    GTRANS_GROUP.position.set(INTERSECT_OBJ.position.x,INTERSECT_OBJ.position.y,INTERSECT_OBJ.position.z);
-                    GTRANS_GROUP.rotation.set(INTERSECT_OBJ.rotation.x,INTERSECT_OBJ.rotation.y,INTERSECT_OBJ.rotation.z);
-                    // GTRANS_GROUP.scale.set(INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z);
-                    // GTRANS_GROUP.rotation.set(0, 0, 0);
-                    GTRANS_GROUP.scale.set(1, 1, 1);
-                    
-                    // let mw = INTERSECT_OBJ.matrixWorld.clone().invert().multiply(intersects[0].object.parent.matrixWorld.clone());
-                    let relativeTranslate = so.position.clone().sub(INTERSECT_OBJ.position);
-                    let rotationY = new THREE.Matrix4().makeRotationY(-orientDom);
-                    relativeTranslate.applyMatrix4(rotationY);
-                    // relativeTranslate.divide(INTERSECT_OBJ.scale);
-                    // let relativeScale = so.scale.clone().divide(INTERSECT_OBJ.scale);
-                    // let rx = Math.sin(orientSub - orientDom) * INTERSECT_OBJ.scale.x;
-                    // let rz = Math.cos(orientSub - orientDom) * INTERSECT_OBJ.scale.z;
-                    // let theta = Math.atan2(rx, rz);
-                    // let sz = Math.sqrt(Math.pow(INTERSECT_OBJ.scale.z * Math.cos(theta), 2) + Math.pow(INTERSECT_OBJ.scale.x * Math.sin(theta), 2));
-                    // let sx = Math.sqrt(Math.pow(INTERSECT_OBJ.scale.z * Math.sin(theta), 2) + Math.pow(INTERSECT_OBJ.scale.x * Math.cos(theta), 2));
-                    so.position.set(relativeTranslate.x, relativeTranslate.y, relativeTranslate.z);
-                    so.rotation.set(0, orientSub - orientDom, 0);
-                    // so.scale.set(so.scale.x / sx, relativeScale.y, so.scale.z / sz);
-                    // so.scale.set(1, relativeScale.y, 1);
-                    GTRANS_GROUP.add(so);
+                    addToGTRANS(intersects[0].object.parent);
                     return; 
                 }else{
+                    releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
                 }
@@ -714,14 +739,6 @@ const onClickIntersectObject = function(event){
             if (INTERSECT_WALL != undefined)
                 unselectWall();
         }
-        GTRANS_GROUP.children.forEach(c => {
-            c.updateWorldMatrix(true, true);
-            let m = c.matrixWorld.clone();
-            scene.add(c);
-            c.position.set(0,0,0);c.rotation.set(0,0,0);c.scale.set(1,1,1);
-            c.applyMatrix4(m)
-            synchronize_json_object(c);
-        })
     }
 }
 
@@ -1035,6 +1052,7 @@ const render_function = function(){
 }
 
 const removeIntersectObject = function(){
+    let GTRANSList = releaseGTRANSChildrens();
     if (MAIN_OBJ != undefined && INTERSECT_OBJ.uuid == MAIN_OBJ.uuid) {
         MAIN_OBJ = undefined;
         $("#mainObjDiv").text("Main Object: None");
@@ -1058,6 +1076,9 @@ const removeIntersectObject = function(){
     }
     applyLayoutViewAdjust();
     removeObjectByUUID(INTERSECT_OBJ.userData.key);
+    GTRANSList.forEach(k => {
+        removeObjectByUUID(k);
+    })
     INTERSECT_OBJ = undefined;
     timeCounter.remove += moment.duration(moment().diff(timeCounter.maniStart)).asSeconds();
     timeCounter.maniStart = moment();
@@ -1510,6 +1531,8 @@ const setting_up = function () {
     }
     scene.add(CGSERIES_GROUP);
     scene.add(GTRANS_GROUP);
+    selectionBox = new THREE.SelectionBox( camera, scene );
+	selectionBoxHelper = new THREE.SelectionHelper( selectionBox, renderer, 'selectBox' );
     onWindowResize();
     gameLoop();
 };
