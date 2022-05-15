@@ -2,6 +2,7 @@
 /static/*.ico
 /latentspace
 /layoutmethods/planit
+/layoutmethods/trafficflow
 /layoutmethods/audio
 /layoutmethods/ltp_data_v3.4.0
 /layoutmethods/cgAnnotation
