@@ -1245,7 +1245,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             k1 = k - 1
                             break
                     dis1 = abs(ring.project(coords[k1]) - dis)
-                    dis2 = abs(ring.project(coords[k2]) - dis) if k2 > 0 else abs(ring.length - dis)
+                    dis2 = abs(ring.project(coords[k2]) - dis) if (k2 > 0 or dis == 0) else abs(ring.length - dis)
                     if dis1 < MERGE_THRESHOLD and dis1 < dis2:
                         addEdge(net, i, ringNodes[j][k1].number)
                         continue
@@ -1311,7 +1311,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             k1 = k - 1
                             break
                     dis1 = abs(ring.project(coords[k1]) - dis)
-                    dis2 = abs(ring.project(coords[k2]) - dis) if k2 > 0 else abs(ring.length - dis)
+                    dis2 = abs(ring.project(coords[k2]) - dis) if (k2 > 0 or dis == 0) else abs(ring.length - dis)
                     if dis1 < MERGE_THRESHOLD and dis1 < dis2:
                         addEdge(net, emptyCenters[i], ringNodes[j][k1].number)
                         continue
@@ -1364,7 +1364,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             k1 = k - 1
                             break
                     dis1 = abs(ring1.project(coords[k1]) - d1)
-                    dis2 = abs(ring1.project(coords[k2]) - d1) if k2 > 0 else abs(ring1.length - d1)
+                    dis2 = abs(ring1.project(coords[k2]) - d1) if (k2 > 0 or dis == 0) else abs(ring1.length - d1)
                     con1 = None
                     if dis1 < MERGE_THRESHOLD and dis1 < dis2:
                         con1 = coord_nodes[k1].number
@@ -1401,7 +1401,7 @@ def buildNet(patternList: list, space: TwoDimSpace):
                             k1 = k - 1
                             break
                     dis1 = abs(ring2.project(coords[k1]) - d2)
-                    dis2 = abs(ring2.project(coords[k2]) - d2) if k2 > 0 else abs(ring2.length - d2)
+                    dis2 = abs(ring2.project(coords[k2]) - d2) if (k2 > 0 or dis == 0) else abs(ring2.length - d2)
                     if dis1 < MERGE_THRESHOLD and dis1 < dis2:
                         addEdge(net, con1, coord_nodes[k1].number)
                     elif dis2 < MERGE_THRESHOLD and dis2 <= dis1:
@@ -1785,22 +1785,36 @@ def iter(choice: int, context: list, space: TwoDimSpace, spaceControlPoints: lis
     ]
 
 
-def contextCostCmp(context1: list, context2: list):
-    if context1[0][5] < context2[0][5]:
-        return -1
-    elif context1[0][5] > context2[0][5]:
-        return 1
-    return 0
-
-
 if __name__ == '__main__':
     # prepare
     # spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 20), p(0, 20)], p(0, 10), p(30, 10), p(1, 0), p(-1, 0)]
-    spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 15), p(15, 15),
-                           p(15, 30), p(0, 30)],
-                          p(7.5, 30),
+    # spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 15), p(15, 15),
+    #                        p(15, 30), p(0, 30)],
+    #                       p(7.5, 30),
+    #                       p(30, 7.5),
+    #                       p(0, -1),
+    #                       p(-1, 0)]
+    # spaceControlPoints = [[p(0, 0), p(30, 0),
+    #                        p(30, 20),
+    #                        p(20, 20),
+    #                        p(20, 10),
+    #                        p(10, 10),
+    #                        p(10, 20),
+    #                        p(0, 20)],
+    #                       p(5, 20),
+    #                       p(25, 20),
+    #                       p(0, -1),
+    #                       p(0, -1)]
+    spaceControlPoints = [[p(0, 0), p(30, 0),
+                           p(30, 15),
+                           p(20, 15),
+                           p(20, 30),
+                           p(10, 30),
+                           p(10, 15),
+                           p(0, 15)],
+                          p(0, 7.5),
                           p(30, 7.5),
-                          p(0, -1),
+                          p(1, 0),
                           p(-1, 0)]
     space = TwoDimSpace(spaceControlPoints[0], spaceControlPoints[1], spaceControlPoints[2], spaceControlPoints[3],
                         spaceControlPoints[4])

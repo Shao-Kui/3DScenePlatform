@@ -1266,3 +1266,10 @@ def cpointsCmp(l1: list, l2: list):
     elif l1[3] > l2[3]:
         return 1
     return 0
+
+def contextCostCmp(context1: list, context2: list):
+    if context1[0][5] < context2[0][5]:
+        return -1
+    elif context1[0][5] > context2[0][5]:
+        return 1
+    return 0
