@@ -211,3 +211,7 @@ a.dropdown-toggle, a.dropdown-toggle:hover, a.dropdown-toggle:focus {
     font-size: 20px;
     color:black;
 }
+
+.selectBox {
+    position: fixed;
+}

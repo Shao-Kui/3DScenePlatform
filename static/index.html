@@ -26,6 +26,8 @@
     <script src="/static/3rdparty/three.js-r131/CopyShader.js"></script>
     <script src="/static/3rdparty/three.js-r131/OrbitControls.js"></script>
     <script src="/static/3rdparty/three.js-r131/PointerLockControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/SelectionBox.js"></script>
+    <script src="/static/3rdparty/three.js-r131/SelectionHelper.js"></script>
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
@@ -132,6 +134,9 @@
       const onlineGroup = "{{ onlineGroup }}";
       const onlineUserID = "{{ serverGivenUserID }}";
       const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
+
+      var selectionBox;
+      var selectionBoxHelper;
 
       $(document).ready(function () {
         manager = new SceneController($("#ui")[0]);

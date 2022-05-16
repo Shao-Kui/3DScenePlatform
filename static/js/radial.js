@@ -84,7 +84,7 @@ var radial_scale_control = function(event){
 const radial_remove_control = function (event) {
     removeIntersectObject();
     transformControls.detach();
-    toggles();
+    if(isToggle)toggles();
 };
 
 var radial_main_object_control = function (event) {
