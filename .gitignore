@@ -6,6 +6,8 @@
 /layoutmethods/ltp_data_v3.4.0
 /layoutmethods/cgAnnotation
 /layoutmethods/cgseries
+/layoutmethods/cgseriesFull
+/layoutmethods/cgseriesSim
 /deprecated
 /examples
 /rooms
