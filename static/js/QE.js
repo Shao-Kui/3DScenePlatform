@@ -163,9 +163,9 @@ const onKeyDown = function(event){
         case 82: // R
             render_function();
             break;
-        case 83: // S
-            downloadSceneJson();
-            break;
+        // case 83: // S
+        //     downloadSceneJson();
+        //     break;
         case 49: // 1
             auxiliary_catlist(-1)
             break;
@@ -188,17 +188,22 @@ const onKeyDown = function(event){
         case 17:
             ctrlPressing = true;
             break;
+        case 18:
+            enteringBoxSelectionMode();
+            break;
         case 46:
             if(INTERSECT_OBJ === undefined){break;}
             radial_remove_control();
             break;
-
         case 68: // d
             if(INTERSECT_OBJ === undefined){break;}
+            let orient = Math.atan2(Math.sin(INTERSECT_OBJ.rotation.y), Math.cos(INTERSECT_OBJ.rotation.x) * Math.cos(INTERSECT_OBJ.rotation.y)) + Math.PI/2;
+            let _x = objectCache[INTERSECT_OBJ.userData.modelId].boundingBox.max.x - objectCache[INTERSECT_OBJ.userData.modelId].boundingBox.min.x;
+            _x *= INTERSECT_OBJ.scale.x;
             let newINTERSECT_OBJ = addObjectFromCache(
                 modelId=INTERSECT_OBJ.userData.modelId,
                 transform={
-                    'translate': [INTERSECT_OBJ.position.x+0.1, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+0.1], 
+                    'translate': [INTERSECT_OBJ.position.x+_x*Math.sin(orient), INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+_x*Math.cos(orient)], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
                     'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z]
                 }
@@ -219,6 +224,10 @@ const onKeyDown = function(event){
             onlineFuncList[cmd.funcName].apply(null, cmd.args);
             emitFunctionCall(cmd.funcName, cmd.args);
         }
+    }
+    if(event.keyCode === 83 && pressedKeys[17]){ // Ctrl + S
+        event.preventDefault();
+        socket.emit('onlineSceneUpdate', getDownloadSceneJson(), onlineGroup);
     }
 };
 
@@ -241,7 +250,123 @@ var onKeyUp = function (event) {
         case 17:
             ctrlPressing = false;
             break;
-          
+        case 18:
+            leavingBoxSelectionMode();
+            break;
+    }
+};
+
+const boxSelectedObjects = [];
+
+const enteringBoxSelectionMode = function(){
+    cancelClickingObject3D();
+    orbitControls.enabled = false;
+    document.removeEventListener('click', onClickObj);
+    selectionBoxHelper.element.style.background = 'rgba(75, 160, 255, 0.3)';
+    selectionBoxHelper.element.style.border = '1px solid #55aaff';
+    document.addEventListener('pointerdown', boxSelectionDown);
+    document.addEventListener('pointermove', boxSelectionMove);
+    document.addEventListener('pointerup', boxSelectionUp);
+}
+
+const leavingBoxSelectionMode = function(){
+    outlinePass2.selectedObjects = [];
+    orbitControls.enabled = true;
+    selectionBoxHelper.element.style.background = 'none';
+    selectionBoxHelper.element.style.border = 'none';
+    document.removeEventListener('pointerdown', boxSelectionDown);
+    document.removeEventListener('pointermove', boxSelectionMove);
+    document.removeEventListener('pointerup', boxSelectionUp);
+    for(let i = 0; i < boxSelectedObjects.length; i++){
+        if(i == 0){
+            INTERSECT_OBJ = manager.renderManager.instanceKeyCache[boxSelectedObjects[i]];
+            setNewIntersectObj();
+        }else{
+            addToGTRANS(manager.renderManager.instanceKeyCache[boxSelectedObjects[i]]);
+        }
+    }
+    boxSelectedObjects.length = 0;
+}
+
+const boxSelectionDown = function(event) {
+    event.preventDefault();
+    document.removeEventListener('click', onClickObj);
+    boxSelectedObjects.length = 0;
+    outlinePass2.selectedObjects = [];
+    for(const item of selectionBox.collection){
+        let selectedObj;
+        if(item.parent.name in manager.renderManager.instanceKeyCache){
+            selectedObj = item.parent;
+        }
+        else if(item.name in manager.renderManager.instanceKeyCache){
+            selectedObj = item;
+        }
+        if(!selectedObj) continue;
+        if(!boxSelectedObjects.includes(selectedObj.name)){
+            outlinePass2.selectedObjects.push(selectedObj);
+            boxSelectedObjects.push(selectedObj.name);
+        }
+    }
+    selectionBox.startPoint.set(
+        ((event.clientX - $(scenecanvas).offset().left) / scenecanvas.clientWidth) * 2 - 1, 
+        -((event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1,
+        0.5
+    );
+}
+
+const boxSelectionMove = function(event){
+    event.preventDefault();
+    document.removeEventListener('click', onClickObj);
+    if (selectionBoxHelper.isDown) {
+        // for ( let i = 0; i < selectionBox.collection.length; i ++ ) {
+        //    selectionBox.collection[ i ].material.emissive.set( 0x000000 );
+        // }
+        boxSelectedObjects.length = 0;
+        outlinePass2.selectedObjects = [];
+        selectionBox.endPoint.set(
+            ((event.clientX - $(scenecanvas).offset().left) / scenecanvas.clientWidth) * 2 - 1, 
+            -((event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1,
+            0.5
+        );
+        const allSelected = selectionBox.select();
+        for (let i = 0; i < allSelected.length; i++) {
+            let selectedObj;
+            if(allSelected[i].parent.name in manager.renderManager.instanceKeyCache){
+                selectedObj = allSelected[i].parent;
+            }
+            else if(allSelected[i].name in manager.renderManager.instanceKeyCache){
+                selectedObj = allSelected[i];
+            }
+            if(!selectedObj) continue
+            if(!boxSelectedObjects.includes(selectedObj.name)){
+                outlinePass2.selectedObjects.push(selectedObj);
+                boxSelectedObjects.push(selectedObj.name);
+            }
+        }
+    }
+}
+
+const boxSelectionUp = function(event){
+    document.removeEventListener('click', onClickObj);
+    selectionBox.endPoint.set(
+        ((event.clientX - $(scenecanvas).offset().left) / scenecanvas.clientWidth) * 2 - 1, 
+        -((event.clientY - $(scenecanvas).offset().top) / scenecanvas.clientHeight) * 2 + 1,
+        0.5
+    );
+    const allSelected = selectionBox.select();
+    for (let i = 0; i < allSelected.length; i++) {
+        let selectedObj;
+        if(allSelected[i].parent.name in manager.renderManager.instanceKeyCache){
+            selectedObj = allSelected[i].parent;
+        }
+        else if(allSelected[i].name in manager.renderManager.instanceKeyCache){
+            selectedObj = allSelected[i];
+        }
+        if(!selectedObj) continue
+        if(!boxSelectedObjects.includes(selectedObj.name)){
+            outlinePass2.selectedObjects.push(selectedObj);
+            boxSelectedObjects.push(selectedObj.name);
+        }
     }
 };
 
