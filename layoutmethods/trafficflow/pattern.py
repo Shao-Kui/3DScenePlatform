@@ -245,7 +245,7 @@ class TwoDimSpace:
 
     def checkConnection(self, net: list, patternList: list):
         """check if the net is connected"""
-        if len(patternList) == 0:
+        if len(patternList) < 6:
             return True
 
         return nx.is_connected(net[0])
