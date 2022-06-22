@@ -11,7 +11,7 @@ torch==1.2.0+cu92
 matplotlib==2.2.2
 librosa==0.7.0
 baidu_aip==2.2.17.0
-numpy==1.17.2
+numpy==1.22.0
 pyclipper==1.1.0.post1
 Pillow==8.2.0
 scikit_learn==0.23.2
