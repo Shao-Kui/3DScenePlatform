@@ -120,3 +120,160 @@ var palette_recommendation = function(){
     }
     
 }
+
+const refreshSceneFutureRoomTypes = function(){
+    let roomtypes = Object.keys(
+    manager.renderManager.scene_json.sceneFuture[`${currentRoomId}`]
+    [manager.renderManager.scene_json.rooms[currentRoomId].state]);
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    roomtypes.forEach(function (rt){
+        let iDiv = document.createElement('div');
+        iDiv.className = "catalogItem";
+        iDiv.textContent = rt;
+        // iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+        // iDiv.setAttribute('objectID', item.id);
+        // iDiv.setAttribute('objectName', item.name);
+        // iDiv.setAttribute('modelId', item.name);
+        // iDiv.setAttribute('coarseSemantic', item.semantic);
+        // iDiv.setAttribute('semantic', item.semantic);
+        iDiv.addEventListener('click', clickSceneFutureIterms);
+        catalogItems.appendChild(iDiv);
+    });
+}
+
+const getUUID = function(){
+    let uuid;
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!uuid) uuid = THREE.MathUtils.generateUUID();
+    return uuid;
+}
+
+const standardizeRotate = function(rotate, refRotate){
+    if(rotate[0] === 0 && rotate[2] === 0){
+        rotate[1] = Math.atan2(Math.sin(rotate[1]), Math.cos(rotate[1]));
+        if(Math.abs(rotate[1] - refRotate[1]) > Math.PI){
+            if(rotate[1] < refRotate[1]){
+                rotate[1] += Math.PI * 2;
+            }else{
+                rotate[1] -= Math.PI * 2;
+            }
+        }
+    }
+}
+
+const clickSceneFutureIterms = function (e) {
+    e.preventDefault();
+    let roomTransitions = manager.renderManager.scene_json.sceneFuture[`${currentRoomId}`]
+    [manager.renderManager.scene_json.rooms[currentRoomId].state]
+    [$(e.target).text()];
+    let room = manager.renderManager.scene_json.rooms[currentRoomId];
+    const previousObjList = [...room.objList];
+    previousObjList.sort((a,b) => a.sforder - b.sforder);
+    let i;
+    for(i = 0; i < previousObjList.length; i++){
+        let next = roomTransitions[i];
+        let currentKey = previousObjList[i].key;
+        if(next.type === "detachable"){
+            removeObjectByUUID(currentKey, true);
+            next.parts.forEach(part => {
+                standardizeRotate(part.startTransform.rotate, part.rotate);
+                let uuid = getUUID();
+                let object = addObjectByUUID(uuid, part.modelId, currentRoomId, {'translate': [...part.startTransform.translate], 'rotate': [...part.startTransform.rotate], 'scale': [...part.startTransform.scale]});
+                gsap.to(manager.renderManager.instanceKeyCache[uuid]['position'], {
+                    duration: 1,
+                    x: part['translate'][0],
+                    y: part['translate'][1],
+                    z: part['translate'][2]
+                }).then(() => {
+                    manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = part.sforder;
+                    synchronize_json_object(object);
+                })
+                gsap.to(manager.renderManager.instanceKeyCache[uuid]['rotation'], {
+                    duration: 1,
+                    x: part['rotate'][0],
+                    y: part['rotate'][1],
+                    z: part['rotate'][2]
+                })
+            });
+            continue;
+        }
+        standardizeRotate(next.rotate, previousObjList[i]['rotate']);
+        gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['position'], {
+            duration: 1,
+            x: next['translate'][0],
+            y: next['translate'][1],
+            z: next['translate'][2]
+        }).then(() => {
+            if(next.type === "composablepart"){
+                removeObjectByUUID(currentKey, true);
+                return;
+            }
+            loadMoreServerUUIDs(1);
+            let uuid;
+            if(!uuid) uuid = serverUUIDs.pop(); 
+            if(!uuid) uuid = THREE.MathUtils.generateUUID();
+            if(next.type === 'composable'){
+                addObjectByUUID(uuid, next.modelId, currentRoomId, next.finalTransform);
+            }else if(next.type === 'packable_in'){
+                removeObjectByUUID(currentKey, true);
+                return;
+            }
+            else{
+                addObjectByUUID(uuid, next.modelId, currentRoomId, next);
+            }
+            manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
+            removeObjectByUUID(currentKey, true);
+        });
+        gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['rotation'], {
+            duration: 1,
+            x: next['rotate'][0],
+            y: next['rotate'][1],
+            z: next['rotate'][2]
+        });
+        if(["movetransformable", "transformable"].includes(next.type)){
+            let tScale = [0,0,0];
+            tScale[0] = (objectCache[next.modelId].boundingBox.max.x-objectCache[next.modelId].boundingBox.min.x) / (objectCache[previousObjList[i].modelId].boundingBox.max.x-objectCache[previousObjList[i].modelId].boundingBox.min.x);
+            tScale[1] = (objectCache[next.modelId].boundingBox.max.y-objectCache[next.modelId].boundingBox.min.y) / (objectCache[previousObjList[i].modelId].boundingBox.max.y-objectCache[previousObjList[i].modelId].boundingBox.min.y);
+            tScale[2] = (objectCache[next.modelId].boundingBox.max.z-objectCache[next.modelId].boundingBox.min.z) / (objectCache[previousObjList[i].modelId].boundingBox.max.z-objectCache[previousObjList[i].modelId].boundingBox.min.z);
+            gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['scale'], {
+                duration: 1,
+                x: tScale[0],
+                y: tScale[1],
+                z: tScale[2]
+            });
+        }
+    }
+    for(; i < roomTransitions.length; i++){
+        let next = roomTransitions[i];
+        let uuid;
+        if(!uuid) uuid = serverUUIDs.pop(); 
+        if(!uuid) uuid = THREE.MathUtils.generateUUID();
+        if(next.type === "packable_out"){
+            addObjectByUUID(uuid, next.modelId, currentRoomId, next.inittransform);
+            manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
+        }
+        gsap.to(manager.renderManager.instanceKeyCache[room.objList[i].key]['position'], {
+            duration: 1,
+            x: next['translate'][0],
+            y: next['translate'][1],
+            z: next['translate'][2]
+        });
+        gsap.to(manager.renderManager.instanceKeyCache[room.objList[i].key]['rotation'], {
+            duration: 1,
+            x: next['rotate'][0],
+            y: next['rotate'][1],
+            z: next['rotate'][2]
+        });
+    }
+    // console.log(nextOrder);
+    // Object.keys(nextOrder).forEach(key => {
+    //     console.log(manager.renderManager.instanceKeyCache[key].userData.json);
+    //     manager.renderManager.instanceKeyCache[key].userData.json.sforder = nextOrder[key];
+    // });
+    room.objList.sort((a,b) => a.sforder - b.sforder);
+    manager.renderManager.scene_json.rooms[currentRoomId].state = $(e.target).text();
+    refreshSceneFutureRoomTypes();
+}

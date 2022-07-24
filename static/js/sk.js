@@ -111,6 +111,9 @@ let refreshObjectFromCache = function(objToInsert){
         object3d = object3dFull;
     }
     object3d.name = undefined;
+    if(objToInsert.rotate[0] === 0 && objToInsert.rotate[2] === 0){
+        objToInsert.rotate[1] = Math.atan2(Math.sin(objToInsert.rotate[1]), Math.cos(objToInsert.rotate[1]));
+    }
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
     object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
@@ -154,6 +157,17 @@ const calculateRoomID = function(translate){
     }
 }
 
+const trafficFlowObjList = ['snack01', 'snack02', 'snack03', 'snack04', 'snacks01', 'snacks02', 'snacks03', 'snacks04', 'snacks05', 'snacks06', 
+'cake02', 'cake03', 'sandwich01', 'sandwich02', 'burger01', 'cake04', 'cake05', 'friescounter01', 'cake06', 'cake07', 'tacocounter01', 'fruit01', 'fruit02', 
+'fruit03', 'fruit04', 'fruit05', 'fruit06', 'fruit07', 'fruit08', 'fruit09', 'fruit10', 'fruit11', 'vegetable01', 'vegetable02', 'vegetable03', 
+'vegetable04', 'vegetable05', 'vegetable06', 'vegetable07', 'vegetable08', 'vegetable09', 'vegetable10', 'vegetable11', 'vegetable12', 
+'vegetable13', 'vegetable14', 'vegetable15', 'vegetable16', 'vegetable17', 'meat01', 'meat02', 'meat03', 'meat04', 'meat05', 'meat06', 
+'meat07', 'meat08', 'meat09', 'meat10', 'grain01', 'grain02', 'staplefood01', 'staplefood02', 'staplefood03', 'oil01', 'oil02', 
+'eggscounter03', 'flavoring01', 'container02', 'container03', 'container04', 'coffee02', 'drinks01', 'drinks02', 'drinks03', 'drinks04', 
+'drinks05', 'wine01', 'milk01', 'drinks06', 'drinks07', 'drinks08', 'drinks09', 'drinks10', 'drinks11', 'drinks12', 'drinks13', 'vendor01', 
+'vendor02', 'housekeeping01', 'housekeeping02', 'housekeeping03', 'housekeeping', 'petfood01', 'freezer01', 'freezer02', 'freezer03', 
+'freezer04', 'freezer05', 'freezer06', 'freezer07', 'freezer08', 'freezer09', 'freezer10', 'shirt01', 'shirt02', 'shirt03', 'shirt04', 
+'shirt05', 'shirt06', 'shirt07', 'shirt08', 'shorts01', 'pants01', 'pants02', 'pants03', 'pants04', 'pants05', 'skirt01', 'skirt02'];
 let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
@@ -162,6 +176,13 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         'funcName': 'removeObjectByUUID',
         'args': [uuid, true]
     });
+    if(trafficFlowObjList.includes(modelId)){
+        transform.scale[0] = 0.9 / (objectCache[modelId].boundingBox.max.x-objectCache[modelId].boundingBox.min.x);
+        transform.scale[1] = transform.scale[0];
+        transform.scale[2] = 0.45 / (objectCache[modelId].boundingBox.max.z-objectCache[modelId].boundingBox.min.z);
+    }
+    console.log(objectCache[modelId].boundingBox);
+
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
     object3d.name = uuid;
@@ -661,6 +682,12 @@ const setNewIntersectObj = function(event = undefined){
 
 const addToGTRANS = function(so){
     if(GTRANS_GROUP.getObjectByName(so.userData.key)){
+        so.updateWorldMatrix(true, true);
+        let m = so.matrixWorld.clone();
+        scene.add(so);
+        so.position.set(0,0,0);so.rotation.set(0,0,0);so.scale.set(1,1,1);
+        so.applyMatrix4(m)
+        synchronize_json_object(so);
         return;
     }
     let orientDom = Math.atan2(Math.sin(INTERSECT_OBJ.rotation.y), Math.cos(INTERSECT_OBJ.rotation.x) * Math.cos(INTERSECT_OBJ.rotation.y));
@@ -726,6 +753,7 @@ const onClickIntersectObject = function(event){
         return;
     }else{
         cancelClickingObject3D();
+        // return; // if you want to disable movable wall, just uncomment this line. 
         if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
             intersects = raycaster.intersectObjects(newWallCache, true);
@@ -904,7 +932,13 @@ function onDocumentMouseMove(event) {
             objectCache[INSERT_OBJ.modelId].name = INSERT_NAME;
             objectCache[INSERT_OBJ.modelId].position.set(ip.x, ip.y, ip.z);
             objectCache[INSERT_OBJ.modelId].rotation.set(0, 0, 0, 'XYZ');
-            objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+            if(trafficFlowObjList.includes(INSERT_OBJ.modelId)){
+                let x = 0.9 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.x-objectCache[INSERT_OBJ.modelId].boundingBox.min.x);
+                let z = 0.45 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.z-objectCache[INSERT_OBJ.modelId].boundingBox.min.z);
+                objectCache[INSERT_OBJ.modelId].scale.set(x, x, z);
+            }else{
+                objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+            }
             scene.add(objectCache[INSERT_OBJ.modelId])
         }else{
             scene.remove(scene.getObjectByName(INSERT_NAME)); 
@@ -1358,6 +1392,7 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
+    $("#operationFuture").click(refreshSceneFutureRoomTypes);
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
