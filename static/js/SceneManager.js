@@ -355,12 +355,24 @@ class SceneManager {
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
                         return;
+                if(inst.modelId === 'noUse'){
+                    return;
+                }
                 if(inst.key === undefined) inst.key=THREE.Math.generateUUID();
+                if(!('format' in inst)){
+                    inst.format = 'obj';
+                }
                 loadObjectToCache(inst.modelId, function(){
                     refreshObjectFromCache(inst);
-                });
+                }, [], inst.format);
             });
         });
+        if('sceneFutureCache' in this.scene_json){
+            this.scene_json.sceneFutureCache.forEach(modelId => {
+                loadObjectToCache(modelId);
+            });
+        }
+        
 	}
 
     refresh_camera = () => {

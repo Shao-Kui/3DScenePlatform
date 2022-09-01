@@ -205,7 +205,8 @@ const onKeyDown = function(event){
                 transform={
                     'translate': [INTERSECT_OBJ.position.x+_x*Math.sin(orient), INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+_x*Math.cos(orient)], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
-                    'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z]
+                    'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z],
+                    'format': INTERSECT_OBJ.userData.format
                 }
             );
             duplicateTimes += 1;

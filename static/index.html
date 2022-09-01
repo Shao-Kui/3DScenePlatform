@@ -17,6 +17,7 @@
     <script src="/static/3rdparty/three.js-r131/MTLLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/OBJLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TGALoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/GLTFLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TransformControls.js"></script>
     <script src="/static/3rdparty/three.js-r131/EffectComposer.js"></script>
     <script src="/static/3rdparty/three.js-r131/OutlinePass.js"></script>
@@ -51,6 +52,7 @@
     <script src="/static/js/QE.js"></script>
     <script src="/static/js/ai.js"></script>
     <script src="/static/js/search.js"></script>
+    <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
@@ -92,6 +94,7 @@
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
       var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
+      // var USE_NEW_WALL = false;
 
       //Global variables, will be initialize only once.
       var manager;
@@ -129,6 +132,9 @@
       var datgui;
       var datgui_intersectfolder;
       const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, total: 0}
+
+      var deltaClock;
+      const animaMixers = [];
 
       // this variable is used for determining the collaborative group a user belonging to;
       const onlineGroup = "{{ onlineGroup }}";
@@ -316,6 +322,13 @@
               class="btn btn-outline-dark m-1 btn-responsive"
             >
               Timer
+            </button>
+            <button
+              id="operationFuture"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Future
             </button>
           </div>
           <div class="py-1 px-0">
@@ -569,6 +582,9 @@
             <a class="text-muted" style="overflow-wrap: break-word"
               >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
             >
+            <!-- <a class="text-muted" style="overflow-wrap: break-word"
+              >Anonymous Authors</a
+            > -->
           </div>
         </div>
       </div>

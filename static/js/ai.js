@@ -164,6 +164,10 @@ const standardizeRotate = function(rotate, refRotate){
     }
 }
 
+const copyTransform = function(transform){
+    return {'translate': [...transform.translate], 'rotate': [...transform.rotate], 'scale': [...transform.scale]};
+} 
+
 const clickSceneFutureIterms = function (e) {
     e.preventDefault();
     let roomTransitions = manager.renderManager.scene_json.sceneFuture[`${currentRoomId}`]
@@ -180,8 +184,10 @@ const clickSceneFutureIterms = function (e) {
             removeObjectByUUID(currentKey, true);
             next.parts.forEach(part => {
                 standardizeRotate(part.startTransform.rotate, part.rotate);
-                let uuid = getUUID();
-                let object = addObjectByUUID(uuid, part.modelId, currentRoomId, {'translate': [...part.startTransform.translate], 'rotate': [...part.startTransform.rotate], 'scale': [...part.startTransform.scale]});
+                // let uuid = getUUID();
+                // let object = addObjectByUUID(uuid, part.modelId, currentRoomId, {'translate': [...part.startTransform.translate], 'rotate': [...part.startTransform.rotate], 'scale': [...part.startTransform.scale]});
+                let object = addObjectFromCache(part.modelId, copyTransform(part.startTransform));
+                let uuid = object.name;
                 gsap.to(manager.renderManager.instanceKeyCache[uuid]['position'], {
                     duration: 1,
                     x: part['translate'][0],
@@ -200,6 +206,29 @@ const clickSceneFutureIterms = function (e) {
             });
             continue;
         }
+        if(next.type === "movetransformable"){
+            if(next.toState !== 'origin' && previousObjList[i].startState === 'origin'){
+                let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[next.toState];
+                action.getMixer().addEventListener('finished', e => {
+                    action.reset();action.paused = true;
+                    action.time = action.getClip().duration;
+                });
+                action.reset();action.paused = true;
+                action.setDuration(1);action.timeScale = Math.abs(action.timeScale);
+                action.time = 0;
+                action.paused = false;
+            }else if(next.toState === 'origin' && previousObjList[i].startState !== 'origin'){
+                let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[previousObjList[i].startState];
+                action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;});
+                action.reset();action.paused = true;
+                action.setDuration(1);action.timeScale = -Math.abs(action.timeScale);
+                action.time = action.getClip().duration;
+                action.paused = false;
+            }else if(next.toState !== 'origin' && previousObjList[i].startState !== 'origin'){
+
+            }
+            manager.renderManager.instanceKeyCache[previousObjList[i].key].userData.json.startState = next.toState;
+        }
         standardizeRotate(next.rotate, previousObjList[i]['rotate']);
         gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['position'], {
             duration: 1,
@@ -207,22 +236,24 @@ const clickSceneFutureIterms = function (e) {
             y: next['translate'][1],
             z: next['translate'][2]
         }).then(() => {
+            if(next.type === "movable" || next.type === "movetransformable"){
+                synchronize_json_object(manager.renderManager.instanceKeyCache[currentKey]);
+                return;
+            }
             if(next.type === "composablepart"){
                 removeObjectByUUID(currentKey, true);
                 return;
             }
-            loadMoreServerUUIDs(1);
-            let uuid;
-            if(!uuid) uuid = serverUUIDs.pop(); 
-            if(!uuid) uuid = THREE.MathUtils.generateUUID();
             if(next.type === 'composable'){
-                addObjectByUUID(uuid, next.modelId, currentRoomId, next.finalTransform);
+                let object = addObjectFromCache(next.modelId, copyTransform(next.finalTransform));
+                uuid = object.name;
             }else if(next.type === 'packable_in'){
                 removeObjectByUUID(currentKey, true);
                 return;
             }
             else{
-                addObjectByUUID(uuid, next.modelId, currentRoomId, next);
+                let object = addObjectFromCache(next.modelId, copyTransform(next));
+                uuid = object.name;
             }
             manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
             removeObjectByUUID(currentKey, true);
@@ -248,20 +279,21 @@ const clickSceneFutureIterms = function (e) {
     }
     for(; i < roomTransitions.length; i++){
         let next = roomTransitions[i];
-        let uuid;
-        if(!uuid) uuid = serverUUIDs.pop(); 
-        if(!uuid) uuid = THREE.MathUtils.generateUUID();
+        let uuid, object;
         if(next.type === "packable_out"){
-            addObjectByUUID(uuid, next.modelId, currentRoomId, next.inittransform);
+            object = addObjectFromCache(next.modelId, copyTransform(next.inittransform));
+            uuid = object.name;
             manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
         }
-        gsap.to(manager.renderManager.instanceKeyCache[room.objList[i].key]['position'], {
+        gsap.to(manager.renderManager.instanceKeyCache[uuid]['position'], {
             duration: 1,
             x: next['translate'][0],
             y: next['translate'][1],
             z: next['translate'][2]
+        }).then(() => {
+            synchronize_json_object(object);
         });
-        gsap.to(manager.renderManager.instanceKeyCache[room.objList[i].key]['rotation'], {
+        gsap.to(manager.renderManager.instanceKeyCache[uuid]['rotation'], {
             duration: 1,
             x: next['rotate'][0],
             y: next['rotate'][1],

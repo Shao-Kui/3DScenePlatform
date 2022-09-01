@@ -36,7 +36,7 @@ const socketInit = function(){
     socket.on("functionCall", (fname, arguments) => {
         let args = [], i = 0;
         while(arguments[i] !== undefined){args.push(arguments[i]); i++; }          
-        if(fname !== 'animateObject3DOnly'){console.log(fname, args);}    
+        // if(fname !== 'animateObject3DOnly'){console.log(fname, args);}    
         onlineFuncList[fname].apply(null, args);
     });
     socket.on("message", (arg) => {
@@ -151,7 +151,7 @@ const removeObjectByUUID = function(uuid, origin=true){
     }
 }
 
-const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}){
+const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}){
     if(!(modelId in objectCache)){
         loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform]);
         return; 
@@ -167,6 +167,8 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "rotate": transform.rotate,
         "orient": transform.rotate[1], 
         "key": uuid,
+        "format": transform.format,
+        "isSceneObj": true,
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
     let object3d = objectCache[modelId].clone();
@@ -179,10 +181,13 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "key": objToInsert.key,
         "roomId": roomID,
         "modelId": modelId,
+        "format": transform.format,
         "coarseSemantic": gatheringObjCat[modelId]
     };
     object3d.children.forEach(child => {
-        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+        if(child.material){
+            if(child.material.origin_mtr) child.material = child.material.origin_mtr;
+        }
     });
     manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
