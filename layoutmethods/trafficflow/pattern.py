@@ -245,7 +245,7 @@ class TwoDimSpace:
 
     def checkConnection(self, net: list, patternList: list):
         """check if the net is connected"""
-        if len(patternList) == 0:
+        if len(patternList) < 6:
             return True
 
         return nx.is_connected(net[0])
@@ -1264,5 +1264,12 @@ def cpointsCmp(l1: list, l2: list):
     if l1[3] < l2[3]:
         return -1
     elif l1[3] > l2[3]:
+        return 1
+    return 0
+
+def contextCostCmp(context1: list, context2: list):
+    if context1[0][5] < context2[0][5]:
+        return -1
+    elif context1[0][5] > context2[0][5]:
         return 1
     return 0
