@@ -209,21 +209,10 @@ const clickSceneFutureIterms = function (e) {
         if(next.type === "movetransformable"){
             if(next.toState !== 'origin' && previousObjList[i].startState === 'origin'){
                 let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[next.toState];
-                action.getMixer().addEventListener('finished', e => {
-                    action.reset();action.paused = true;
-                    action.time = action.getClip().duration;
-                });
-                action.reset();action.paused = true;
-                action.setDuration(1);action.timeScale = Math.abs(action.timeScale);
-                action.time = 0;
-                action.paused = false;
+                actionForthToTarget(action);
             }else if(next.toState === 'origin' && previousObjList[i].startState !== 'origin'){
                 let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[previousObjList[i].startState];
-                action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;});
-                action.reset();action.paused = true;
-                action.setDuration(1);action.timeScale = -Math.abs(action.timeScale);
-                action.time = action.getClip().duration;
-                action.paused = false;
+                actionBackToOrigin(action);
             }else if(next.toState !== 'origin' && previousObjList[i].startState !== 'origin'){
 
             }

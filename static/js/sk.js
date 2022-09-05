@@ -468,6 +468,26 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
+const actionForthToTarget  = function(action){
+    action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = action.getClip().duration;});
+    action.reset();
+    action.paused = true;
+    action.setDuration(1);
+    action.timeScale = Math.abs(action.timeScale);
+    action.time = 0;
+    action.paused = false;
+}
+
+const actionBackToOrigin = function(action){
+    action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;});
+    action.reset();
+    action.paused = true;
+    action.setDuration(1);
+    action.timeScale = -Math.abs(action.timeScale);
+    action.time = action.getClip().duration;
+    action.paused = false;
+}
+
 const setNewIntersectObj = function(event = undefined){
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     transformControls.attach(INTERSECT_OBJ);
@@ -486,6 +506,38 @@ const setNewIntersectObj = function(event = undefined){
     }
     datguiObjectFolder(INTERSECT_OBJ);
     if($("#scenePaletteSVG").css('display') === 'block'){paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
+    // if the new intersected object is transformable: 
+    if("actions" in INTERSECT_OBJ){
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        Object.keys(INTERSECT_OBJ.actions).forEach(function (actionName){
+            let iDiv = document.createElement('div');
+            iDiv.className = "catalogItem";
+            iDiv.textContent = actionName;
+            iDiv.addEventListener('click', function(e){
+                e.preventDefault();
+                let actionName = $(e.target).text();
+                let isNeedBack = false;
+                console.log(INTERSECT_OBJ.actions[actionName]);
+                Object.keys(INTERSECT_OBJ.actions).forEach(function(an){
+                    let action = INTERSECT_OBJ.actions[an]
+                    if(action.time === action.getClip().duration){ // if this action is performed already: 
+                        actionBackToOrigin(action);
+                        isNeedBack = true;
+                    }
+                    if(an === actionName && action.time === 0 && isNeedBack){
+                        setTimeout(actionForthToTarget, 1000, action);
+                    }
+                    if(an === actionName && action.time === 0 && (!isNeedBack)){
+                        console.log(action);
+                        actionForthToTarget(action);
+                    }
+                });
+            });
+            catalogItems.appendChild(iDiv);
+        });
+    }
 }
 
 const addToGTRANS = function(so){
