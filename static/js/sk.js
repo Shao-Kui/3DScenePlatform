@@ -337,7 +337,8 @@ const synchronize_json_object = function (object) {
         let transform = {
             'translate': inst.translate,
             'scale': inst.scale,
-            'rotate': inst.rotate
+            'rotate': inst.rotate,
+            'startState': inst.startState
         };
         emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, object.userData.roomId]);
     }
@@ -488,6 +489,27 @@ const actionBackToOrigin = function(action){
     action.paused = false;
 }
 
+const objectToAction = function(object3d, actionName){
+    let isNeedBack = false;
+    if(object3d.userData.json.startState === actionName){
+        return;
+    }
+    object3d.userData.json.startState = actionName;
+    Object.keys(object3d.actions).forEach(function(an){
+        let action = object3d.actions[an]
+        if(action.time === action.getClip().duration){ // if this action is performed already: 
+            actionBackToOrigin(action);
+            isNeedBack = true;
+        }
+        if(an === actionName && action.time === 0 && isNeedBack){
+            setTimeout(actionForthToTarget, 1000, action);
+        }
+        if(an === actionName && action.time === 0 && (!isNeedBack)){
+            actionForthToTarget(action);
+        }
+    });
+}
+
 const setNewIntersectObj = function(event = undefined){
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     transformControls.attach(INTERSECT_OBJ);
@@ -511,29 +533,14 @@ const setNewIntersectObj = function(event = undefined){
         while (catalogItems.firstChild) {
             catalogItems.firstChild.remove();
         }
-        Object.keys(INTERSECT_OBJ.actions).forEach(function (actionName){
+        ['origin'].concat(Object.keys(INTERSECT_OBJ.actions)).forEach(function (actionName){
             let iDiv = document.createElement('div');
             iDiv.className = "catalogItem";
             iDiv.textContent = actionName;
             iDiv.addEventListener('click', function(e){
                 e.preventDefault();
-                let actionName = $(e.target).text();
-                let isNeedBack = false;
-                console.log(INTERSECT_OBJ.actions[actionName]);
-                Object.keys(INTERSECT_OBJ.actions).forEach(function(an){
-                    let action = INTERSECT_OBJ.actions[an]
-                    if(action.time === action.getClip().duration){ // if this action is performed already: 
-                        actionBackToOrigin(action);
-                        isNeedBack = true;
-                    }
-                    if(an === actionName && action.time === 0 && isNeedBack){
-                        setTimeout(actionForthToTarget, 1000, action);
-                    }
-                    if(an === actionName && action.time === 0 && (!isNeedBack)){
-                        console.log(action);
-                        actionForthToTarget(action);
-                    }
-                });
+                objectToAction(INTERSECT_OBJ, $(e.target).text());
+                synchronize_json_object(INTERSECT_OBJ);
             });
             catalogItems.appendChild(iDiv);
         });
@@ -1306,7 +1313,7 @@ const setting_up = function () {
         if(lighting_Mode){
             button.style.backgroundColor = '#9400D3';
             Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
-                if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp'].includes(object3d.userData.coarseSemantic)){
+                if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'wall_lamp'].includes(object3d.userData.coarseSemantic)){
                     let light = new THREE.PointLight( 0xffffff, 5, 100 );
                     light.name = SEMANTIC_POINTLIGHT;
                     light.position.set(0,0,0);
@@ -1319,7 +1326,7 @@ const setting_up = function () {
         }else{
             button.style.backgroundColor = 'transparent';
             Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
-                if(['Ceiling Lamp', 'Pendant Lamp'].includes(object3d.userData.coarseSemantic)){
+                if(['Ceiling Lamp', 'Pendant Lamp', 'wall_lamp'].includes(object3d.userData.coarseSemantic)){
                     object3d.remove(object3d.getObjectByName(SEMANTIC_POINTLIGHT));
                 }
             });

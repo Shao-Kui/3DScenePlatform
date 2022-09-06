@@ -131,6 +131,9 @@ const transformObjectByUUID = function(uuid, transform, roomID){
     object3d.position.set(transform.translate[0], transform.translate[1], transform.translate[2]); 
     object3d.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
     object3d.rotation.set(transform.rotate[0], transform.rotate[1], transform.rotate[2]);
+    if(transform.startState){
+        objectToAction(object3d, transform.startState);
+    }
     synchronizeObjectJsonByObject3D(object3d);
     // the core code for calculating orientations of objects; 
     if(AUXILIARY_MODE){auxiliaryMode();}
