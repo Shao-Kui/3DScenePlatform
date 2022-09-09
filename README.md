@@ -170,7 +170,7 @@ This project is also the container for MageAdd, which is a interactive modelling
 root/
 --main_magic.py
 --static/
-------js/
+----js/
 ------MageAdd.js
 ```
 The .py file corrsponds to the **Piror Update** and the .js file contains the main logic of inference of MageAdd. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
@@ -185,6 +185,22 @@ Our paper is accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Pleas
   doi={10.1145/3474085.3475194}
 }
 ```
+# SceneViewer
+![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/OPPNTPP.png "OPPNTPP")
+
+\[Paper\] \[Video\] \[Supp\] (Coming Soon)
+
+This project is also the container for our work on Photography in 3D residential scenes. The related source code includes:
+```
+root/
+--autoview.py
+--sceneviewer/
+----constraints.py
+----inset.py
+----utils.py
+----views.py
+```
+The "autoview.py" contains the fundamental logics of our method, which will call functions for deriving probe views and use constraints for evaluating views. It also organizes the generated views and renders the views. One could consider it as a controller. The "views.py" contains how we generate probe views based on one-point perspective and two-point perspective. The "constraints.py" contains the measurements, i.e., the content constraints and aesthetic constraints. The "utiles.py" contrains several functions for geometrical computing. Finally, "inset.py" contains the "mapping" algorithm proposed in the paper. 
 # Manuals  
 Our platform is split into two panel: operation & 3D scene. In operation panel, we allow rendering, layouting, saving, loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left clicking a searched result and left clicking a position in a scene. 3D scene panel uses an orbital controller, where interactions follows:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
