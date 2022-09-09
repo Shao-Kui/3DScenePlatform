@@ -190,7 +190,7 @@ Our paper is accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Pleas
 
 \[Paper\] \[Video\] \[Supp\] (Coming Soon)
 
-This project is also the container for our work on Photography in 3D residential scenes. The related source code includes:
+This project is also the container for our work on automatic Photography in 3D residential scenes. The related source code includes:
 ```
 root/
 --autoview.py
@@ -235,6 +235,8 @@ This platform is designed, structured and implemented by [Shao-Kui Zhang][shaoku
 Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
 
 The MageAdd is designed, implemented and publicated by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], Song-Hai Zhang. 
+
+The SceneViewer is designed, implemented by [Shao-Kui Zhang][shaokui], Hou Tam, Yi-Xiao Li, Tai-Jiang Mu, Song-Hai Zhang. 
 # Copyright
 This platform is developed for researches, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT security guaranteed if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
 
