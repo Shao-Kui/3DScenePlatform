@@ -10,7 +10,8 @@ const clickCatalogItem = function (e, d=undefined) {
         INSERT_OBJ = {
             "modelId": $(e.target).attr("objectName"),
             "coarseSemantic": $(e.target).attr("coarseSemantic"), 
-            "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
+            "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0],
+            "format": $(e.target).attr("format")
         };
     }
     scene.remove(scene.getObjectByName(INSERT_NAME));
@@ -24,7 +25,7 @@ const clickCatalogItem = function (e, d=undefined) {
         timeCounter.addStart = moment();
     }
     scenecanvas.style.cursor = "crosshair";
-    loadObjectToCache(INSERT_OBJ.modelId); 
+    loadObjectToCache(INSERT_OBJ.modelId, ()=>{}, [], INSERT_OBJ.format); 
 }
 
 const clickTextureItem = function(e){
@@ -66,6 +67,10 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('modelId', item.name);
     iDiv.setAttribute('coarseSemantic', item.semantic);
     iDiv.setAttribute('semantic', item.semantic);
+    if(!item.format){
+        item.format = 'obj'
+    }
+    iDiv.setAttribute('format', item.format);
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
     catalogItems.appendChild(iDiv);

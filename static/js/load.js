@@ -153,7 +153,7 @@ let refreshObjectFromCache = function(objToInsert){
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     // add reference from object3d to objectjson: 
     object3d.userData.json = objToInsert;
-    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'chandelier'].includes(object3d.userData.coarseSemantic)){
+    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'chandelier', 'wall_lamp'].includes(object3d.userData.coarseSemantic)){
         let light = new THREE.PointLight( 0xffffff, 10, 100 );
         light.name = SEMANTIC_POINTLIGHT;
         light.position.set(0,0,0);
@@ -193,9 +193,11 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     }
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
+    console.log(object3d, uuid);
     object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     if(transform.format === 'glb'){
+        object3d.userData.json.startState = 'origin';
         playAnimation(object3d);
     }
     return object3d; 
@@ -232,9 +234,18 @@ const playAnimation = function(object3d){
         action.play();
         action.paused = true;
         action.time = 0;
+        action.weight = 0;
         if(object3d.userData.json.startState === animation.name){
             action.time = action.getClip().duration;
+            action.weight = 1;
         }
+        action.getMixer().addEventListener('finished', e => {
+            let action = e.action;
+            action.reset();action.paused = true;
+            action.afterCall(action);
+            // action.time = action.getClip().duration;action.weight = 1;
+            // console.log('starting forth to target', action.weight, action.getClip().name);
+        });
         // object3d.currentAction = action;
         object3d.actions[animation.name] = action;
     });

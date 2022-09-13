@@ -470,17 +470,18 @@ const onTouchObj = function (event) {
 };
 
 const actionForthToTarget  = function(action){
-    action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = action.getClip().duration;});
+    // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = action.getClip().duration;action.weight = 1;console.log('starting forth to target', action.time, action.getClip().name);});
     action.reset();
     action.paused = true;
     action.setDuration(1);
     action.timeScale = Math.abs(action.timeScale);
     action.time = 0;
     action.paused = false;
+    action.weight = 1;
 }
 
 const actionBackToOrigin = function(action){
-    action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;});
+    // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;action.weight = 0;console.log('starting back to origin', action.time, action.getClip().name);});
     action.reset();
     action.paused = true;
     action.setDuration(1);
@@ -499,15 +500,20 @@ const objectToAction = function(object3d, actionName){
         let action = object3d.actions[an]
         if(action.time === action.getClip().duration){ // if this action is performed already: 
             actionBackToOrigin(action);
+            action.afterCall = a => {a.weight = 0;a.time=0;}
             isNeedBack = true;
         }
-        if(an === actionName && action.time === 0 && isNeedBack){
-            setTimeout(actionForthToTarget, 1000, action);
-        }
-        if(an === actionName && action.time === 0 && (!isNeedBack)){
-            actionForthToTarget(action);
-        }
     });
+    if(actionName === 'origin'){
+        return;
+    }
+    if(isNeedBack){
+        setTimeout(actionForthToTarget, 1000, object3d.actions[actionName]);
+    }
+    else{
+        actionForthToTarget(object3d.actions[actionName]);
+    }
+    object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
 }
 
 const setNewIntersectObj = function(event = undefined){
@@ -537,10 +543,11 @@ const setNewIntersectObj = function(event = undefined){
             let iDiv = document.createElement('div');
             iDiv.className = "catalogItem";
             iDiv.textContent = actionName;
+            iDiv.setAttribute('key', INTERSECT_OBJ.userData.key);
             iDiv.addEventListener('click', function(e){
                 e.preventDefault();
-                objectToAction(INTERSECT_OBJ, $(e.target).text());
-                synchronize_json_object(INTERSECT_OBJ);
+                objectToAction(manager.renderManager.instanceKeyCache[$(e.target).attr("key")], $(e.target).text());
+                synchronize_json_object(manager.renderManager.instanceKeyCache[$(e.target).attr("key")]);
             });
             catalogItems.appendChild(iDiv);
         });
@@ -689,7 +696,8 @@ var onClickObj = function (event) {
             transform={
                 'translate': [p.x, p.y, p.z], 
                 'rotate': [0,0,0],
-                'scale': [1,1,1]
+                'scale': [1,1,1],
+                'format': INSERT_OBJ.format
             }
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
