@@ -298,3 +298,47 @@ const clickSceneFutureIterms = function (e) {
     manager.renderManager.scene_json.rooms[currentRoomId].state = $(e.target).text();
     refreshSceneFutureRoomTypes();
 }
+
+const sceneTransformTo = function(derivations){
+    for(let i = 0; i < derivations.length; i++){
+        let object = manager.renderManager.scene_json.rooms[0].objList[i];
+        let object3d = manager.renderManager.instanceKeyCache[object.key];
+        derivations[i].forEach(seq => {
+            seq.forEach(a => {
+                if(a.action === 'move'){
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], object3d.position.y, a.p2[1]], 'position', true, a.t[1] - a.t[0]);
+                }
+                if(a.action === 'rotate'){
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [0, a.r2, 0], 'rotation', true, a.t[1] - a.t[0]);
+                }
+                if(a.action === 'transform'){
+                    a.preStatus = object.startState;
+                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.status, a.t[1] - a.t[0]);
+                }
+            })
+        })
+    }
+}
+
+const sceneTransformBack = function(derivations){
+    // arr.slice().reverse().forEach(x => console.log(x))
+    const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
+    console.log(T);
+    for(let i = derivations.length-1; i >= 0; i--){
+        let object = manager.renderManager.scene_json.rooms[0].objList[i];
+        let object3d = manager.renderManager.instanceKeyCache[object.key];
+        derivations[i].slice().reverse().forEach(seq => {
+            seq.slice().reverse().forEach(a => {
+                if(a.action === 'move'){
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [a.p1[0], object3d.position.y, a.p1[1]], 'position', true, a.t[1] - a.t[0]);
+                }
+                if(a.action === 'rotate'){
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [0, a.r1, 0], 'rotation', true, a.t[1] - a.t[0]);
+                }
+                if(a.action === 'transform'){
+                    setTimeout(objectToAction, (T - a.t[1]) * 1000, object3d, a.preStatus, a.t[1] - a.t[0]);
+                }
+            })
+        })
+    }
+}
