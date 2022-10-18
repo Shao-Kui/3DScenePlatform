@@ -1,4 +1,6 @@
+from pickle import TRUE
 from re import L
+from xmlrpc.client import NOT_WELLFORMED_ERROR
 from jinja2 import Environment, FileSystemLoader
 import json
 import os
@@ -29,6 +31,7 @@ r_dir = 'batch'
 wallMaterial = True
 REMOVELAMP = False
 SAVECONFIG = False
+NOWALL = False
 USENEWWALL = False
 
 def autoPerspectiveCamera(scenejson):
@@ -199,7 +202,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
                     blocks.append(obj)
     for room in scenejson['rooms']:
-        if USENEWWALL and 'roomShape' in room:
+        if USENEWWALL and 'roomShape' in room and not NOWALL:
             # for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
             #     next = room['roomShape'][(index+1)%len(room['roomShape'])]
             #     xScale = np.linalg.norm(np.array(next) - np.array(pre)) / 2
@@ -370,7 +373,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                     polytest = Polygon(roomShape)
                     print(roomShape, polytest.area)
                     break
-        else:
+        elif not USENEWWALL and not NOWALL:
             for cwf in ['w', 'f']:
                 if os.path.exists(f'./dataset/room2021/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
                     scenejson['renderroomobjlist'].append({
@@ -387,7 +390,11 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 print('A lamp is removed. ')
                 continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])
-            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
+            if 'format' not in obj:
+                obj['format'] = 'obj'
+            if obj['format'] == 'glb':
+                obj['modelPath'] = '../../../static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])) or os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
                 scenejson['renderobjlist'].append(obj)
     output = template.render(
         scenejson=scenejson, 
@@ -493,7 +500,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "emitter="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -511,6 +518,8 @@ if __name__ == "__main__":
             print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
+        elif opt in ("--nowall"):
+            NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
             emitter = arg
         elif opt in ("--task"):
