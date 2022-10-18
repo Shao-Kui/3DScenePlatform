@@ -277,15 +277,16 @@ const tCache = [];
 var fastTimeLine = gsap.timeline({repeat: 0});
 var lastMovedTimeStamp = moment();
 var currentMovedTimeStamp = moment();
-const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false){
+const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false, duration=0.2, ease='power1'){
     currentMovedTimeStamp = moment();
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
     if(smooth){
         gsap.to(object3d[mode], {
-            duration: 0.2,
+            duration: duration,
             x: xyz[0],
             y: xyz[1],
-            z: xyz[2]
+            z: xyz[2],
+            ease: ease
         });
     }else{
         object3d[mode].x = xyz[0]; object3d[mode].y = xyz[1]; object3d[mode].z = xyz[2]; 
@@ -469,37 +470,41 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
-const actionForthToTarget  = function(action){
+const actionForthToTarget  = function(action, duration=1){
     // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = action.getClip().duration;action.weight = 1;console.log('starting forth to target', action.time, action.getClip().name);});
     action.reset();
     action.paused = true;
-    action.setDuration(1);
+    action.setDuration(duration);
     action.timeScale = Math.abs(action.timeScale);
     action.time = 0;
     action.paused = false;
     action.weight = 1;
 }
 
-const actionBackToOrigin = function(action){
+const actionBackToOrigin = function(action, duration=1){
     // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;action.weight = 0;console.log('starting back to origin', action.time, action.getClip().name);});
     action.reset();
     action.paused = true;
-    action.setDuration(1);
+    action.setDuration(duration);
     action.timeScale = -Math.abs(action.timeScale);
     action.time = action.getClip().duration;
     action.paused = false;
 }
 
-const objectToAction = function(object3d, actionName){
+const objectToAction = function(object3d, actionName, duration=1){
     let isNeedBack = false;
     if(object3d.userData.json.startState === actionName){
         return;
     }
+    if(actionName != 'origin' && object3d.userData.json.startState != 'origin'){
+        duration = duration * 0.5;
+    }
     object3d.userData.json.startState = actionName;
+    
     Object.keys(object3d.actions).forEach(function(an){
         let action = object3d.actions[an]
         if(action.time === action.getClip().duration){ // if this action is performed already: 
-            actionBackToOrigin(action);
+            actionBackToOrigin(action, duration);
             action.afterCall = a => {a.weight = 0;a.time=0;}
             isNeedBack = true;
         }
@@ -508,12 +513,15 @@ const objectToAction = function(object3d, actionName){
         return;
     }
     if(isNeedBack){
-        setTimeout(actionForthToTarget, 1000, object3d.actions[actionName]);
+        setTimeout(actionForthToTarget, duration*1000, object3d.actions[actionName], duration);
     }
     else{
-        actionForthToTarget(object3d.actions[actionName]);
+        actionForthToTarget(object3d.actions[actionName], duration);
     }
-    object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
+    if(actionName != 'origin'){
+        console.log(actionName, 'origin')
+        object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
+    }
 }
 
 const setNewIntersectObj = function(event = undefined){
@@ -542,12 +550,31 @@ const setNewIntersectObj = function(event = undefined){
         ['origin'].concat(Object.keys(INTERSECT_OBJ.actions)).forEach(function (actionName){
             let iDiv = document.createElement('div');
             iDiv.className = "catalogItem";
-            iDiv.textContent = actionName;
+            // iDiv.textContent = actionName;
             iDiv.setAttribute('key', INTERSECT_OBJ.userData.key);
+            iDiv.setAttribute('actionName', actionName);
+            iDiv.style.backgroundImage = `url(/static/dataset/object/${INTERSECT_OBJ.userData.json.modelId}/render20${actionName}/render-${actionName}-10.png)`;
             iDiv.addEventListener('click', function(e){
                 e.preventDefault();
-                objectToAction(manager.renderManager.instanceKeyCache[$(e.target).attr("key")], $(e.target).text());
-                synchronize_json_object(manager.renderManager.instanceKeyCache[$(e.target).attr("key")]);
+                let object3d = manager.renderManager.instanceKeyCache[$(e.target).attr("key")];
+                if(animaRecord_Mode && $(e.target).attr("actionName") != object3d.userData.json.startState){
+                    let index = object3d.userData.json.sforder;
+                    let startTime;
+                    if(currentSeqs[index][0].length === 0){
+                        startTime = 0;
+                    }else{
+                        startTime = currentSeqs[index][0].at(-1).t[1];
+                    }
+                    currentSeqs[index][0].push({
+                        "action": "transform",
+                        "s1": object3d.userData.json.startState,
+                        "s2": $(e.target).attr("actionName"),
+                        "t": [startTime, startTime+1]
+                    });
+                }
+                objectToAction(object3d, $(e.target).attr("actionName"), 1);
+                synchronize_json_object(object3d);
+                console.log($(e.target).attr("actionName"), object3d.userData.json.startState);
             });
             catalogItems.appendChild(iDiv);
         });
@@ -742,6 +769,12 @@ var onClickObj = function (event) {
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         timeCounter.rotate += moment.duration(moment().diff(timeCounter.rotateStart)).asSeconds();
+        if(animaRecord_Mode){
+            let index = INTERSECT_OBJ.userData.json.sforder;
+            let a = currentSeqs[index][0].at(-1);
+            a.r2 = INTERSECT_OBJ.rotation.y;
+            a.t[1] = a.t[0]+1;
+        }
         return;
     }
 
@@ -1340,7 +1373,22 @@ const setting_up = function () {
             });
         }
     });
-    
+    $("#animaRecord_button").click(function(){
+        if(currentRoomId === undefined){
+            return;
+        }
+        let button = document.getElementById("animaRecord_button");
+        animaRecord_Mode = !animaRecord_Mode;
+        if(animaRecord_Mode){
+            currentSeqs = [...Array(manager.renderManager.scene_json.rooms[currentRoomId].objList.length)].map(e => [[]]);
+            for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
+                manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
+            }
+            button.style.backgroundColor = '#9400D3';
+        }else{
+            button.style.backgroundColor = 'transparent';
+        }
+    });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
     $("#useNewWallCheckBox").click(() => {
         window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)

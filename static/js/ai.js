@@ -154,6 +154,7 @@ const getUUID = function(){
 const standardizeRotate = function(rotate, refRotate){
     if(rotate[0] === 0 && rotate[2] === 0){
         rotate[1] = Math.atan2(Math.sin(rotate[1]), Math.cos(rotate[1]));
+        // refRotate[1] = Math.atan2(Math.sin(refRotate[1]), Math.cos(refRotate[1]));
         if(Math.abs(rotate[1] - refRotate[1]) > Math.PI){
             if(rotate[1] < refRotate[1]){
                 rotate[1] += Math.PI * 2;
@@ -299,21 +300,43 @@ const clickSceneFutureIterms = function (e) {
     refreshSceneFutureRoomTypes();
 }
 
+const sceneTransformFirst = function(derivation, name){
+    for(let j = 0; j < derivation.length; j++){
+        for(let k = 0; k < derivation[j].length; k++){
+            if(derivation[j][k].action === 'move' && name === 'move'){
+                return derivation[j][k].p1;
+            }
+            if(derivation[j][k].action === 'rotate' && name === 'rotate'){
+                return derivation[j][k].r1;
+            }
+        }
+    }
+}
+
 const sceneTransformTo = function(derivations){
     for(let i = 0; i < derivations.length; i++){
-        let object = manager.renderManager.scene_json.rooms[0].objList[i];
+        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
+        if(!('key' in object)){
+            continue
+        }
         let object3d = manager.renderManager.instanceKeyCache[object.key];
+        let initp = sceneTransformFirst(derivations[i], 'move');
+        if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
+        let initr = sceneTransformFirst(derivations[i], 'rotate');
+        if(initr){object3d.rotation.set(0, initr, 0);}
         derivations[i].forEach(seq => {
             seq.forEach(a => {
                 if(a.action === 'move'){
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], object3d.position.y, a.p2[1]], 'position', true, a.t[1] - a.t[0]);
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'rotate'){
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [0, a.r2, 0], 'rotation', true, a.t[1] - a.t[0]);
+                    let r = [0, a.r2, 0]
+                    standardizeRotate(r, [0, a.r1, 0]);
+                    object3d.rotation.set(0, a.r1, 0);
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'transform'){
-                    a.preStatus = object.startState;
-                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.status, a.t[1] - a.t[0]);
+                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.s2, a.t[1] - a.t[0], 'none');
                 }
             })
         })
@@ -321,22 +344,23 @@ const sceneTransformTo = function(derivations){
 }
 
 const sceneTransformBack = function(derivations){
-    // arr.slice().reverse().forEach(x => console.log(x))
     const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
-    console.log(T);
     for(let i = derivations.length-1; i >= 0; i--){
-        let object = manager.renderManager.scene_json.rooms[0].objList[i];
+        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
         let object3d = manager.renderManager.instanceKeyCache[object.key];
         derivations[i].slice().reverse().forEach(seq => {
             seq.slice().reverse().forEach(a => {
                 if(a.action === 'move'){
-                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [a.p1[0], object3d.position.y, a.p1[1]], 'position', true, a.t[1] - a.t[0]);
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [a.p1[0], a.p1[1], a.p1[2]], 'position', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'rotate'){
-                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [0, a.r1, 0], 'rotation', true, a.t[1] - a.t[0]);
+                    let r = [0, a.r1, 0];
+                    standardizeRotate(r, [0, a.r2, 0]);
+                    object3d.rotation.set(0, a.r2, 0);
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'transform'){
-                    setTimeout(objectToAction, (T - a.t[1]) * 1000, object3d, a.preStatus, a.t[1] - a.t[0]);
+                    setTimeout(objectToAction, (T - a.t[1]) * 1000, object3d, a.s1, a.t[1] - a.t[0], 'none');
                 }
             })
         })

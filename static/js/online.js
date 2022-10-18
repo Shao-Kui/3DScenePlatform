@@ -195,7 +195,7 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
     manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
-    scene.add(object3d)
+    scene.add(object3d);
     // if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);}
     return object3d;
 }

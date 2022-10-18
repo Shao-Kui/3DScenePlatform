@@ -78,6 +78,7 @@
       var AUXILIARY_MODE = false;
       var LayoutViewAdjust_MODE = false;
       var lighting_Mode = false;
+      var animaRecord_Mode = false;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
@@ -119,6 +120,7 @@
       var drawStartPos = new THREE.Vector2();
       var searchResults;
       var currentRoomId;
+      var currentSeqs;
       var orthline;
       const pressedKeys = [];
 
@@ -615,13 +617,19 @@
               Load
             </button>
             <button
+              id="animaRecord_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              AnimaRecord
+            </button>
+            <button
               id="auxiliary_button"
               type="button"
               class="btn btn-lg btn-outline-light mx-2"
             >
               AuxiliaryMode
             </button>
-
             <button
               id="sklayout"
               type="button"

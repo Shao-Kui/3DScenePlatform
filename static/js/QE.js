@@ -38,6 +38,26 @@ const transformControlsConfig = function(){
             }
             timeCounter.maniStart = moment();
         }
+        if(animaRecord_Mode && transformControls.mode === 'translate'){
+            let index = INTERSECT_OBJ.userData.json.sforder;
+            let startTime;
+            if(currentSeqs[index][0].length === 0){
+                startTime = 0;
+            }else{
+                startTime = currentSeqs[index][0].at(-1).t[1];
+            }
+            if(event.value){
+                currentSeqs[index][0].push({
+                    "action": "move",
+                    "p1": [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z],
+                    "t": [startTime, startTime+1]
+                });
+            }else{
+                let a = currentSeqs[index][0].at(-1);
+                a.p2 = [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z];
+                a.t[1] = a.t[0] + Math.sqrt(Math.pow(a.p1[0]-a.p2[0], 2) + Math.pow(a.p1[1]-a.p2[1], 2) + Math.pow(a.p1[2]-a.p2[2], 2)) / 4;
+            }
+        }
     });
     transformControls.addEventListener('change', function (event) {
         if(INTERSECT_OBJ === undefined){
@@ -71,6 +91,20 @@ const transformControlsConfig = function(){
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z], 'scale');
         }
+    });
+}
+
+const actionAddTime = function(duration=1){
+    let index = INTERSECT_OBJ.userData.json.sforder;
+    let startTime;
+    if(currentSeqs[index][0].length === 0){
+        startTime = 0;
+    }else{
+        startTime = currentSeqs[index][0].at(-1).t[1];
+    }
+    currentSeqs[index][0].push({
+        "action": "pause",
+        "t": [startTime, startTime+duration]
     });
 }
 
