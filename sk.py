@@ -21,7 +21,7 @@ ASPECT = 16 / 9
 DEFAULT_FOV = 75
 with open('./dataset/objCatListLG.json') as f:
     objCatList = json.load(f)
-with open('./dataset/objListCataAliv2.json') as f:
+with open('./dataset/objListCataAliv4.json') as f:
     objListCat = json.load(f)
 
 # code is from https://github.com/mikedh/trimesh/issues/507
@@ -72,6 +72,32 @@ def load_AABB(i):
         json.dump(AABB, f, default=jsonDumpsDefault)
     AABBcache[i] = AABB
     return AABBcache[i]
+
+def load_AABB_glb(i, state):
+    if i in AABBcache:
+        return AABBcache[i+state]
+    if os.path.exists(f'./static/dataset/object/{i}/{state}-AABB.json'):
+        try:
+            with open(f'./static/dataset/object/{i}/{state}-AABB.json') as f:
+                AABBcache[i+state] = json.load(f)
+            return AABBcache[i+state]
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+    mesh = as_mesh(trimesh.load(f'./static/dataset/object/{i}/{state}.obj'))
+    AABB = {}
+    AABB['max'] = [0,0,0]
+    AABB['min'] = [0,0,0]
+    AABB['max'][0] = np.max(mesh.vertices[:, 0]).tolist()
+    AABB['max'][1] = np.max(mesh.vertices[:, 1]).tolist()
+    AABB['max'][2] = np.max(mesh.vertices[:, 2]).tolist()
+    AABB['min'][0] = np.min(mesh.vertices[:, 0]).tolist()
+    AABB['min'][1] = np.min(mesh.vertices[:, 1]).tolist()
+    AABB['min'][2] = np.min(mesh.vertices[:, 2]).tolist()
+    AABB['vertices'] = np.array(mesh.vertices)
+    with open(f'./static/dataset/object/{i}/{state}-AABB.json', 'w') as f:
+        json.dump(AABB, f, default=jsonDumpsDefault)
+    AABBcache[i+state] = AABB
+    return AABBcache[i+state]
 
 def preloadAABB(obj):
     if objectInDataset(obj['modelId']):
@@ -200,10 +226,53 @@ def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
     py = ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / D
     return [px, py]
 
+def generateRoomNormals(roomShape):
+    wallSecIndices = np.arange(1, len(roomShape)).tolist() + [0]
+    rv = np.array(roomShape)[:] - np.array(roomShape)[wallSecIndices]
+    normals = rv[:, [1,0]]
+    normals[:, 1] = -normals[:, 1]
+    roomNorm = normals.tolist()
+    return roomNorm
+
+def regularizeRoomShape(roomShape):
+    for i in range(len(roomShape)):
+        p = roomShape[i]
+        p1 = roomShape[(i-1)%len(roomShape)]
+        p2 = roomShape[(i+1)%len(roomShape)]
+        value = toLeftTest(p, p1, p2) * toLeftTest(p1, p, p2) * toLeftTest(p2, p, p1)
+        # print('regularizeRoomShape', p, p1, p2, value, toLeftTest(p, p1, p2), toLeftTest(p1, p, p2), toLeftTest(p2, p, p1))
+        if abs(value) < 0.0000001:
+            newroomshape = []
+            for j in range(len(roomShape)):
+                if j == i:
+                    continue
+                newroomshape.append(roomShape[j])
+            return regularizeRoomShape(newroomshape)
+    for i in range(len(roomShape)):
+        p = roomShape[i]
+        p1 = roomShape[(i-1)%len(roomShape)]
+        if np.linalg.norm(np.array(p) - np.array(p1)) < 0.0000001:
+            newroomshape = []
+            for j in range(len(roomShape)):
+                if j == i:
+                    continue
+                newroomshape.append(roomShape[j])
+            return regularizeRoomShape(newroomshape)
+    return roomShape
+
+def toLeftTest(p, p1, p2):
+    # if p is to the left, returns a value greater than 0; 
+    return (p[0] - p1[0])*(p2[1] - p1[1]) - (p[1] - p1[1])*(p2[0] - p1[0])
+
 def isTwoLineSegCross(p1, p2, p3, p4):
     l1 = LineString((p1, p2))
     l2 = LineString((p3, p4))
     return l1.crosses(l2)
+
+def isTwoLineSegIntersect(p1, p2, p3, p4):
+    l1 = LineString((p1, p2))
+    l2 = LineString((p3, p4))
+    return l1.intersects(l2)
 
 def pointToLineDistance(point, p1, p2):
     return np.linalg.norm(np.cross(p2-p1, p1-point)) / np.linalg.norm(p2-p1)
@@ -256,6 +325,18 @@ def inside_test(points , cube3d):
     res3 = np.where( (np.absolute(np.dot(dir_vec, dir3)) * 2) > size3 )[0]
 
     return list( set().union(res1, res2, res3) )
+
+def isPointProjectedToLineSeg(p, p1, p2):
+    p = np.array(p)
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+    value = np.dot(p2-p1, p2-p)/np.linalg.norm(p2-p1)
+    value /= np.linalg.norm(p2-p1)
+    if value <= 0.00001:
+        return False
+    if value >= 1.00001:
+        return False
+    return True
 
 def pointProjectedToPlane(p, normal, startPoint):
     normal = normal / np.linalg.norm(normal)
@@ -850,13 +931,37 @@ def analyzeAnswerPlanner():
     print('Our: ' + str(our / (tra + our + nts)))
     print('Nts: ' + str(nts / (tra + our + nts)))
 
+def renderGLBbatch():
+    objlist = os.listdir('./static/dataset/object/')
+    for objname in objlist:
+        print(objname)
+        if os.path.exists(f'./static/dataset/object/{objname}/render20origin/render-origin-0.png'):
+            continue
+        filelist = os.listdir(f'./static/dataset/object/{objname}')
+        for fname in filelist:
+            if '.obj' in fname:
+                try:
+                    renderModel20(objname, 'glb', fname.split('.')[0])
+                except Exception as e:
+                    print(e)
+
 icosavn = np.loadtxt("./assets/icosavn", dtype=np.float)
 # icosavn = torch.from_numpy(icosavn).float().to("cuda")
-def renderModel20(objname):
+def renderModel20(objname, format='obj', stateName='origin'):
+    RENDER20DIR = f'./dataset/object/{objname}/render20'
+    OBJECTDIR = f'./dataset/object/{objname}/{objname}.obj'
+    RENDERNAME = f'{RENDER20DIR}/render-{objname}'
+    if format == 'glb':
+        RENDER20DIR = f'./static/dataset/object/{objname}/render20{stateName}'
+        OBJECTDIR = f'./static/dataset/object/{objname}/{stateName}.obj'
+        RENDERNAME = f'{RENDER20DIR}/render-{stateName}'
     pt.SAVECONFIG = False
-    obj = {'translate': [0,0,0],'rotate': [0,0,0],'scale': [1,1,1],'modelId': objname}
-    AABB = load_AABB(objname)
-    objpath = f'./dataset/object/{objname}/{objname}.obj'
+    obj = {'translate': [0,0,0],'rotate': [0,0,0],'scale': [1,1,1],'modelId': objname, 'startState': stateName,'format': format}
+    if format == 'obj':
+        AABB = load_AABB(objname)
+    elif format == 'glb':
+        AABB = load_AABB_glb(objname, stateName)
+    objpath = OBJECTDIR
     mesh = as_mesh(trimesh.load(objpath))
     vertices = np.array(mesh.vertices)
     max_p = np.array(AABB['max'])
@@ -874,10 +979,9 @@ def renderModel20(objname):
         scenejson["PerspectiveCamera"]["target"] = center.tolist()
         scenejson["PerspectiveCamera"]["up"] = [0,1,0]
         scenejson["PerspectiveCamera"]["fov"] = DEFAULT_FOV
-        scenejson
-        if not os.path.exists(f'./dataset/object/{objname}/render20'):
-            os.makedirs(f'./dataset/object/{objname}/render20')
-        pt.pathTracing(scenejson, 16, f'./dataset/object/{objname}/render20/render-{objname}-{i}.png')
+        if not os.path.exists(RENDER20DIR):
+            os.makedirs(RENDER20DIR)
+        pt.pathTracing(scenejson, 16, f'{RENDERNAME}-{i}.png')
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -896,7 +1000,10 @@ if __name__ == "__main__":
     # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
     # renderModel20('coffee01')
-    renderModel20('drinks05')
+    # renderModel20('shirt02')
+    # renderModel20('sofa2bed', 'glb', 'origin')
+    # renderModel20('sofa2bed', 'glb', 'bed')
+    renderGLBbatch()
     # renderModel20('shoecounter01')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     # cgs('1133', None, '小太阳-灰色奢华土豪')
