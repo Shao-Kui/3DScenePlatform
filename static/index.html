@@ -78,7 +78,6 @@
       var AUXILIARY_MODE = false;
       var LayoutViewAdjust_MODE = false;
       var lighting_Mode = false;
-      var animaRecord_Mode = false;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
@@ -120,7 +119,6 @@
       var drawStartPos = new THREE.Vector2();
       var searchResults;
       var currentRoomId;
-      var currentSeqs;
       var orthline;
       const pressedKeys = [];
 
@@ -570,8 +568,23 @@
                         </div>
                     </div>
                 </form> -->
+         </div>
+         <div class="py-2 px-3">
+          <div id="mainObjDivYL" class="h4 py-3 px-2 text-left"></div>
+          <div id="usedObjDivYL" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
+          <form onsubmit="return false">
+            <div class="input-group input-group-lg py-1">
+              <input type="text" class="form-control" id="userYL" placeholder="请输入您的用户名" aria-label="series" required>
+              <input type="text" class="form-control" id="nameYL" placeholder="给关联关系起个名字" aria-label="series">
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="submit" id="usercommitchange_buttonYL">提交</button>
+              </div>
+            </div>
+            <input type="checkbox" id="wallYL">考虑墙体位置<br>
+          </form>
           </div>
-          <div id="rec_container" style="display: none"></div>
+
+        <div id="rec_container" style="display: none"></div>
           <svg height="800" id="scenePaletteSVG" class="catalogSectionContent" style='display: none; margin: 0 auto;'>
               <g></g>
           </svg>
@@ -617,19 +630,13 @@
               Load
             </button>
             <button
-              id="animaRecord_button"
-              type="button"
-              class="btn btn-lg btn-outline-light mx-2"
-            >
-              AnimaRecord
-            </button>
-            <button
               id="auxiliary_button"
               type="button"
               class="btn btn-lg btn-outline-light mx-2"
             >
               AuxiliaryMode
             </button>
+
             <button
               id="sklayout"
               type="button"

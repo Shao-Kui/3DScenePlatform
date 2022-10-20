@@ -1470,6 +1470,57 @@ const setting_up = function () {
         }
     });
 
+    $("#usercommitchange_buttonYL").click(() => {
+        userYL = $("#userYL").val();
+        rela_nameYL = $("#nameYL").val();
+        if (userYL == "") {
+            alert("请填写您的用户名");
+        }
+        wallYL = $("#wallYL").is(":checked");
+
+        var tmpYL = new Array(10);
+        tmpYL[0] = INTERSECT_OBJ.userData.modelId;
+        tmpYL[1] = INTERSECT_OBJ.position.x;
+        tmpYL[2] = INTERSECT_OBJ.position.y;
+        tmpYL[3] = INTERSECT_OBJ.position.z;
+        tmpYL[4] = INTERSECT_OBJ.rotation.x;
+        tmpYL[5] = INTERSECT_OBJ.rotation.y;
+        tmpYL[6] = INTERSECT_OBJ.rotation.z;
+        tmpYL[7] = INTERSECT_OBJ.scale.x;
+        tmpYL[8] = INTERSECT_OBJ.scale.y;
+        tmpYL[9] = INTERSECT_OBJ.scale.z;
+        var tempYL = new Array();
+        GTRANS_GROUP.traverse(function(objYL) {
+            if (objYL.userData.modelId){ //modelID != None
+                var varYL = new Array(5);
+                varYL[0] = objYL.userData.modelId;
+                varYL[1] = objYL.position.x;
+                varYL[2] = objYL.position.y;
+                varYL[3] = objYL.position.z;
+                varYL[4] = objYL.rotation.y;
+                var pYL = new Array(1); pYL[0] = varYL;
+                tempYL = tempYL.concat(pYL);
+            }
+        })
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/usercommitchangeYL/yueliang`,
+            data: JSON.stringify({
+                userYL: userYL,
+                rela_nameYL: rela_nameYL,
+                wallYL: wallYL,
+                intersectobject: tmpYL,
+                gtransgroup: tempYL,
+                json: getDownloadSceneJson()}),
+            success: function (msg) {
+                alert(msg);
+            }
+        });
+        
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
