@@ -1179,6 +1179,107 @@ def usercommitchange(username):
                 count += 1
         return f'{count} {main_obj}/{series}/{username}_{alipay}_{timestr}'
 
+
+def calWall(wallResult, obji, room):
+    try:
+        shape = np.array(room['roomShape']) # p2d('/' + room['origin'], room['modelId'] + 'f.obj')
+    except Exception as e:
+        return -1
+    if len(shape) <= 2:
+        return -1
+
+    # find the nearest wall; 
+    p = np.array([obji['translate'][0], obji['translate'][2]])
+    shapeEnd = shape[np.arange(1,len(shape)).tolist() + [0]]
+    a_square = np.sum((shape - p)**2, axis=1)
+    b_square = np.sum((shapeEnd - p)**2, axis=1)
+    c_square = np.sum((shape - shapeEnd)**2, axis=1)
+    area_double = 0.5 * np.sqrt(4 * a_square * b_square - (a_square + b_square - c_square)**2 )
+    distances = area_double / np.sqrt(c_square)
+    _indicesList = []
+    wallMinIndices = np.argsort(distances)
+    innerProducts = np.sum((shape - p) * (shape - shapeEnd), axis=1)
+    for i in wallMinIndices:
+        if 0 <= innerProducts[i] and innerProducts[i] <= c_square[i]:
+            _indicesList.append(i)
+            if len(_indicesList) == 2:
+                break
+            # wallMinIndex = i
+    if len(_indicesList) < 2:
+        return -1
+    
+    wallResult[1] = distances[_indicesList[0]]
+    wallResult[3] = distances[_indicesList[1]]
+
+    wn = (shape[_indicesList[0]] - shapeEnd[_indicesList[0]])[[1,0]]
+    wallResult[0] = wn[0]
+    wallResult[2] = -wn[1]
+
+    return 1
+
+@app_autoView.route("/usercommitchangeYL/<username>", methods=['POST'])
+def usercommitchangeYL(username):
+    if flask.request.method == 'POST':
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        data = flask.request.json
+        scene_json = data['json']
+        intersect = data['intersectobject']
+        gtransgroup = data['gtransgroup']
+        user = data['userYL']
+        withWall = data['wallYL']
+        
+        try:
+            rela_name = data['rela_nameYL']
+        except:
+            rela_name = ''
+    else:
+        return 'sorry you\'re not using POST method'
+
+    wallResult = [-1,-1,-1,-1]
+    flag = False
+    changable = False
+    for room in scene_json['rooms']:
+        for obj in room['objList']:
+            if 'modelId' in obj and obj['modelId'] == intersect[0]:
+                if abs(obj['translate'][0] - intersect[1]) < 0.001 and abs(obj['translate'][1] - intersect[2]) < 0.001 and abs(obj['translate'][2] - intersect[3]) < 0.001:
+                    flag = (calWall(wallResult, obj, room) > 0)
+                    if 'startState' in obj:
+                        changable = obj['startState']
+                    if flag:
+                        break
+                    else:
+                        return 'geometry error in the room'
+        if flag:
+            break
+
+    if not flag:
+        return 'object isn\'t found in the scene'
+
+    fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'a+')
+    writeString = intersect[0]
+
+    if changable:
+        writeString += ', state ' + changable
+
+    if len(gtransgroup):
+        writeString += ', gtrans['
+        for k in gtransgroup:
+            writeString += '{%s, %.5f, %.5f, %.5f, %.5f} '%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]))
+        writeString += ']'
+    
+    if withWall:
+        writeString += ', wall{%.5f, %.5f, %.5f, %.5f}'%(wallResult[1],wallResult[3], wallResult[0], wallResult[2])
+    
+    if len(rela_name):
+        writeString += ', ' + rela_name
+    
+    writeString += ', ' + user
+
+    fd.write(writeString + "\n")
+    fd.close()
+
+    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}'     
+
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):
     if flask.request.method == 'POST':

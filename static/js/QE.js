@@ -260,6 +260,16 @@ const onKeyDown = function(event){
             emitFunctionCall(cmd.funcName, cmd.args);
         }
     }
+
+    if(event.keyCode === 77 && pressedKeys[17]){ 
+        tmp = $("#wallYL").is(":checked");
+        $("#wallYL").attr("checked", !tmp);
+    }
+
+    if(event.keyCode === 66 && pressedKeys[17]){
+        $("#usercommitchange_buttonYL").click();
+    }
+
     if(event.keyCode === 83 && pressedKeys[17]){ // Ctrl + S
         event.preventDefault();
         socket.emit('onlineSceneUpdate', getDownloadSceneJson(), onlineGroup);
