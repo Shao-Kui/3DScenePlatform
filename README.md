@@ -188,7 +188,7 @@ Our paper is accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Pleas
 # SceneViewer
 ![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/OPPNTPP.png "OPPNTPP")
 
-\[Paper\] [\[Video\]][sceneviewer] \[Supp\] (Coming Soon)
+[\[Paper\]][sceneviewerpaper] [\[Video\]][sceneviewer] [\[Supp\]][sceneviewersupp]
 
 This project is also the container for our work on automatic Photography in 3D residential scenes. The related source code includes:
 ```
@@ -257,4 +257,6 @@ This platform is developed for researches, though our license follows [GNU GPL 3
 [gbaPre]:https://www.bilibili.com/video/BV1FU4y1a7A1/
 [acmmm2021]:https://2021.acmmm.org/
 [yongliang]:http://yongliangyang.net/
+[sceneviewerpaper]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneViewer.pdf
 [sceneviewer]:https://www.bilibili.com/video/BV1Q84y1B7tb
+[sceneviewersupp]:https://ieeexplore.ieee.org/document/9920233/media#media
