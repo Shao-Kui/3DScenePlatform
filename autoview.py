@@ -1217,37 +1217,141 @@ def calWall(wallResult, obji, room):
 
     return 1
 
-@app_autoView.route("/usercommitchangeYL/<username>", methods=['POST'])
-def usercommitchangeYL(username):
+def obj_WinDoor_Relation(windoorResult, iobj, windoor):
+    if windoor['bbox']['max'][1] < 0.001:
+        #print('illegal door bbox')
+        return -1
+    lenx = windoor['bbox']['max'][0] - windoor['bbox']['min'][0]
+    leny = windoor['bbox']['max'][1] - windoor['bbox']['min'][1]
+    lenz = windoor['bbox']['max'][2] - windoor['bbox']['min'][2]
+    width = 0
+    posx = (windoor['bbox']['max'][0] + windoor['bbox']['min'][0])/2 - iobj['translate'][0]
+    posy = (windoor['bbox']['max'][1] + windoor['bbox']['min'][1])/2 - iobj['translate'][1]
+    posz = (windoor['bbox']['max'][2] + windoor['bbox']['min'][2])/2 - iobj['translate'][2]
+    dis = np.sqrt(posx*posx + posz*posz)
+    ori = - iobj['orient']
+    #if iobj['rotateOrder'] != 'XYZ':
+        #print('warning: obj_WinDoor_Relation: unexpected rotation order ' + iobj['rotateOrder'])
+
+    #if abs(iobj['rotate'][0]) > 0.001 or abs(iobj['rotate'][2]) > 0.001 :
+        #print('warning: obj_WinDoor_Relation: rotation on x-axis or z-axis will be ignored')
+    
+    if lenx > lenz:
+        width = lenx
+    else :
+        width = lenz
+        ori += 1.5708
+
+    windoorResult[0] = dis
+    windoorResult[1] = posx
+    windoorResult[2] = posy
+    windoorResult[3] = posz
+    windoorResult[4] = width
+    windoorResult[5] = leny
+    windoorResult[6] = ori
+    return 1
+
+def calDoor(doorResult, iobj, room):
+    print('calculating door from block')
+    for obj in room['blockList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
+                #print(obj['bbox'])
+                print('max0 skip\n')
+                continue
+            print(obj['bbox'])
+            print(windoorResult)
+            print('\n')
+            loc = 0
+            for tmp in doorResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            doorResult.insert(loc, windoorResult)
+            
+    print('calculating door from obj')
+    for obj in room['objList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
+                #print(obj['bbox'])
+                print('max0 skip\n')
+                continue
+            print(obj['bbox'])
+            print(windoorResult)
+            print('\n')
+            loc = 0
+            for tmp in doorResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            doorResult.insert(loc, windoorResult)
+    return 1
+
+def calWindow(windowResult, iobj, room):
+    print('calculating window')
+    for obj in room['objList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'window' or obj['coarseSemantic'] == 'Window'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
+                #print(obj['bbox'])
+                print('max0 skip\n')
+                continue
+            print(obj['bbox'])
+            print(windoorResult)
+            print('\n')
+            loc = 0
+            for tmp in windowResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            windowResult.insert(loc, windoorResult)
+    return 1
+
+@app_autoView.route("/usercommitOSR", methods=['POST'])
+def usercommitOSR():
     if flask.request.method == 'POST':
         timestr = time.strftime("%Y%m%d-%H%M%S")
         data = flask.request.json
         scene_json = data['json']
         intersect = data['intersectobject']
         gtransgroup = data['gtransgroup']
-        user = data['userYL']
-        withWall = data['wallYL']
+        user = data['userOSR']
+        withWall = data['roomConstraints'][0]
+        withWindow = data['roomConstraints'][1] #data['windowYL']
+        withDoor = data['roomConstraints'][2] #data['doorYL']
         
         try:
-            rela_name = data['rela_nameYL']
+            rela_name = data['nameOSR']
         except:
             rela_name = ''
     else:
         return 'sorry you\'re not using POST method'
 
     wallResult = [-1,-1,-1,-1]
+    windowResult = []
+    doorResult = []
     flag = False
     changable = False
     for room in scene_json['rooms']:
         for obj in room['objList']:
             if 'modelId' in obj and obj['modelId'] == intersect[0]:
                 if abs(obj['translate'][0] - intersect[1]) < 0.001 and abs(obj['translate'][1] - intersect[2]) < 0.001 and abs(obj['translate'][2] - intersect[3]) < 0.001:
-                    flag = (calWall(wallResult, obj, room) > 0)
+                    flag = True
+                    print(obj)
+                    if withWall:
+                        flag = (calWall(wallResult, obj, room) > 0)
+                    if withWindow:
+                        flag = (calWindow(windowResult, obj, room) > 0)
+                    if withDoor:
+                        flag = (calDoor(doorResult, obj, room) > 0)
                     if 'startState' in obj:
                         changable = obj['startState']
-                    if flag:
-                        break
-                    else:
+                    if not flag:
                         return 'geometry error in the room'
         if flag:
             break
@@ -1259,21 +1363,36 @@ def usercommitchangeYL(username):
     writeString = intersect[0]
 
     if changable:
-        writeString += ', state ' + changable
+        writeString += '; state ' + changable
 
     if len(gtransgroup):
-        writeString += ', gtrans['
+        writeString += '; gtrans['
         for k in gtransgroup:
-            writeString += '{%s, %.5f, %.5f, %.5f, %.5f} '%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]))
+            writeString += '{%s, %.5f, %.5f, %.5f, %.5f,'%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]))
+            if len(k[5]):
+                writeString += 'state %s,' %(k[5])
+            writeString += '}:'
         writeString += ']'
     
     if withWall:
-        writeString += ', wall{%.5f, %.5f, %.5f, %.5f}'%(wallResult[1],wallResult[3], wallResult[0], wallResult[2])
+        writeString += '; wall[{%.5f, %.5f, %.5f, %.5f,}:]'%(wallResult[1],wallResult[3], wallResult[0], wallResult[2])
+    
+    if withWindow and len(windowResult) > 0:
+        writeString += '; window['
+        for win in windowResult:
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6])
+        writeString += ']'
+
+    if withDoor and len(doorResult) > 0:
+        writeString += '; door['
+        for dor in doorResult:
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6])
+        writeString += ']'
     
     if len(rela_name):
-        writeString += ', ' + rela_name
+        writeString += '; ' + rela_name
     
-    writeString += ', ' + user
+    writeString += '; ' + user
 
     fd.write(writeString + "\n")
     fd.close()

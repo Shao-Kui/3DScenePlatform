@@ -262,12 +262,12 @@ const onKeyDown = function(event){
     }
 
     if(event.keyCode === 77 && pressedKeys[17]){ 
-        tmp = $("#wallYL").is(":checked");
-        $("#wallYL").attr("checked", !tmp);
+        tmp = $("#considerWall").is(":checked");
+        $("#considerWall").attr("checked", !tmp);
     }
 
     if(event.keyCode === 66 && pressedKeys[17]){
-        $("#usercommitchange_buttonYL").click();
+        $("#usercommitOSR").click();
     }
 
     if(event.keyCode === 83 && pressedKeys[17]){ // Ctrl + S
