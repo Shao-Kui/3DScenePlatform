@@ -17,6 +17,7 @@
     <script src="/static/3rdparty/three.js-r131/MTLLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/OBJLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TGALoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/GLTFLoader.js"></script>
     <script src="/static/3rdparty/three.js-r131/TransformControls.js"></script>
     <script src="/static/3rdparty/three.js-r131/EffectComposer.js"></script>
     <script src="/static/3rdparty/three.js-r131/OutlinePass.js"></script>
@@ -51,6 +52,7 @@
     <script src="/static/js/QE.js"></script>
     <script src="/static/js/ai.js"></script>
     <script src="/static/js/search.js"></script>
+    <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
@@ -76,6 +78,7 @@
       var AUXILIARY_MODE = false;
       var LayoutViewAdjust_MODE = false;
       var lighting_Mode = false;
+      var animaRecord_Mode = false;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
@@ -92,6 +95,7 @@
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
       var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
+      // var USE_NEW_WALL = false;
 
       //Global variables, will be initialize only once.
       var manager;
@@ -116,6 +120,7 @@
       var drawStartPos = new THREE.Vector2();
       var searchResults;
       var currentRoomId;
+      var currentSeqs;
       var orthline;
       const pressedKeys = [];
 
@@ -129,6 +134,9 @@
       var datgui;
       var datgui_intersectfolder;
       const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, total: 0}
+
+      var deltaClock;
+      const animaMixers = [];
 
       // this variable is used for determining the collaborative group a user belonging to;
       const onlineGroup = "{{ onlineGroup }}";
@@ -316,6 +324,13 @@
               class="btn btn-outline-dark m-1 btn-responsive"
             >
               Timer
+            </button>
+            <button
+              id="operationFuture"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Future
             </button>
           </div>
           <div class="py-1 px-0">
@@ -555,8 +570,23 @@
                         </div>
                     </div>
                 </form> -->
+         </div>
+         <div class="py-2 px-3">
+          <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
+          <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
+          <form onsubmit="return false">
+            <div class="input-group input-group-lg py-1">
+              <input type="text" class="form-control" id="userOSR" placeholder="请输入您的用户名" aria-label="series" required>
+              <input type="text" class="form-control" id="nameOSR" placeholder="给关联关系起个名字" aria-label="series">
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="submit" id="usercommitOSR">提交</button>
+              </div>
+            </div>
+            <input type="checkbox" id="considerWall">考虑墙体    <input type="checkbox" id="considerWindow">考虑窗户    <input type="checkbox" id="considerDoor">考虑门    <br>
+          </form>
           </div>
-          <div id="rec_container" style="display: none"></div>
+
+        <div id="rec_container" style="display: none"></div>
           <svg height="800" id="scenePaletteSVG" class="catalogSectionContent" style='display: none; margin: 0 auto;'>
               <g></g>
           </svg>
@@ -569,6 +599,9 @@
             <a class="text-muted" style="overflow-wrap: break-word"
               >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
             >
+            <!-- <a class="text-muted" style="overflow-wrap: break-word"
+              >Anonymous Authors</a
+            > -->
           </div>
         </div>
       </div>
@@ -597,6 +630,13 @@
               class="btn btn-lg btn-outline-light mx-2"
             >
               Load
+            </button>
+            <button
+              id="animaRecord_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              AnimaRecord
             </button>
             <button
               id="auxiliary_button"

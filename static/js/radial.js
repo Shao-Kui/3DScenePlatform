@@ -65,6 +65,21 @@ var radial_rotate_control = function (event) {
     On_ROTATE = true;
     transformControls.detach();
     toggles();
+    if(animaRecord_Mode){
+        INTERSECT_OBJ.rotation.set(0, INTERSECT_OBJ.rotation.y, 0);
+        let index = INTERSECT_OBJ.userData.json.sforder;
+        let startTime;
+        if(currentSeqs[index][0].length === 0){
+            startTime = 0;
+        }else{
+            startTime = currentSeqs[index][0].at(-1).t[1];
+        }
+        currentSeqs[index][0].push({
+            "action": "rotate",
+            "r1": INTERSECT_OBJ.rotation.y,
+            "t": [startTime, startTime+1]
+        });
+    }
 };
 
 var radial_lift_control = function(event){

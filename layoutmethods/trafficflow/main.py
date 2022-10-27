@@ -301,7 +301,7 @@ def getTotalcost(net: list, patternList: list, wallPatterns: list, space: TwoDim
         if fullnet.degree[nodeList[i]] == 1:
             netDegreeCost += 0.03
 
-    if len(patternList) > 0:
+    if nx.is_connected(fullnet):
         totalLength = 0
         for edge in fullnet.edges:
             totalLength += fullnet[edge[0]][edge[1]]['length']
@@ -1471,6 +1471,7 @@ def iter(choice: int, context: list, space: TwoDimSpace, spaceControlPoints: lis
     actionProbabilities = context[choice][9]
     sinceLastBest = context[choice][10]
     bestWallPatterns = context[choice][11]
+    wallPatterns = context[choice][12]
 
     for i in range(nowIterRound, nowIterRound + PROCESS_ITER_ROUND):
         if i % PLOT_INTERVAL == 0:
@@ -1492,8 +1493,13 @@ def iter(choice: int, context: list, space: TwoDimSpace, spaceControlPoints: lis
             # print(successRate)
 
         if LOGGING and i % LOG_INTERVAL == 0 and i > 0:
+            wallPatterns = buildWallPatterns(patternList, space)
+            tmplist = [
+                net, bestNet, patternList, bestList, totalcost, bestCost, totalcostList, nowIterRound, bestIterRound,
+                actionProbabilities, sinceLastBest, bestWallPatterns, wallPatterns
+            ]
             np.save('log_models/' + (str)(SET_NUMBER) + '_' + (str)(choice) + '_' + (str)(i) + '.npy',
-                    np.array([spaceControlPoints, deepcopy(context[choice])], dtype=object))
+                    np.array([spaceControlPoints, tmplist], dtype=object))
         totalcostList.append(totalcost)
 
         if totalcost < bestCost:  # save the best result
@@ -1781,19 +1787,19 @@ def iter(choice: int, context: list, space: TwoDimSpace, spaceControlPoints: lis
     nowIterRound += PROCESS_ITER_ROUND
     context[choice] = [
         net, bestNet, patternList, bestList, totalcost, bestCost, totalcostList, nowIterRound, bestIterRound,
-        actionProbabilities, sinceLastBest, bestWallPatterns
+        actionProbabilities, sinceLastBest, bestWallPatterns, wallPatterns
     ]
 
 
 if __name__ == '__main__':
     # prepare
-    # spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 20), p(0, 20)], p(0, 10), p(30, 10), p(1, 0), p(-1, 0)]
+    spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 20), p(0, 20)], p(0, 10), p(30, 10), p(1, 0), p(-1, 0)]
     # spaceControlPoints = [[p(0, 0), p(30, 0), p(30, 15), p(15, 15),
     #                        p(15, 30), p(0, 30)],
     #                       p(7.5, 30),
     #                       p(30, 7.5),
     #                       p(0, -1),
-    #                       p(-1, 0)]
+    #                       p(-1, 0)]  l
     # spaceControlPoints = [[p(0, 0), p(30, 0),
     #                        p(30, 20),
     #                        p(20, 20),
@@ -1804,18 +1810,147 @@ if __name__ == '__main__':
     #                       p(5, 20),
     #                       p(25, 20),
     #                       p(0, -1),
-    #                       p(0, -1)]
-    spaceControlPoints = [[p(0, 0), p(30, 0),
-                           p(30, 15),
-                           p(20, 15),
-                           p(20, 30),
-                           p(10, 30),
-                           p(10, 15),
-                           p(0, 15)],
-                          p(0, 7.5),
-                          p(30, 7.5),
-                          p(1, 0),
-                          p(-1, 0)]
+    #                       p(0, -1)]  u
+    # spaceControlPoints = [[p(0, 0), p(30, 0),
+    #                        p(30, 15),
+    #                        p(20, 15),
+    #                        p(20, 30),
+    #                        p(10, 30),
+    #                        p(10, 15),
+    #                        p(0, 15)],
+    #                       p(0, 7.5),
+    #                       p(30, 7.5),
+    #                       p(1, 0),
+    #                       p(-1, 0)] t
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(15, 0),
+    #     p(15, -15),
+    #     p(30, -15),
+    #     p(30, 0),
+    #     p(45, 0),
+    #     p(45, 15),
+    #     p(30, 15),
+    #     p(30, 30),
+    #     p(15, 30),
+    #     p(15, 15),
+    #     p(0, 15)
+    # ],
+    #                       p(0, 7.5),
+    #                       p(22.5, 30),
+    #                       p(1, 0),
+    #                       p(0, -1)] cross
+    # spaceControlPoints = [[p(0, 0), p(20, 0),
+    #                        p(20, 15),
+    #                        p(30, 15),
+    #                        p(30, 30),
+    #                        p(10, 30),
+    #                        p(10, 15),
+    #                        p(0, 15)],
+    #                       p(0, 7.5),
+    #                       p(30, 22.5),
+    #                       p(1, 0),
+    #                       p(-1, 0)] z
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(10, 0),
+    #     p(10, 10),
+    #     p(20, 10),
+    #     p(20, 0),
+    #     p(30, 0),
+    #     p(30, 30),
+    #     p(20, 30),
+    #     p(20, 20),
+    #     p(10, 20),
+    #     p(10, 30),
+    #     p(0, 30)
+    # ],
+    #                       p(5, 0),
+    #                       p(25, 0),
+    #                       p(0, 1),
+    #                       p(0, 1)] h
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(20, 0),
+    #     p(20, 10),
+    #     p(30, 10),
+    #     p(30, 20),
+    #     p(20, 20),
+    #     p(20, 30),
+    #     p(10, 30),
+    #     p(10, 20),
+    #     p(0, 20)
+    # ],
+    #                       p(15, 30),
+    #                       p(5, 0),
+    #                       p(0, -1),
+    #                       p(0, 1)] club
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(40, 0),
+    #     p(40, 30),
+    #     p(30, 30),
+    #     p(30, 10),
+    #     p(20, 10),
+    #     p(20, 20),
+    #     p(10, 20),
+    #     p(10, 15),
+    #     p(0, 15)
+    # ],
+    #                       p(35, 30),
+    #                       p(5, 15),
+    #                       p(0, -1),
+    #                       p(0, -1)] f
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(40, 0),
+    #     p(40, 40),
+    #     p(0, 40)
+    # ],
+    #                       p(15, 40),
+    #                       p(25, 0),
+    #                       p(0, -1),
+    #                       p(0, 1)] big square
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(10, 0),
+    #     p(10, 10),
+    #     p(15, 10),
+    #     p(15, 0),
+    #     p(30, 0),
+    #     p(30, 10),
+    #     p(35, 10),
+    #     p(35, 0),
+    #     p(45, 0),
+    #     p(45, 30),
+    #     p(0, 30)
+    # ],
+    #                       p(22.5, 0),
+    #                       p(22.5, 30),
+    #                       p(0, 1),
+    #                       p(0, -1)] e
+    # spaceControlPoints = [[
+    #     p(0, 0),
+    #     p(10, 0),
+    #     p(10, -10),
+    #     p(20, -10),
+    #     p(20, 0),
+    #     p(30, 0),
+    #     p(30, 10),
+    #     p(40, 10),
+    #     p(40, 20),
+    #     p(20, 20),
+    #     p(20, 15),
+    #     p(10, 15),
+    #     p(10,20),
+    #     p(-10,20),
+    #     p(-10,10),
+    #     p(0,10)
+    # ],
+    #                       p(-10, 15),
+    #                       p(40, 15),
+    #                       p(1, 0),
+    #                       p(-1, 0)] irre
     space = TwoDimSpace(spaceControlPoints[0], spaceControlPoints[1], spaceControlPoints[2], spaceControlPoints[3],
                         spaceControlPoints[4])
 
@@ -1863,6 +1998,7 @@ if __name__ == '__main__':
                     patternList = []
                     bestList = []
                     bestWallPatterns = []
+                    wallPatterns = []
                     net = buildNet(patternList, space)
                     wallPatterns = buildWallPatterns(patternList, space)
                     totalcost = getTotalcost(net, patternList, wallPatterns, space)[0]
@@ -1874,7 +2010,7 @@ if __name__ == '__main__':
                     sinceLastBest = 0
                     context[i] = [
                         net, bestNet, patternList, bestList, totalcost, bestCost, totalcostList, nowIterRound,
-                        bestIterRound, actionProbabilities, sinceLastBest, bestWallPatterns
+                        bestIterRound, actionProbabilities, sinceLastBest, bestWallPatterns, wallPatterns
                     ]
                     contextCount[i] = 0
                 totalCount = 0

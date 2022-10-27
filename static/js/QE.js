@@ -38,6 +38,26 @@ const transformControlsConfig = function(){
             }
             timeCounter.maniStart = moment();
         }
+        if(animaRecord_Mode && transformControls.mode === 'translate'){
+            let index = INTERSECT_OBJ.userData.json.sforder;
+            let startTime;
+            if(currentSeqs[index][0].length === 0){
+                startTime = 0;
+            }else{
+                startTime = currentSeqs[index][0].at(-1).t[1];
+            }
+            if(event.value){
+                currentSeqs[index][0].push({
+                    "action": "move",
+                    "p1": [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z],
+                    "t": [startTime, startTime+1]
+                });
+            }else{
+                let a = currentSeqs[index][0].at(-1);
+                a.p2 = [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z];
+                a.t[1] = a.t[0] + Math.sqrt(Math.pow(a.p1[0]-a.p2[0], 2) + Math.pow(a.p1[1]-a.p2[1], 2) + Math.pow(a.p1[2]-a.p2[2], 2)) / 4;
+            }
+        }
     });
     transformControls.addEventListener('change', function (event) {
         if(INTERSECT_OBJ === undefined){
@@ -71,6 +91,20 @@ const transformControlsConfig = function(){
             transformObject3DOnly(INTERSECT_OBJ.userData.key, 
                 [INTERSECT_OBJ.scale.x, INTERSECT_OBJ.scale.y, INTERSECT_OBJ.scale.z], 'scale');
         }
+    });
+}
+
+const actionAddTime = function(duration=1){
+    let index = INTERSECT_OBJ.userData.json.sforder;
+    let startTime;
+    if(currentSeqs[index][0].length === 0){
+        startTime = 0;
+    }else{
+        startTime = currentSeqs[index][0].at(-1).t[1];
+    }
+    currentSeqs[index][0].push({
+        "action": "pause",
+        "t": [startTime, startTime+duration]
     });
 }
 
@@ -205,7 +239,8 @@ const onKeyDown = function(event){
                 transform={
                     'translate': [INTERSECT_OBJ.position.x+_x*Math.sin(orient), INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+_x*Math.cos(orient)], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
-                    'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z]
+                    'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z],
+                    'format': INTERSECT_OBJ.userData.format
                 }
             );
             duplicateTimes += 1;
@@ -225,6 +260,16 @@ const onKeyDown = function(event){
             emitFunctionCall(cmd.funcName, cmd.args);
         }
     }
+
+    if(event.keyCode === 77 && pressedKeys[17]){ 
+        tmp = $("#considerWall").is(":checked");
+        $("#considerWall").attr("checked", !tmp);
+    }
+
+    if(event.keyCode === 66 && pressedKeys[17]){
+        $("#usercommitOSR").click();
+    }
+
     if(event.keyCode === 83 && pressedKeys[17]){ // Ctrl + S
         event.preventDefault();
         socket.emit('onlineSceneUpdate', getDownloadSceneJson(), onlineGroup);

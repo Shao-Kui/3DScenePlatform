@@ -120,3 +120,249 @@ var palette_recommendation = function(){
     }
     
 }
+
+const refreshSceneFutureRoomTypes = function(){
+    let roomtypes = Object.keys(
+    manager.renderManager.scene_json.sceneFuture[`${currentRoomId}`]
+    [manager.renderManager.scene_json.rooms[currentRoomId].state]);
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    roomtypes.forEach(function (rt){
+        let iDiv = document.createElement('div');
+        iDiv.className = "catalogItem";
+        iDiv.textContent = rt;
+        // iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+        // iDiv.setAttribute('objectID', item.id);
+        // iDiv.setAttribute('objectName', item.name);
+        // iDiv.setAttribute('modelId', item.name);
+        // iDiv.setAttribute('coarseSemantic', item.semantic);
+        // iDiv.setAttribute('semantic', item.semantic);
+        iDiv.addEventListener('click', clickSceneFutureIterms);
+        catalogItems.appendChild(iDiv);
+    });
+}
+
+const getUUID = function(){
+    let uuid;
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!uuid) uuid = THREE.MathUtils.generateUUID();
+    return uuid;
+}
+
+const standardizeRotate = function(rotate, refRotate){
+    if(rotate[0] === 0 && rotate[2] === 0){
+        rotate[1] = Math.atan2(Math.sin(rotate[1]), Math.cos(rotate[1]));
+        // refRotate[1] = Math.atan2(Math.sin(refRotate[1]), Math.cos(refRotate[1]));
+        if(Math.abs(rotate[1] - refRotate[1]) > Math.PI){
+            if(rotate[1] < refRotate[1]){
+                rotate[1] += Math.PI * 2;
+            }else{
+                rotate[1] -= Math.PI * 2;
+            }
+        }
+    }
+}
+
+const copyTransform = function(transform){
+    return {'translate': [...transform.translate], 'rotate': [...transform.rotate], 'scale': [...transform.scale]};
+} 
+
+const clickSceneFutureIterms = function (e) {
+    e.preventDefault();
+    let roomTransitions = manager.renderManager.scene_json.sceneFuture[`${currentRoomId}`]
+    [manager.renderManager.scene_json.rooms[currentRoomId].state]
+    [$(e.target).text()];
+    let room = manager.renderManager.scene_json.rooms[currentRoomId];
+    const previousObjList = [...room.objList];
+    previousObjList.sort((a,b) => a.sforder - b.sforder);
+    let i;
+    for(i = 0; i < previousObjList.length; i++){
+        let next = roomTransitions[i];
+        let currentKey = previousObjList[i].key;
+        if(next.type === "detachable"){
+            removeObjectByUUID(currentKey, true);
+            next.parts.forEach(part => {
+                standardizeRotate(part.startTransform.rotate, part.rotate);
+                // let uuid = getUUID();
+                // let object = addObjectByUUID(uuid, part.modelId, currentRoomId, {'translate': [...part.startTransform.translate], 'rotate': [...part.startTransform.rotate], 'scale': [...part.startTransform.scale]});
+                let object = addObjectFromCache(part.modelId, copyTransform(part.startTransform));
+                let uuid = object.name;
+                gsap.to(manager.renderManager.instanceKeyCache[uuid]['position'], {
+                    duration: 1,
+                    x: part['translate'][0],
+                    y: part['translate'][1],
+                    z: part['translate'][2]
+                }).then(() => {
+                    manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = part.sforder;
+                    synchronize_json_object(object);
+                })
+                gsap.to(manager.renderManager.instanceKeyCache[uuid]['rotation'], {
+                    duration: 1,
+                    x: part['rotate'][0],
+                    y: part['rotate'][1],
+                    z: part['rotate'][2]
+                })
+            });
+            continue;
+        }
+        if(next.type === "movetransformable"){
+            if(next.toState !== 'origin' && previousObjList[i].startState === 'origin'){
+                let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[next.toState];
+                actionForthToTarget(action);
+            }else if(next.toState === 'origin' && previousObjList[i].startState !== 'origin'){
+                let action = manager.renderManager.instanceKeyCache[previousObjList[i].key].actions[previousObjList[i].startState];
+                actionBackToOrigin(action);
+            }else if(next.toState !== 'origin' && previousObjList[i].startState !== 'origin'){
+
+            }
+            manager.renderManager.instanceKeyCache[previousObjList[i].key].userData.json.startState = next.toState;
+        }
+        standardizeRotate(next.rotate, previousObjList[i]['rotate']);
+        gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['position'], {
+            duration: 1,
+            x: next['translate'][0],
+            y: next['translate'][1],
+            z: next['translate'][2]
+        }).then(() => {
+            if(next.type === "movable" || next.type === "movetransformable"){
+                synchronize_json_object(manager.renderManager.instanceKeyCache[currentKey]);
+                return;
+            }
+            if(next.type === "composablepart"){
+                removeObjectByUUID(currentKey, true);
+                return;
+            }
+            if(next.type === 'composable'){
+                let object = addObjectFromCache(next.modelId, copyTransform(next.finalTransform));
+                uuid = object.name;
+            }else if(next.type === 'packable_in'){
+                removeObjectByUUID(currentKey, true);
+                return;
+            }
+            else{
+                let object = addObjectFromCache(next.modelId, copyTransform(next));
+                uuid = object.name;
+            }
+            manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
+            removeObjectByUUID(currentKey, true);
+        });
+        gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['rotation'], {
+            duration: 1,
+            x: next['rotate'][0],
+            y: next['rotate'][1],
+            z: next['rotate'][2]
+        });
+        if(["movetransformable", "transformable"].includes(next.type)){
+            let tScale = [0,0,0];
+            tScale[0] = (objectCache[next.modelId].boundingBox.max.x-objectCache[next.modelId].boundingBox.min.x) / (objectCache[previousObjList[i].modelId].boundingBox.max.x-objectCache[previousObjList[i].modelId].boundingBox.min.x);
+            tScale[1] = (objectCache[next.modelId].boundingBox.max.y-objectCache[next.modelId].boundingBox.min.y) / (objectCache[previousObjList[i].modelId].boundingBox.max.y-objectCache[previousObjList[i].modelId].boundingBox.min.y);
+            tScale[2] = (objectCache[next.modelId].boundingBox.max.z-objectCache[next.modelId].boundingBox.min.z) / (objectCache[previousObjList[i].modelId].boundingBox.max.z-objectCache[previousObjList[i].modelId].boundingBox.min.z);
+            gsap.to(manager.renderManager.instanceKeyCache[previousObjList[i].key]['scale'], {
+                duration: 1,
+                x: tScale[0],
+                y: tScale[1],
+                z: tScale[2]
+            });
+        }
+    }
+    for(; i < roomTransitions.length; i++){
+        let next = roomTransitions[i];
+        let uuid, object;
+        if(next.type === "packable_out"){
+            object = addObjectFromCache(next.modelId, copyTransform(next.inittransform));
+            uuid = object.name;
+            manager.renderManager.instanceKeyCache[uuid].userData.json.sforder = next.sforder;
+        }
+        gsap.to(manager.renderManager.instanceKeyCache[uuid]['position'], {
+            duration: 1,
+            x: next['translate'][0],
+            y: next['translate'][1],
+            z: next['translate'][2]
+        }).then(() => {
+            synchronize_json_object(object);
+        });
+        gsap.to(manager.renderManager.instanceKeyCache[uuid]['rotation'], {
+            duration: 1,
+            x: next['rotate'][0],
+            y: next['rotate'][1],
+            z: next['rotate'][2]
+        });
+    }
+    // console.log(nextOrder);
+    // Object.keys(nextOrder).forEach(key => {
+    //     console.log(manager.renderManager.instanceKeyCache[key].userData.json);
+    //     manager.renderManager.instanceKeyCache[key].userData.json.sforder = nextOrder[key];
+    // });
+    room.objList.sort((a,b) => a.sforder - b.sforder);
+    manager.renderManager.scene_json.rooms[currentRoomId].state = $(e.target).text();
+    refreshSceneFutureRoomTypes();
+}
+
+const sceneTransformFirst = function(derivation, name){
+    for(let j = 0; j < derivation.length; j++){
+        for(let k = 0; k < derivation[j].length; k++){
+            if(derivation[j][k].action === 'move' && name === 'move'){
+                return derivation[j][k].p1;
+            }
+            if(derivation[j][k].action === 'rotate' && name === 'rotate'){
+                return derivation[j][k].r1;
+            }
+        }
+    }
+}
+
+const sceneTransformTo = function(derivations){
+    for(let i = 0; i < derivations.length; i++){
+        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
+        if(!('key' in object)){
+            continue
+        }
+        let object3d = manager.renderManager.instanceKeyCache[object.key];
+        let initp = sceneTransformFirst(derivations[i], 'move');
+        if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
+        let initr = sceneTransformFirst(derivations[i], 'rotate');
+        if(initr){object3d.rotation.set(0, initr, 0);}
+        derivations[i].forEach(seq => {
+            seq.forEach(a => {
+                if(a.action === 'move'){
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
+                }
+                if(a.action === 'rotate'){
+                    let r = [0, a.r2, 0]
+                    standardizeRotate(r, [0, a.r1, 0]);
+                    object3d.rotation.set(0, a.r1, 0);
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
+                }
+                if(a.action === 'transform'){
+                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.s2, a.t[1] - a.t[0], 'none');
+                }
+            })
+        })
+    }
+}
+
+const sceneTransformBack = function(derivations){
+    const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
+    for(let i = derivations.length-1; i >= 0; i--){
+        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
+        let object3d = manager.renderManager.instanceKeyCache[object.key];
+        derivations[i].slice().reverse().forEach(seq => {
+            seq.slice().reverse().forEach(a => {
+                if(a.action === 'move'){
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [a.p1[0], a.p1[1], a.p1[2]], 'position', true, a.t[1] - a.t[0], 'none');
+                }
+                if(a.action === 'rotate'){
+                    let r = [0, a.r1, 0];
+                    standardizeRotate(r, [0, a.r2, 0]);
+                    object3d.rotation.set(0, a.r2, 0);
+                    setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
+                }
+                if(a.action === 'transform'){
+                    setTimeout(objectToAction, (T - a.t[1]) * 1000, object3d, a.s1, a.t[1] - a.t[0], 'none');
+                }
+            })
+        })
+    }
+}

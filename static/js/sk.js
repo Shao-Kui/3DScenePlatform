@@ -1,143 +1,3 @@
-const objectCache = {}; 
-const objectLoadingQueue = {};
-const gatheringObjCat = {}; 
-let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[]){
-    if(modelId in objectCache){
-        anchor.apply(null, anchorArgs);
-        return;
-    }
-    if(modelId in objectLoadingQueue){
-        objectLoadingQueue[modelId].push({'modelId': modelId, 'anchor': anchor, 'anchorArgs': anchorArgs});
-        return;
-    }
-    objectLoadingQueue[modelId] = [];
-    let mtlurl = `/mtl/${modelId}`;
-    let meshurl = `/mesh/${modelId}`;
-    let objLoader = new THREE.OBJLoader();
-    let mtlLoader = new THREE.MTLLoader();
-    mtlLoader.load(mtlurl, function (mCreator) {
-        objLoader.setMaterials(mCreator);
-        objLoader.load(meshurl, function (instance) {
-            instance.userData = {
-                "type": 'object',
-                "roomId": currentRoomId,
-                "modelId": modelId,
-                "name": modelId,
-                "coarseSemantic": ""
-            };
-            // enable shadowing of instances; 
-            instance.castShadow = true;
-            instance.receiveShadow = true;
-            instance.coarseAABB = new THREE.Box3().setFromObject(instance);
-            instance.boundingBox = {'min': new THREE.Vector3(Infinity, Infinity, Infinity), 'max': new THREE.Vector3(-Infinity, -Infinity, -Infinity)};
-            traverseObjSetting(instance);
-            if('geometry' in instance){
-                instance.geometry.computeBoundingBox();
-                instance.boundingBox = instance.geometry.boundingBox;
-            }
-            instance.children.forEach(child => {
-                if(child.material.newmtr_lowopa !== undefined) child.material = child.material.newmtr_lowopa;
-                if('geometry' in child){
-                    child.geometry.computeBoundingBox();
-                    if(child.geometry.boundingBox.max.x > instance.boundingBox.max.x){instance.boundingBox.max.x = child.geometry.boundingBox.max.x;}
-                    if(child.geometry.boundingBox.max.y > instance.boundingBox.max.y){instance.boundingBox.max.y = child.geometry.boundingBox.max.y;}
-                    if(child.geometry.boundingBox.max.z > instance.boundingBox.max.z){instance.boundingBox.max.z = child.geometry.boundingBox.max.z;}
-                    if(child.geometry.boundingBox.min.x < instance.boundingBox.min.x){instance.boundingBox.min.x = child.geometry.boundingBox.min.x;}
-                    if(child.geometry.boundingBox.min.y < instance.boundingBox.min.y){instance.boundingBox.min.y = child.geometry.boundingBox.min.y;}
-                    if(child.geometry.boundingBox.min.z < instance.boundingBox.min.z){instance.boundingBox.min.z = child.geometry.boundingBox.min.z;}
-                }
-            });
-            let associatedBox = new THREE.Mesh(new THREE.BoxGeometry(
-                instance.boundingBox.max.x - instance.boundingBox.min.x, 
-                instance.boundingBox.max.y - instance.boundingBox.min.y, 
-                instance.boundingBox.max.z - instance.boundingBox.min.z
-            ), new THREE.MeshPhongMaterial({color: 0xffffff}));
-            associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
-            instance.associatedBox = associatedBox;
-            traverseMtlToOppacity(instance);
-            objectCache[modelId] = instance;
-            anchor.apply(null, anchorArgs);
-            while(objectLoadingQueue[modelId].length){
-                let _f = objectLoadingQueue[modelId].pop();
-                _f.anchor.apply(null, _f.anchorArgs);
-            }
-            delete objectLoadingQueue.modelId;
-        });
-    });
-};
-
-const traverseMtlToOppacity = function (object) {
-    if(object instanceof THREE.Mesh){
-        let newmtr_lowopa;
-        if(Array.isArray(object.material)){
-            newmtr_lowopa = [];
-            for(let i = 0; i < object.material.length; i++){
-                let mtl = object.material[i].clone()
-                mtl.transparent = true;
-                mtl.opacity = 0.6;
-                newmtr_lowopa.push(mtl);
-            }
-        }else{
-            newmtr_lowopa = object.material.clone();
-            newmtr_lowopa.transparent = true;
-            newmtr_lowopa.opacity = 0.6;
-            
-        }
-        newmtr_lowopa.origin_mtr = object.material;
-        newmtr_lowopa.newmtr_lowopa = newmtr_lowopa;
-        object.material.origin_mtr = object.material;
-        object.material.newmtr_lowopa = newmtr_lowopa;
-        object.material = newmtr_lowopa;
-        return;
-    }
-    if(object.children.length === 0){
-        return;
-    }
-    object.children.forEach(function(child){
-        traverseMtlToOppacity(child);
-    });
-};
-
-let refreshObjectFromCache = function(objToInsert){
-    if(!(objToInsert.modelId in objectCache)) return;
-    let object3dFull = objectCache[objToInsert.modelId].clone();
-    let object3d;
-    if(manager.renderManager.islod){
-        object3d = new THREE.LOD();
-        object3d.addLevel(new THREE.Group(), 40);
-        object3d.addLevel(objectCache[objToInsert.modelId].associatedBox.clone(), 10);
-        object3d.addLevel(object3dFull, 0);
-    }else{
-        object3d = object3dFull;
-    }
-    object3d.name = undefined;
-    object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
-    object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
-    object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
-    object3d.userData = {
-        "type": 'object',
-        "key": objToInsert.key,
-        "roomId": objToInsert.roomId,
-        "modelId": objToInsert.modelId,
-        "coarseSemantic": objToInsert.coarseSemantic
-    };
-    object3dFull.children.forEach(child => {
-        if(child.material.origin_mtr) child.material = child.material.origin_mtr;
-    });
-    manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
-    // add reference from object3d to objectjson: 
-    object3d.userData.json = objToInsert;
-    if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'chandelier'].includes(object3d.userData.coarseSemantic)){
-        let light = new THREE.PointLight( 0xffffff, 10, 100 );
-        light.name = SEMANTIC_POINTLIGHT;
-        light.position.set(0,0,0);
-        object3d.add(light);
-    }
-    object3d.name = objToInsert.key;
-    scene.add(object3d)
-    return object3d; 
-}
-
 const roomIDCaster = new THREE.Raycaster();
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
@@ -153,41 +13,6 @@ const calculateRoomID = function(translate){
         return 0; 
     }
 }
-
-let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0]}, uuid=undefined, origin=true){
-    loadMoreServerUUIDs(1);
-    if(!uuid) uuid = serverUUIDs.pop(); 
-    if(!uuid) uuid = THREE.MathUtils.generateUUID();
-    commandStack.push({
-        'funcName': 'removeObjectByUUID',
-        'args': [uuid, true]
-    });
-    let roomID = calculateRoomID(transform.translate)
-    let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
-    object3d.name = uuid;
-    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
-    return object3d; 
-};
-
-const addObjectsFromCache = function(oArray){
-    loadMoreServerUUIDs(oArray.length);
-    let uuids = [];
-    console.log(oArray)
-    oArray.forEach(o => {
-        let uuid = serverUUIDs.pop(); // For object, pop a new uuid. 
-        if(!uuid){
-            uuid = THREE.MathUtils.generateUUID();
-        }
-        let roomID = calculateRoomID(o.transform.translate);
-        addObjectByUUID(uuid, o.modelId, roomID, o.transform);
-        emitFunctionCall('addObjectByUUID', [uuid, o.modelId, roomID, o.transform]);
-        uuids.push(uuid);
-    });
-    commandStack.push({
-        'funcName': 'removeObjectsByUUID',
-        'args': [uuids]
-    });
-};
 
 const removeObjectsByUUID = function(uuids){
     uuids.forEach(uuid => {
@@ -378,6 +203,10 @@ const gameLoop = function () {
     // renderer.render(scene, camera);
     composer.render();
     manager.renderManager.orthrenderer.render(scene, manager.renderManager.orthcamera);
+    const mixerUpdateDelta = deltaClock.getDelta();
+    animaMixers.forEach(animaMixer => {
+        animaMixer.update(mixerUpdateDelta);
+    })
     stats.end();
     requestAnimationFrame(gameLoop);
 };
@@ -448,15 +277,16 @@ const tCache = [];
 var fastTimeLine = gsap.timeline({repeat: 0});
 var lastMovedTimeStamp = moment();
 var currentMovedTimeStamp = moment();
-const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false){
+const transformObject3DOnly = function(uuid, xyz, mode='position', smooth=false, duration=0.2, ease='power1'){
     currentMovedTimeStamp = moment();
     let object3d = manager.renderManager.instanceKeyCache[uuid]; 
     if(smooth){
         gsap.to(object3d[mode], {
-            duration: 0.2,
+            duration: duration,
             x: xyz[0],
             y: xyz[1],
-            z: xyz[2]
+            z: xyz[2],
+            ease: ease
         });
     }else{
         object3d[mode].x = xyz[0]; object3d[mode].y = xyz[1]; object3d[mode].z = xyz[2]; 
@@ -508,7 +338,8 @@ const synchronize_json_object = function (object) {
         let transform = {
             'translate': inst.translate,
             'scale': inst.scale,
-            'rotate': inst.rotate
+            'rotate': inst.rotate,
+            'startState': inst.startState
         };
         emitFunctionCall('transformObjectByUUID', [object.userData.key, transform, object.userData.roomId]);
     }
@@ -639,6 +470,60 @@ const onTouchObj = function (event) {
     onClickIntersectObject(event.changedTouches[0]);
 };
 
+const actionForthToTarget  = function(action, duration=1){
+    // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = action.getClip().duration;action.weight = 1;console.log('starting forth to target', action.time, action.getClip().name);});
+    action.reset();
+    action.paused = true;
+    action.setDuration(duration);
+    action.timeScale = Math.abs(action.timeScale);
+    action.time = 0;
+    action.paused = false;
+    action.weight = 1;
+}
+
+const actionBackToOrigin = function(action, duration=1){
+    // action.getMixer().addEventListener('finished', e => {action.reset();action.paused = true;action.time = 0;action.weight = 0;console.log('starting back to origin', action.time, action.getClip().name);});
+    action.reset();
+    action.paused = true;
+    action.setDuration(duration);
+    action.timeScale = -Math.abs(action.timeScale);
+    action.time = action.getClip().duration;
+    action.paused = false;
+}
+
+const objectToAction = function(object3d, actionName, duration=1){
+    let isNeedBack = false;
+    if(object3d.userData.json.startState === actionName){
+        return;
+    }
+    if(actionName != 'origin' && object3d.userData.json.startState != 'origin'){
+        duration = duration * 0.5;
+    }
+    object3d.userData.json.startState = actionName;
+    
+    Object.keys(object3d.actions).forEach(function(an){
+        let action = object3d.actions[an]
+        if(action.time === action.getClip().duration){ // if this action is performed already: 
+            actionBackToOrigin(action, duration);
+            action.afterCall = a => {a.weight = 0;a.time=0;}
+            isNeedBack = true;
+        }
+    });
+    if(actionName === 'origin'){
+        return;
+    }
+    if(isNeedBack){
+        setTimeout(actionForthToTarget, duration*1000, object3d.actions[actionName], duration);
+    }
+    else{
+        actionForthToTarget(object3d.actions[actionName], duration);
+    }
+    if(actionName != 'origin'){
+        console.log(actionName, 'origin')
+        object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
+    }
+}
+
 const setNewIntersectObj = function(event = undefined){
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     transformControls.attach(INTERSECT_OBJ);
@@ -657,10 +542,53 @@ const setNewIntersectObj = function(event = undefined){
     }
     datguiObjectFolder(INTERSECT_OBJ);
     if($("#scenePaletteSVG").css('display') === 'block'){paletteExpand([INTERSECT_OBJ.userData.json.modelId]);}
+    // if the new intersected object is transformable: 
+    if("actions" in INTERSECT_OBJ){
+        while (catalogItems.firstChild) {
+            catalogItems.firstChild.remove();
+        }
+        ['origin'].concat(Object.keys(INTERSECT_OBJ.actions)).forEach(function (actionName){
+            let iDiv = document.createElement('div');
+            iDiv.className = "catalogItem";
+            // iDiv.textContent = actionName;
+            iDiv.setAttribute('key', INTERSECT_OBJ.userData.key);
+            iDiv.setAttribute('actionName', actionName);
+            iDiv.style.backgroundImage = `url(/static/dataset/object/${INTERSECT_OBJ.userData.json.modelId}/render20${actionName}/render-${actionName}-10.png)`;
+            iDiv.addEventListener('click', function(e){
+                e.preventDefault();
+                let object3d = manager.renderManager.instanceKeyCache[$(e.target).attr("key")];
+                if(animaRecord_Mode && $(e.target).attr("actionName") != object3d.userData.json.startState){
+                    let index = object3d.userData.json.sforder;
+                    let startTime;
+                    if(currentSeqs[index][0].length === 0){
+                        startTime = 0;
+                    }else{
+                        startTime = currentSeqs[index][0].at(-1).t[1];
+                    }
+                    currentSeqs[index][0].push({
+                        "action": "transform",
+                        "s1": object3d.userData.json.startState,
+                        "s2": $(e.target).attr("actionName"),
+                        "t": [startTime, startTime+1]
+                    });
+                }
+                objectToAction(object3d, $(e.target).attr("actionName"), 1);
+                synchronize_json_object(object3d);
+                console.log($(e.target).attr("actionName"), object3d.userData.json.startState);
+            });
+            catalogItems.appendChild(iDiv);
+        });
+    }
 }
 
 const addToGTRANS = function(so){
     if(GTRANS_GROUP.getObjectByName(so.userData.key)){
+        so.updateWorldMatrix(true, true);
+        let m = so.matrixWorld.clone();
+        scene.add(so);
+        so.position.set(0,0,0);so.rotation.set(0,0,0);so.scale.set(1,1,1);
+        so.applyMatrix4(m)
+        synchronize_json_object(so);
         return;
     }
     let orientDom = Math.atan2(Math.sin(INTERSECT_OBJ.rotation.y), Math.cos(INTERSECT_OBJ.rotation.x) * Math.cos(INTERSECT_OBJ.rotation.y));
@@ -717,7 +645,20 @@ const onClickIntersectObject = function(event){
             console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
             cancelClickingObject3D();return; 
         }
-        INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        INTERSECT_OBJ = intersects[0].object;
+        do{
+            if(!INTERSECT_OBJ.userData){
+                INTERSECT_OBJ = INTERSECT_OBJ.parent;
+                continue;
+            }
+            if(!INTERSECT_OBJ.userData.isSceneObj){
+                INTERSECT_OBJ = INTERSECT_OBJ.parent;
+                continue;
+            }else{
+                break;
+            }
+        }while(INTERSECT_OBJ.parent.type !== 'Scene')
+        // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
@@ -726,6 +667,7 @@ const onClickIntersectObject = function(event){
         return;
     }else{
         cancelClickingObject3D();
+        // return; // if you want to disable movable wall, just uncomment this line. 
         if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
             intersects = raycaster.intersectObjects(newWallCache, true);
@@ -781,7 +723,8 @@ var onClickObj = function (event) {
             transform={
                 'translate': [p.x, p.y, p.z], 
                 'rotate': [0,0,0],
-                'scale': [1,1,1]
+                'scale': [1,1,1],
+                'format': INSERT_OBJ.format
             }
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
@@ -826,6 +769,12 @@ var onClickObj = function (event) {
         synchronize_json_object(INTERSECT_OBJ);
         applyLayoutViewAdjust();
         timeCounter.rotate += moment.duration(moment().diff(timeCounter.rotateStart)).asSeconds();
+        if(animaRecord_Mode){
+            let index = INTERSECT_OBJ.userData.json.sforder;
+            let a = currentSeqs[index][0].at(-1);
+            a.r2 = INTERSECT_OBJ.rotation.y;
+            a.t[1] = a.t[0]+1;
+        }
         return;
     }
 
@@ -904,7 +853,13 @@ function onDocumentMouseMove(event) {
             objectCache[INSERT_OBJ.modelId].name = INSERT_NAME;
             objectCache[INSERT_OBJ.modelId].position.set(ip.x, ip.y, ip.z);
             objectCache[INSERT_OBJ.modelId].rotation.set(0, 0, 0, 'XYZ');
-            objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+            if(trafficFlowObjList.includes(INSERT_OBJ.modelId)){
+                let x = 0.9 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.x-objectCache[INSERT_OBJ.modelId].boundingBox.min.x);
+                let z = 0.45 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.z-objectCache[INSERT_OBJ.modelId].boundingBox.min.z);
+                objectCache[INSERT_OBJ.modelId].scale.set(x, x, z);
+            }else{
+                objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+            }
             scene.add(objectCache[INSERT_OBJ.modelId])
         }else{
             scene.remove(scene.getObjectByName(INSERT_NAME)); 
@@ -1358,6 +1313,7 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
+    $("#operationFuture").click(refreshSceneFutureRoomTypes);
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1398,7 +1354,7 @@ const setting_up = function () {
         if(lighting_Mode){
             button.style.backgroundColor = '#9400D3';
             Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
-                if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp'].includes(object3d.userData.coarseSemantic)){
+                if(['Ceiling Lamp', 'Pendant Lamp', 'Wall Lamp', 'wall_lamp'].includes(object3d.userData.coarseSemantic)){
                     let light = new THREE.PointLight( 0xffffff, 5, 100 );
                     light.name = SEMANTIC_POINTLIGHT;
                     light.position.set(0,0,0);
@@ -1411,13 +1367,28 @@ const setting_up = function () {
         }else{
             button.style.backgroundColor = 'transparent';
             Object.values(manager.renderManager.instanceKeyCache).forEach(object3d => {
-                if(['Ceiling Lamp', 'Pendant Lamp'].includes(object3d.userData.coarseSemantic)){
+                if(['Ceiling Lamp', 'Pendant Lamp', 'wall_lamp'].includes(object3d.userData.coarseSemantic)){
                     object3d.remove(object3d.getObjectByName(SEMANTIC_POINTLIGHT));
                 }
             });
         }
     });
-    
+    $("#animaRecord_button").click(function(){
+        if(currentRoomId === undefined){
+            return;
+        }
+        let button = document.getElementById("animaRecord_button");
+        animaRecord_Mode = !animaRecord_Mode;
+        if(animaRecord_Mode){
+            currentSeqs = [...Array(manager.renderManager.scene_json.rooms[currentRoomId].objList.length)].map(e => [[]]);
+            for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
+                manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
+            }
+            button.style.backgroundColor = '#9400D3';
+        }else{
+            button.style.backgroundColor = 'transparent';
+        }
+    });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
     $("#useNewWallCheckBox").click(() => {
         window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
@@ -1499,6 +1470,60 @@ const setting_up = function () {
         }
     });
 
+    $("#usercommitOSR").click(() => {
+        userOSR = $("#userOSR").val();
+        nameOSR = $("#nameOSR").val();
+        if (userOSR == "") {
+            alert("请填写您的用户名");
+        }
+
+        var interInfo = new Array(10);
+        interInfo[0] = INTERSECT_OBJ.userData.modelId;
+        interInfo[1] = INTERSECT_OBJ.position.x;
+        interInfo[2] = INTERSECT_OBJ.position.y;
+        interInfo[3] = INTERSECT_OBJ.position.z;
+        interInfo[4] = INTERSECT_OBJ.rotation.x;
+        interInfo[5] = INTERSECT_OBJ.rotation.y;
+        interInfo[6] = INTERSECT_OBJ.rotation.z;
+        interInfo[7] = INTERSECT_OBJ.scale.x;
+        interInfo[8] = INTERSECT_OBJ.scale.y;
+        interInfo[9] = INTERSECT_OBJ.scale.z;
+        var gtransInfo = new Array();
+        GTRANS_GROUP.traverse(function(objInG) {
+            if (objInG.userData.modelId){ //modelID != None
+                var objInfo = new Array(6);
+                objInfo[0] = objInG.userData.modelId;
+                objInfo[1] = objInG.position.x;
+                objInfo[2] = objInG.position.y;
+                objInfo[3] = objInG.position.z;
+                objInfo[4] = objInG.rotation.y;
+                objInfo[5] = '';
+                if(objInG.userData.json.startState){
+                    objInfo[5] = objInG.userData.json.startState;
+                }
+                var p = new Array(1); p[0] = objInfo;
+                gtransInfo = gtransInfo.concat(p);
+            }
+        })
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/usercommitOSR`,
+            data: JSON.stringify({
+                userOSR: userOSR,
+                nameOSR: nameOSR,
+                roomConstraints: [$("#considerWall").is(":checked"), $("#considerWindow").is(":checked"), $("#considerDoor").is(":checked")],
+                intersectobject: interInfo,
+                gtransgroup: gtransInfo,
+                json: getDownloadSceneJson()}),
+            success: function (msg) {
+                alert(msg);
+            }
+        });
+        
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1534,6 +1559,7 @@ const setting_up = function () {
     selectionBox = new THREE.SelectionBox( camera, scene );
 	selectionBoxHelper = new THREE.SelectionHelper( selectionBox, renderer, 'selectBox' );
     onWindowResize();
+    deltaClock = new THREE.Clock();
     gameLoop();
 };
 

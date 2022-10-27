@@ -33,6 +33,43 @@ from sk import ASPECT,DEFAULT_FOV
 RENDERWIDTH = 600
 SAMPLE_COUNT = 4
 
+def autoViewFromPatterns(room):
+    pcam = {}
+    roomType = room['roomTypes'][0]
+    for obj in room['objList']:
+        obj['roomType'] = roomType
+    room['objList'].sort(key=keyObjectKeyFunction, reverse=True)
+    if len(room['objList']) == 0:
+        return None
+    theDom = room['objList'][0]
+    # find a random pattern of object room['objList'][0];
+    try:
+        with open(f"./latentspace/pos-orient-5/{theDom['modelId']}.json") as f:
+            pattern = random.choice(random.choice(list(json.load(f).items()))[1])
+            print(pattern)
+    except Exception as e:
+        print(e)
+        return None
+    # rotate & scale the prior; 
+    pattern['translate'] = sk.transform_a_point(np.array(pattern['translate']), theDom['translate'], theDom['orient'], theDom['scale'])
+    # camTranslate = np.array(theDom['translate']) + pattern['translate']
+    camTranslate = pattern['translate'].copy()
+    pcam["origin"] = (camTranslate.copy()).tolist()
+    # calculate the vector toward the 'target'; 
+    theta = theDom['orient'] + pattern['orient']
+    camTarget = camTranslate.copy()
+    camTarget[0] += np.sin(theta)
+    camTarget[2] += np.cos(theta)
+    pcam["target"] = (camTarget.copy()).tolist()
+    # calculate the 'up' vector via the normal of plane;    
+    pcam["up"] = calCamUpVec(camTranslate, camTarget).tolist()
+    # get the object AABB bounding box; 
+    subAABB = sk.load_AABB(pattern['sub'])
+    tall = subAABB['max'][1] * pattern['scale'][1]
+    pcam["origin"][1] = tall
+    pcam["target"][1] = tall
+    return pcam
+
 def keyObjectKeyFunction(obj):
     if obj is None:
         return -1
@@ -58,9 +95,13 @@ def balancing(h, room, theta):
         DIS = 1 / cosToDirection
         DRC = probeTot / np.linalg.norm(probeTot)
         onePlanePointList.append(h['probe'] + DIS * DRC)
+    if len(onePlanePointList) == 0:
+        return h['direction']
     centroid = sum(onePlanePointList) / len(onePlanePointList)
     newDirection = centroid - h['probe']
     newDirection /= np.linalg.norm(newDirection, ord=2)
+    h['direction'] = newDirection
+    toOriginAndTarget(h)
     return newDirection
 
 def longestDiagonalSimple(wallIndex, floorMeta, floorPoly):
@@ -466,6 +507,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
     return hypotheses
 
 def renderPcamAsync(scenejson,identifier,dst=None):
+    pt.USENEWWALL = True
     if dst is not None:
         return pt.pathTracing(scenejson, SAMPLE_COUNT, dst)
     return pt.pathTracing(scenejson, SAMPLE_COUNT, f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
@@ -481,6 +523,7 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
     scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
     # identifier = uuid.uuid1()
     identifier = f'room{pcam["roomId"]}-{pcam["type"]}-{pcam["rank"]}'
+    # identifier = f'room{pcam["roomId"]}-{pcam["type"]}-{pcam["cons"]}'
     if not os.path.exists(f"./latentspace/autoview/{scenejson['origin']}"):
         os.makedirs(f"./latentspace/autoview/{scenejson['origin']}")
     pcam['identifier'] = str(identifier)
@@ -499,6 +542,194 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
     # thread = pt.pathTracingPara.delay(scenejson, 4, f"./latentspace/autoview/{scenejson['origin']}/{identifier}.png")
     # renderThreads[str(identifier)] = thread
 
+def eachNoConstraint(pcams):
+    def nonumObjBeSeen(h):
+        res = 0.
+        # if h['numObjBeSeen'] == 0:
+        #     return res
+        if h['isProbeOutside']:
+            return res
+        if h['wallNormalOffset'] < -0.20:
+            return res
+        if h['isObjCovered']:
+            res -= 1
+        if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+            res += 1
+        res += h['totalWindoorArea'] * 0.6 + h['layoutDirection'] * 3 # h['numObjBeSeen'] * 1. + 
+        res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
+        res += h['wallNormalOffset'] * 10
+        return res
+
+    def nototalWindoorArea(h):
+        res = 0.
+        if h['numObjBeSeen'] == 0:
+            return res
+        if h['isProbeOutside']:
+            return res
+        if h['wallNormalOffset'] < -0.20:
+            return res
+        if h['isObjCovered']:
+            res -= 1
+        if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+            res += 1
+        res += h['numObjBeSeen'] * 1. + h['layoutDirection'] * 3 #  + h['totalWindoorArea'] * 0.6
+        res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
+        res += h['wallNormalOffset'] * 10
+        return res
+
+    def nothird(h):
+        res = 0.
+        if h['numObjBeSeen'] == 0:
+            return res
+        if h['isProbeOutside']:
+            return res
+        if h['wallNormalOffset'] < -0.20:
+            return res
+        if h['isObjCovered']:
+            res -= 1
+        if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+            res += 1
+        res += h['numObjBeSeen'] * 1. + h['layoutDirection'] * 3 + h['totalWindoorArea'] * 0.6
+        # res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
+        res += h['wallNormalOffset'] * 10
+        return res
+
+    def nolayoutDirection(h):
+        res = 0.
+        if h['numObjBeSeen'] == 0:
+            return res
+        if h['isProbeOutside']:
+            return res
+        if h['wallNormalOffset'] < -0.20:
+            return res
+        if h['isObjCovered']:
+            res -= 1
+        if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+            res += 1
+        res += h['numObjBeSeen'] * 1. + h['totalWindoorArea'] * 0.6 # h['layoutDirection'] * 3 + 
+        res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
+        res += h['wallNormalOffset'] * 10
+        return res
+
+    def nowallNormalOffset(h):
+        res = 0.
+        if h['numObjBeSeen'] == 0:
+            return res
+        if h['isProbeOutside']:
+            return res
+        if h['wallNormalOffset'] < -0.20:
+            return res
+        if h['isObjCovered']:
+            res -= 1
+        # if h['type'] in ['wellAlignedShifted', 'againstMidWall', 'was_thin']:
+        #     res += 1
+        res += h['numObjBeSeen'] * 1. + h['layoutDirection'] * 3 + h['totalWindoorArea'] * 0.6 
+        res += int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])
+        # res += h['wallNormalOffset'] * 10
+        return res
+    
+    newpcams = []
+    for pc in pcams:
+        pc['nonumObjBeSeen'] = nonumObjBeSeen(pc)
+        pc['nototalWindoorArea'] = nototalWindoorArea(pc)
+        pc['nothird'] = nothird(pc)
+        pc['nolayoutDirection'] = nolayoutDirection(pc)
+        pc['nowallNormalOffset'] = nowallNormalOffset(pc)
+
+    def showMeAPcam(attr, pc):
+        for index in range(len(pcams)):
+            if pcams[index][attr] == pc[attr]:
+                return pcams.pop(index)
+
+    pc = max(pcams, key=lambda item: item['nonumObjBeSeen'])
+    pc = showMeAPcam('nonumObjBeSeen', pc)
+    if pc['nonumObjBeSeen'] <= 0:
+        return []
+    pc['cons'] = 'nonumObjBeSeen'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['nototalWindoorArea'])
+    pc = showMeAPcam('nototalWindoorArea', pc)
+    if pc['nototalWindoorArea'] <= 0:
+        return []
+    pc['cons'] = 'nototalWindoorArea'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['nothird'])
+    pc = showMeAPcam('nothird', pc)
+    if pc['nothird'] <= 0:
+        return []
+    pc['cons'] = 'nothird'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['nolayoutDirection'])
+    pc = showMeAPcam('nolayoutDirection', pc)
+    if pc['nolayoutDirection'] <= 0:
+        return []
+    pc['cons'] = 'nolayoutDirection'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['nowallNormalOffset'])
+    pc = showMeAPcam('nowallNormalOffset', pc)
+    if pc['nowallNormalOffset'] < 0:
+        return []
+    pc['cons'] = 'nowallNormalOffset'
+    newpcams.append(pc)
+
+    # for pc in newpcams:
+    #     print(pc[pc['cons']])
+    return newpcams
+
+def eachConstraint(pcams):
+    # the following code is for the qualitative comparison of constraints. 
+    newpcams = []
+    for pc in pcams:
+        pc['third'] = int(pc['thirdHasObj_rb']) + int(pc['thirdHasObj_lb'])
+
+    def showMeAPcam(attr, pc):
+        for index in range(len(pcams)):
+            if pcams[index][attr] == pc[attr]:
+                return pcams.pop(index)
+
+    pc = max(pcams, key=lambda item: item['numObjBeSeen'])
+    pc = showMeAPcam('numObjBeSeen', pc)
+    if pc['numObjBeSeen'] <= 0:
+        return []
+    pc['cons'] = 'numObjBeSeen'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['totalWindoorArea'])
+    pc = showMeAPcam('totalWindoorArea', pc)
+    if pc['totalWindoorArea'] <= 0:
+        return []
+    pc['cons'] = 'totalWindoorArea'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['third'])
+    pc = showMeAPcam('third', pc)
+    if pc['third'] <= 0:
+        return []
+    pc['cons'] = 'third'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['layoutDirection'])
+    pc = showMeAPcam('layoutDirection', pc)
+    if pc['layoutDirection'] <= 0:
+        return []
+    pc['cons'] = 'layoutDirection'
+    newpcams.append(pc)
+
+    pc = max(pcams, key=lambda item: item['wallNormalOffset'])
+    pc = showMeAPcam('wallNormalOffset', pc)
+    if pc['wallNormalOffset'] < 0:
+        return []
+    pc['cons'] = 'wallNormalOffset'
+    newpcams.append(pc)
+
+    # for pc in newpcams:
+    #     print(pc[pc['cons']])
+    return newpcams
+
 def autoViewRooms(scenejson, isPathTrancing=True):
     pt.SAVECONFIG = False
     sk.preloadAABBs(scenejson)
@@ -516,6 +747,9 @@ def autoViewRooms(scenejson, isPathTrancing=True):
             continue
 
         pcams = autoViewOnePointPerspective(room, scenejson)
+        # pcams = eachNoConstraint(pcams)
+        # global SAMPLE_COUNT
+        # SAMPLE_COUNT = 64
         if isinstance(pcams, (dict,)):
             for tp in pcams:
                 if pcams[tp] is None:
@@ -525,23 +759,24 @@ def autoViewRooms(scenejson, isPathTrancing=True):
                 if thread is not None:
                     renderThreads.append(thread)
         elif isinstance(pcams, (list,)):
-            for index, pcam in zip(range(len(pcams)), pcams[0:6]):
-                if index > 0 and pcam['score'] < 5:
-                    continue
+            for index, pcam in zip(range(len(pcams)), pcams[0:11]):
+                # if index > 0 and pcam['score'] < 0.01:
+                #     continue
+                pcams[index]['direction'] = balancing(pcams[index], room, pcams[index]['theta'])
                 thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
                 if thread is not None:
                     renderThreads.append(thread)
     if not os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
         print(f'{scenejson["origin"]} is an empty floorplan. ')
         return []
-    hamilton(scenejson)
+    # hamilton(scenejson)
     for t in renderThreads:
         t.join()
-    try:
-        showPcamInset(scenejson['origin'])
-        showPcamPoints(scenejson['origin'])
-    except:
-        pass
+    # try:
+    #     showPcamInset(scenejson['origin'])
+    #     showPcamPoints(scenejson['origin'])
+    # except:
+    #     pass
     return renderThreads
 
 def hamiltonNext(ndp, views, scene):
@@ -694,14 +929,18 @@ def floorplanOrthes():
     pt.cameraType = 'orthographic'
     pt.SAVECONFIG = False
     pt.REMOVELAMP = True
-    floorplanlist = os.listdir('./dataset/alilevel_door2021/')
-    # for floorplanfile in floorplanlist:
-    for floorplanfile in ['e8b0a6bf-58a2-49de-b9ea-231995fc9e3b.json', '317d64ff-b96e-4743-88f6-2b5b27551a7c.json']:
+    pt.USENEWWALL = True
+    floorplanlist = os.listdir('./dataset/Levels2021/')
+    _start = 241
+    for floorplanfile in floorplanlist[_start:]:
+    # for floorplanfile in ['007e1443-462a-4dae-b47c-44cfc6a5a41d.json']:
+        print(_start)
+        _start+=1
         if '.json' not in floorplanfile:
             continue
-        with open(f'./dataset/alilevel_door2021/{floorplanfile}') as f:
+        with open(f'./dataset/Levels2021/{floorplanfile}') as f:
             scenejson = json.load(f)
-        # if os.path.exists(f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png"):
+        # if os.path.exists(f"./dataset/alilevel_door2022_orth/{scenejson['origin']}.png"):
         #     continue
         points = []
         for room in scenejson['rooms']:
@@ -731,10 +970,13 @@ def floorplanOrthes():
         scenejson['canvas']['height'] = int((d - u) * 100)
         print(f'Rendering {floorplanfile} ...')
         try:
-            pt.pathTracing(scenejson, 64, f"./dataset/alilevel_door2021_orth/{scenejson['origin']}.png")
+            pt.USENEWWALL = False
+            pt.pathTracing(scenejson, 1, f"./dataset/alilevel_door2022_orth/{scenejson['origin']}.png")
         except Exception as e:
             print(e)
             continue
+        pt.USENEWWALL = True
+        pt.pathTracing(scenejson, 1, f"./dataset/alilevel_door2022_orth/{scenejson['origin']}newwall.png")
     # swap the cameraType back to perspective cameras. 
     pt.cameraType = 'perspective'
 
@@ -743,6 +985,8 @@ def highResRendering(dst=None):
         dst = 'highres'
     pt.SAVECONFIG = False
     pt.REMOVELAMP = False
+    pt.USENEWWALL = True
+    pt.emitter = 'constant'
     global RENDERWIDTH, SAMPLE_COUNT
     SAMPLE_COUNT = 64
     RENDERWIDTH = 1920
@@ -753,7 +997,7 @@ def highResRendering(dst=None):
         with open(f'./latentspace/autoview/{dst}/{jfn}') as f:
             view = json.load(f)
         origin = view['scenejsonfile']
-        with open(f'dataset/alilevel_door2021/{view["scenejsonfile"]}.json') as f:
+        with open(f'dataset/Levels2021/{view["scenejsonfile"]}.json') as f:
             scenejson = json.load(f)
         scenejson["PerspectiveCamera"] = {}
         scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
@@ -763,27 +1007,29 @@ def highResRendering(dst=None):
         rThread.join()
     if dst == 'highres':
         return
-    showPcamPoints(origin)
-    showPcamInset(origin)
-    try:
-        shutil.copytree(f'./latentspace/autoview/{origin}', f'./sceneviewer/results/{origin}')
-        shutil.copy(f'./dataset/alilevel_door2021/{origin}.json', f'./sceneviewer/results/{origin}/scenejson.json')
-    except:
-        pass
+    # showPcamPoints(origin)
+    # showPcamInset(origin)
+    # try:
+    #     shutil.copytree(f'./latentspace/autoview/{origin}', f'./sceneviewer/results/{origin}')
+    #     shutil.copy(f'./dataset/alilevel_door2021/{origin}.json', f'./sceneviewer/results/{origin}/scenejson.json')
+    # except:
+    #     pass
 
 def sceneViewerBatch():
     pt.SAVECONFIG = False
     pt.REMOVELAMP = False
+    pt.USENEWWALL = True
+    pt.emitter = 'constant'
     global RENDERWIDTH, SAMPLE_COUNT
     SAMPLE_COUNT = 4
     RENDERWIDTH = 600
     sjfilenames = os.listdir('./dataset/alilevel_door2021')
-    sjfilenames = sjfilenames[1000:1100]
+    sjfilenames = sjfilenames[1400:1500]
     for sjfilename in sjfilenames:
-        with open(f'./dataset/alilevel_door2021/{sjfilename}') as f:
+        with open(f'./dataset/Levels2021/{sjfilename}') as f:
             scenejson = json.load(f)
-        if os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
-            continue
+        # if os.path.exists(f'./latentspace/autoview/{scenejson["origin"]}'):
+        #     continue
         scenejson["PerspectiveCamera"] = {}
         scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
         scenejson["canvas"] = {}
@@ -796,33 +1042,42 @@ def sceneViewerBatch():
 
 def autoViewRoom(room, scenejson):
     pt.SAVECONFIG = False
+    pt.USENEWWALL = True
+    pt.emitter = 'constant'
     sk.preloadAABBs(scenejson)
     renderThreads = []
     pcams = autoViewOnePointPerspective(room, scenejson)
     for pcam in pcams:
+        pcam['direction'] = balancing(pcam, scenejson['rooms'][pcam['roomId']], pcam['theta'])
         thread = renderGivenPcam(pcam, scenejson.copy())
         if thread is not None:
             renderThreads.append(thread)
 
-def renderLabelledImages():
-    originnames = os.listdir('./dataset/PathTracing/TanHao/us-results')
+def renderLabelledImages(FD):
+    originnames = os.listdir(f'./dataset/PathTracing/TanHao/{FD}')
     global RENDERWIDTH, SAMPLE_COUNT
     SAMPLE_COUNT = 64
     RENDERWIDTH = 1920
     pt.SAVECONFIG = False
     pt.REMOVELAMP = False
+    pt.emitter = 'constant'
     for originname in originnames:
-        jsonnames = os.listdir(f'./dataset/PathTracing/TanHao/us-results/{originname}')
+        jsonnames = os.listdir(f'./dataset/PathTracing/TanHao/{FD}/{originname}')
         for jsonname in jsonnames:
+            identifier = jsonname.split('.')[0]
+            if os.path.exists(f"./dataset/PathTracing/TanHao/{FD}/{originname}/{identifier}.png"):
+                continue
+            print(f'Rendering -- {originname} -- {identifier}. ')
             if '.json' not in jsonname:
                 continue
-            with open(f'./dataset/PathTracing/TanHao/us-results/{originname}/{jsonname}') as f:
-                scenejson = json.load(f)
-            scenejson['canvas']['width']  = int(RENDERWIDTH)
-            scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
-            identifier = jsonname.split('.')[0]
-            print(f'Rendering -- {originname} -- {identifier}. ')
-            pt.pathTracing(scenejson, SAMPLE_COUNT, f"./dataset/PathTracing/TanHao/us-results/{originname}/{identifier}.png")
+            try:
+                with open(f'./dataset/PathTracing/TanHao/{FD}/{originname}/{jsonname}') as f:
+                    scenejson = json.load(f)
+                scenejson['canvas']['width']  = int(RENDERWIDTH)
+                scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
+                pt.pathTracing(scenejson, SAMPLE_COUNT, f"./dataset/PathTracing/TanHao/{FD}/{originname}/{identifier}.png")
+            except Exception as e:
+                print(e)
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -833,9 +1088,39 @@ if __name__ == "__main__":
     # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
 
     batchList = [
-
+        # '187b9a69-55fa-43d4-a309-b9654b061fa5'
+        # '20bb8b5e-be3b-4882-afd6-cf66095c447a',
+        # '20850871-40c6-42c8-8a18-737cb55f8be0',
+        # '20762858-41f4-424d-8fd5-caaf8ab8bef3',
+        # '206a5356-a7db-46d6-89dc-2bdb21a8af7b',
+        # '1fc66710-a632-4699-9b9f-8e217e1c33c1',
+        # '1f8df1b6-5d60-4847-a1ce-8949251a76fb',
+        # '1f5d59ce-7227-4643-9540-21f8d90618a2',
+        # '1e818dfa-cfd3-43ce-9005-3ebefd7cf467',
+        # '1e3aca33-209f-4ebd-8e99-704bc3b0158e',
+        # '1e1e3a61-c5f2-4992-a4b8-074c193d02e3',
+        # '1e16532d-1ec8-42c6-a66f-ef21e31c22c1',
+        # '1e12ac7d-0584-47a4-8f90-b6086554e128',
+        # '1dc74c70-21d3-40c6-8bd4-afb94dab934c',
+        # '1d7a01b8-4621-4ac0-8d81-b1c8f0cedc98',
+        # '1d481334-3f7f-4a41-8d8c-8c6e05a9ac10',
+        # '1cdf715f-663f-4fe1-9307-edd66e5312cd',
+        # '1cc6ef03-efaa-43d8-84a3-eafee1f6b214',
+        # '1cc33f5b-a9f0-4f6c-a859-25ccf28ddfab',
+        # '1cb6af4d-b7cf-4f76-8410-c3ac26e3c31a',
+        # '1c5c5b3e-bb82-4177-88eb-eacae17642fa',
+        # '1c35ad3e-ed43-4481-8bfc-63ee5918f9df',
+        # '1c2e47d2-2ddb-4d62-bcc7-93a438f22b18',
+        # '1c236ace-0e0e-48e5-8995-f0aef0a55373',
+        # '1bf513b5-70af-4c69-b053-beb0f0419b8b',
+        # '1bf23764-9d72-43f9-830f-0c0e17e18a83',
+        # '1bcbb926-b9ef-471f-ba0f-f711b90bafd6',
+        # '1bc22c85-3159-417c-a8cb-4e3788a0a0eb',
+        # '1bba94d6-9dfe-4597-bf5a-3c2a3eae85bb',
+        # '1b8a6ce5-1abe-4db5-b26e-93c0fbdde77e',
+        # '1b86c99f-c4ae-41bc-96db-4597619d7add'
+        '21e64bf0-2285-4847-934b-f29c8caf7648'
     ]
-
     for origin in batchList:
         try:
             highResRendering(origin)
@@ -849,17 +1134,13 @@ if __name__ == "__main__":
     # insetBatch(os.listdir('./sceneviewer/results'))
     # insetBatch(['03ff3349-3ab0-45fd-ae99-53da3334cb69'])
     # hamiltonBatch(batchList)
-    # renderLabelledImages()
+    # for d in os.listdir(f'./dataset/PathTracing/TanHao/userstudy-sceneviewer/'):
+    #     renderLabelledImages(f'userstudy-sceneviewer/{d}')
 
-    # with open('./dataset/alilevel_door2021/162d9b31-fe63-48d6-8053-cff7527ab5e0.json') as f:
+    # with open('./dataset/Levels2021/187b9a69-55fa-43d4-a309-b9654b061fa5.json') as f:
     #    test_file = json.load(f)
     #    sk.preloadAABBs(test_file)
-    # autoViewRoom(test_file['rooms'][2], test_file)    
-    # with open('./dataset/alilevel_door2021/162d9b31-fe63-48d6-8053-cff7527ab5e0.json') as f:
-    #    test_file = json.load(f)
-    #    sk.preloadAABBs(test_file)
-    # autoViewRoom(test_file['rooms'][2], test_file)
-    # autoViewRoom(test_file['rooms'][4], test_file)
+    # autoViewRoom(test_file['rooms'][1], test_file)    
 
     # sceneViewerBatch()
 
@@ -897,6 +1178,218 @@ def usercommitchange(username):
             if f'{username}_{alipay}_' in filename:
                 count += 1
         return f'{count} {main_obj}/{series}/{username}_{alipay}_{timestr}'
+
+
+def calWall(wallResult, obji, room):
+    try:
+        shape = np.array(room['roomShape']) # p2d('/' + room['origin'], room['modelId'] + 'f.obj')
+    except Exception as e:
+        return -1
+    if len(shape) <= 2:
+        return -1
+
+    # find the nearest wall; 
+    p = np.array([obji['translate'][0], obji['translate'][2]])
+    shapeEnd = shape[np.arange(1,len(shape)).tolist() + [0]]
+    a_square = np.sum((shape - p)**2, axis=1)
+    b_square = np.sum((shapeEnd - p)**2, axis=1)
+    c_square = np.sum((shape - shapeEnd)**2, axis=1)
+    area_double = 0.5 * np.sqrt(4 * a_square * b_square - (a_square + b_square - c_square)**2 )
+    distances = area_double / np.sqrt(c_square)
+    _indicesList = []
+    wallMinIndices = np.argsort(distances)
+    innerProducts = np.sum((shape - p) * (shape - shapeEnd), axis=1)
+    for i in wallMinIndices:
+        if 0 <= innerProducts[i] and innerProducts[i] <= c_square[i]:
+            _indicesList.append(i)
+            if len(_indicesList) == 2:
+                break
+            # wallMinIndex = i
+    if len(_indicesList) < 2:
+        return -1
+    
+    wallResult[1] = distances[_indicesList[0]]
+    wallResult[3] = distances[_indicesList[1]]
+
+    wn = (shape[_indicesList[0]] - shapeEnd[_indicesList[0]])[[1,0]]
+    wallResult[0] = wn[0]
+    wallResult[2] = -wn[1]
+
+    return 1
+
+def obj_WinDoor_Relation(windoorResult, iobj, windoor):
+    if windoor['bbox']['max'][1] < 0.001:
+        #print('illegal door bbox')
+        return -1
+    lenx = windoor['bbox']['max'][0] - windoor['bbox']['min'][0]
+    leny = windoor['bbox']['max'][1] - windoor['bbox']['min'][1]
+    lenz = windoor['bbox']['max'][2] - windoor['bbox']['min'][2]
+    width = 0
+    posx = (windoor['bbox']['max'][0] + windoor['bbox']['min'][0])/2 - iobj['translate'][0]
+    posy = (windoor['bbox']['max'][1] + windoor['bbox']['min'][1])/2 - iobj['translate'][1]
+    posz = (windoor['bbox']['max'][2] + windoor['bbox']['min'][2])/2 - iobj['translate'][2]
+    dis = np.sqrt(posx*posx + posz*posz)
+    ori = - iobj['orient']
+    #if iobj['rotateOrder'] != 'XYZ':
+        #print('warning: obj_WinDoor_Relation: unexpected rotation order ' + iobj['rotateOrder'])
+
+    #if abs(iobj['rotate'][0]) > 0.001 or abs(iobj['rotate'][2]) > 0.001 :
+        #print('warning: obj_WinDoor_Relation: rotation on x-axis or z-axis will be ignored')
+    
+    if lenx > lenz:
+        width = lenx
+    else :
+        width = lenz
+        ori += 1.5708
+
+    windoorResult[0] = dis
+    windoorResult[1] = posx
+    windoorResult[2] = posy
+    windoorResult[3] = posz
+    windoorResult[4] = width
+    windoorResult[5] = leny
+    windoorResult[6] = ori
+    return 1
+
+def calDoor(doorResult, iobj, room):
+    #print('calculating door from block')
+    for obj in room['blockList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
+                #print(obj['bbox'])
+                #print('max0 skip\n')
+                continue
+            #print(obj['bbox'])
+            #print(windoorResult)
+            #print('\n')
+            loc = 0
+            for tmp in doorResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            doorResult.insert(loc, windoorResult)
+            
+    #print('calculating door from obj')
+    for obj in room['objList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
+                continue
+            #print(obj['bbox'])
+            #print(windoorResult)
+            #print('\n')
+            loc = 0
+            for tmp in doorResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            doorResult.insert(loc, windoorResult)
+    return 1
+
+def calWindow(windowResult, iobj, room):
+    #print('calculating window')
+    for obj in room['objList']:
+        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'window' or obj['coarseSemantic'] == 'Window'):
+            windoorResult = [0,0,0,0,0,0,0]
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] +  'max0 skip\n')
+                continue
+            loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
+            for tmp in windowResult:
+                if tmp[0] < windoorResult[0]:
+                    loc = loc+1
+                else:
+                    break
+            windowResult.insert(loc, windoorResult)
+    return 1
+
+@app_autoView.route("/usercommitOSR", methods=['POST'])
+def usercommitOSR():
+    if flask.request.method == 'POST':
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        data = flask.request.json
+        scene_json = data['json']
+        intersect = data['intersectobject']
+        gtransgroup = data['gtransgroup']
+        user = data['userOSR']
+        withWall = data['roomConstraints'][0]
+        withWindow = data['roomConstraints'][1] #data['windowYL']
+        withDoor = data['roomConstraints'][2] #data['doorYL']
+        
+        try:
+            rela_name = data['nameOSR']
+        except:
+            rela_name = ''
+    else:
+        return 'sorry you\'re not using POST method'
+
+    wallResult = [-1,-1,-1,-1]
+    windowResult = []
+    doorResult = []
+    flag = False
+    changable = False
+    for room in scene_json['rooms']:
+        for obj in room['objList']:
+            if 'modelId' in obj and obj['modelId'] == intersect[0]:
+                if abs(obj['translate'][0] - intersect[1]) < 0.001 and abs(obj['translate'][1] - intersect[2]) < 0.001 and abs(obj['translate'][2] - intersect[3]) < 0.001:
+                    flag = True #print(obj)
+                    if withWall:
+                        flag = (calWall(wallResult, obj, room) > 0)
+                    if withWindow:
+                        flag = (calWindow(windowResult, obj, room) > 0)
+                    if withDoor:
+                        flag = (calDoor(doorResult, obj, room) > 0)
+                    if 'startState' in obj:
+                        changable = obj['startState']
+                    if not flag:
+                        return 'geometry error in the room'
+        if flag:
+            break
+
+    if not flag:
+        return 'object isn\'t found in the scene'
+
+    fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'a+')
+    writeString = intersect[0]
+
+    if changable:
+        writeString += '; state ' + changable
+
+    if len(gtransgroup):
+        writeString += '; gtrans['
+        for k in gtransgroup:
+            writeString += '{%s, %.5f, %.5f, %.5f, %.5f,'%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]))
+            if len(k[5]):
+                writeString += 'state %s,' %(k[5])
+            writeString += '}:'
+        writeString += ']'
+    
+    if withWall:
+        writeString += '; wall[{%.5f, %.5f, %.5f, %.5f,}:]'%(wallResult[1],wallResult[3], wallResult[0], wallResult[2])
+    
+    if withWindow and len(windowResult) > 0:
+        writeString += '; window['
+        for win in windowResult:
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6])
+        writeString += ']'
+
+    if withDoor and len(doorResult) > 0:
+        writeString += '; door['
+        for dor in doorResult:
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6])
+        writeString += ']'
+    
+    if len(rela_name):
+        writeString += '; ' + rela_name
+    
+    writeString += '; ' + user
+
+    fd.write(writeString + "\n")
+    fd.close()
+
+    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}'     
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):

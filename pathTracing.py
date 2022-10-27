@@ -1,3 +1,6 @@
+from pickle import TRUE
+from re import L
+from xmlrpc.client import NOT_WELLFORMED_ERROR
 from jinja2 import Environment, FileSystemLoader
 import json
 import os
@@ -27,7 +30,8 @@ num_samples = 64
 r_dir = 'batch'
 wallMaterial = True
 REMOVELAMP = False
-SAVECONFIG = True
+SAVECONFIG = False
+NOWALL = False
 USENEWWALL = False
 
 def autoPerspectiveCamera(scenejson):
@@ -161,6 +165,21 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
     if 'PerspectiveCamera' not in scenejson:
         autoPerspectiveCamera(scenejson)
+    # if cameraType == 'orthographic':
+    #     points = []
+    #     for room in scenejson['rooms']:
+    #         points += room['roomShape']
+    #     v = np.array(points)
+    #     l = np.min(v[:, 0])
+    #     r = np.max(v[:, 0])
+    #     u = np.min(v[:, 1])
+    #     d = np.max(v[:, 1])
+    #     orthViewLen = r - l
+    #     scenejson["PerspectiveCamera"]['origin'] = [(r + l)/2, 50, (d + u)/2]
+    #     scenejson["PerspectiveCamera"]['target'] = [(r + l)/2, 0,  (d + u)/2]
+    #     scenejson["PerspectiveCamera"]['up'] = [0, 0, 1]
+    #     scenejson['OrthCamera'] = {'x': orthViewLen / 2, 'y': orthViewLen / 2}
+    #     scenejson["canvas"] = {'width': int((r - l) * 100), 'height': int((d - u) * 100)}
     if 'canvas' not in scenejson:
         scenejson['canvas'] = {}
         scenejson['canvas']['width'] = "1920"
@@ -183,7 +202,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
                     blocks.append(obj)
     for room in scenejson['rooms']:
-        if USENEWWALL:
+        if USENEWWALL and 'roomShape' in room and not NOWALL:
             # for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
             #     next = room['roomShape'][(index+1)%len(room['roomShape'])]
             #     xScale = np.linalg.norm(np.array(next) - np.array(pre)) / 2
@@ -245,23 +264,69 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                         1
                     ]
                 })
-            roomDiag = np.linalg.norm(np.max(room['roomShape'], axis=0) - np.min(room['roomShape'], axis=0))
+            roomDiag = 10 * np.linalg.norm(np.max(room['roomShape'], axis=0) - np.min(room['roomShape'], axis=0))
             roomShape = room['roomShape'].copy()
-            roomNorm = room['roomNorm'].copy()
-            if not sk.checkClockwise(roomShape):
-                roomShape.reverse()
-                roomNorm.reverse()
+            # print(room['roomId'], 'Init RoomShape: ', roomShape)
+            roomShape = sk.regularizeRoomShape(roomShape)
+            if len(roomShape) < 4:
+                polytest = Polygon(roomShape)
+                print(roomShape, polytest.area)
             i = 1
             while len(roomShape) != 0:
+                roomNorm = sk.generateRoomNormals(roomShape)
+                if not sk.checkClockwise(roomShape):
+                    roomShape.reverse()
+                    roomNorm.reverse()
+                # print(roomShape)
+                if len(roomShape) == 4:
+                    ma = np.max(roomShape, axis=0)
+                    mi = np.min(roomShape, axis=0)
+                    pos = (ma + mi) / 2
+                    scale = (ma - mi) / 2
+                    scenejson['newroomobjlist'].append({'translate': [pos[0],0,pos[1]],'rotate': [np.pi/2, 0, 0],'scale': [scale[0],scale[1],1]})
+                    break
                 p0 = np.array(roomShape[i-1])
                 p1 = np.array(roomShape[i])
                 p2 = np.array(roomShape[i+1])
                 n0 = np.array(roomNorm[i-1]) * roomDiag
                 n1 = np.array(roomNorm[i]) * roomDiag
-                if not sk.isTwoLineSegCross(p0, p0 + n0, p2, p2 + n1):
+                n2 = np.array(roomNorm[i+1]) * roomDiag
+                if not sk.isTwoLineSegIntersect(p0, p0 + n0, p2, p2 + n1):
                     i += 1
                     continue
+                # if other walls block this intersection, we should also continue to the next iteration;
+                # _mindis = np.Inf
+                # for _i in range(len(roomShape)):
+                #     __p = sk.twoInfLineIntersection(roomShape[_i], roomShape[(_i+1)%len(roomShape)], p2, p2 + n1)
+                #     if __p is None:
+                #        continue
+                #     _dis = sk.pointToLineDistance(p2, roomShape[_i], roomShape[(_i+1)%len(roomShape)])
+                #     if _dis < _mindis and roomShape[_i] != i:
+                #         _mindis = _dis
+                #         _p = __p
+                #         tarI = roomShape[_i]
+                # if tarI == (i-1+len(roomShape)) % len(roomShape):
+                #     pstart = p0
+                #     roomShape.insert(i+2, _p)
+                # elif:
+                #     pstart = sk.twoInfLineIntersection(p0, p1, _p, _p + n2)
+                #     roomShape.insert(i, pstart)
+                #     roomShape.insert(i+2, _p)
                 _p = sk.twoInfLineIntersection(p0, p0 + n0, p2, p2 + n1)
+                RIGHTSIGN = False
+                for _index, p in zip(range(len(roomShape)), roomShape):
+                    if _index in [i-1, i, i+1]:
+                        continue
+                    if not sk.isPointProjectedToLineSeg(p, p2, _p):
+                        continue
+                    value = sk.toLeftTest(p, p2, p2 + n1)
+                    if value < -0.0000001:
+                        # print('rightsign', p, p2, p2 + n1)
+                        RIGHTSIGN = True
+                        break
+                if RIGHTSIGN:
+                    i += 1
+                    continue
                 ma = np.max([p0, p1, p2, _p], axis=0)
                 mi = np.min([p0, p1, p2, _p], axis=0)
                 pos = (ma + mi) / 2
@@ -270,11 +335,23 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 if len(roomShape) == 4:
                     break
                 polygon = Polygon([p0, p1, p2, _p])
+                testlist = []
+                # test whether the new point is overlap with an existing point;
+                # pbefore = roomShape[(i-2+len(roomShape)) % len(roomShape)]
+                # value0 = sk.toLeftTest(pbefore, p2, p2 + n1)
+                # if value0 > -0.0000001 and value0 < 0.0000001:
+                #     print(value0)
+                #     testlist += [(i-2)%(len(roomShape)+1)]
+                value1 = sk.toLeftTest(p2, _p, roomShape[(i+2)%len(roomShape)])
+                DELETEP2 = False
+                if value1 > -0.0000001 and value1 < 0.0000001:
+                    DELETEP2 = True
                 # p2 next;
                 if np.dot(np.array(roomNorm[i+1]), n0) < 0:
-                    testlist = [i+3]
-                else:
-                    testlist = []
+                    testlist += [i+3]
+                # if np.dot(np.array(roomNorm[(i-3)%len(roomShape)]), n0) < 0:
+                #     print('yes')
+                #     testlist += [(i-3)%(len(roomShape)+1)]
                 roomShape.insert((i-1+len(roomShape)) % len(roomShape), _p)
                 newroomShape = []
                 testlist += [i-1, i, i+1, i+2]
@@ -284,18 +361,19 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                     if polygon.covers(Point(p)):
                         if _ip in testlist and _in in testlist:
                             continue
+                    if DELETEP2 and _index == i+2:
+                        continue
                     newroomShape.append(p)
                 roomShape = newroomShape
                 if not sk.checkClockwise(roomShape):
                     roomShape.reverse()
-                # recalculated roomNorm;
-                wallSecIndices = np.arange(1, len(roomShape)).tolist() + [0]
-                rv = np.array(roomShape)[:] - np.array(roomShape)[wallSecIndices]
-                normals = rv[:, [1,0]]
-                normals[:, 1] = -normals[:, 1]
-                roomNorm = normals.tolist()
-                i = 1              
-        else:
+                roomShape = sk.regularizeRoomShape(roomShape)
+                i = 1
+                if i+1 >= len(roomShape):
+                    polytest = Polygon(roomShape)
+                    print(roomShape, polytest.area)
+                    break
+        elif not USENEWWALL and not NOWALL:
             for cwf in ['w', 'f']:
                 if os.path.exists(f'./dataset/room2021/{scenejson["origin"]}/{room["modelId"]}{cwf}.obj'):
                     scenejson['renderroomobjlist'].append({
@@ -312,7 +390,11 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 print('A lamp is removed. ')
                 continue
             obj['modelPath'] = '../../object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])
-            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
+            if 'format' not in obj:
+                obj['format'] = 'obj'
+            if obj['format'] == 'glb':
+                obj['modelPath'] = '../../../static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])) or os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
                 scenejson['renderobjlist'].append(obj)
     output = template.render(
         scenejson=scenejson, 
@@ -339,18 +421,18 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
 def batch():
     filenames = os.listdir(f'./dataset/PathTracing/{r_dir}')
     for filename in filenames:
+        pngfilename = filename.replace('.json', '.png')
         if '.json' not in filename:
             continue
         print('start do :' + filename)
         with open(f'./dataset/PathTracing/{r_dir}/{filename}') as f:
             try:
-                casename = pathTracing(json.load(f), sampleCount=num_samples)
+                casename = pathTracing(json.load(f), sampleCount=num_samples, dst=f'./dataset/PathTracing/{r_dir}/{pngfilename}')
             except Exception as e:
                 print(e)
                 continue
             # copy rendered imgs to the rdir: 
-            pngfilename = filename.replace('.json', '.png')
-            shutil.copy(casename + '/render.png', f'./dataset/PathTracing/{r_dir}/{pngfilename}')
+            # shutil.copy(casename + '/render.png', f'./dataset/PathTracing/{r_dir}/{pngfilename}')
 
 # roomtypelist = ['MasterBedroom', 'LivingDinningRoom', 'KidsRoom', 'SecondBedroom', 'LivingRoom', 'DinningRoom']
 roomtypelist = ['MasterBedroom']
@@ -418,7 +500,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -436,6 +518,10 @@ if __name__ == "__main__":
             print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
+        elif opt in ("--nowall"):
+            NOWALL = bool(int(arg))
+        elif opt in ("--emitter"):
+            emitter = arg
         elif opt in ("--task"):
             # defaultTast = getattr(__name__, arg)
             defaultTast = globals()[arg]

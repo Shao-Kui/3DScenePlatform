@@ -83,6 +83,18 @@ meat03 = Model('meat03', 1.2000007, 0.6382834, 2.0300000480000002, -2.4999999997
                0.009999952)
 meat04 = Model('meat04', 1.2000007, 0.6382834, 2.0300000480000002, -2.4999999997943334e-07, 0.01914170000000001,
                0.009999952)
+meat05 = Model('meat05', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
+meat06 = Model('meat06', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
+meat07 = Model('meat07', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
+meat08 = Model('meat08', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
+meat09 = Model('meat09', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
+meat10 = Model('meat10', 1.2000007, 0.6382834, 2.00000003824747, -2.4999999997943334e-07, 0.01914170000000001,
+               -3.824747e-08)
 grain01 = Model('grain01', 1.51, 0.676294, 0.8628171091, 0.0, -0.0052197000000000215, -0.0007844091)
 grain02 = Model('grain02', 1.51, 0.6752941, 0.8538579091, 0.0, -0.0047197500000000225, -0.0007844091)
 staplefood01 = Model('staplefood01', 1.331613, 0.7173203, 1.829805, -0.002193500000000015, 0.35866015, 0.0)
@@ -124,6 +136,13 @@ petfood01 = Model('petfood01', 1.331613, 0.7173203, 2.054899, -0.002193500000000
 freezer01 = Model('freezer01', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
 freezer02 = Model('freezer02', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
 freezer03 = Model('freezer03', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer04 = Model('freezer04', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer05 = Model('freezer05', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer06 = Model('freezer06', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer07 = Model('freezer07', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer08 = Model('freezer08', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer09 = Model('freezer09', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
+freezer10 = Model('freezer10', 1.2011454, 0.5999998, 0.862507, 0.0, 0.2862956, -1.416515e-17)
 shirt01 = Model('shirt01', 0.710213, 0.9840002, 1.0149998807907, 0.0, 0.0, 1.192093e-07)
 shirt02 = Model('shirt02', 1.1707278, 0.5457376, 1.01499997019768, 0.0, 0.0, 2.980232e-08)
 shirt03 = Model('shirt03', 1.1707278, 0.5457376, 1.01499997019768, 0.0, 0.0, 2.980232e-08)
@@ -145,10 +164,11 @@ allModels = [
     fruit03, fruit04, fruit05, fruit06, fruit07, fruit08, fruit09, fruit10, fruit11, vegetable01, vegetable02,
     vegetable03, vegetable04, vegetable05, vegetable06, vegetable07, vegetable08, vegetable09, vegetable10, vegetable11,
     vegetable12, vegetable13, vegetable14, vegetable15, vegetable16, vegetable17, meat01, meat02, meat03, meat04,
-    grain01, grain02, staplefood01, staplefood02, staplefood03, oil01, oil02, eggscounter03, flavoring01, container02,
-    container03, container04, coffee02, drinks01, drinks02, drinks03, drinks04, drinks05, wine01, milk01, drinks06,
-    drinks07, drinks08, drinks09, drinks10, drinks11, drinks12, drinks13, vendor01, vendor02, housekeeping01,
-    housekeeping02, housekeeping03, housekeeping, petfood01, freezer01, freezer02, freezer03, shirt01, shirt02, shirt03,
+    meat05, meat06, meat07, meat08, meat09, meat10, grain01, grain02, staplefood01, staplefood02, staplefood03, oil01,
+    oil02, eggscounter03, flavoring01, container02, container03, container04, coffee02, drinks01, drinks02, drinks03,
+    drinks04, drinks05, wine01, milk01, drinks06, drinks07, drinks08, drinks09, drinks10, drinks11, drinks12, drinks13,
+    vendor01, vendor02, housekeeping01, housekeeping02, housekeeping03, housekeeping, petfood01, freezer01, freezer02,
+    freezer03, freezer04, freezer05, freezer06, freezer07, freezer08, freezer09, freezer10, shirt01, shirt02, shirt03,
     shirt04, shirt05, shirt06, shirt07, shorts01, pants01, pants02, pants03, pants04, pants05, skirt01, skirt02
 ]
 snacks = [snack01, snack02, snack03, snack04, snacks01, snacks02, snacks03, snacks04, snacks05, snacks06]
@@ -160,7 +180,7 @@ vegetables = [
     vegetable01, vegetable02, vegetable03, vegetable04, vegetable05, vegetable06, vegetable07, vegetable08, vegetable09,
     vegetable10, vegetable11, vegetable12, vegetable13, vegetable14, vegetable15, vegetable16, vegetable17
 ]
-meats = [meat01, meat02, meat03, meat04]
+meats = [meat01, meat02, meat03, meat04, meat05, meat06, meat07, meat08, meat09, meat10]
 grains = [
     grain01, grain02, staplefood01, staplefood02, staplefood03, oil01, oil02, eggscounter03, flavoring01, petfood01
 ]
@@ -169,15 +189,18 @@ drinks = [
     coffee02, drinks01, drinks02, drinks03, drinks04, drinks05, wine01, milk01, drinks06, drinks07, drinks08, drinks09,
     drinks10, drinks11, drinks12, drinks13
 ]
-vendors = [vendor01, vendor02, freezer01, freezer02, freezer03]
+vendors = [
+    vendor01, vendor02, freezer01, freezer02, freezer03, freezer04, freezer05, freezer06, freezer07, freezer08,
+    freezer09, freezer10
+]
 housekeepings = [housekeeping01, housekeeping02, housekeeping03, housekeeping]
 shirts = [
     shirt01, shirt02, shirt03, shirt04, shirt05, shirt06, shirt07, shorts01, pants01, pants02, pants03, pants04,
     pants05, skirt01, skirt02
 ]
 
-lessChoices = [vendors, meats, containers, housekeepings]
-moreChoices = [snacks, cakes, fruits, vegetables, grains, drinks, shirts]
+lessChoices = [containers, housekeepings]
+moreChoices = [snacks, cakes, fruits, vegetables, grains, drinks, shirts, vendors, meats]
 
 door = Model('cgaxis_models_32_24', 2.535636, 0.620525, 2.499879, 0.0, 5.000000000143778e-07, 5.5e-05)
-shelf01=Model('shelf01',1.2000004,0.6000004,2.0,0.0,0.0,-6.123234e-17)
+shelf01 = Model('shelf01', 1.2000004, 0.6000004, 2.0, 0.0, 0.0, -6.123234e-17)

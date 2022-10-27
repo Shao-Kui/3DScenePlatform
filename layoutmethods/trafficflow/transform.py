@@ -64,7 +64,7 @@ def transformSingle(patternList: list,
         if pattern.type == EMPTY:
             modelChoices.append(None)
             continue
-        groups = [[] for k in range(100)]
+        groups = [[] for k in range(200)]
         for shelf in pattern.shelfs:
             groups[shelf.group].append(shelf)
         groupCount = 0
@@ -87,7 +87,7 @@ def transformSingle(patternList: list,
 
     for wpattern in wallPatternList:
 
-        groups = [[] for k in range(10)]
+        groups = [[] for k in range(20)]
         for shelf in wpattern.shelfs:
             groups[shelf.group].append(shelf)
         groupCount = 0
@@ -230,7 +230,7 @@ def transformLog(setNum: int, index: int, render=True):
     for i in range(len(allModels)):
         allModels[i].id = i
 
-    round = 1000
+    round = 10
     scenes = []
     while True:
         if os.path.exists('log_models/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round) + '.npy'):
@@ -244,8 +244,8 @@ def transformLog(setNum: int, index: int, render=True):
             zhigh = space.boundbox.bounds[3]
             xlen = xhigh - xlow
             zlen = zhigh - zlow
-            bestList = context[3]
-            bestWallList = context[11]
+            bestList = context[2]
+            bestWallList = context[12]
             name = 'log_scenes/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round)
             if os.path.exists('log_models/' + (str)(setNum) + '_' + (str)(index) + '_' + (str)(round + 1000) + '.npy'):
                 scenes.append(
@@ -255,12 +255,12 @@ def transformLog(setNum: int, index: int, render=True):
                                               name))
         else:
             break
-        round += 1000
+        round += 10
     if render:
         os.chdir('../../')
         print('log render start')
         for i in tqdm(range(len(scenes))):
-            round = i * 1000 + 1000
+            round = i * 10 + 10
             pt.SAVECONFIG = False
             pt.USENEWWALL = True
             pt.cameraType = 'perspective'

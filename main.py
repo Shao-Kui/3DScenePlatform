@@ -78,17 +78,24 @@ def mtl(name):
     else:
         return ""
 
+@app.route('/texture/<path:path>')
+def getTexture(path):
+    return flask.send_file(os.path.join(".", "dataset", "texture", path))
+
 @app.route("/texture//<id>")
 def texture(id):
-    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
+    return flask.send_file(os.path.join(".", "dataset", "texture", id))
+    # return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
 
-@app.route("/texture/<id>")
-def texture_(id):
-    return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
+# @app.route("/texture/<id>")
+# def texture_(id):
+#     print('Haha2')
+#     return flask.send_file(os.path.join(".", "dataset", "texture", id))
+#     # return flask.send_from_directory(os.path.join(".", "dataset", "texture"), id)
 
-@app.route("/texture/maps/<id>")
-def texture_maps(id):
-    return flask.send_file(f"./dataset/texture/maps/{id}")
+# @app.route("/texture/maps/<id>")
+# def texture_maps(id):
+#     return flask.send_file(f"./dataset/texture/maps/{id}")
 
 """
 @app.route("/thumbnail/<id>/<int:view>")
@@ -145,8 +152,10 @@ def query2nd():
     ret = []
     kw = flask.request.args.get('kw', default = "", type = str) # keyword
     num = flask.request.args.get('num', default = 20, type = int) # keyword
+    if os.path.exists(f'./static/dataset/object/{kw}/{kw}.glb'):
+        ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/static/dataset/object/{kw}/render20origin/render-origin-10.png", "format": "glb"})
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
-        ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/thumbnail/{kw}"})
+        ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/thumbnail/{kw}", "format": "obj"})
     catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
     if len(catMatches) != 0:
         cat = ChineseMapping[catMatches[0]]
