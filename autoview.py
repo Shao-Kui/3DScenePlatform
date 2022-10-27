@@ -1252,17 +1252,17 @@ def obj_WinDoor_Relation(windoorResult, iobj, windoor):
     return 1
 
 def calDoor(doorResult, iobj, room):
-    print('calculating door from block')
+    #print('calculating door from block')
     for obj in room['blockList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
             windoorResult = [0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
                 #print(obj['bbox'])
-                print('max0 skip\n')
+                #print('max0 skip\n')
                 continue
-            print(obj['bbox'])
-            print(windoorResult)
-            print('\n')
+            #print(obj['bbox'])
+            #print(windoorResult)
+            #print('\n')
             loc = 0
             for tmp in doorResult:
                 if tmp[0] < windoorResult[0]:
@@ -1271,17 +1271,15 @@ def calDoor(doorResult, iobj, room):
                     break
             doorResult.insert(loc, windoorResult)
             
-    print('calculating door from obj')
+    #print('calculating door from obj')
     for obj in room['objList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
             windoorResult = [0,0,0,0,0,0,0]
-            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
-                #print(obj['bbox'])
-                print('max0 skip\n')
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
-            print(obj['bbox'])
-            print(windoorResult)
-            print('\n')
+            #print(obj['bbox'])
+            #print(windoorResult)
+            #print('\n')
             loc = 0
             for tmp in doorResult:
                 if tmp[0] < windoorResult[0]:
@@ -1292,18 +1290,13 @@ def calDoor(doorResult, iobj, room):
     return 1
 
 def calWindow(windowResult, iobj, room):
-    print('calculating window')
+    #print('calculating window')
     for obj in room['objList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'window' or obj['coarseSemantic'] == 'Window'):
             windoorResult = [0,0,0,0,0,0,0]
-            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
-                #print(obj['bbox'])
-                print('max0 skip\n')
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] +  'max0 skip\n')
                 continue
-            print(obj['bbox'])
-            print(windoorResult)
-            print('\n')
-            loc = 0
+            loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
             for tmp in windowResult:
                 if tmp[0] < windoorResult[0]:
                     loc = loc+1
@@ -1341,8 +1334,7 @@ def usercommitOSR():
         for obj in room['objList']:
             if 'modelId' in obj and obj['modelId'] == intersect[0]:
                 if abs(obj['translate'][0] - intersect[1]) < 0.001 and abs(obj['translate'][1] - intersect[2]) < 0.001 and abs(obj['translate'][2] - intersect[3]) < 0.001:
-                    flag = True
-                    print(obj)
+                    flag = True #print(obj)
                     if withWall:
                         flag = (calWall(wallResult, obj, room) > 0)
                     if withWindow:
