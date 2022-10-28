@@ -1491,15 +1491,18 @@ const setting_up = function () {
         var gtransInfo = new Array();
         GTRANS_GROUP.traverse(function(objInG) {
             if (objInG.userData.modelId){ //modelID != None
-                var objInfo = new Array(6);
+                var objInfo = new Array(9);
                 objInfo[0] = objInG.userData.modelId;
                 objInfo[1] = objInG.position.x;
                 objInfo[2] = objInG.position.y;
                 objInfo[3] = objInG.position.z;
                 objInfo[4] = objInG.rotation.y;
-                objInfo[5] = '';
+                objInfo[5] = objInG.scale.x;
+                objInfo[6] = objInG.scale.y;
+                objInfo[7] = objInG.scale.z;
+                objInfo[8] = '';
                 if(objInG.userData.json.startState){
-                    objInfo[5] = objInG.userData.json.startState;
+                    objInfo[8] = objInG.userData.json.startState;
                 }
                 var p = new Array(1); p[0] = objInfo;
                 gtransInfo = gtransInfo.concat(p);
