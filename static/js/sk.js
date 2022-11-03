@@ -617,6 +617,25 @@ const addToGTRANS = function(so){
     GTRANS_GROUP.add(so);
 }
 
+const toSceneObj = function(object3d){
+    do{
+        if(object3d.parent.parent === null){
+            break;
+        }
+        if(!object3d.userData){
+            object3d = object3d.parent;
+            continue;
+        }
+        if(!object3d.userData.isSceneObj){
+            object3d = object3d.parent;
+            continue;
+        }else{
+            break;
+        }
+    }while(object3d.parent.type !== 'Scene')
+    return object3d;
+}
+
 const onClickIntersectObject = function(event){
     duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
@@ -628,7 +647,7 @@ const onClickIntersectObject = function(event){
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 if(pressedKeys[16]){// entering group transformation mode: 
-                    addToGTRANS(intersects[0].object.parent);
+                    addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
                 }else{
                     releaseGTRANSChildrens();
@@ -645,19 +664,7 @@ const onClickIntersectObject = function(event){
             console.log(`This object is already claimed by ${intersects[0].object.parent.userData.controlledByID}`);
             cancelClickingObject3D();return; 
         }
-        INTERSECT_OBJ = intersects[0].object;
-        do{
-            if(!INTERSECT_OBJ.userData){
-                INTERSECT_OBJ = INTERSECT_OBJ.parent;
-                continue;
-            }
-            if(!INTERSECT_OBJ.userData.isSceneObj){
-                INTERSECT_OBJ = INTERSECT_OBJ.parent;
-                continue;
-            }else{
-                break;
-            }
-        }while(INTERSECT_OBJ.parent.type !== 'Scene')
+        INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
@@ -839,8 +846,8 @@ function onDocumentMouseMove(event) {
     if(manager.renderManager.islod){
         outlinePass.selectedObjects = [];
     }
-    else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(intersects[0].object.parent)) {
-        outlinePass.selectedObjects = [intersects[0].object.parent, GTRANS_GROUP];
+    else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(toSceneObj(intersects[0].object.parent))) {
+        outlinePass.selectedObjects = [toSceneObj(intersects[0].object.parent), GTRANS_GROUP];
     }else{
         outlinePass.selectedObjects = [GTRANS_GROUP]
     }  
@@ -1491,15 +1498,18 @@ const setting_up = function () {
         var gtransInfo = new Array();
         GTRANS_GROUP.traverse(function(objInG) {
             if (objInG.userData.modelId){ //modelID != None
-                var objInfo = new Array(6);
+                var objInfo = new Array(9);
                 objInfo[0] = objInG.userData.modelId;
                 objInfo[1] = objInG.position.x;
                 objInfo[2] = objInG.position.y;
                 objInfo[3] = objInG.position.z;
                 objInfo[4] = objInG.rotation.y;
-                objInfo[5] = '';
+                objInfo[5] = objInG.scale.x;
+                objInfo[6] = objInG.scale.y;
+                objInfo[7] = objInG.scale.z;
+                objInfo[8] = '';
                 if(objInG.userData.json.startState){
-                    objInfo[5] = objInG.userData.json.startState;
+                    objInfo[8] = objInG.userData.json.startState;
                 }
                 var p = new Array(1); p[0] = objInfo;
                 gtransInfo = gtransInfo.concat(p);

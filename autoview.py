@@ -1232,7 +1232,6 @@ def obj_WinDoor_Relation(windoorResult, iobj, windoor):
     ori = - iobj['orient']
     #if iobj['rotateOrder'] != 'XYZ':
         #print('warning: obj_WinDoor_Relation: unexpected rotation order ' + iobj['rotateOrder'])
-
     #if abs(iobj['rotate'][0]) > 0.001 or abs(iobj['rotate'][2]) > 0.001 :
         #print('warning: obj_WinDoor_Relation: rotation on x-axis or z-axis will be ignored')
     
@@ -1256,14 +1255,9 @@ def calDoor(doorResult, iobj, room):
     for obj in room['blockList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
             windoorResult = [0,0,0,0,0,0,0]
-            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0:
-                #print(obj['bbox'])
-                #print('max0 skip\n')
+            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
-            #print(obj['bbox'])
-            #print(windoorResult)
-            #print('\n')
-            loc = 0
+            loc = 0  #print(obj['bbox']) print(windoorResult) print('\n')
             for tmp in doorResult:
                 if tmp[0] < windoorResult[0]:
                     loc = loc+1
@@ -1277,10 +1271,7 @@ def calDoor(doorResult, iobj, room):
             windoorResult = [0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
-            #print(obj['bbox'])
-            #print(windoorResult)
-            #print('\n')
-            loc = 0
+            loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
             for tmp in doorResult:
                 if tmp[0] < windoorResult[0]:
                     loc = loc+1
@@ -1354,15 +1345,18 @@ def usercommitOSR():
     fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'a+')
     writeString = intersect[0]
 
+    if abs(1.00 - intersect[7]) > 0.001 or abs(1.00 - intersect[8]) > 0.001 and abs(1.0 - intersect[9]) > 0.001:
+        writeString += '; scale[{%.5f, %.5f, %.5f,}:]'%(intersect[7], intersect[8], intersect[9])
+
     if changable:
-        writeString += '; state ' + changable
+        writeString += '; state[{%s,}:]'%(changable)
 
     if len(gtransgroup):
         writeString += '; gtrans['
         for k in gtransgroup:
-            writeString += '{%s, %.5f, %.5f, %.5f, %.5f,'%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]))
-            if len(k[5]):
-                writeString += 'state %s,' %(k[5])
+            writeString += '{%s, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,'%(k[0],float(k[1]),float(k[2]),float(k[3]),float(k[4]),float(k[5]),float(k[6]),float(k[7]))
+            if len(k[8]):
+                writeString += '%s,' %(k[8])
             writeString += '}:'
         writeString += ']'
     
