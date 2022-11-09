@@ -51,8 +51,7 @@ element
         |(item)------------------------------------------------------------------                 single item;
             |nearestDistance                                                                                   nearest distance towards the main object
             |secondDistance                                                                                    distance of the second nearest wall
-            |nearestOrient0
-            |nearestOrient1
+            |nearestOrient
     |window++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                              +if the window is taken into account
         |(item)------------------------------------------------------------------                              -for each window
             |distance                                                                                          distance of window to the main object
@@ -99,8 +98,8 @@ def itemListHandler(lst, instr):
             return {}
 
     if instr == 'wall':
-        if len(lst) == 4:
-            return {'nearestDistance' : float(lst[0]), 'secondDistance' : float(lst[1]), 'nearestOrient0' : float(lst[2]), 'nearestOrient1' : float(lst[3])}
+        if len(lst) == 3:
+            return {'nearestDistance' : float(lst[0]), 'secondDistance' : float(lst[1]), 'nearestOrient0' : float(lst[2])}
         else:
             return {}
     
