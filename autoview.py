@@ -1209,11 +1209,16 @@ def calWall(wallResult, obji, room):
         return -1
     
     wallResult[1] = distances[_indicesList[0]]
-    wallResult[3] = distances[_indicesList[1]]
+    wallResult[2] = distances[_indicesList[1]]
 
     wn = (shape[_indicesList[0]] - shapeEnd[_indicesList[0]])[[1,0]]
-    wallResult[0] = wn[0]
-    wallResult[2] = -wn[1]
+    ori = obji['orient'] - np.arctan2(wn[0], -wn[1])
+    while ori > np.math.pi:
+        ori -= 2 * np.math.pi
+    while ori < -(np.math.pi):
+        ori += 2 * np.math.pi
+
+    wallResult[0] = ori
 
     return 1
 
@@ -1316,7 +1321,7 @@ def usercommitOSR():
     else:
         return 'sorry you\'re not using POST method'
 
-    wallResult = [-1,-1,-1,-1]
+    wallResult = [-1,-1,-1]
     windowResult = []
     doorResult = []
     flag = False
@@ -1361,7 +1366,7 @@ def usercommitOSR():
         writeString += ']'
     
     if withWall:
-        writeString += '; wall[{%.5f, %.5f, %.5f, %.5f,}:]'%(wallResult[1],wallResult[3], wallResult[0], wallResult[2])
+        writeString += '; wall[{%.5f, %.5f, %.5f,}:]'%(wallResult[1],wallResult[2], wallResult[0])
     
     if withWindow and len(windowResult) > 0:
         writeString += '; window['
