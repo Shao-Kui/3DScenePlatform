@@ -82,6 +82,10 @@ def mtl(name):
 def getTexture(path):
     return flask.send_file(os.path.join(".", "dataset", "texture", path))
 
+@app.route('/online/textures/<path:path>')
+def getOnlieTextures(path):
+    return flask.send_file(f'./static/dataset/textures/{path}')
+
 @app.route("/texture//<id>")
 def texture(id):
     return flask.send_file(os.path.join(".", "dataset", "texture", id))

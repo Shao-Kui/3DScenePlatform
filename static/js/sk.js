@@ -1571,6 +1571,24 @@ const setting_up = function () {
     onWindowResize();
     deltaClock = new THREE.Clock();
     gameLoop();
+    const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
+    const params = {
+        color: '#ffffff',
+        scale: 4,
+        flowX: 1,
+        flowY: 1
+    };
+    water = new THREE.Water( waterGeometry, {
+        color: params.color,
+        scale: params.scale,
+        flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
+        textureWidth: 1024,
+        textureHeight: 1024
+    } );
+
+    water.position.y = 1;
+    water.rotation.x = Math.PI * - 0.5;
+    // scene.add( water );
 };
 
 var autocollapse = function (menu, maxHeight) {
