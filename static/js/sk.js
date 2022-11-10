@@ -619,6 +619,9 @@ const addToGTRANS = function(so){
 
 const toSceneObj = function(object3d){
     do{
+        if(object3d.parent === null){
+            break;
+        }
         if(object3d.parent.parent === null){
             break;
         }
