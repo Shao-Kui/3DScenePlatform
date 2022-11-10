@@ -731,7 +731,8 @@ var onClickObj = function (event) {
                 'translate': [p.x, p.y, p.z], 
                 'rotate': [0,0,0],
                 'scale': [1,1,1],
-                'format': INSERT_OBJ.format
+                'format': INSERT_OBJ.format,
+                'startState': INSERT_OBJ.status
             }
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
@@ -853,21 +854,24 @@ function onDocumentMouseMove(event) {
     }  
     // currentMovedTimeStamp = moment();
     tf.engine().startScope();
-    if(On_ADD && INSERT_OBJ.modelId in objectCache){
+    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         if(intersects.length > 0){
             let ip = intersects[0].point
-            objectCache[INSERT_OBJ.modelId].name = INSERT_NAME;
-            objectCache[INSERT_OBJ.modelId].position.set(ip.x, ip.y, ip.z);
-            objectCache[INSERT_OBJ.modelId].rotation.set(0, 0, 0, 'XYZ');
+            INSERT_OBJ.object3d.name = INSERT_NAME;
+            INSERT_OBJ.object3d.position.set(ip.x, ip.y, ip.z);
+            INSERT_OBJ.object3d.rotation.set(0, 0, 0, 'XYZ');
             if(trafficFlowObjList.includes(INSERT_OBJ.modelId)){
-                let x = 0.9 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.x-objectCache[INSERT_OBJ.modelId].boundingBox.min.x);
-                let z = 0.45 / (objectCache[INSERT_OBJ.modelId].boundingBox.max.z-objectCache[INSERT_OBJ.modelId].boundingBox.min.z);
-                objectCache[INSERT_OBJ.modelId].scale.set(x, x, z);
+                let x = 0.9 / (INSERT_OBJ.object3d.boundingBox.max.x-INSERT_OBJ.object3d.boundingBox.min.x);
+                let z = 0.45 / (INSERT_OBJ.object3d.boundingBox.max.z-INSERT_OBJ.object3d.boundingBox.min.z);
+                INSERT_OBJ.object3d.scale.set(x, x, z);
             }else{
-                objectCache[INSERT_OBJ.modelId].scale.set(1, 1, 1);
+                INSERT_OBJ.object3d.scale.set(1, 1, 1);
             }
-            scene.add(objectCache[INSERT_OBJ.modelId])
+            if(INSERT_OBJ.status !== undefined && INSERT_OBJ.format === 'glb'){
+                actionSet(INSERT_OBJ.object3d, INSERT_OBJ.status)
+            }
+            scene.add(INSERT_OBJ.object3d)
         }else{
             scene.remove(scene.getObjectByName(INSERT_NAME)); 
         }

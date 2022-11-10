@@ -42,6 +42,7 @@ const loadObjectToCacheContent = function(instance){
     instance.associatedBox = associatedBox;
     traverseMtlToOppacity(instance);
     objectCache[modelId] = instance;
+    playAnimation(objectCache[modelId]);
     while(objectLoadingQueue[modelId].length){
         let _f = objectLoadingQueue[modelId].pop();
         _f.anchor.apply(null, _f.anchorArgs);
@@ -74,7 +75,6 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
         });
     }else if(format === 'glb'){
         let gltfLoader = new THREE.GLTFLoader();
-        console.log(`/static/dataset/object/${modelId}/${modelId}.glb`);
         gltfLoader.load(`/static/dataset/object/${modelId}/${modelId}.glb`, function(instance){
             instance.scene.modelId = modelId;
             instance.scene.animations = instance.animations;
@@ -178,7 +178,7 @@ const trafficFlowObjList = ['snack01', 'snack02', 'snack03', 'snack04', 'snacks0
 'vendor02', 'housekeeping01', 'housekeeping02', 'housekeeping03', 'housekeeping', 'petfood01', 'freezer01', 'freezer02', 'freezer03', 
 'freezer04', 'freezer05', 'freezer06', 'freezer07', 'freezer08', 'freezer09', 'freezer10', 'shirt01', 'shirt02', 'shirt03', 'shirt04', 
 'shirt05', 'shirt06', 'shirt07', 'shirt08', 'shorts01', 'pants01', 'pants02', 'pants03', 'pants04', 'pants05', 'skirt01', 'skirt02'];
-let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}, uuid=undefined, origin=true){
+let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj', 'startState': 'origin'}, uuid=undefined, origin=true){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
     if(!uuid) uuid = THREE.MathUtils.generateUUID();
@@ -193,13 +193,8 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     }
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
-    console.log(object3d, uuid);
     object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
-    if(transform.format === 'glb'){
-        object3d.userData.json.startState = 'origin';
-        playAnimation(object3d);
-    }
     return object3d; 
 };
 
@@ -235,7 +230,9 @@ const playAnimation = function(object3d){
         action.paused = true;
         action.time = 0;
         action.weight = 0;
-        if(object3d.userData.json.startState === animation.name){
+        let startState = 'origin';
+        if(object3d.userData.json){startState = object3d.userData.json.startState;}
+        if(startState === animation.name){
             action.time = action.getClip().duration;
             action.weight = 1;
         }
@@ -249,4 +246,25 @@ const playAnimation = function(object3d){
         // object3d.currentAction = action;
         object3d.actions[animation.name] = action;
     });
+}
+
+const actionSet = function(object3d, status){
+    if(object3d.actions === undefined){
+        return;
+    }
+    if(object3d.actions.length === 0){
+        return;
+    }
+    let anames = Object.keys(object3d.actions);
+    anames.forEach(aname => {
+        let action = object3d.actions[aname];
+        action.reset();action.paused = true;action.weight = 0;
+    });
+    if(status === 'origin'){
+        return;
+    }
+    let action = object3d.actions[status];
+    action.reset();action.paused = true;
+    action.time = action.getClip().duration;
+    action.weight = 1;
 }

@@ -171,6 +171,7 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "orient": transform.rotate[1], 
         "key": uuid,
         "format": transform.format,
+        "startState": transform.startState,
         "isSceneObj": true,
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
@@ -195,6 +196,10 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
     manager.renderManager.scene_json.rooms[roomID].objList.push(objToInsert);
     manager.renderManager.instanceKeyCache[objToInsert.key] = object3d;
     object3d.userData.json = objToInsert; // add reference from object3d to objectjson. 
+    if(transform.format === 'glb'){
+        object3d.userData.json.startState = transform.startState;
+        playAnimation(object3d);
+    }
     scene.add(object3d);
     // if(origin && onlineGroup !== 'OFFLINE'){emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);}
     return object3d;
