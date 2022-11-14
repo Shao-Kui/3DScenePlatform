@@ -11,7 +11,9 @@ const clickCatalogItem = function (e, d=undefined) {
             "modelId": $(e.target).attr("objectName"),
             "coarseSemantic": $(e.target).attr("coarseSemantic"), 
             "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0],
-            "format": $(e.target).attr("format")
+            "format": $(e.target).attr("format"),
+            "status": $(e.target).attr("status"),
+            'object3d': undefined
         };
     }
     scene.remove(scene.getObjectByName(INSERT_NAME));
@@ -25,7 +27,12 @@ const clickCatalogItem = function (e, d=undefined) {
         timeCounter.addStart = moment();
     }
     scenecanvas.style.cursor = "crosshair";
-    loadObjectToCache(INSERT_OBJ.modelId, ()=>{}, [], INSERT_OBJ.format); 
+    loadObjectToCache(INSERT_OBJ.modelId, ()=>{
+        INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
+        if(INSERT_OBJ.status !== undefined){
+            playAnimation(INSERT_OBJ.object3d);
+        }
+    }, [], INSERT_OBJ.format); 
 }
 
 const clickTextureItem = function(e){
@@ -67,6 +74,8 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('modelId', item.name);
     iDiv.setAttribute('coarseSemantic', item.semantic);
     iDiv.setAttribute('semantic', item.semantic);
+    if(!item.status){item.status = 'origin';}
+    iDiv.setAttribute('status', item.status);
     if(!item.format){
         item.format = 'obj'
     }

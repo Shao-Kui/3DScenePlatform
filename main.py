@@ -61,10 +61,18 @@ def mesh(name):
     # m = orm.query_model_by_id(id)
     # return flask.send_file(json.loads(m.resources)["mesh"])
     objDir = f'./dataset/object/{name}/{name}.obj'
-    if os.path.exists(objDir):
+    if os.path.exists(objDir): 
         return flask.send_file(objDir)
     else:
         return ""
+
+@app.route("/thumbnailTransformable/<modelId>/<status>")
+def thumbnailTransformable(modelId, status):
+    imgpath = f'./static/dataset/object/{modelId}/render20{status}/render-{status}-10.png'
+    if os.path.exists(imgpath):
+        return flask.send_file(imgpath)
+    else:
+        return flask.send_file('./static/thumbnail_default.png')
 
 @app.route("/thumbnail/<name>")
 def thumbnail_sk(name):
@@ -83,6 +91,10 @@ def mtl(name):
 @app.route('/texture/<path:path>')
 def getTexture(path):
     return flask.send_file(os.path.join(".", "dataset", "texture", path))
+
+@app.route('/online/textures/<path:path>')
+def getOnlieTextures(path):
+    return flask.send_file(f'./static/dataset/textures/{path}')
 
 @app.route("/texture//<id>")
 def texture(id):
@@ -149,6 +161,8 @@ def textquery():
 
 with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
+with open('./dataset/transModuleIndex.json', encoding='utf-8') as f:
+    transModuleIndex = json.load(f)
 @app.route("/query2nd")
 def query2nd():
     ret = []
@@ -158,6 +172,12 @@ def query2nd():
         ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/static/dataset/object/{kw}/render20origin/render-origin-10.png", "format": "glb"})
     if os.path.exists(f'./dataset/object/{kw}/{kw}.obj'):
         ret.append({"name": kw, "semantic": sk.getobjCat(kw), "thumbnail":f"/thumbnail/{kw}", "format": "obj"})
+    catMatches = difflib.get_close_matches(kw, list(transModuleIndex.keys()), 1)
+    if len(catMatches) != 0:
+        print(f'Transformable Query: {catMatches[0]}. ')
+        modules = transModuleIndex[catMatches[0]]
+        ret += [{"name": module['modelId'], "status": module['status'], "semantic":catMatches[0], "format": 'glb',
+        "thumbnail":f"/thumbnailTransformable/{module['modelId']}/{module['status']}"} for module in modules]
     catMatches = difflib.get_close_matches(kw, list(ChineseMapping.keys()), 1)
     if len(catMatches) != 0:
         cat = ChineseMapping[catMatches[0]]
