@@ -6,7 +6,9 @@ from flask_cors import CORS
 import json
 import os
 import base64
+import atexit
 import time
+from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 # from rec_release import fa_reshuffle
 from layoutmethods.autolayoutv2 import sceneSynthesis
@@ -371,14 +373,16 @@ def favicon():
 
 onlineScenes = {}
 
-import atexit
 # defining function to run on shutdown
 def save_online_scenes():
+    print("Saving Online Scenes. " + time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
     for groupName in onlineScenes:
         with open(f'./examples/onlineScenes/{groupName}.json', 'w') as f:
             json.dump(onlineScenes[groupName], f)
-# Register the function to be called on exit
-atexit.register(save_online_scenes)
+schesk = BackgroundScheduler()
+schesk.add_job(func=save_online_scenes, trigger="interval", seconds=600)
+schesk.start()
+atexit.register(lambda: schesk.shutdown()) # Register the function to be called on exit
 
 @app.route("/applyuuid")
 def applyuuid():
