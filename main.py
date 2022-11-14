@@ -161,6 +161,19 @@ with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
 with open('./dataset/transModuleIndex.json', encoding='utf-8') as f:
     transModuleIndex = json.load(f)
+
+@app.route("/queryModule")
+def queryModule():
+    ret = []
+    kw = flask.request.args.get('kw', default = "", type = str) # keyword
+    catMatches = difflib.get_close_matches(kw, list(transModuleIndex.keys()), 1)
+    if len(catMatches) != 0:
+        print(f'Transformable Query: {catMatches[0]}. (queryModule)')
+        modules = transModuleIndex[catMatches[0]]
+        ret += [{"name": module['modelId'], "status": module['status'], "semantic":catMatches[0], "format": 'glb',
+        "thumbnail":f"/thumbnailTransformable/{module['modelId']}/{module['status']}"} for module in modules]
+    return json.dumps(ret)
+
 @app.route("/query2nd")
 def query2nd():
     ret = []

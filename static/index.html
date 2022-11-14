@@ -97,8 +97,8 @@
       var INSERT_OBJ;
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
-      var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
-      // var USE_NEW_WALL = false;
+      // var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
+      var USE_NEW_WALL = false;
 
       //Global variables, will be initialize only once.
       var manager;
@@ -341,7 +341,17 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >双人床</button>
+            >床</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >双层床</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >床头柜</button>
             <button
               id=""
               type="button"
@@ -351,22 +361,7 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >餐桌</button>
-            <button
-              id=""
-              type="button"
-              class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >小圆桌</button>
-            <button
-              id=""
-              type="button"
-              class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >梳妆台</button>
-            <button
-              id=""
-              type="button"
-              class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >衣柜</button>
+            >沙发</button>
             <button
               id=""
               type="button"
@@ -376,17 +371,37 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >沙发</button>
+            >餐桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >椅子</button>
+            >办公桌</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >储物柜</button>
+            >置物架</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >座椅</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >储藏柜</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >桌椅</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >长椅</button>
             <button
               id=""
               type="button"
@@ -566,7 +581,7 @@
                   type="submit"
                   id="floorPlanbtn"
                 >
-                  FloorPlan
+                  Module
                 </button>
               </div>
             </div>

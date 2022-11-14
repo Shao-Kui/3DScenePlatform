@@ -1562,7 +1562,7 @@ const setting_up = function () {
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#searchbtn').click();
+        $('#floorPlanbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){

@@ -122,6 +122,17 @@ const clickTextSearchButton = function () {
     });
 };
 
+const clickModuleSearchButton = function () {
+    while (catalogItems.firstChild) {catalogItems.firstChild.remove();}
+    var search_url = "/queryModule?kw=" + document.getElementById("searchinput").value;
+    $.getJSON(search_url, function (data) {
+        searchResults = data;
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
+};
+
 const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     let mid = {
         x: (lastPos.x + pcam.origin[0]) / 2,
@@ -353,6 +364,25 @@ const mappingClick = function(e){
     });
 }
 
+const mappingRightClick = function(e){
+    e.preventDefault();
+    autoViewPathPos.kill();
+    autoViewPathTar.kill();
+    let meta = $(e.target).data("meta");
+    $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
+        result.rooms.forEach(r => {
+            let newObjList = [];
+            r.objList.forEach(o => {
+                if(!o.inDatabase){
+                    newObjList.push(o);
+                }
+            });
+            r.objList = newObjList;
+        });
+        socket.emit('sceneRefresh', result, onlineGroup);
+    });
+}
+
 const addImageProcess = function(src){
     return new Promise((resolve) => {
         let img = new Image();
@@ -421,6 +451,7 @@ const clickAutoViewMapping = function(){
             iDiv.addEventListener('mouseover', mappingHover);
             iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
+            iDiv.addEventListener('contextmenu', mappingRightClick);
             iDiv.classList.add('tiler');
             catalogItems.appendChild(iDiv);
             $(iDiv).data('meta', item);
@@ -587,12 +618,13 @@ const searchPanelInitialization = function(){
     // $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
-    $("#floorPlanbtn").click(() => {
-        let origin = document.getElementById("searchinput").value;
-        $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
-            socket.emit('sceneRefresh', result, onlineGroup);
-        });
-    })
+    // $("#floorPlanbtn").click(() => {
+    //     let origin = document.getElementById("searchinput").value;
+    //     $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
+    //         socket.emit('sceneRefresh', result, onlineGroup);
+    //     });
+    // })
+    $("#floorPlanbtn").click(clickModuleSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#manyTextures").click(() => {
