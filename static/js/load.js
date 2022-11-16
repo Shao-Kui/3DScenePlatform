@@ -73,7 +73,20 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
                 anchor.apply(null, anchorArgs);
             });
         });
-    }else if(format === 'glb'){
+    }else if(format === 'Door' || format === 'Window'){
+        let objLoader = new THREE.OBJLoader();
+        let mtlLoader = new THREE.MTLLoader();
+        mtlLoader.load(mtlurl, function (mCreator) {
+            objLoader.setMaterials(mCreator);
+            objLoader.load(meshurl, function (instance) {
+                instance.format = format;
+                instance.modelId = modelId;
+                loadObjectToCacheContent(instance);
+                anchor.apply(null, anchorArgs);
+            });
+        });
+    }
+    else if(format === 'glb'){
         let gltfLoader = new THREE.GLTFLoader();
         gltfLoader.load(`/static/dataset/object/${modelId}/${modelId}.glb`, function(instance){
             instance.scene.modelId = modelId;
@@ -133,6 +146,22 @@ let refreshObjectFromCache = function(objToInsert){
     if(objToInsert.rotate[0] === 0 && objToInsert.rotate[2] === 0){
         objToInsert.rotate[1] = Math.atan2(Math.sin(objToInsert.rotate[1]), Math.cos(objToInsert.rotate[1]));
     }
+    if(objToInsert.format === 'Door' || objToInsert.format === 'Window'){
+        objToInsert.translate[0] = (objToInsert.bbox.max[0] + objToInsert.bbox.min[0]) / 2;
+        objToInsert.translate[1] = objToInsert.bbox.min[1];
+        objToInsert.translate[2] = (objToInsert.bbox.max[2] + objToInsert.bbox.min[2]) / 2;
+        let roomShape = tf.tensor(manager.renderManager.scene_json.rooms[objToInsert.roomId].roomShape);
+        let ftnw = findTheNearestWall({'point': {'x': objToInsert.translate[0], 'y': objToInsert.translate[1], 'z': objToInsert.translate[2]}}, roomShape); 
+        let wallIndex = ftnw[0][0];
+        objToInsert.rotate[1] = manager.renderManager.scene_json.rooms[objToInsert.roomId].roomOrient[wallIndex];
+        objToInsert.scale[0] = (objToInsert.bbox.max[0] - objToInsert.bbox.min[0]) / (objectCache[objToInsert.modelId].boundingBox.max.x-objectCache[objToInsert.modelId].boundingBox.min.x);
+        objToInsert.scale[1] = (objToInsert.bbox.max[1] - objToInsert.bbox.min[1]) / (objectCache[objToInsert.modelId].boundingBox.max.y-objectCache[objToInsert.modelId].boundingBox.min.y);
+        objToInsert.scale[2] = (objToInsert.bbox.max[2] - objToInsert.bbox.min[2]) / (objectCache[objToInsert.modelId].boundingBox.max.z-objectCache[objToInsert.modelId].boundingBox.min.z);
+        if(Math.abs(objToInsert.rotate[1] % Math.PI) > 0.1){
+            objToInsert.scale[0] = (objToInsert.bbox.max[2] - objToInsert.bbox.min[2]) / (objectCache[objToInsert.modelId].boundingBox.max.x-objectCache[objToInsert.modelId].boundingBox.min.x);
+            objToInsert.scale[2] = (objToInsert.bbox.max[0] - objToInsert.bbox.min[0]) / (objectCache[objToInsert.modelId].boundingBox.max.z-objectCache[objToInsert.modelId].boundingBox.min.z);
+        }
+    }
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
     object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
@@ -166,6 +195,14 @@ let refreshObjectFromCache = function(objToInsert){
     }
     return object3d; 
 }
+
+const refreshSceneCall = function(thejson){
+    commandStack.push({
+        'funcName': 'refreshSceneByJson',
+        'args': [getDownloadSceneJson()]
+    });
+    socket.emit('sceneRefresh', thejson, onlineGroup);
+};
 
 const trafficFlowObjList = ['snack01', 'snack02', 'snack03', 'snack04', 'snacks01', 'snacks02', 'snacks03', 'snacks04', 'snacks05', 'snacks06', 
 'cake02', 'cake03', 'sandwich01', 'sandwich02', 'burger01', 'cake04', 'cake05', 'friescounter01', 'cake06', 'cake07', 'tacocounter01', 'fruit01', 'fruit02', 

@@ -645,6 +645,9 @@ const onClickIntersectObject = function(event){
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(['Door', 'Window'].includes(intersects[0].object.parent.userData.format)){
+            return;
+        }
         // start to count time consumed. 
         timeCounter.maniStart = moment();
         if(INTERSECT_OBJ){
@@ -678,7 +681,7 @@ const onClickIntersectObject = function(event){
     }else{
         cancelClickingObject3D();
         // return; // if you want to disable movable wall, just uncomment this line. 
-        if (INTERSECT_WALL == undefined) {
+        /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
             intersects = raycaster.intersectObjects(newWallCache, true);
             if (intersects.length > 0) {
@@ -690,7 +693,7 @@ const onClickIntersectObject = function(event){
         } else {
             if (INTERSECT_WALL != undefined)
                 unselectWall();
-        }
+        }*/
     }
 }
 
@@ -1220,6 +1223,18 @@ const downloadSceneJson =  function(){
     dlAnchorElem.setAttribute("href", dataStr);
     dlAnchorElem.setAttribute("download", `${json_to_dl.origin}-r${json_to_dl.PerspectiveCamera.roomId}.json`);
     dlAnchorElem.click();
+}
+
+const numberOfObjectsInTheScene = function(){
+    let count = 0;
+    manager.renderManager.scene_json.rooms.forEach(r => {
+        r.objList.forEach(o => {
+            if(o.inDatabase){
+                count += 1;
+            }
+        });
+    });
+    console.log(count);
 }
 
 var temp;

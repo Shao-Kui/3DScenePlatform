@@ -360,7 +360,7 @@ const mappingClick = function(e){
     autoViewPathTar.kill();
     let meta = $(e.target).data("meta");
     $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
-        socket.emit('sceneRefresh', result, onlineGroup);
+        refreshSceneCall(result);
     });
 }
 
@@ -478,6 +478,53 @@ const clickAutoViewMapping = function(){
         })
     });
 };
+
+const jiahong1115 = ['4.0_3.0_2', '4.0_3.0_64', '4.0_4.0_2', '4.0_4.0_64', '5.0_3.0_2', '5.0_3.0_47', 
+'5.0_4.0_47', '5.5_4.0_23', '6.0_3.0_47', '6.0_3.0_61', '6.5_4.5_64', '6.5_4.5_78'];
+const clickSelectRoomShape = function(){
+    floorPlanMapping.clear();
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    jiahong1115.forEach(item => {
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/static/dataset/jiahong1115/${item}.png`;
+        iDiv.className = "mapping catalogItem";
+        iDiv.style.backgroundImage = `url(/static/dataset/jiahong1115/${item}.png)`;
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        iDiv.addEventListener('mouseover', mappingHover);
+        iDiv.addEventListener('mouseout', mappingLeave);
+        iDiv.addEventListener('click', (e) => {
+            $.getJSON(`/static/dataset/jiahong1115/${item}.json`, function(result){
+                refreshSceneCall(result);
+            });
+            mappingLeave(e);
+        });
+        iDiv.classList.add('tiler');
+        catalogItems.appendChild(iDiv);
+        $(iDiv).data('meta', {'identifier': item.replaceAll('.', '-')});
+        floorPlanMapping.set(item.replaceAll('.', '-'), image);
+    });
+    Splitting({
+        target: '.tiler',
+        by: 'cells',
+        rows: nrs,
+        columns: ncs,
+        image: true
+    });
+    $('.tiler .cell-grid .cell').each(function(index){
+        let meta = $(this).parent().parent().data("meta");
+        $(this).parent().attr('id', `grids-${meta.identifier}`);
+        $(this).attr('id', `grid-${meta.identifier}`);
+        console.log(meta.identifier)
+    })
+}
 
 const showLargerCGSPreview = function(e){
     e.preventDefault();
@@ -618,6 +665,7 @@ const searchPanelInitialization = function(){
     // $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
+    $("#selectRoomShapebtn").click(clickSelectRoomShape);
     // $("#floorPlanbtn").click(() => {
     //     let origin = document.getElementById("searchinput").value;
     //     $.getJSON(`/getSceneJsonByID/${origin}`, function(result){

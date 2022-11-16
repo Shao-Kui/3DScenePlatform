@@ -352,6 +352,13 @@ class SceneManager {
                 if(inst === null || inst == undefined){
                     return;
                 }
+                if(inst.format === 'Door' || inst.format === 'Window'){
+                    if(inst.format === 'Door') inst.modelId = '214';
+                    if(inst.format === 'Window') inst.modelId = '126';
+                    loadObjectToCache(inst.modelId, function(){
+                        refreshObjectFromCache(inst);
+                    }, [], inst.format);
+                }
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
                         return;

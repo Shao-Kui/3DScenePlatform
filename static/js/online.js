@@ -154,6 +154,10 @@ const removeObjectByUUID = function(uuid, origin=true){
     }
 }
 
+const refreshSceneByJson = function(thejson){
+    socket.emit('sceneRefresh', thejson, onlineGroup);
+}
+
 const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}){
     if(!(modelId in objectCache)){
         loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform]);
@@ -173,7 +177,8 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "format": transform.format,
         "startState": transform.startState,
         "isSceneObj": true,
-        "mageAddDerive": objectCache[modelId].userData.mageAddDerive
+        "mageAddDerive": objectCache[modelId].userData.mageAddDerive,
+        "inDatabase": true
     };
     let object3d = objectCache[modelId].clone();
     object3d.name = undefined;
@@ -237,6 +242,7 @@ const onlineInitialization = function(){
     onlineFuncList['refreshRoomByID'] = refreshRoomByID;
     onlineFuncList['transformRoomShape'] = transformRoomShape;
     onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID
+    onlineFuncList['refreshSceneByJson'] = refreshSceneByJson
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){
