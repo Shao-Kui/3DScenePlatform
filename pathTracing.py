@@ -33,27 +33,29 @@ REMOVELAMP = False
 SAVECONFIG = False
 NOWALL = False
 USENEWWALL = False
+CAMGEN = False
+WALLHEIGHT = 2.6
 
 def autoPerspectiveCamera(scenejson):
-    bbox = scenejson['rooms'][0]['bbox']
-    lx = (bbox['max'][0] + bbox['min'][0]) / 2
-    lz = (bbox['max'][2] + bbox['min'][2]) / 2
-    ymax = bbox['max'][1]
-    camfovratio = np.tan((75/2) * np.pi / 180) 
-    height_x = (bbox['max'][0]/2 - bbox['min'][0]/2) / camfovratio
-    height_z = (bbox['max'][2]/2 - bbox['min'][2]/2) / camfovratio
-    camHeight = ymax + np.max([height_x, height_z])
-    if camHeight > 36 or camHeight < 0 or camHeight == np.NaN:
-        camHeight = 6
     PerspectiveCamera = {}
+    roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+    lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
+    lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
+    camfovratio = np.tan((sk.DEFAULT_FOV/2) * np.pi / 180) 
+    lx_length = (np.max(roomShape[:, 0]) - np.min(roomShape[:, 0]))
+    lz_length = (np.max(roomShape[:, 1]) - np.min(roomShape[:, 1]))
+    if lz_length > lx_length:
+        PerspectiveCamera['up'] = [1,0,0]
+        camHeight = WALLHEIGHT + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+    else:
+        PerspectiveCamera['up'] = [0,0,1]
+        camHeight = WALLHEIGHT + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
     PerspectiveCamera['origin'] = [lx, camHeight, lz]
     PerspectiveCamera['target'] = [lx, 0, lz]
     PerspectiveCamera['up'] = [0,0,1]
     PerspectiveCamera['rotate'] = [0,0,0]
-    lx_length = bbox['max'][0] - bbox['min'][0]
-    lz_length = bbox['max'][2] - bbox['min'][2]
-    if lz_length > lx_length:
-        PerspectiveCamera['up'] = [1,0,0]
+    PerspectiveCamera['fov'] = sk.DEFAULT_FOV
+    PerspectiveCamera['focalLength'] = 35
     scenejson['PerspectiveCamera'] = PerspectiveCamera
     return PerspectiveCamera
 
@@ -163,7 +165,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
-    if 'PerspectiveCamera' not in scenejson:
+    if 'PerspectiveCamera' not in scenejson or CAMGEN:
         autoPerspectiveCamera(scenejson)
     # if cameraType == 'orthographic':
     #     points = []
@@ -220,12 +222,12 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 initialWallPlanes.append({
                     'pre': np.array(pre), 
                     'next': np.array(next),
-                    'tl': np.array([pre[0], 2.6, pre[1]]), # top-left
-                    'tr': np.array([next[0], 2.6, next[1]]), # top-right
+                    'tl': np.array([pre[0], WALLHEIGHT, pre[1]]), # top-left
+                    'tr': np.array([next[0], WALLHEIGHT, next[1]]), # top-right
                     'bl': np.array([pre[0], 0., pre[1]]), # bottom-left
                     'br': np.array([next[0], 0., next[1]]), # bottom-right
                     'bbox': {
-                        'max': np.array([np.max([pre[0], next[0]]), 2.6, np.max([pre[1], next[1]])]),
+                        'max': np.array([np.max([pre[0], next[0]]), WALLHEIGHT, np.max([pre[1], next[1]])]),
                         'min': np.array([np.min([pre[0], next[0]]), 0.0, np.min([pre[1], next[1]])])
                     },
                     'norm': np.array([room['roomNorm'][index][0], 0., room['roomNorm'][index][1]]),
@@ -500,7 +502,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -518,6 +520,8 @@ if __name__ == "__main__":
             print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
+        elif opt in ("--camgen"):
+            CAMGEN = bool(int(arg))
         elif opt in ("--nowall"):
             NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
