@@ -27,13 +27,14 @@ template = env.get_template('./assets/pathTracingTemplate.xml')
 cameraType="perspective" # spherical
 emitter="sky"
 num_samples = 64
-r_dir = 'batch'
+r_dir = 'batch1'
 wallMaterial = True
 REMOVELAMP = False
 SAVECONFIG = False
 NOWALL = False
 USENEWWALL = False
 CAMGEN = False
+TRAV = False
 WALLHEIGHT = 2.6
 
 def autoPerspectiveCamera(scenejson):
@@ -420,10 +421,30 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         shutil.rmtree(casename)
     return casename
 
+def batchTravDir(new_dir):
+    filenames = os.listdir(f'./dataset/PathTracing/{new_dir}')
+    for filename in filenames:
+        pngfilename = filename.replace('.json', '.png')
+        if os.path.isdir(f'./dataset/PathTracing/{new_dir}/{filename}'):
+            batchTravDir(f'{new_dir}/{filename}')
+        if '.json' not in filename:
+            continue
+        if os.path.exists(f'./dataset/PathTracing/{new_dir}/{pngfilename}'):
+            continue
+        print('start do :' + f'{new_dir}/{filename}')
+        with open(f'./dataset/PathTracing/{new_dir}/{filename}') as f:
+            try:
+                casename = pathTracing(json.load(f), sampleCount=num_samples, dst=f'./dataset/PathTracing/{new_dir}/{pngfilename}')
+            except Exception as e:
+                print(e)
+                continue
+
 def batch():
     filenames = os.listdir(f'./dataset/PathTracing/{r_dir}')
     for filename in filenames:
         pngfilename = filename.replace('.json', '.png')
+        if os.path.isdir(f'./dataset/PathTracing/{r_dir}/{filename}') and TRAV:
+            batchTravDir(f'{r_dir}/{filename}')
         if '.json' not in filename:
             continue
         print('start do :' + filename)
@@ -502,7 +523,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -522,6 +543,8 @@ if __name__ == "__main__":
             USENEWWALL = bool(int(arg))
         elif opt in ("--camgen"):
             CAMGEN = bool(int(arg))
+        elif opt in ("--trav"):
+            TRAV = bool(int(arg))
         elif opt in ("--nowall"):
             NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
