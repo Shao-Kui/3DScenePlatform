@@ -171,6 +171,7 @@ const updateTimerTab = function(){
     $('#tab_Rotate').text(timeCounter.rotate.toFixed(3));
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
+    $('#tab_CLTP').text(timeCounter.cltp.toFixed(3));
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
 
@@ -1342,7 +1343,13 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
-    $("#operationFuture").click(refreshSceneFutureRoomTypes);
+    $("#operationFuture").click(function(){
+        let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, function (data) {
+            currentAnimation = data;
+            operationFuture();
+        });
+    });
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1354,6 +1361,7 @@ const setting_up = function () {
         timeCounter.rotate - ${timeCounter.rotate}\r\n
         timeCounter.scale - ${timeCounter.scale}\r\n
         timeCounter.cgs - ${timeCounter.cgs}\r\n
+        timeCounter.cltp - ${timeCounter.cltp}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
         timeCounter.navigate = 0;
@@ -1361,6 +1369,7 @@ const setting_up = function () {
         timeCounter.rotate = 0;
         timeCounter.scale = 0;
         timeCounter.cgs = 0;
+        timeCounter.cltp = 0;
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;

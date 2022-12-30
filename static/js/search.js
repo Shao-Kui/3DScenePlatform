@@ -502,6 +502,7 @@ const clickSelectRoomShape = function(){
         iDiv.addEventListener('mouseout', mappingLeave);
         iDiv.addEventListener('click', (e) => {
             $.getJSON(`/static/dataset/jiahong1115/${item}.json`, function(result){
+                result.origin = item;
                 refreshSceneCall(result);
             });
             mappingLeave(e);
@@ -522,7 +523,6 @@ const clickSelectRoomShape = function(){
         let meta = $(this).parent().parent().data("meta");
         $(this).parent().attr('id', `grids-${meta.identifier}`);
         $(this).attr('id', `grid-${meta.identifier}`);
-        console.log(meta.identifier)
     })
 }
 

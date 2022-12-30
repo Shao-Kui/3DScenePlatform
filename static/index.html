@@ -82,6 +82,7 @@
       var LayoutViewAdjust_MODE = false;
       var lighting_Mode = false;
       var animaRecord_Mode = false;
+      var currentAnimation = undefined;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
@@ -97,8 +98,8 @@
       var INSERT_OBJ;
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
-      // var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
-      var USE_NEW_WALL = false;
+      var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
+      // var USE_NEW_WALL = false;
 
       //Global variables, will be initialize only once.
       var manager;
@@ -136,7 +137,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
-      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, total: 0}
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, total: 0}
 
       var deltaClock;
       const animaMixers = [];
@@ -239,6 +240,8 @@
               <tr>
                 <th scope="row">CGS</th>
                 <td id="tab_CGS"></td>
+                <th scope="row">CLTP</th>
+                <td id="tab_CLTP"></td>
                 <th>Total</th>
                 <td id="tab_Total"></td>
               </tr>
@@ -335,6 +338,13 @@
             >
               Future
             </button>
+            <button
+              id="selectRoomShapebtn"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              选择房型
+            </button>
           </div>
           <div class="py-1 px-0">
             <button
@@ -386,12 +396,12 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >座椅</button>
+            >储藏柜</button>
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >储藏柜</button>
+            >座椅</button>
             <button
               id=""
               type="button"
@@ -406,8 +416,18 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >CGS</button>
+            >梳妆台</button>
             <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >圆桌</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >CGS</button>
+            <!-- <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
@@ -421,7 +441,7 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >CGS-餐桌</button>
+            >CGS-餐桌</button> -->
           </div>
 
           <div>
