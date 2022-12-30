@@ -7,6 +7,13 @@ const clickCatalogItem = function (e, d=undefined) {
             "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
         };
     }else{
+        if($(e.target).attr('status') === 'clutterpaletteCategory'){
+            while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
+            searchResults = JSON.parse($(e.target).attr('secondaryCatalogItems'));
+            searchResults.forEach(function (item) {
+                newSecondaryCatalogItem(item);
+            });
+        }
         INSERT_OBJ = {
             "modelId": $(e.target).attr("objectName"),
             "coarseSemantic": $(e.target).attr("coarseSemantic"), 
@@ -31,6 +38,13 @@ const clickCatalogItem = function (e, d=undefined) {
         INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
         if(INSERT_OBJ.status !== undefined){
             playAnimation(INSERT_OBJ.object3d);
+        }
+        if (clutterpalette_Mode) {
+            INSERT_OBJ.object3d.name = INSERT_NAME;
+            INSERT_OBJ.object3d.position.set(clutterpalettePos.x, clutterpalettePos.y, clutterpalettePos.z);
+            INSERT_OBJ.object3d.rotation.set(0, 0, 0, 'XYZ');
+            INSERT_OBJ.object3d.scale.set(1, 1, 1);
+            scene.add(INSERT_OBJ.object3d)
         }
     }, [], INSERT_OBJ.format); 
 }
@@ -75,6 +89,9 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('coarseSemantic', item.semantic);
     iDiv.setAttribute('semantic', item.semantic);
     if(!item.status){item.status = 'origin';}
+    if(item.status === "clutterpaletteCategory"){
+        iDiv.setAttribute('secondaryCatalogItems', item.secondaryCatalogItems);
+    }
     iDiv.setAttribute('status', item.status);
     if(!item.format){
         item.format = 'obj'
@@ -83,6 +100,27 @@ const newCatalogItem = function(item){
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
     catalogItems.appendChild(iDiv);
+};
+
+const newSecondaryCatalogItem = function(item){
+    let iDiv = document.createElement('div');
+    iDiv.className = "catalogItem";
+    iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+    iDiv.setAttribute('objectID', item.id);
+    iDiv.setAttribute('objectName', item.name);
+    iDiv.setAttribute('modelId', item.name);
+    iDiv.setAttribute('coarseSemantic', item.semantic);
+    iDiv.setAttribute('semantic', item.semantic);
+    if(!item.status){item.status = 'origin';}
+    iDiv.setAttribute('status', item.status);
+    if(!item.format){
+        item.format = 'obj'
+    }
+    iDiv.setAttribute('format', item.format);
+    iDiv.addEventListener('click', clickCatalogItem);
+    iDiv.addEventListener('contextmenu', clickCatalogItem);
+    gatheringObjCat[item.name] = item.semantic;
+    secondaryCatalogItems.appendChild(iDiv);
 };
 
 const clickSketchSearchButton = function () {

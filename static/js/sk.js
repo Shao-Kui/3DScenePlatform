@@ -430,6 +430,7 @@ const onTouchObj = function (event) {
     if(On_ADD){
         On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -441,6 +442,9 @@ const onTouchObj = function (event) {
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
         timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }
         return;
     }
     if (On_MOVE) {
@@ -640,6 +644,42 @@ const toSceneObj = function(object3d){
     return object3d;
 }
 
+const onClutterpaletteClick = function() {
+    timeCounter.cltpStart = moment();
+    let intersects = raycaster.intersectObjects(manager.renderManager.wfCache, true);
+    if (intersects.length > 0) {
+        clutterpalettePos = { x: intersects[0].point.x, y: 0, z: intersects[0].point.z };
+        while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+        while (secondaryCatalogItems.firstChild) { secondaryCatalogItems.firstChild.remove(); }
+        let roomId = intersects[0].object.parent.userData.roomId;
+        let room = manager.renderManager.scene_json.rooms[roomId];
+        let aabb = new THREE.Box3();
+        for (let obj of room.objList) {
+            if (obj.key in manager.renderManager.instanceKeyCache) {
+                aabb.setFromObject(manager.renderManager.instanceKeyCache[obj.key]);
+                obj.bbox = {
+                    min: [aabb.min.x, aabb.min.y, aabb.min.z],
+                    max: [aabb.max.x, aabb.max.y, aabb.max.z]
+                };
+            }
+        }
+        $.ajax({
+            type: "POST",
+            url: "/clutterpalette",
+            data: {
+                room: JSON.stringify(room),
+                pos: JSON.stringify(clutterpalettePos)
+            }
+        }).done(function (o) {
+            $('#searchinput').val('');
+            searchResults = JSON.parse(o);
+            searchResults.forEach(function (item) {
+                newCatalogItem(item);
+            });
+        });
+    }
+}
+
 const onClickIntersectObject = function(event){
     duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
@@ -681,6 +721,7 @@ const onClickIntersectObject = function(event){
         return;
     }else{
         cancelClickingObject3D();
+        if (clutterpalette_Mode) { onClutterpaletteClick(); }
         // return; // if you want to disable movable wall, just uncomment this line. 
         /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
@@ -732,6 +773,7 @@ var onClickObj = function (event) {
     if (On_ADD) {
         On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -745,6 +787,9 @@ var onClickObj = function (event) {
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
         timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }
         return;
     }
     if (On_MOVE) {
@@ -861,7 +906,7 @@ function onDocumentMouseMove(event) {
     }  
     // currentMovedTimeStamp = moment();
     tf.engine().startScope();
-    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined){
+    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined && !clutterpalette_Mode){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         if(intersects.length > 0){
             let ip = intersects[0].point
@@ -1374,6 +1419,19 @@ const setting_up = function () {
         timeCounter.add = 0;
         timeCounter.remove = 0;
         timeCounter.totalStart = moment();
+    });
+    $("#clutterpalette_button").click(function() {
+        let button = document.getElementById("clutterpalette_button");
+        clutterpalette_Mode = !clutterpalette_Mode;
+        if(clutterpalette_Mode){
+            button.style.backgroundColor = '#9400D3';
+            $("#secondaryCatalogItems").show();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            $("#secondaryCatalogItems").hide();
+            // while (catalogItems.firstChild) {catalogItems.firstChild.remove();}
+            // while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
+        }
     });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
