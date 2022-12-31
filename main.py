@@ -25,6 +25,7 @@ import random
 from subprocess import check_output
 import difflib
 import sk
+from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
 
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
@@ -307,6 +308,15 @@ def set_scene_configuration():
         return "POST scene configuration. "
     if request.method == 'GET':
         return "Do not support using GET to configurate scene. "
+
+@app.route("/clutterpalette", methods=['POST', 'GET'])
+def clutterpalette():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        pos = json.loads(request.form.get('pos'))
+        ret = clutterpaletteQuery(room, pos)
+        return json.dumps(ret)
+    return "clutterpalette"
 
 @app.route("/sketch", methods=['POST', 'GET'])
 def sketch():
