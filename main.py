@@ -413,7 +413,7 @@ def save_online_scenes():
         with open(f'./examples/onlineScenes/{groupName}.json', 'w') as f:
             json.dump(onlineScenes[groupName], f)
 schesk = BackgroundScheduler()
-schesk.add_job(func=save_online_scenes, trigger="interval", seconds=600)
+schesk.add_job(func=save_online_scenes, trigger="interval", seconds=6000)
 schesk.start()
 atexit.register(lambda: schesk.shutdown()) # Register the function to be called on exit
 
