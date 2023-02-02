@@ -1,6 +1,6 @@
 const clickCatalogItem = function (e, d=undefined) {
     e.preventDefault();
-    if(d3.select(e.path[0].parentElement).attr('id') === 'scenePaletteGroup'){
+    if(e.path && d3.select(e.path[0].parentElement).attr('id') === 'scenePaletteGroup'){
         INSERT_OBJ = {
             "modelId": d.modelId,
             "coarseSemantic": d.coarseSemantic, 
@@ -91,6 +91,7 @@ const newCatalogItem = function(item){
     if(!item.status){item.status = 'origin';}
     if(item.status === "clutterpaletteCategory"){
         iDiv.setAttribute('secondaryCatalogItems', item.secondaryCatalogItems);
+        iDiv.innerHTML = item.semantic;
     }
     iDiv.setAttribute('status', item.status);
     if(!item.format){

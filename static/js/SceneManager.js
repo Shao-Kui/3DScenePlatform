@@ -214,6 +214,7 @@ class SceneManager {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
+        refreshArea(this.scene_json);
     };
 
     refresh_light(){

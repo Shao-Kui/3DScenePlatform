@@ -305,3 +305,52 @@ const actionSet = function(object3d, status){
     action.time = action.getClip().duration;
     action.weight = 1;
 }
+
+const getShapeByAreaShape = function(areaShape){
+    let shape = new THREE.Shape();
+    shape.moveTo(areaShape[0][0], areaShape[0][1]);
+    for(let i = 1; i < areaShape.length; i++){
+        shape.lineTo(areaShape[i][0], areaShape[i][1]);
+    }
+    shape.lineTo(areaShape[0][0], areaShape[0][1]);
+    return shape;
+}
+
+const areaList = [];
+const refreshArea = function(scene_json){
+    const params = {
+        color: '#ffffff',
+        scale: 1,
+        flowX: 10,
+        flowY: 10
+    };
+    scene_json.rooms.forEach(room => {
+        if(room.areaType === 'water'){
+            let water = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
+                color: params.color,
+                scale: params.scale,
+                flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
+                textureWidth: 1024,
+                textureHeight: 1024
+            });
+            water.rotation.x = Math.PI * 0.5;
+            water.scale.z = -1;
+            scene.add(water);
+            areaList.push(water);
+        }
+        if(room.areaType === 'earth'){
+            let mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), getMaterial('/GeneralTexture/grass01.jpg')) ;
+            mesh.rotation.x = Math.PI * 0.5;
+            mesh.scale.z = -1;
+            scene.add(mesh);
+            areaList.push(mesh);
+        }
+        if(room.areaType === 'road'){
+            let mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), getMaterial('/GeneralTexture/road01.jpg')) ;
+            mesh.rotation.x = Math.PI * 0.5;
+            mesh.scale.z = -1;
+            scene.add(mesh);
+            areaList.push(mesh);
+        }
+    })
+}
