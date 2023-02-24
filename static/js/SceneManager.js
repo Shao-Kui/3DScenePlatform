@@ -346,6 +346,7 @@ class SceneManager {
 
     refresh_instances(){
 	    // var self=this;
+        let loadingCounter = 0;
 		this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
 		this.instanceKeyCache = {};
         this.scene_json.rooms.forEach(function(room){
@@ -370,9 +371,13 @@ class SceneManager {
                 if(!('format' in inst)){
                     inst.format = 'obj';
                 }
-                loadObjectToCache(inst.modelId, function(){
+                setTimeout(loadObjectToCache, loadingCounter*100, inst.modelId, function(){
                     refreshObjectFromCache(inst);
                 }, [], inst.format);
+                loadingCounter++;
+                // loadObjectToCache(inst.modelId, function(){
+                //     refreshObjectFromCache(inst);
+                // }, [], inst.format);
             });
         });
         if('sceneFutureCache' in this.scene_json){
