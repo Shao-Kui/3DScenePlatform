@@ -1,0 +1,138 @@
+{
+    "story" : [
+        {
+            "modelId": "5134",
+            "storyContents": [
+                {
+                    "storyIndex": "1",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "3",
+                    "guidType": "lookat",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "8271",
+            "storyContents": [
+                {
+                    "storyIndex": "2",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation",
+                    "resutlSound": "name of sound"
+                }
+            ]
+        },
+        {
+            "modelId": "2776",
+            "storyContents": [
+                {
+                    "storyIndex": "4",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "2630",
+            "storyContents": [
+                {
+                    "storyIndex": "5",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation",
+                    "resutlSound": "name of sound"
+                }
+            ]
+        },
+        {
+            "modelId": "3365",
+            "storyContents": [
+                {
+                    "storyIndex": "8",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "9",
+                    "guidType": "lookat",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "6",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "8873",
+            "storyContents": [
+                {
+                    "storyIndex": "7",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "4737",
+            "storyContents": [
+                {
+                    "storyIndex": "12",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "9426",
+            "storyContents": [
+                {
+                    "storyIndex": "10",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "13",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "9706",
+            "storyContents": [
+                {
+                    "storyIndex": "11",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        }
+    ]
+}
