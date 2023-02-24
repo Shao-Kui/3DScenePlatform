@@ -314,13 +314,24 @@ const getMaterial = function(imgPath){
     return new THREE.MeshPhongMaterial( { map: texture } );
 }
 
-const getShapeByAreaShape = function(areaShape){
+const getShapeByAreaShape = function(areaShape, interior){
     let shape = new THREE.Shape();
     shape.moveTo(areaShape[0][0], areaShape[0][1]);
     for(let i = 1; i < areaShape.length; i++){
         shape.lineTo(areaShape[i][0], areaShape[i][1]);
     }
     shape.lineTo(areaShape[0][0], areaShape[0][1]);
+    if(interior){
+        interior.forEach(itrr => {
+            let path = new THREE.Path();
+            path.moveTo(itrr[0][0], itrr[0][1]);
+            for(let i = 1; i < itrr.length; i++){
+                path.lineTo(itrr[i][0], itrr[i][1]);
+            }
+            path.lineTo(itrr[0][0], itrr[0][1]);
+            shape.holes.push(path);
+        });
+    }
     return shape;
 }
 const waterparams = {
@@ -350,22 +361,22 @@ const addAreaByRoom = function(room){
         });
     }
     if(room.areaType === 'grass'){
-        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
     }if(room.areaType === 'earth'){
-        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), assignMaterial('/GeneralTexture/earth01.jpg')) ;
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/earth01.jpg')) ;
     }
     if(room.areaType === 'road1'){
-        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), assignMaterial('/GeneralTexture/road01.jpg')) ;
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/road01.jpg')) ;
     }
     if(room.areaType === 'road2'){
-        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), assignMaterial('/GeneralTexture/road02.jpg')) ;
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/road02.jpg')) ;
     }
     if(mesh === undefined){
         return;
     }
     mesh.rotation.x = Math.PI * 0.5;
     mesh.scale.z = -1;
-    mesh.position.y = room.layer*0.02 + Math.random() / 51;
+    if(room.layer){mesh.position.y = room.layer*0.02 + Math.random() / 51;}
     scene.add(mesh);
     areaList.push(mesh);
 }
