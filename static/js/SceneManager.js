@@ -186,7 +186,7 @@ class SceneManager {
     };
 
     refresh_scene = (scene_json, refresh_camera = false) => {
-        console.log('called refresh scene! ');
+        traverseSceneJson(scene_json);
         outlinePass.selectedObjects = [];
         outlinePass2.selectedObjects = [];
         if(scene_json.islod){

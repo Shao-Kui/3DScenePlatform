@@ -50,6 +50,7 @@ const loadObjectToCacheContent = function(instance){
     delete objectLoadingQueue.modelId;
 }
 let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='obj'){
+    if(format === 'instancedMesh'){return;}
     if(modelId in objectCache){
         anchor.apply(null, anchorArgs);
         return;
@@ -234,6 +235,73 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     return object3d; 
 };
+
+const instancedCache = {};
+const addObjectUsingInstance = function(o){
+    if(!(o.modelId in instancedCache)){
+        setTimeout(addObjectUsingInstance, Math.random() * 3000 + 1000, o);
+        return;
+    }
+    instancedCache[o.modelId].forEach(c => {
+        const position = new THREE.Vector3();
+        const rotation = new THREE.Euler();
+        const quaternion = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        const matrix = new THREE.Matrix4();
+        position.x = o['translate'][0]
+        position.y = o['translate'][1]
+        position.z = o['translate'][2]
+        rotation.x = o['rotate'][0]
+        rotation.y = o['rotate'][1]
+        rotation.z = o['rotate'][2]
+        quaternion.setFromEuler( rotation );
+        scale.x = o['scale'][0];
+        scale.y = o['scale'][1];
+        scale.z = o['scale'][2];
+        matrix.compose( position, quaternion, scale );
+        c.setMatrixAt(o.cumulatedCount, matrix);
+        c.instanceMatrix.needsUpdate = true;
+    })
+}
+const traverseSceneJson = function(sj){
+    Object.keys(instancedCache).forEach(modelId => {
+        instancedCache[modelId].forEach(c => {
+            scene.remove(c);
+        });
+        delete instancedCache[modelId];
+    });
+    let modelIds = new Map();
+    sj.rooms.forEach(room => {
+        room.objList.forEach(o => {
+            if(modelIds.has(o.modelId)){
+                modelIds.set(o.modelId, modelIds.get(o.modelId)+1);
+            }else{
+                modelIds.set(o.modelId, 1);
+            }
+            o.cumulatedCount = modelIds.get(o.modelId)-1;
+        })
+    });
+    sj.rooms.forEach(room => {
+        room.objList.forEach(o => {
+            if(modelIds.get(o.modelId) > 10 || o.format === 'instancedMesh'){
+                o.format = 'instancedMesh';
+                loadObjectToCache(o.modelId, () => {
+                    if(o.modelId in instancedCache){
+                        return;
+                    }
+                    let res = []; // this array will finally contain all instancedMesh in THREE.js. 
+                    objectCache[o.modelId].children.forEach(c => {
+                        let im = new THREE.InstancedMesh(c.geometry, c.material, modelIds.get(o.modelId));
+                        res.push(im);
+                        scene.add(im);
+                    });
+                    instancedCache[o.modelId] = res;
+                }, []);
+                addObjectUsingInstance(o);
+            }
+        })
+    });
+}
 
 const addObjectsFromCache = function(oArray){
     loadMoreServerUUIDs(oArray.length);
