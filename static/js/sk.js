@@ -698,7 +698,7 @@ const onClickIntersectObject = function(event){
                 if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
-                }else{
+                }else if(INTERSECT_OBJ.userData.modelId !== 'shelf-placeholder'){
                     releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
@@ -715,6 +715,13 @@ const onClickIntersectObject = function(event){
         }
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        console.log(INTERSECT_OBJ, INTERSECT_OBJ.userData.json.commodity)
+        if(INTERSECT_OBJ.userData.modelId === 'shelf-placeholder'){
+            shelfPlaceholderHandler();
+            return;
+        }else{
+            cancelClickingShelfPlaceholders();
+        }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
@@ -724,6 +731,7 @@ const onClickIntersectObject = function(event){
     }else{
         cancelClickingObject3D();
         if (clutterpalette_Mode) { onClutterpaletteClick(); }
+        if (INTERSECT_SHELF_PLACEHOLDERS.size !== 0) cancelClickingShelfPlaceholders(); // TO BE FIX: might release object control twice if INTERSECT_OBJ in INTERSECT_SHELF_PLACEHOLDERS
         // return; // if you want to disable movable wall, just uncomment this line. 
         /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
@@ -1863,4 +1871,47 @@ const initAttributes = function() {
         // console.log('attrSmoothness', $('#attrSmoothness').val());
         CGSERIES_GROUP.attrS = +$('#attrSmoothness').val();
     });
+}
+
+let shelfPlaceholderHandler = () => {
+    if (INTERSECT_SHELF_PLACEHOLDERS.has(INTERSECT_OBJ.userData.key)) {
+        // cancel
+        claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+        INTERSECT_SHELF_PLACEHOLDERS.delete(INTERSECT_OBJ.userData.key);
+    } else {
+        // select
+        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
+        INTERSECT_SHELF_PLACEHOLDERS.add(INTERSECT_OBJ.userData.key);
+    }
+
+    let roomId = INTERSECT_OBJ.userData.roomId;
+    $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
+    $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);
+    $('#tab_roomid').text(roomId);
+    $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
+    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+
+    if (INTERSECT_SHELF_PLACEHOLDERS.size == 0) return;
+    $.ajax({
+        type: "POST",
+        url: "/shelfPlaceholder",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
+        }
+    }).done(function (o) {
+        $('#searchinput').val('');
+        searchResults = JSON.parse(o);
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
+}
+
+let cancelClickingShelfPlaceholders = () => {
+    for (const phKey of INTERSECT_SHELF_PLACEHOLDERS) {
+        claimControlObject3D(phKey, true);
+    }
+    INTERSECT_SHELF_PLACEHOLDERS.clear();
+    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
 }
