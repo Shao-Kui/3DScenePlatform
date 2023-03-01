@@ -441,10 +441,12 @@ const onTouchObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         if (clutterpalette_Mode) {
             timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {
@@ -772,7 +774,7 @@ var onClickObj = function (event) {
     }
     if (On_ADD) {
         On_ADD = false;
-        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache).concat(areaList)), true)[0].point;
         if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
@@ -786,10 +788,12 @@ var onClickObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         if (clutterpalette_Mode) {
             timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
         }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {

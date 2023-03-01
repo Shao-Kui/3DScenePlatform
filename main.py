@@ -214,6 +214,10 @@ def query2nd():
         'sofa_small', 'speaker', 'Stove', 'Stovetop', 'table', 'table1', 'TableAngular', 'Table_Black', 'Table_original', 
         'Table_White', 'toilet', 'Trash', 'tv', 'tv_table', 'wall_lighter', 'washbasin', 'Washer', 'word_table', 'work_chair']
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in xiaoyiids1]
+    if kw == 'yulin':
+        with open('./dataset/yulin.json') as f:
+            yulin = json.load(f)
+        ret += [{"name":modelId, "semantic": 'Shop', "thumbnail":f"/thumbnail/{modelId}"} for modelId in yulin]
     if kw == '灰色现代风':
         greyMordenStyle = ['2624','1456','1138','3740','6129','8829','6855','7735','2715','3088','7209,1394','1806','5933','3232','4455',
         '5253','6096','1993','8983','10198','10855','2043','9767','8185','5010','7763','10414','1830','1288','10053','5218','10480','9018',
