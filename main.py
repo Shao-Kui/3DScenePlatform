@@ -318,6 +318,17 @@ def clutterpalette():
         return json.dumps(ret)
     return "clutterpalette"
 
+@app.route("/shelfPlaceholder", methods=['POST', 'GET'])
+def shelfPlaceholder():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        placeholders = json.loads(request.form.get('placeholders'))
+        # TODO: replace with yulin's method
+        yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
+        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in yulinModels]
+        return json.dumps(ret)
+    return "shelfPlaceholder"
+
 @app.route("/sketch", methods=['POST', 'GET'])
 def sketch():
     if request.method == 'POST':
@@ -576,7 +587,8 @@ def functionCall(fname, arguments, groupName):
             'uuid': arguments[0],
             'modelId': arguments[1],
             'roomID': arguments[2],
-            'transform': arguments[3]
+            'transform': arguments[3], 
+            'otherInfo': {} if len(arguments) == 4 else arguments[4]
         }), room=groupName, include_self=False)
     if fname == 'removeObjectByUUID':
         emit('functionCallUnity', ({
@@ -600,6 +612,11 @@ def functionCall(fname, arguments, groupName):
             'fname': 'refreshRoomByID',
             'roomId': arguments[0],
             'objList': arguments[1]
+        }), room=groupName, include_self=False)
+    if fname == 'updateObjectProperties':
+        emit('functionCallUnity', ({
+            'fname': 'updateObjectProperties',
+            'objectProperties': arguments[0]
         }), room=groupName, include_self=False)
 
 object3DControlledByList = {}

@@ -40,7 +40,7 @@ const loadObjectToCacheContent = function(instance){
     ), new THREE.MeshPhongMaterial({color: 0xffffff}));
     associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
     instance.associatedBox = associatedBox;
-    traverseMtlToOppacity(instance);
+    traverseMtlToOpacity(instance);
     objectCache[modelId] = instance;
     playAnimation(objectCache[modelId]);
     while(objectLoadingQueue[modelId].length){
@@ -99,7 +99,7 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
     }
 };
 
-const traverseMtlToOppacity = function (object) {
+const traverseMtlToOpacity = function (object, opacity = 0.6) {
     if(object instanceof THREE.Mesh){
         let newmtr_lowopa;
         if(Array.isArray(object.material)){
@@ -107,13 +107,13 @@ const traverseMtlToOppacity = function (object) {
             for(let i = 0; i < object.material.length; i++){
                 let mtl = object.material[i].clone()
                 mtl.transparent = true;
-                mtl.opacity = 0.6;
+                mtl.opacity = opacity;
                 newmtr_lowopa.push(mtl);
             }
         }else{
             newmtr_lowopa = object.material.clone();
             newmtr_lowopa.transparent = true;
-            newmtr_lowopa.opacity = 0.6;
+            newmtr_lowopa.opacity = opacity;
             
         }
         newmtr_lowopa.origin_mtr = object.material;
@@ -127,7 +127,7 @@ const traverseMtlToOppacity = function (object) {
         return;
     }
     object.children.forEach(function(child){
-        traverseMtlToOppacity(child);
+        traverseMtlToOpacity(child, opacity);
     });
 };
 
@@ -194,6 +194,9 @@ let refreshObjectFromCache = function(objToInsert){
     if(objToInsert.format === 'glb'){
         playAnimation(object3d);
     }
+    if(objToInsert.modelId === 'shelf-placeholder'){
+        traverseMtlToOpacity(object3d, 0.1);
+    }
     return object3d; 
 }
 
@@ -216,7 +219,8 @@ const trafficFlowObjList = ['snack01', 'snack02', 'snack03', 'snack04', 'snacks0
 'vendor02', 'housekeeping01', 'housekeeping02', 'housekeeping03', 'housekeeping', 'petfood01', 'freezer01', 'freezer02', 'freezer03', 
 'freezer04', 'freezer05', 'freezer06', 'freezer07', 'freezer08', 'freezer09', 'freezer10', 'shirt01', 'shirt02', 'shirt03', 'shirt04', 
 'shirt05', 'shirt06', 'shirt07', 'shirt08', 'shorts01', 'pants01', 'pants02', 'pants03', 'pants04', 'pants05', 'skirt01', 'skirt02'];
-let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj', 'startState': 'origin'}, uuid=undefined, origin=true){
+const shelfPlaceholderOffestY = [1.565, 1.116, 0.666, 0.200];
+let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj', 'startState': 'origin'}, uuid=undefined, origin=true, otherInfo = {}){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
     if(!uuid) uuid = THREE.MathUtils.generateUUID();
@@ -230,10 +234,15 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         transform.scale[2] = 0.45 / (objectCache[modelId].boundingBox.max.z-objectCache[modelId].boundingBox.min.z);
     }
     let roomID = calculateRoomID(transform.translate)
-    let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
+    if (modelId === 'shelf01') {
+        otherInfo['placeholders'] = getUUIDs(8);
+        addShelfPlaceholders(roomID, transform, uuid, otherInfo['placeholders']);
+        console.log(otherInfo['placeholders'])
+    }
+    let object3d = addObjectByUUID(uuid, modelId, roomID, transform, otherInfo);
     object3d.name = uuid;
-    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
-    return object3d; 
+    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform, otherInfo]);
+    return object3d;
 };
 
 const instancedCache = {};
@@ -322,6 +331,47 @@ const addObjectsFromCache = function(oArray){
         'args': [uuids]
     });
 };
+
+let getUUIDs = function(n) {
+    ret = []
+    loadMoreServerUUIDs(n);
+    for (let i = 0; i < n; ++i) {
+        let uuid = undefined;
+        if (!uuid) uuid = serverUUIDs.pop();
+        if (!uuid) uuid = THREE.MathUtils.generateUUID();
+        ret.push(uuid);
+    }
+    return ret;
+}
+
+let addShelfPlaceholders = function (roomID, shelfTransform, shelfUUID, phUUIDs) {
+    if (!('shelf-placeholder' in objectCache)) {
+        loadObjectToCache('shelf-placeholder', anchor = addShelfPlaceholders, anchorArgs = [roomID, shelfTransform, shelfUUID, phUUIDs]);
+        return;
+    }
+    let idx = 0;
+    for (let offsetY of shelfPlaceholderOffestY) {
+        for (let offsetX of [-0.3, 0.3]) {
+            phUUID = phUUIDs[idx];
+            let phTransform = JSON.parse(JSON.stringify(shelfTransform));
+            let t = shelfTransform.translate;
+            phTransform.translate = [t[0] + offsetX, t[1] + offsetY, t[2]];
+            // phTransform.format = 'instancedMesh';
+
+            // addShelfPlaceholderObjectByUUID(phUUID, roomID, phTransform, shelfUUID);
+            commandStack.push({
+                'funcName': 'removeObjectByUUID',
+                'args': [phUUID, true]
+            });
+            otherInfo = { shelf: shelfUUID, shelfIndex: idx, commodity: '' };
+            let phObj = addObjectByUUID(phUUID, 'shelf-placeholder', roomID, phTransform, otherInfo);
+            phObj.name = phUUID;
+            traverseMtlToOpacity(phObj, 0.1);
+            emitFunctionCall('addObjectByUUID', [phUUID, 'shelf-placeholder', roomID, phTransform, otherInfo]);
+            idx += 1;
+        }
+    }
+}
 
 const playAnimation = function(object3d){
     const animaMixer = new THREE.AnimationMixer(object3d);

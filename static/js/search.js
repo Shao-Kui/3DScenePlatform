@@ -35,6 +35,10 @@ const clickCatalogItem = function (e, d=undefined) {
     }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId, ()=>{
+        if (INSERT_OBJ.modelId.startsWith('yulin') && INTERSECT_SHELF_PLACEHOLDERS.size > 0) { // for now
+            stockShelves();
+            return;
+        }
         INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
         if(INSERT_OBJ.status !== undefined){
             playAnimation(INSERT_OBJ.object3d);
@@ -47,6 +51,37 @@ const clickCatalogItem = function (e, d=undefined) {
             scene.add(INSERT_OBJ.object3d)
         }
     }, [], INSERT_OBJ.format); 
+}
+
+const stockShelves = () => {
+    On_ADD = false;
+    scenecanvas.style.cursor = "auto";
+    let objectProperties = {};
+    for (const phKey of INTERSECT_SHELF_PLACEHOLDERS) {
+        let ph = manager.renderManager.instanceKeyCache[phKey];
+        if (ph.userData.json.commodity !== '') {
+            removeObjectByUUID(ph.userData.json.commodity)
+            ph.userData.json.commodity = '';
+        }
+        if (INSERT_OBJ.modelId !== 'yulin-empty') {
+            let commodity = addObjectFromCache(
+                modelId = INSERT_OBJ.modelId,
+                transform = {
+                    'translate': [ph.position.x, ph.position.y, ph.position.z],
+                    'rotate': [ph.rotation.x, ph.rotation.y, ph.rotation.z],
+                    'scale': [ph.scale.x, ph.scale.y, ph.scale.z]
+                },
+                uuid = undefined,
+                origin = true,
+                otherInfo = {
+                    parentPlaceholder: phKey
+                }
+            );
+            ph.userData.json.commodity = commodity.name; // update this to other users
+        }
+        objectProperties[phKey] = { commodity: ph.userData.json.commodity };
+    }
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
 
 const clickTextureItem = function(e){

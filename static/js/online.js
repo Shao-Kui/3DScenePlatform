@@ -158,9 +158,9 @@ const refreshSceneByJson = function(thejson){
     socket.emit('sceneRefresh', thejson, onlineGroup);
 }
 
-const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}){
+const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}, otherInfo={}){
     if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform]);
+        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform, otherInfo]);
         return; 
     }
     // check room ID: 
@@ -180,6 +180,9 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive,
         "inDatabase": true
     };
+    for (const property in otherInfo) {
+        objToInsert[property] = otherInfo[property];
+    }
     let object3d = objectCache[modelId].clone();
     object3d.name = undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
@@ -241,8 +244,9 @@ const onlineInitialization = function(){
     onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
     onlineFuncList['refreshRoomByID'] = refreshRoomByID;
     onlineFuncList['transformRoomShape'] = transformRoomShape;
-    onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID
-    onlineFuncList['refreshSceneByJson'] = refreshSceneByJson
+    onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID;
+    onlineFuncList['refreshSceneByJson'] = refreshSceneByJson;
+    onlineFuncList['updateObjectProperties'] = updateObjectProperties;
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){
@@ -250,4 +254,10 @@ const onlineInitialization = function(){
         return null;
     }
     window.onbeforeunload = closingCode;
+}
+
+let updateObjectProperties = function (objectProperties) {
+    for (let objKey in objectProperties)
+        for (let property in objectProperties[objKey])
+            manager.renderManager.instanceKeyCache[objKey].userData.json[property] = objectProperties[objKey][property];
 }
