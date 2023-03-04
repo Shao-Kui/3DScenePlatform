@@ -40,7 +40,7 @@ const loadObjectToCacheContent = function(instance){
     ), new THREE.MeshPhongMaterial({color: 0xffffff}));
     associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
     instance.associatedBox = associatedBox;
-    traverseMtlToOpacity(instance);
+    // traverseMtlToOpacity(instance); // from 2023.3.3 this feature is temperally removed due to instanseMesh. 
     objectCache[modelId] = instance;
     playAnimation(objectCache[modelId]);
     while(objectLoadingQueue[modelId].length){
@@ -467,6 +467,13 @@ const assignMaterial = function(imgpath){
         materialMap.set(imgpath, getMaterial(imgpath));
     }
 }
+const addAreaToScene = function(mesh, room){
+    mesh.rotation.x = Math.PI * 0.5;
+    mesh.scale.z = -1;
+    if(room.layer){mesh.position.y = room.layer*0.02;}
+    scene.add(mesh);
+    areaList.push(mesh);
+}
 const addAreaByRoom = function(room){
     let mesh;
     if(room.areaType === 'water'){
@@ -474,9 +481,10 @@ const addAreaByRoom = function(room){
             color: waterparams.color,
             scale: waterparams.scale,
             flowDirection: new THREE.Vector2( waterparams.flowX, waterparams.flowY ),
-            textureWidth: 1024,
-            textureHeight: 1024
+            textureWidth: 128,
+            textureHeight: 128
         });
+        // addAreaToScene(mesh, room);return;
     }
     if(room.areaType === 'grass'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
@@ -492,11 +500,11 @@ const addAreaByRoom = function(room){
     if(mesh === undefined){
         return;
     }
-    mesh.rotation.x = Math.PI * 0.5;
-    mesh.scale.z = -1;
-    if(room.layer){mesh.position.y = room.layer*0.02 + Math.random() / 51;}
-    scene.add(mesh);
-    areaList.push(mesh);
+    if(!mesh.material.map){
+        setTimeout(addAreaByRoom, 1000, room);
+        return;
+    }
+    addAreaToScene(mesh, room);
 }
 
 const areaList = [];
