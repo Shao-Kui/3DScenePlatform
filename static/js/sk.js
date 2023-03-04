@@ -698,7 +698,7 @@ const onClickIntersectObject = function(event){
                 if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
-                }else if(INTERSECT_OBJ.userData.modelId !== 'shelf-placeholder'){
+                }else if(!isShelfPlaceholder(INTERSECT_OBJ)){
                     releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
@@ -715,12 +715,15 @@ const onClickIntersectObject = function(event){
         }
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
-        console.log(INTERSECT_OBJ, INTERSECT_OBJ.userData.json.commodity)
-        if(INTERSECT_OBJ.userData.modelId === 'shelf-placeholder'){
-            shelfPlaceholderHandler();
-            return;
-        }else{
-            cancelClickingShelfPlaceholders();
+        if (shelfstocking_Mode) {
+            if(isShelfPlaceholder(INTERSECT_OBJ)){
+                shelfPlaceholderHandler();
+                return;
+            }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
+                // FUTURE WORK: select all ph of that shelf, change the number of ph on each row
+            }else{
+                cancelClickingShelfPlaceholders();
+            }
         }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
@@ -731,7 +734,7 @@ const onClickIntersectObject = function(event){
     }else{
         cancelClickingObject3D();
         if (clutterpalette_Mode) { onClutterpaletteClick(); }
-        if (INTERSECT_SHELF_PLACEHOLDERS.size !== 0) cancelClickingShelfPlaceholders(); // TO BE FIX: might release object control twice if INTERSECT_OBJ in INTERSECT_SHELF_PLACEHOLDERS
+        if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
         // return; // if you want to disable movable wall, just uncomment this line. 
         /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
@@ -913,6 +916,8 @@ function onDocumentMouseMove(event) {
     }
     else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(toSceneObj(intersects[0].object.parent))) {
         outlinePass.selectedObjects = [toSceneObj(intersects[0].object.parent), GTRANS_GROUP];
+    }else if(shelfstocking_Mode && instanceKeyCache.length > 0 && intersects.length > 0 && intersects[0].object.name.startsWith('shelf-placeholder-')){
+        outlinePass.selectedObjects = [intersects[0].object]
     }else{
         outlinePass.selectedObjects = [GTRANS_GROUP]
     }  
@@ -1445,6 +1450,17 @@ const setting_up = function () {
             // while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
         }
     });
+    $("#stockshelf_button").click(function() {
+        let button = document.getElementById("stockshelf_button");
+        shelfstocking_Mode = !shelfstocking_Mode;
+        if(shelfstocking_Mode){
+            button.style.backgroundColor = '#9400D3';
+            enterShelfStockingMode();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            exitShelfStockingMode();
+        }
+    });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
         fpCtrlMode = !fpCtrlMode;
@@ -1874,19 +1890,38 @@ const initAttributes = function() {
 }
 
 let shelfPlaceholderHandler = () => {
-    if (INTERSECT_SHELF_PLACEHOLDERS.has(INTERSECT_OBJ.userData.key)) {
-        // cancel
-        claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-        INTERSECT_SHELF_PLACEHOLDERS.delete(INTERSECT_OBJ.userData.key);
+    let shelfKey = INTERSECT_OBJ.userData.shelfKey;
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    if (onlineGroup !== 'OFFLINE' && shelf.userData.controlledByID !== undefined && shelf.userData.controlledByID !== onlineUser.id) {
+        console.log(`This shelf is already claimed by ${shelf.userData.controlledByID}`);
+        INTERSECT_OBJ = undefined;
+        return;
+    }
+    if (shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
+        if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].has(INTERSECT_OBJ.name)) {
+            // cancel
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].delete(INTERSECT_OBJ.name);
+            let index = outlinePass2.selectedObjects.indexOf(INTERSECT_OBJ);
+            if(index > -1){
+                outlinePass2.selectedObjects.splice(index, 1);
+            }
+            if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].size === 0) {
+                claimControlObject3D(shelfKey, true);
+                delete INTERSECT_SHELF_PLACEHOLDERS[shelfKey];
+            }
+        } else {
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(INTERSECT_OBJ.name);
+            outlinePass2.selectedObjects.push(INTERSECT_OBJ);
+        }
     } else {
-        // select
-        claimControlObject3D(INTERSECT_OBJ.userData.key, false);
-        INTERSECT_SHELF_PLACEHOLDERS.add(INTERSECT_OBJ.userData.key);
+        INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set([INTERSECT_OBJ.name]);
+        claimControlObject3D(shelfKey, false);
+        outlinePass2.selectedObjects.push(INTERSECT_OBJ);
     }
 
-    let roomId = INTERSECT_OBJ.userData.roomId;
-    $('#tab_modelid').text(INTERSECT_OBJ.userData.modelId);
-    $('#tab_category').text(INTERSECT_OBJ.userData.coarseSemantic);
+    let roomId = shelf.userData.roomId;
+    $('#tab_modelid').text(INTERSECT_OBJ.name);
+    $('#tab_category').text('shelf-placeholder');
     $('#tab_roomid').text(roomId);
     $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
     while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
@@ -1909,9 +1944,163 @@ let shelfPlaceholderHandler = () => {
 }
 
 let cancelClickingShelfPlaceholders = () => {
-    for (const phKey of INTERSECT_SHELF_PLACEHOLDERS) {
-        claimControlObject3D(phKey, true);
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
+        claimControlObject3D(shelfKey, true);
     }
-    INTERSECT_SHELF_PLACEHOLDERS.clear();
+    INTERSECT_SHELF_PLACEHOLDERS = {};
     while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+}
+
+let enterShelfStockingMode = () => {
+    for (let key in manager.renderManager.instanceKeyCache) {
+        let inst = manager.renderManager.instanceKeyCache[key];
+        if (inst.userData.json.modelId === 'shelf01') {
+            if (inst.userData.json.commodities == undefined) {
+                inst.userData.json.commodities = [
+                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
+                ];
+            }
+            addShelfPlaceholders(key);
+        }
+    }
+}
+
+let getCube = (width, height, depth, opacity) => {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = new THREE.MeshBasicMaterial();
+    material.transparent = true;
+    material.opacity = opacity;
+    const cube = new THREE.Mesh(geometry, material);
+    return cube;
+}
+
+const shelfOffestY = [1.565, 1.116, 0.666, 0.200];
+
+let addShelfPlaceholders = (shelfKey) => {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    for (let r = 0; r < 4; ++r) {
+        offsetY = shelfOffestY[r]+0.2;
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`
+            placeholder.name = phKey;
+            let offsetX = (0.6/l)*(2*c+1)-0.6;
+            placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
+            placeholder.rotation.set(shelf.rotation.x, shelf.rotation.y, shelf.rotation.z);
+            placeholder.scale.set(shelf.scale.x, shelf.scale.y, shelf.scale.z);
+            placeholder.userData.shelfKey = shelfKey;
+            placeholder.userData.shelfRow = r;
+            placeholder.userData.shelfCol = c;
+            scene.add(placeholder);
+            manager.renderManager.instanceKeyCache[phKey] = placeholder;
+        }
+    }
+}
+
+let exitShelfStockingMode = () => {
+    cancelClickingShelfPlaceholders();
+    for (let key in manager.renderManager.instanceKeyCache) {
+        if (key.startsWith('shelf-placeholder-')) {
+            scene.remove(manager.renderManager.instanceKeyCache[key]);
+            delete manager.renderManager.instanceKeyCache[key];
+        }
+    }
+}
+
+let isShelfPlaceholder = function(obj) {
+    return obj.name !== undefined && obj.name.startsWith('shelf-placeholder-');
+}
+
+let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
+    if (!(modelId in objectCache)) {
+        loadObjectToCache(modelId, anchor = addCommodityToShelf, anchorArgs = [shelfKey, modelId, r, c, l]);
+        return;
+    }
+    let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
+    let offsetY = shelfOffestY[r];
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodity = addObjectFromCache(
+        modelId = modelId,
+        transform = {
+            'translate': [shelf.position.x + offsetX, shelf.position.y + offsetY, shelf.position.z],
+            'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
+            'scale': [shelf.scale.x, shelf.scale.y, shelf.scale.z]
+        },
+        uuid = undefined,
+        origin = true,
+        otherInfo = {
+            shelfKey: shelfKey,
+            shelfRow: r,
+            shelfCol: c
+        }
+    );
+    shelf.userData.json.commodities[r][c] = { modelId: modelId, uuid: commodity.name };
+    let objectProperties = {};
+    objectProperties[shelfKey] = { commodities: shelf.userData.json.commodities };
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
+}
+
+let yulin = function (shelfKey, newCommodities) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let oldCommodities = shelf.userData.json.commodities;
+    if (oldCommodities !== undefined) {
+        for (let r = 0; r < 4; ++r) {
+            for (let c = 0; c < oldCommodities[r].length; ++c) {
+                if (oldCommodities[r][c].modelId === newCommodities[r][c].modelId) {
+                    newCommodities[r][c].uuid = oldCommodities[r][c].uuid;
+                } else {
+                    newCommodities[r][c].uuid = ''
+                    if (oldCommodities[r][c].uuid !== '') {
+                        removeObjectByUUID(oldCommodities[r][c].uuid)
+                    }
+                }
+            }
+        }
+    }
+    shelf.userData.json.commodities = newCommodities;
+    for (let r = 0; r < 4; ++r) {
+        let l = newCommodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            let modelId = newCommodities[r][c].modelId;
+            if (modelId !== '' && newCommodities[r][c].uuid === '') {
+                addCommodityToShelf(shelfKey, modelId, r, c, l);
+            }
+        }
+    }
+}
+
+let clearDanglingCommodities = () => {
+    for (let key in manager.renderManager.instanceKeyCache) {
+        let inst = manager.renderManager.instanceKeyCache[key];
+        if (inst.userData.modelId.startsWith('yulin-')) {
+            let r = inst.userData.json.shelfRow;
+            let c = inst.userData.json.shelfCol;
+            let shelfKey = inst.userData.json.shelfKey;
+            if (shelfKey in manager.renderManager.instanceKeyCache) {
+                let commodities = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities;
+                if (commodities[r][c].uuid !== key) {
+                    removeObjectByUUID(key);
+                }
+            } else {
+                // the shelf is gone
+                removeObjectByUUID(key);
+            }
+        } else if (inst.userData.modelId === 'shelf01') {
+            let commodities = inst.userData.json.commodities;
+            for (let r = 0; r < 4; ++r) {
+                let l = commodities[r].length;
+                for (let c = 0; c < l; ++c) {
+                    if (!(commodities[r][c].uuid in manager.renderManager.instanceKeyCache)) {
+                        commodities[r][c] = { modelId: '', uuid: '' };
+                    }
+                }
+            }
+        }
+    }
 }

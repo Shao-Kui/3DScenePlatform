@@ -194,9 +194,6 @@ let refreshObjectFromCache = function(objToInsert){
     if(objToInsert.format === 'glb'){
         playAnimation(object3d);
     }
-    if(objToInsert.modelId === 'shelf-placeholder'){
-        traverseMtlToOpacity(object3d, 0.1);
-    }
     return object3d; 
 }
 
@@ -219,7 +216,7 @@ const trafficFlowObjList = ['snack01', 'snack02', 'snack03', 'snack04', 'snacks0
 'vendor02', 'housekeeping01', 'housekeeping02', 'housekeeping03', 'housekeeping', 'petfood01', 'freezer01', 'freezer02', 'freezer03', 
 'freezer04', 'freezer05', 'freezer06', 'freezer07', 'freezer08', 'freezer09', 'freezer10', 'shirt01', 'shirt02', 'shirt03', 'shirt04', 
 'shirt05', 'shirt06', 'shirt07', 'shirt08', 'shorts01', 'pants01', 'pants02', 'pants03', 'pants04', 'pants05', 'skirt01', 'skirt02'];
-const shelfPlaceholderOffestY = [1.565, 1.116, 0.666, 0.200];
+
 let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj', 'startState': 'origin'}, uuid=undefined, origin=true, otherInfo = {}){
     loadMoreServerUUIDs(1);
     if(!uuid) uuid = serverUUIDs.pop(); 
@@ -233,12 +230,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
         transform.scale[1] = transform.scale[0];
         transform.scale[2] = 0.45 / (objectCache[modelId].boundingBox.max.z-objectCache[modelId].boundingBox.min.z);
     }
-    let roomID = calculateRoomID(transform.translate)
-    if (modelId === 'shelf01') {
-        otherInfo['placeholders'] = getUUIDs(8);
-        addShelfPlaceholders(roomID, transform, uuid, otherInfo['placeholders']);
-        console.log(otherInfo['placeholders'])
-    }
+    let roomID = calculateRoomID(transform.translate);
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform, otherInfo);
     object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform, otherInfo]);
@@ -331,7 +323,7 @@ const addObjectsFromCache = function(oArray){
         'args': [uuids]
     });
 };
-
+/*
 let getUUIDs = function(n) {
     ret = []
     loadMoreServerUUIDs(n);
@@ -372,7 +364,7 @@ let addShelfPlaceholders = function (roomID, shelfTransform, shelfUUID, phUUIDs)
         }
     }
 }
-
+*/
 const playAnimation = function(object3d){
     const animaMixer = new THREE.AnimationMixer(object3d);
     animaMixers.push(animaMixer);
