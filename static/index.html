@@ -85,6 +85,7 @@
       var currentAnimation = undefined;
       var clutterpalette_Mode = false;
       var clutterpalettePos;
+      var shelfstocking_Mode = false;
       const AUXILIARY_NAME = "auxiliaryObject";
       const INSERT_NAME = "INSERT_ON_ADD";
       const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
@@ -97,7 +98,7 @@
       const commonSmoothDuration = 0.2;
       var INTERSECT_OBJ;
       var INTERSECT_WALL;
-      var INTERSECT_SHELF_PLACEHOLDERS = new Set();
+      var INTERSECT_SHELF_PLACEHOLDERS = {};
       var INSERT_OBJ;
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
@@ -710,6 +711,12 @@
             >
               PlanIT
             </button>
+
+            <button
+              id="stockshelf_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >Stock Shelf</button>
 
             <button
               id="clutterpalette_button"

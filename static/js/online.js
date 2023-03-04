@@ -81,6 +81,7 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
     }
     else{
         manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;
+        if (!(shelfstocking_Mode && userID === onlineUserID && INTERSECT_OBJ.userData.key !== objKey))
         outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[objKey]);
     };  
 });
