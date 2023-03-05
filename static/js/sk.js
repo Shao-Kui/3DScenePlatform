@@ -2052,10 +2052,10 @@ let yulin = function (shelfKey, newCommodities) {
     if (oldCommodities !== undefined) {
         for (let r = 0; r < 4; ++r) {
             for (let c = 0; c < oldCommodities[r].length; ++c) {
-                if (oldCommodities[r][c].modelId === newCommodities[r][c].modelId) {
+                if (newCommodities[r].length == oldCommodities[r].length && newCommodities[r][c].modelId === oldCommodities[r][c].modelId) {
+                    // same commodity
                     newCommodities[r][c].uuid = oldCommodities[r][c].uuid;
                 } else {
-                    newCommodities[r][c].uuid = ''
                     if (oldCommodities[r][c].uuid !== '') {
                         removeObjectByUUID(oldCommodities[r][c].uuid)
                     }
@@ -2068,7 +2068,7 @@ let yulin = function (shelfKey, newCommodities) {
         let l = newCommodities[r].length;
         for (let c = 0; c < l; ++c) {
             let modelId = newCommodities[r][c].modelId;
-            if (modelId !== '' && newCommodities[r][c].uuid === '') {
+            if (modelId !== '' && (newCommodities[r][c].uuid === '' || newCommodities[r][c].uuid === undefined)) {
                 addCommodityToShelf(shelfKey, modelId, r, c, l);
             }
         }

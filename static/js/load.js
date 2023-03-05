@@ -323,48 +323,7 @@ const addObjectsFromCache = function(oArray){
         'args': [uuids]
     });
 };
-/*
-let getUUIDs = function(n) {
-    ret = []
-    loadMoreServerUUIDs(n);
-    for (let i = 0; i < n; ++i) {
-        let uuid = undefined;
-        if (!uuid) uuid = serverUUIDs.pop();
-        if (!uuid) uuid = THREE.MathUtils.generateUUID();
-        ret.push(uuid);
-    }
-    return ret;
-}
 
-let addShelfPlaceholders = function (roomID, shelfTransform, shelfUUID, phUUIDs) {
-    if (!('shelf-placeholder' in objectCache)) {
-        loadObjectToCache('shelf-placeholder', anchor = addShelfPlaceholders, anchorArgs = [roomID, shelfTransform, shelfUUID, phUUIDs]);
-        return;
-    }
-    let idx = 0;
-    for (let offsetY of shelfPlaceholderOffestY) {
-        for (let offsetX of [-0.3, 0.3]) {
-            phUUID = phUUIDs[idx];
-            let phTransform = JSON.parse(JSON.stringify(shelfTransform));
-            let t = shelfTransform.translate;
-            phTransform.translate = [t[0] + offsetX, t[1] + offsetY, t[2]];
-            // phTransform.format = 'instancedMesh';
-
-            // addShelfPlaceholderObjectByUUID(phUUID, roomID, phTransform, shelfUUID);
-            commandStack.push({
-                'funcName': 'removeObjectByUUID',
-                'args': [phUUID, true]
-            });
-            otherInfo = { shelf: shelfUUID, shelfIndex: idx, commodity: '' };
-            let phObj = addObjectByUUID(phUUID, 'shelf-placeholder', roomID, phTransform, otherInfo);
-            phObj.name = phUUID;
-            traverseMtlToOpacity(phObj, 0.1);
-            emitFunctionCall('addObjectByUUID', [phUUID, 'shelf-placeholder', roomID, phTransform, otherInfo]);
-            idx += 1;
-        }
-    }
-}
-*/
 const playAnimation = function(object3d){
     const animaMixer = new THREE.AnimationMixer(object3d);
     animaMixers.push(animaMixer);
