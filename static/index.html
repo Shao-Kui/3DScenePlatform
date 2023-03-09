@@ -449,7 +449,70 @@
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
             >CGS-餐桌</button> -->
           </div>
-
+          <div>
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#shelfInfoDiv" role="button"
+              aria-expanded="false" aria-controls="shelfInfoDiv">
+              Shelf Info
+            </a>
+          
+            <div class="collapse container" id="shelfInfoDiv">
+              <div class="h4 py-1 px-2 text-left">
+                Shelf Key: <div id="shelfKey"></div>
+              </div>
+          
+              <div class="input-group input-group-lg mb-3 col-8">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Row 1</span>
+                </div>
+                <input id="shelfRow0" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                <div class="input-group-append">
+                  <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
+                      class="glyphicon glyphicon-minus"></i></button>
+                  <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
+                      class="glyphicon glyphicon-plus"></i></button>
+                </div>
+              </div>
+          
+              <div class="input-group input-group-lg mb-3 col-8">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Row 2</span>
+                </div>
+                <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                <div class="input-group-append">
+                  <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
+                      class="glyphicon glyphicon-minus"></i></button>
+                  <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
+                      class="glyphicon glyphicon-plus"></i></button>
+                </div>
+              </div>
+          
+              <div class="input-group input-group-lg mb-3 col-8">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Row 3</span>
+                </div>
+                <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                <div class="input-group-append">
+                  <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
+                      class="glyphicon glyphicon-minus"></i></button>
+                  <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
+                      class="glyphicon glyphicon-plus"></i></button>
+                </div>
+              </div>
+          
+              <div class="input-group input-group-lg mb-3 col-8">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Row 4</span>
+                </div>
+                <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                <div class="input-group-append">
+                  <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
+                      class="glyphicon glyphicon-minus"></i></button>
+                  <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
+                      class="glyphicon glyphicon-plus"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div>
             <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#attributeSliderDiv" role="button" aria-expanded="false" aria-controls="attributeSliderBarDiv">
               Attribute Slider
@@ -552,29 +615,37 @@
             <div class="collapse" id="drawingCanvasDivv">
               <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
             </div>
+
+            <div>
+              <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#cgsAnnoDiv" role="button"
+                aria-expanded="false" aria-controls="cgsAnnoDiv">
+                CGS标注
+              </a>
             
-            <div class="py-2 px-3">
-            <form onsubmit="return false">
-              <div class="input-group input-group-lg py-1">
-                <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username" pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
-                <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+              <div class="py-3 px-3 collapse container" id="cgsAnnoDiv">
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username"
+                      pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
+                    <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+                  </div>
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">提交</button>
+                    </div>
+                  </div>
+                </form>
+                <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
+                <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
               </div>
-              <div class="input-group input-group-lg py-1">
-                <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
-                <div class="input-group-append">
-                  <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">提交</button>
-                </div>
-              </div>
-            </form>
-            <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
-            <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
             </div>
             
-            <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="commitSuccessModalCenterTitle" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalCenterTitle">感谢提交！</h5>
+                    <h5 class="modal-title" id="commitSuccessModalCenterTitle">感谢提交！</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                       <span aria-hidden="true">&times;</span>
                     </button>
