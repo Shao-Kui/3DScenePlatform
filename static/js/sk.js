@@ -2082,7 +2082,7 @@ let addShelfPlaceholdersByRow = function(shelfKey, r, l) {
     offsetY = shelfOffestY[r]+0.2;
     for (let c = 0; c < l; ++c) {
         let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
-        let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`
+        let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
         placeholder.name = phKey;
         let offsetX = (0.6/l)*(2*c+1)-0.6;
         placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
@@ -2133,7 +2133,6 @@ let changeShelfRow = function (shelfKey, r, newRow) {
 }
 
 let setIntersectShelf = () => {
-    // FUTURE WORK: select all ph of that shelf
     if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
     $("#shelfKey").text(INTERSECT_OBJ.userData.key);
     for (let r = 0; r < 4; ++r) {
@@ -2149,7 +2148,9 @@ let setIntersectShelf = () => {
         } else {
             $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
         }
+        $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
     }
+    $(`#shelfSelectAllBtn`).removeAttr('disabled');
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     $("#shelfInfoDiv").collapse('show');
 }
@@ -2160,7 +2161,9 @@ let clearShelfInfo = () => {
         $(`#shelfRow${r}`).val(0);
         $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
         $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+        $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
     }
+    $(`#shelfSelectAllBtn`).attr("disabled", "true");
 }
 
 let shelfRowMinus = (r) => {
@@ -2189,4 +2192,40 @@ let shelfRowPlus = (r) => {
     $(`#shelfRow${r}`).val(newRow.length);
     if (newRow.length >= 8) $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
     $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+}
+
+let shelfRowSelect = (rows) => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+
+    let shelfKey = $("#shelfKey").text();
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+
+    for (let r of rows) {
+
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(phKey);
+            outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[phKey]);
+        }
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/shelfPlaceholder",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[shelf.userData.roomId]),
+            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
+        }
+    }).done(function (o) {
+        $('#searchinput').val('');
+        searchResults = JSON.parse(o);
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
 }

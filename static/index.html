@@ -454,63 +454,82 @@
               aria-expanded="false" aria-controls="shelfInfoDiv">
               Shelf Info
             </a>
-          
+            
             <div class="collapse container" id="shelfInfoDiv">
               <div class="h4 py-1 px-2 text-left">
                 Shelf Key: <div id="shelfKey"></div>
               </div>
-          
-              <div class="input-group input-group-lg mb-3 col-8">
-                <div class="input-group-prepend">
-                  <span class="input-group-text">Row 1</span>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 1</span>
+                  </div>
+                  <input id="shelfRow0" type="text" class="form-control" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
                 </div>
-                <input id="shelfRow0" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
-                <div class="input-group-append">
-                  <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
-                      class="glyphicon glyphicon-minus"></i></button>
-                  <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
-                      class="glyphicon glyphicon-plus"></i></button>
-                </div>
+                <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0])"
+                  disabled>全选</button>
               </div>
-          
-              <div class="input-group input-group-lg mb-3 col-8">
-                <div class="input-group-prepend">
-                  <span class="input-group-text">Row 2</span>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 2</span>
+                  </div>
+                  <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
                 </div>
-                <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
-                <div class="input-group-append">
-                  <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
-                      class="glyphicon glyphicon-minus"></i></button>
-                  <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
-                      class="glyphicon glyphicon-plus"></i></button>
-                </div>
+                <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([1])"
+                  disabled>全选</button>
               </div>
-          
-              <div class="input-group input-group-lg mb-3 col-8">
-                <div class="input-group-prepend">
-                  <span class="input-group-text">Row 3</span>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 3</span>
+                  </div>
+                  <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
                 </div>
-                <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
-                <div class="input-group-append">
-                  <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
-                      class="glyphicon glyphicon-minus"></i></button>
-                  <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
-                      class="glyphicon glyphicon-plus"></i></button>
-                </div>
+                <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([2])"
+                  disabled>全选</button>
               </div>
-          
-              <div class="input-group input-group-lg mb-3 col-8">
-                <div class="input-group-prepend">
-                  <span class="input-group-text">Row 4</span>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 4</span>
+                  </div>
+                  <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
                 </div>
-                <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
-                <div class="input-group-append">
-                  <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
-                      class="glyphicon glyphicon-minus"></i></button>
-                  <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
-                      class="glyphicon glyphicon-plus"></i></button>
-                </div>
+                <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([3])"
+                  disabled>全选</button>
               </div>
+            
+              <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0,1,2,3])"
+                disabled>全选</button>
             </div>
           </div>
           <div>
