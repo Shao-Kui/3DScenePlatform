@@ -9,25 +9,41 @@ OFFSET = 0.2
 MAX_VISIBLE_AREA = 3
 MIN_VISIBLE_AREA = 0.5
 
-with open('test/0e3f92e0-8f04-4643-a737-23603f438e68-r4.json') as f:
-    sceneJson = json.load(f)
+
+
+def initOriganBbox():
+    with open('test/0e3f92e0-8f04-4643-a737-23603f438e68-r4.json') as f:
+        sceneJson = json.load(f)
+    for room in sceneJson['rooms']:
+        if('roomShape' in room.keys()):
+            for obj in room['objList']:
+                if('bbox' in obj.keys()):
+                    obj['bbox']['max'][0] = (obj['bbox']['max'][0] - obj['translate'][0])/obj['scale'][0]
+                    obj['bbox']['max'][1]  = (obj['bbox']['max'][1] - obj['translate'][1])/obj['scale'][1]
+                    obj['bbox']['max'][2] = (obj['bbox']['max'][2] - obj['translate'][2])/obj['scale'][2]
+                    obj['bbox']['min'][0] = -obj['bbox']['max'][0]
+                    obj['bbox']['min'][1] = -obj['bbox']['max'][1]
+                    obj['bbox']['min'][2] = -obj['bbox']['max'][2]
+    with open("test/0e3f92e0-8f04-4643-a737-23603f438e68-r4.json", "w", encoding="utf-8") as fw:
+        json.dump(sceneJson, fw)
 
 def obj2Polygon(obj):
     x = obj['orient'] / math.pi * 180 / 90
+    
     isClose = math.isclose(x,0,rel_tol= 1e-14) or math.isclose(x,1,rel_tol= 1e-14) or math.isclose(x,-1,rel_tol= 1e-14) or math.isclose(x,2,rel_tol= 1e-14) or math.isclose(x,-2,rel_tol= 1e-14)
     if(isClose):
         return Polygon([
-        [obj['bbox']['min'][0],obj['bbox']['min'][2]],
-        [obj['bbox']['min'][0],obj['bbox']['max'][2]],
-        [obj['bbox']['max'][0],obj['bbox']['max'][2]],
-        [obj['bbox']['max'][0],obj['bbox']['min'][2]]
+        [(obj['bbox']['min'][0] + obj['translate'][0]) * obj['scale'][0], (obj['bbox']['min'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['min'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['max'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['max'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['max'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['max'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['min'][2]+ obj['translate'][2]) * obj['scale'][2]]
     ])
     else:
         return shapely.affinity.rotate(Polygon([
-            [obj['bbox']['min'][0],obj['bbox']['min'][2]],
-            [obj['bbox']['min'][0],obj['bbox']['max'][2]],
-            [obj['bbox']['max'][0],obj['bbox']['max'][2]],
-            [obj['bbox']['max'][0],obj['bbox']['min'][2]]
+        [(obj['bbox']['min'][0] + obj['translate'][0]) * obj['scale'][0], (obj['bbox']['min'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['min'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['max'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['max'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['max'][2]+ obj['translate'][2]) * obj['scale'][2]],
+        [(obj['bbox']['max'][0]+ obj['translate'][0])* obj['scale'][0],(obj['bbox']['min'][2]+ obj['translate'][2]) * obj['scale'][2]]
         ]), -obj['orient'], use_radians=True)
 
 def wall2Polygon(room):
@@ -56,9 +72,9 @@ def connectivityNum(room):
         roomGeo = gpd.GeoSeries(roomPolygon)
 
         # visualize
-        roomGeo.plot(ax = ax1, color = 'green')
-        roomOffsetGeo.plot(ax = ax1, color = 'white')
-        roomGeo.boundary.plot(ax = ax1, color = 'slategrey')
+        # roomGeo.plot(ax = ax1, color = 'green')
+        # roomOffsetGeo.plot(ax = ax1, color = 'white')
+        # roomGeo.boundary.plot(ax = ax1, color = 'slategrey')
         # visualize
 
         for obj in room['objList']:
@@ -68,19 +84,26 @@ def connectivityNum(room):
                 allOffsetGeo = allOffsetGeo.union(objOffsetGeo,align = True)
                 objGeo = gpd.GeoSeries(objPolygon)
                 # visualize
-                objOffsetGeo.plot(ax = ax1, color = 'pink')
-                objGeo.plot(ax = ax1, color = 'blue')
+                # objOffsetGeo.plot(ax = ax1, color = 'pink')
+                # objGeo.plot(ax = ax1, color = 'blue')
                 # visualize
         rest = roomGeo.difference(allOffsetGeo,align=True)
         j  = rest.to_json()
         y = json.loads(j)
         features = y['features']
         for feature in features:
-            coordinates = feature['geometry']['coordinates']
+            # if(feature.keys)
+            if ('geometry' in obj.keys()):
+                coordinates = feature['geometry']['coordinates']
+            else:
+                return 0
             
         co = list(coordinates)
-        connectionPart = len(co)
+        connectionPart = float(len(co))
         return(connectionPart)
+    
+    else:
+        return 0
 
 def visiableDis(obj):
     interval = []
@@ -131,7 +154,7 @@ def lineRectOverlap(sp1, sp2, obj):
     lineGeo = gpd.GeoSeries(line)
     objGeo = gpd.GeoSeries(obj)
     # visualize
-    lineGeo.plot(ax = ax1, color = 'red')
+    # lineGeo.plot(ax = ax1, color = 'red')
     # visualize
     return lineGeo.overlaps(objGeo)
 
@@ -144,7 +167,7 @@ def barrier(story,other):
             for obj in other:
                 totalScore += lineRectOverlap(storyPoint.polygon, storyPointNext.polygon, obj)
     if(len(story)): 
-        return totalScore / len(story)
+        return float(totalScore / len(story))
     else:
         return 0
 
@@ -167,18 +190,32 @@ def storyPointDetectable(story):
             d = point1.distance(point2)
             totalScore += disControl(d,storyPoint.intervalMin,storyPoint.intervalMax,2)
     if(len(story)): 
-        return totalScore / len(story)
+        return float(totalScore / len(story))
     else:
         return 0
-
-if __name__ == "__main__":
-    fig, ax1 = plt.subplots()
-    for room in sceneJson['rooms']:
+    
+def costFunction(data):
+    total = 0.0
+    for room in data['rooms']:
         story = []
         other = []
         storyObjList(room,story,other)
-        connectivityNum(room)
-        storyPointDetectable(story)
-        barrier(story,other)
-    plt.savefig("test/0e3f92e0-8f04-4643-a737-23603f438e68-r3-Geometry.jpg")
-    plt.show()
+        total = total + connectivityNum(room) + storyPointDetectable(story) + barrier(story,other)
+    print(total)
+    return total
+
+# if __name__ == "__main__":
+    # initOriganBbox()
+    # with open('test/0e3f92e0-8f04-4643-a737-23603f438e68-r4.json') as f:
+        # sceneJson = json.load(f)
+    # costFunction(sceneJson)
+    # fig, ax1 = plt.subplots()
+    # for room in sceneJson['rooms']:
+    #     story = []
+    #     other = []
+    #     storyObjList(room,story,other)
+    #     connectivityNum(room)
+    #     storyPointDetectable(story)
+    #     barrier(story,other)
+    # plt.savefig("test/Geometry.jpg")
+    # plt.show()
