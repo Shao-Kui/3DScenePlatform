@@ -449,7 +449,209 @@
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
             >CGS-餐桌</button> -->
           </div>
-          <div>
+
+          <div class="py-3">
+            <div class="m-3">
+              <select id="sidebarSelect" class="form-select">
+                <option value="" selected></option>
+                <option value="shelfInfoDiv">Shelf Info</option>
+                <option value="attributeSliderDiv">Attribute Slider</option>
+                <option value="drawingCanvasDiv">Drawing Canvas</option>
+                <option value="drawingCanvasDivv">Furniture Palette</option>
+                <option value="cgsAnnoDiv">CGS标注</option>
+              </select>
+            </div>
+  
+            <div id="collaborative_container" class="m-4">
+              <div class="collapse container sidebarSelect_collapse" id="shelfInfoDiv">
+                <div class="h4 py-1 px-2 text-left">
+                  Shelf Key: <div id="shelfKey"></div>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 1</span>
+                    </div>
+                    <input id="shelfRow0" type="text" class="form-control" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 2</span>
+                    </div>
+                    <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([1])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 3</span>
+                    </div>
+                    <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([2])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 4</span>
+                    </div>
+                    <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([3])"
+                    disabled>全选</button>
+                </div>
+              
+                <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0,1,2,3])"
+                  disabled>全选</button>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="attributeSliderDiv">
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrArea" class="form-label attrSliderText">Area</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrArea" oninput="attrValArea.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValArea"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrNumOfObjects" class="form-label attrSliderText">#Objects</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrNumOfObjects" oninput="attrValNumOfObjects.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValNumOfObjects"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrObjRichness" class="form-label attrSliderText">Richness</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrObjRichness" oninput="attrValObjRichness.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText" >
+                    <span id="attrValObjRichness"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrSpaceUtilization" class="form-label attrSliderText">Utilization</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSpaceUtilization" oninput="attrValSpaceUtilization.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValSpaceUtilization"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrDependency" class="form-label attrSliderText">Dependency</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrDependency" oninput="attrValDependency.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValDependency"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrSmoothness" class="form-label attrSliderText">Smoothness</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSmoothness" oninput="attrValSmoothness.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValSmoothness"></span>
+                  </div>
+                </div>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDiv">
+                <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
+                <div id="sketchsearchdiv" class="btn-group mx-1 my-3">
+                    <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchsearchbtn">
+                        Sketch Search
+                    </button>
+                    <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchclearbtn">
+                        Sketch Clear
+                    </button>
+                </div>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDivv">
+                <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="cgsAnnoDiv">
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username"
+                      pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
+                    <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+                  </div>
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">提交</button>
+                    </div>
+                  </div>
+                </form>
+                <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
+                <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- <div>
             <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#shelfInfoDiv" role="button"
               aria-expanded="false" aria-controls="shelfInfoDiv">
               Shelf Info
@@ -658,7 +860,7 @@
                 <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
                 <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
               </div>
-            </div>
+            </div> -->
             
             <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="commitSuccessModalCenterTitle" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
@@ -676,6 +878,7 @@
               </div>
             </div>
             
+          <div>
             <div class="input-group input-group-lg py-2 px-3">
               <input
                 class="form-control"

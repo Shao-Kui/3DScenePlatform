@@ -1660,6 +1660,14 @@ const setting_up = function () {
         
     });
 
+    $("#sidebarSelect").change(()=>{
+        $('.sidebarSelect_collapse').collapse("hide");
+        if ($("#sidebarSelect").val() !== "") {
+            let selector = "#" + $("#sidebarSelect").val();
+            $(selector).collapse("show");
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -2152,7 +2160,9 @@ let setIntersectShelf = () => {
     }
     $(`#shelfSelectAllBtn`).removeAttr('disabled');
     claimControlObject3D(INTERSECT_OBJ.userData.key, false);
-    $("#shelfInfoDiv").collapse('show');
+    if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
+        $("#sidebarSelect").val("shelfInfoDiv").change();
+    }
 }
 
 let clearShelfInfo = () => {
