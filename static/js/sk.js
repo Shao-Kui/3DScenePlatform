@@ -708,6 +708,11 @@ const onClickIntersectObject = function(event){
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
                 }
+            }else{
+                // user keeps clicking the same object
+                if (shelfstocking_Mode && INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                    return;
+                }
             }
         }
         // if this is the online mode and the object is already controlled by other users...
@@ -2142,9 +2147,34 @@ let changeShelfRow = function (shelfKey, r, newRow) {
 
 let setIntersectShelf = () => {
     if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
-    $("#shelfKey").text(INTERSECT_OBJ.userData.key);
+    let shelfKey = INTERSECT_OBJ.userData.key;
+    claimControlObject3D(shelfKey, false);
+    $("#shelfKey").text(shelfKey);
+    $.ajax({
+        type: "POST",
+        url: "/shelfType",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId]),
+            shelfKey: JSON.stringify(shelfKey)
+        }
+    }).done(function (o) {
+        let intersectShelfType = INTERSECT_OBJ.userData.json.shelfType;
+        shelfTypes = JSON.parse(o);
+        shelfTypes.forEach(function (t, i) {
+            $("#shelfTypeRadios").append(`
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}')">
+                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
+                </div>
+            `);
+            if (intersectShelfType !== undefined && intersectShelfType === t) {
+                $(`#shelfTypeRadio${i}`).prop("checked", true);
+            }
+        });
+    });
+    let commodities = INTERSECT_OBJ.userData.json.commodities;
     for (let r = 0; r < 4; ++r) {
-        let l = INTERSECT_OBJ.userData.json.commodities[r].length;
+        let l = commodities[r].length;
         $(`#shelfRow${r}`).val(l);
         if (l === 1) {
             $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
@@ -2159,10 +2189,18 @@ let setIntersectShelf = () => {
         $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
     }
     $(`#shelfSelectAllBtn`).removeAttr('disabled');
-    claimControlObject3D(INTERSECT_OBJ.userData.key, false);
     if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
         $("#sidebarSelect").val("shelfInfoDiv").change();
     }
+}
+
+let setShelfType = (t) => {
+    let shelfKey = $("#shelfKey").text();
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    shelf.userData.json.shelfType = t;
+    let objectProperties = {};
+    objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
 
 let clearShelfInfo = () => {
@@ -2174,6 +2212,7 @@ let clearShelfInfo = () => {
         $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
     }
     $(`#shelfSelectAllBtn`).attr("disabled", "true");
+    $("#shelfTypeRadios").empty();
 }
 
 let shelfRowMinus = (r) => {

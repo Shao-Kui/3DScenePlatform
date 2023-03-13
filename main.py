@@ -322,6 +322,17 @@ def clutterpalette():
         return json.dumps(ret)
     return "clutterpalette"
 
+@app.route("/shelfType", methods=['POST', 'GET'])
+def shelfType():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        shelfKey = json.loads(request.form.get('shelfKey'))
+        # TODO: replace with yulin's method
+        ret = ["水果", "蔬菜", "肉类", "混合"]
+        random.shuffle(ret)
+        return json.dumps(ret)
+    return "shelfType"
+
 @app.route("/shelfPlaceholder", methods=['POST', 'GET'])
 def shelfPlaceholder():
     if request.method == 'POST':
