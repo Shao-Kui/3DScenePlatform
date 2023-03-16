@@ -23,4 +23,4 @@ def insertSPIntoJson(storyName, sceneName):
         outfile.write(sceneString)
 
 if __name__ == "__main__":
-    insertSPIntoJson('stories/sample.json','test/0e3f92e0-8f04-4643-a737-23603f438e68-r4.json')
+    insertSPIntoJson('stories/abandondedschoolstory.json','test/abandondedschool-r0.json')
