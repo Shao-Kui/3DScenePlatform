@@ -9,13 +9,12 @@ import os
 import re
 import codecs
 import csv
+from scipy.spatial.transform import Rotation as R
+import numpy as np
 
 STEP = 4
-INDOOR_SIG = 1
-OUTDOOR_SIG = 2
-DOOR_SIG = 3
-OUTDOOR_WIN_SING = 4
-OUTDOOR_WIN_DOUB = 5
+MAX_WALL_HEIGHT = 4.576642
+
 
 wallOutside = []
 wallInside = []
@@ -56,7 +55,7 @@ def createEmptyRoom(scene):
     door = next(item for item in doorAndWin if item['type'] == 'door')['list']
     windowSingle = next(item for item in doorAndWin if item['type'] == 'windowSingle')['list']
     windowDouble = next(item for item in doorAndWin if item['type'] == 'windowDouble')['list']
-    sceneJson['origin'] = themeName
+    
     areaShapes = gpd.GeoSeries(scene['areaShapes'])
     areaShapeJson = json.loads(areaShapes.to_json())
     xmin = areaShapeJson['bbox'][0]
@@ -64,6 +63,7 @@ def createEmptyRoom(scene):
     xmax = areaShapeJson['bbox'][2]
     ymax = areaShapeJson['bbox'][3]
 
+    sceneJson['origin'] = themeName
     sceneJson['bbox']['min'] = [xmin, 0, ymin]
     sceneJson['bbox']['max'] = [xmax, 3, ymax]
 
@@ -84,9 +84,6 @@ def createEmptyRoom(scene):
         room = {}
 
         lo = feature['geometry']['coordinates'][0]
-        # for i in range(0,len(lo)-1,1):
-        #     dx = lo[i+1] - lo[i]
-        #     dy = lo[i+1] - lo[i]
         lo.pop()
         room['areaShape'] = lo
 
@@ -156,7 +153,7 @@ def createEmptyRoom(scene):
 
 def getObjBboxAndSurface(base):
     surface = []
-    with open('./test/contactSurface.csv', encoding='utf-8-sig') as f:
+    with open('./prop/contactSurface.csv', encoding='utf-8-sig') as f:
         sf = csv.DictReader(f)
         surface = list(sf)
     for root, ds, fs in os.walk(base):
@@ -172,7 +169,6 @@ def getObjBboxAndSurface(base):
                     js['bbox'] = {'max': aabbJson['max'],'min': aabbJson['min']}
                     js['surface'] = s
                 yield js
-                # yield modelId
 
 def writeBboxSurface(base):
     allObjBbox = {}
@@ -193,6 +189,7 @@ def addBboxSurface2SceneJson(sceneJsonName):
             modelId = obj['modelId']
             j = next(item for item in bboxJson if item['modelId'] == modelId)
             obj['originBbox'] = j['bbox']
+            reloadAABB(obj)
             obj['surface'] = j['surface']
     with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
@@ -219,9 +216,132 @@ def addStoryContent2SceneJson(themeName, sceneJsonName):
     with open(sceneJsonName, "w") as outfile:
         outfile.write(sceneString)
 
+def addWallShapes2SceneJson(sceneJsonName):
+    with open('./stories/' + sceneJsonName) as f:
+        sceneJson =  json.load(f)
+    walls = []
+    rooms = []
+    for room in sceneJson['rooms']:
+        rooms.append(Polygon(room['areaShape']))
+        for obj in room['objList']:
+            if (obj['modelId'] == 'story-WallInside_4m') :
+                o = reloadAABB(obj)
+                p1 = Point(o['eightPoints'][3][0],o['eightPoints'][3][2])
+                p2 = Point(o['eightPoints'][2][0],o['eightPoints'][2][2])
+                walls.append(LineString([p1,p2]))
+                p1 = Point(o['eightPoints'][0][0],o['eightPoints'][0][2])
+                p2 = Point(o['eightPoints'][1][0],o['eightPoints'][1][2])
+                walls.append(LineString([p1,p2]))
+            if (obj['modelId'] == 'story-WallOutside_2f_4m_B'):
+                o = reloadAABB(obj)
+                p1 = Point(o['eightPoints'][3][0],o['eightPoints'][3][2])
+                p2 = Point(o['eightPoints'][2][0],o['eightPoints'][2][2])
+                walls.append(LineString([p1,p2]))
+    
+    wallInRooms = []
+    for r in rooms:
+        subwall = []
+        for w in walls:
+            if r.contains(w.centroid):
+                subwall.append(w)
+        wallInRooms.append(subwall)
+
+    for wir in wallInRooms:
+        for w in wir:
+            wnext = [i for i in wir if i != w]
+            for wn in wnext:
+                if((wn.centroid.x == w.centroid.x) & (abs(wn.centroid.y - w.centroid.y) == 4) | (wn.centroid.y == w.centroid.y) & (abs(wn.centroid.x - w.centroid.x) == 4)):
+                    bds = gpd.GeoSeries(wn).union(gpd.GeoSeries(w)).bounds
+                    p1 = Point(bds.minx,bds.miny)
+                    p2 = Point(bds.maxx,bds.maxy)
+                    i = wir.index(w)
+                    w = LineString([p2,p1])   
+                    wir[i] = w
+                    wir.remove(wn)
+
+    for room in sceneJson['rooms']:
+        i = sceneJson['rooms'].index(room)
+        room['wallShapes'] = []
+        wallShape = {}
+        wr = gpd.GeoSeries(wallInRooms[i])
+        wallShapeJson = json.loads(wr.to_json())
+        for feature in wallShapeJson['features']:
+            wallShape['max'] = [feature['geometry']['coordinates'][0][0],MAX_WALL_HEIGHT,feature['geometry']['coordinates'][0][1]]
+            wallShape['min'] = [feature['geometry']['coordinates'][1][0],0,feature['geometry']['coordinates'][1][1]]
+            room['wallShapes'].append(wallShape)
+            
+    with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
+        json.dump(sceneJson, fw)   
+
+def reloadAABB(obj):
+    eightPoints = np.array([
+        [obj['originBbox']['max'][0], obj['originBbox']['min'][1], obj['originBbox']['max'][2]],
+        [obj['originBbox']['min'][0], obj['originBbox']['min'][1], obj['originBbox']['max'][2]],
+        [obj['originBbox']['min'][0], obj['originBbox']['min'][1], obj['originBbox']['min'][2]],
+        [obj['originBbox']['max'][0], obj['originBbox']['min'][1], obj['originBbox']['min'][2]],
+        [obj['originBbox']['max'][0], obj['originBbox']['max'][1], obj['originBbox']['max'][2]],
+        [obj['originBbox']['min'][0], obj['originBbox']['max'][1], obj['originBbox']['max'][2]],
+        [obj['originBbox']['min'][0], obj['originBbox']['max'][1], obj['originBbox']['min'][2]],
+        [obj['originBbox']['max'][0], obj['originBbox']['max'][1], obj['originBbox']['min'][2]],
+    ])
+    scale = np.array(obj['scale'])
+    rX = R.from_euler('x', obj['rotate'][0], degrees=False).as_matrix()
+    rY = R.from_euler('y', obj['rotate'][1], degrees=False).as_matrix()
+    rZ = R.from_euler('z', obj['rotate'][2], degrees=False).as_matrix()
+    rotate = rZ @ rY @ rX
+    translate = np.array(obj['translate'])
+    center = (np.array(obj['originBbox']['max']) + np.array(obj['originBbox']['min'])) / 2
+    center = rotate @ (center * scale) + translate
+    eightPoints = eightPoints * scale
+    eightPoints = rotate @ eightPoints.T
+    eightPoints = eightPoints.T + translate
+    obj['bbox'] = {
+        'min': list(eightPoints[2]),
+        'max': list(eightPoints[4])
+    }
+    return {
+        'eightPoints': eightPoints,
+        'center': center
+    }
+
+def initialWallCeilingObjY(sceneJson):
+    for room in sceneJson['rooms']:
+        wallShapes = room['wallShapes']
+
+        for obj in room['objList']:
+            if obj['surface' == 'wall']:
+                obj['translate'][1] = MAX_WALL_HEIGHT / 2
+                for wallShape in wallShapes:
+                    max = wallShape['max']
+                    min = wallShape['min']
+                    # 墙面投影竖着
+                    if max[0] == min[0]:
+                        obj['translate'][0] = max[0]
+                        obj['translate'][2] = (max[2] - min[2]) / 2 + min[2]
+                        reloadAABB(obj)
+                    # 横
+                    else:
+                        intervalX = max[2] - min[2]
+                        obj['translate'][2] = max[2]
+                        obj['translate'][0] = (max[0] - min[0]) / 2 + min[0]
+                        reloadAABB(obj)
+            if obj['surface'] == 'ceiling':
+                obj['translate'][1] = MAX_WALL_HEIGHT      
+
 if __name__ == "__main__":
+    # 通过模板json和形状初始化一个空房间
     # createEmptyRoom(scene1)
-    # addBboxSurface2SceneJson('abandondedschool-r0.json')
+
+    # # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
-    addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
+
+    # # sceneJson添加surface和bbox
+    # addBboxSurface2SceneJson('abandondedschool-r0.json')
+
+    # 添加storycontent
+    # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
+
+    # sceneJson添加墙壁shape
+    addWallShapes2SceneJson('abandondedschool-r0.json')
+

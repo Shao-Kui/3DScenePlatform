@@ -153,9 +153,6 @@ def lineRectOverlap(sp1, sp2, obj):
     line = LineString([[centroid1.x,centroid1.y],[centroid2.x,centroid2.y]])
     lineGeo = gpd.GeoSeries(line)
     objGeo = gpd.GeoSeries(obj)
-    # visualize
-    # lineGeo.plot(ax = ax1, color = 'red')
-    # visualize
     return lineGeo.overlaps(objGeo)
 
 def barrier(story,other):
