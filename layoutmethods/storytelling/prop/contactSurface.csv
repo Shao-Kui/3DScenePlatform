@@ -2,7 +2,7 @@ modelId,surface
 story-ArchiveDrawersClosed,floor
 story-ArchiveDrawersOpen,floor
 story-Bench,floor
-story-Blackboard,ceiling
+story-Blackboard,wall
 story-Bookcase,floor
 story-BookcaseBrokenA,floor
 story-BookcaseBrokenB,floor
@@ -32,10 +32,12 @@ story-ToiletC,floor
 story-ToiletCabin,floor
 story-ToiletCabin_openable,floor
 story-ToiletCabin_static,floor
-story-Toilet_MirrorA,floor
-story-Toilet_MirrorB,floor
+story-Toilet_MirrorA,wall
+story-Toilet_MirrorB,wall
 story-WallInside_4m,floor
 story-WallInterior_DoorwayNarrow,floor
 story-WallOutside_2f_4m_B,floor
 story-WallOutside_2f_4m_WindowDouble_B,floor
 story-WallOutside_2f_4m_WindowSingle_B,floor
+story-BlackboardSmall,wall
+story-Map,wall
