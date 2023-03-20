@@ -422,6 +422,7 @@ const addAreaToScene = function(mesh, room){
     mesh.rotation.x = Math.PI * 0.5;
     mesh.scale.z = -1;
     if(room.layer){mesh.position.y = room.layer*0.02;}
+    mesh.userData = {'roomId': room.roomId};
     scene.add(mesh);
     areaList.push(mesh);
 }
@@ -439,8 +440,12 @@ const addAreaByRoom = function(room){
     }
     if(room.areaType === 'grass'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
-    }if(room.areaType === 'earth'){
+    }
+    if(room.areaType === 'earth'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/earth01.jpg')) ;
+    }
+    if(room.areaType=='garden'){
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/flower01.jpg')) ;
     }
     if(room.areaType === 'road1'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/road01.jpg')) ;
