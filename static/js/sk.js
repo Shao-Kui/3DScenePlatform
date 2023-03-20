@@ -698,13 +698,23 @@ const onClickIntersectObject = function(event){
         timeCounter.maniStart = moment();
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
-                if(pressedKeys[16]){// entering group transformation mode: 
+                if (shelfstocking_Mode) {
+                    if(INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                        claimControlObject3D(INTERSECT_OBJ.userData.key, true);
+                        clearShelfInfo();
+                    }
+                }else if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
-                }else if(!isShelfPlaceholder(INTERSECT_OBJ)){
+                }else{
                     releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
+                }
+            }else{
+                // user keeps clicking the same object
+                if (shelfstocking_Mode && INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                    return;
                 }
             }
         }
@@ -723,7 +733,8 @@ const onClickIntersectObject = function(event){
                 shelfPlaceholderHandler();
                 return;
             }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
-                // FUTURE WORK: select all ph of that shelf, change the number of ph on each row
+                setIntersectShelf();
+                return;
             }else{
                 cancelClickingShelfPlaceholders();
             }
@@ -737,7 +748,10 @@ const onClickIntersectObject = function(event){
     }else{
         cancelClickingObject3D();
         if (clutterpalette_Mode) { onClutterpaletteClick(); }
-        if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
+        if (shelfstocking_Mode) {
+            cancelClickingShelfPlaceholders();
+            clearShelfInfo();
+        }
         // return; // if you want to disable movable wall, just uncomment this line. 
         /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
@@ -1654,6 +1668,14 @@ const setting_up = function () {
         
     });
 
+    $("#sidebarSelect").change(()=>{
+        $('.sidebarSelect_collapse').collapse("hide");
+        if ($("#sidebarSelect").val() !== "") {
+            let selector = "#" + $("#sidebarSelect").val();
+            $(selector).collapse("show");
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1956,6 +1978,7 @@ let cancelClickingShelfPlaceholders = () => {
 }
 
 let enterShelfStockingMode = () => {
+    cancelClickingObject3D();
     for (let key in manager.renderManager.instanceKeyCache) {
         let inst = manager.renderManager.instanceKeyCache[key];
         if (inst.userData.json.modelId === 'shelf01') {
@@ -1985,24 +2008,8 @@ const shelfOffestY = [1.565, 1.116, 0.666, 0.200];
 
 let addShelfPlaceholders = (shelfKey) => {
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let commodities = shelf.userData.json.commodities;
     for (let r = 0; r < 4; ++r) {
-        offsetY = shelfOffestY[r]+0.2;
-        let l = commodities[r].length;
-        for (let c = 0; c < l; ++c) {
-            let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
-            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`
-            placeholder.name = phKey;
-            let offsetX = (0.6/l)*(2*c+1)-0.6;
-            placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
-            placeholder.rotation.set(shelf.rotation.x, shelf.rotation.y, shelf.rotation.z);
-            placeholder.scale.set(shelf.scale.x, shelf.scale.y, shelf.scale.z);
-            placeholder.userData.shelfKey = shelfKey;
-            placeholder.userData.shelfRow = r;
-            placeholder.userData.shelfCol = c;
-            scene.add(placeholder);
-            manager.renderManager.instanceKeyCache[phKey] = placeholder;
-        }
+        addShelfPlaceholdersByRow(shelfKey, r, shelf.userData.json.commodities[r].length);
     }
 }
 
@@ -2014,6 +2021,7 @@ let exitShelfStockingMode = () => {
             delete manager.renderManager.instanceKeyCache[key];
         }
     }
+    clearShelfInfo();
 }
 
 let isShelfPlaceholder = function(obj) {
@@ -2050,31 +2058,8 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
 }
 
 let yulin = function (shelfKey, newCommodities) {
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let oldCommodities = shelf.userData.json.commodities;
-    if (oldCommodities !== undefined) {
-        for (let r = 0; r < 4; ++r) {
-            for (let c = 0; c < oldCommodities[r].length; ++c) {
-                if (newCommodities[r].length == oldCommodities[r].length && newCommodities[r][c].modelId === oldCommodities[r][c].modelId) {
-                    // same commodity
-                    newCommodities[r][c].uuid = oldCommodities[r][c].uuid;
-                } else {
-                    if (oldCommodities[r][c].uuid !== '') {
-                        removeObjectByUUID(oldCommodities[r][c].uuid)
-                    }
-                }
-            }
-        }
-    }
-    shelf.userData.json.commodities = newCommodities;
     for (let r = 0; r < 4; ++r) {
-        let l = newCommodities[r].length;
-        for (let c = 0; c < l; ++c) {
-            let modelId = newCommodities[r][c].modelId;
-            if (modelId !== '' && (newCommodities[r][c].uuid === '' || newCommodities[r][c].uuid === undefined)) {
-                addCommodityToShelf(shelfKey, modelId, r, c, l);
-            }
-        }
+        changeShelfRow(shelfKey, r, newCommodities[r]);
     }
 }
 
@@ -2106,4 +2091,193 @@ let clearDanglingCommodities = () => {
             }
         }
     }
+}
+
+let addShelfPlaceholdersByRow = function(shelfKey, r, l) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    offsetY = shelfOffestY[r]+0.2;
+    for (let c = 0; c < l; ++c) {
+        let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
+        let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+        placeholder.name = phKey;
+        let offsetX = (0.6/l)*(2*c+1)-0.6;
+        placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
+        placeholder.rotation.set(shelf.rotation.x, shelf.rotation.y, shelf.rotation.z);
+        placeholder.scale.set(shelf.scale.x, shelf.scale.y, shelf.scale.z);
+        placeholder.userData.shelfKey = shelfKey;
+        placeholder.userData.shelfRow = r;
+        placeholder.userData.shelfCol = c;
+        scene.add(placeholder);
+        manager.renderManager.instanceKeyCache[phKey] = placeholder;
+    }
+}
+
+// newRow = [{modelId: 'yulin-xxx'}, {modelId: ''}, ...]
+let changeShelfRow = function (shelfKey, r, newRow) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let oldRow = shelf.userData.json.commodities[r];
+    if (oldRow !== undefined) {
+        for (let c = 0; c < oldRow.length; ++c) {
+            if (newRow.length === oldRow.length && newRow[c].modelId === oldRow[c].modelId) {
+                // same commodity
+                newRow[c].uuid = oldRow[c].uuid;
+            } else {
+                if (oldRow[c].uuid !== "") {
+                    removeObjectByUUID(oldRow[c].uuid)
+                }
+            }
+        }
+    }
+    if (newRow.length !== oldRow.length) {
+        for (let c = 0; c < oldRow.length; ++c) {
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+            scene.remove(manager.renderManager.instanceKeyCache[phKey]);
+            delete manager.renderManager.instanceKeyCache[phKey];
+        }
+        addShelfPlaceholdersByRow(shelfKey, r, newRow.length);
+    }
+    shelf.userData.json.commodities[r] = newRow;
+    let l = newRow.length;
+    for (let c = 0; c < l; ++c) {
+        let modelId = newRow[c].modelId;
+        if (newRow.length === oldRow.length && newRow[c].uuid !== undefined && newRow[c].uuid !== "") {
+            continue;
+        } else {
+            addCommodityToShelf(shelfKey, modelId, r, c, l);
+        }
+    }
+}
+
+let setIntersectShelf = () => {
+    if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
+    let shelfKey = INTERSECT_OBJ.userData.key;
+    claimControlObject3D(shelfKey, false);
+    $("#shelfKey").text(shelfKey);
+    $.ajax({
+        type: "POST",
+        url: "/shelfType",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId]),
+            shelfKey: JSON.stringify(shelfKey)
+        }
+    }).done(function (o) {
+        let intersectShelfType = INTERSECT_OBJ.userData.json.shelfType;
+        shelfTypes = JSON.parse(o);
+        shelfTypes.forEach(function (t, i) {
+            $("#shelfTypeRadios").append(`
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}')">
+                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
+                </div>
+            `);
+            if (intersectShelfType !== undefined && intersectShelfType === t) {
+                $(`#shelfTypeRadio${i}`).prop("checked", true);
+            }
+        });
+    });
+    let commodities = INTERSECT_OBJ.userData.json.commodities;
+    for (let r = 0; r < 4; ++r) {
+        let l = commodities[r].length;
+        $(`#shelfRow${r}`).val(l);
+        if (l === 1) {
+            $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+        } else {
+            $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+        }
+        if (l >= 8) {
+            $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+        } else {
+            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
+        }
+        $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
+    }
+    $(`#shelfSelectAllBtn`).removeAttr('disabled');
+    if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
+        $("#sidebarSelect").val("shelfInfoDiv").change();
+    }
+}
+
+let setShelfType = (t) => {
+    let shelfKey = $("#shelfKey").text();
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    shelf.userData.json.shelfType = t;
+    let objectProperties = {};
+    objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
+}
+
+let clearShelfInfo = () => {
+    $("#shelfKey").text("");
+    for (let r = 0; r < 4; ++r) {
+        $(`#shelfRow${r}`).val(0);
+        $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+        $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+        $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
+    }
+    $(`#shelfSelectAllBtn`).attr("disabled", "true");
+    $("#shelfTypeRadios").empty();
+}
+
+let shelfRowMinus = (r) => {
+    let shelfKey = $("#shelfKey").text();
+    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
+    for (let i = oldRow.length - 1; i >= 0; --i) {
+        if (oldRow[i].modelId === "") {
+            let newRow = [...oldRow];
+            newRow.splice(i, 1);
+            changeShelfRow(shelfKey, r, newRow);
+            $(`#shelfRow${r}`).val(newRow.length);
+            if (newRow.length <= 1) $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
+            return;
+        }
+    }
+    alert("不能再减了！");
+}
+
+let shelfRowPlus = (r) => {
+    let shelfKey = $("#shelfKey").text();
+    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
+    let newRow = [...oldRow];
+    newRow.push({modelId:""});
+    changeShelfRow(shelfKey, r, newRow);
+    $(`#shelfRow${r}`).val(newRow.length);
+    if (newRow.length >= 8) $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+    $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+}
+
+let shelfRowSelect = (rows) => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+
+    let shelfKey = $("#shelfKey").text();
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+
+    for (let r of rows) {
+
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(phKey);
+            outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[phKey]);
+        }
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/shelfPlaceholder",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[shelf.userData.roomId]),
+            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
+        }
+    }).done(function (o) {
+        $('#searchinput').val('');
+        searchResults = JSON.parse(o);
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
 }

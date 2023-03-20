@@ -1,7 +1,7 @@
 {
     "story" : [
         {
-            "modelId": "5134",
+            "modelId": "story-ArchiveDrawersClosed",
             "storyContents": [
                 {
                     "storyIndex": "1",
@@ -19,7 +19,7 @@
             ]
         },
         {
-            "modelId": "8271",
+            "modelId": "story-Blackboard",
             "storyContents": [
                 {
                     "storyIndex": "2",
@@ -31,7 +31,7 @@
             ]
         },
         {
-            "modelId": "2776",
+            "modelId": "story-CardboardBoxA",
             "storyContents": [
                 {
                     "storyIndex": "4",
@@ -43,7 +43,7 @@
             ]
         },
         {
-            "modelId": "2630",
+            "modelId": "story-Fan",
             "storyContents": [
                 {
                     "storyIndex": "5",
@@ -55,7 +55,7 @@
             ]
         },
         {
-            "modelId": "3365",
+            "modelId": "story-LampFluoHangingA_ON",
             "storyContents": [
                 {
                     "storyIndex": "8",
@@ -80,53 +80,10 @@
             ]
         },
         {
-            "modelId": "8873",
+            "modelId": "story-StudentDeskB",
             "storyContents": [
                 {
                     "storyIndex": "7",
-                    "guideType": "any",
-                    "guideAnimation": "name of animation",
-                    "guideSound": "name of sound",
-                    "resultAnimation": "name of animation"
-                }
-            ]
-        },
-        {
-            "modelId": "4737",
-            "storyContents": [
-                {
-                    "storyIndex": "12",
-                    "guideType": "any",
-                    "guideAnimation": "name of animation",
-                    "guideSound": "name of sound",
-                    "resultAnimation": "name of animation"
-                }
-            ]
-        },
-        {
-            "modelId": "9426",
-            "storyContents": [
-                {
-                    "storyIndex": "10",
-                    "guideType": "any",
-                    "guideAnimation": "name of animation",
-                    "guideSound": "name of sound",
-                    "resultAnimation": "name of animation"
-                },
-                {
-                    "storyIndex": "13",
-                    "guideType": "any",
-                    "guideAnimation": "name of animation",
-                    "guideSound": "name of sound",
-                    "resultAnimation": "name of animation"
-                }
-            ]
-        },
-        {
-            "modelId": "9706",
-            "storyContents": [
-                {
-                    "storyIndex": "11",
                     "guideType": "any",
                     "guideAnimation": "name of animation",
                     "guideSound": "name of sound",
