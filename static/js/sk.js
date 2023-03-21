@@ -2190,8 +2190,10 @@ let setIntersectShelf = () => {
             $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
         }
         $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
+        $(`#shelfClearRow${r}Btn`).removeAttr('disabled');
     }
     $(`#shelfSelectAllBtn`).removeAttr('disabled');
+    $(`#shelfClearAllBtn`).removeAttr('disabled');
     if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
         $("#sidebarSelect").val("shelfInfoDiv").change();
     }
@@ -2213,8 +2215,10 @@ let clearShelfInfo = () => {
         $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
         $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
         $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
+        $(`#shelfClearRow${r}Btn`).attr("disabled", "true");
     }
     $(`#shelfSelectAllBtn`).attr("disabled", "true");
+    $(`#shelfClearAllBtn`).attr("disabled", "true");
     $("#shelfTypeRadios").empty();
 }
 
@@ -2257,7 +2261,6 @@ let shelfRowSelect = (rows) => {
     INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
 
     for (let r of rows) {
-
         let l = commodities[r].length;
         for (let c = 0; c < l; ++c) {
             let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
@@ -2280,4 +2283,23 @@ let shelfRowSelect = (rows) => {
             newCatalogItem(item);
         });
     });
+}
+
+let shelfRowClear = (rows) => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+
+    let shelfKey = $("#shelfKey").text();
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+
+    for (let r of rows) {
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            if (commodities[r][c].uuid !== "") removeObjectByUUID(commodities[r][c].uuid);
+            commodities[r][c] = { modelId: '', uuid: '' };
+        }
+    }
 }
