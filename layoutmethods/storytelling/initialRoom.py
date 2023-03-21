@@ -11,6 +11,7 @@ import codecs
 import csv
 from scipy.spatial.transform import Rotation as R
 import numpy as np
+import random
 
 STEP = 4
 MAX_WALL_HEIGHT = 4.576642
@@ -195,7 +196,7 @@ def addBboxSurface2SceneJson(sceneJsonName):
         json.dump(sceneJson, fw)   
 
 def addStoryContent2SceneJson(themeName, sceneJsonName):
-    with open(sceneJsonName) as f:
+    with open('./stories/' + sceneJsonName) as f:
         sceneJson = json.load(f)
     with open('./stories/' + themeName + '-story.json') as f:
         storyJson = json.load(f)
@@ -213,7 +214,7 @@ def addStoryContent2SceneJson(themeName, sceneJsonName):
                     storyJson['story'].remove(storyPoint)
 
     sceneString = json.dumps(sceneJson)
-    with open(sceneJsonName, "w") as outfile:
+    with open('./stories/' + sceneJsonName, "w") as outfile:
         outfile.write(sceneString)
 
 def addWallShapes2SceneJson(sceneJsonName):
@@ -231,7 +232,7 @@ def addWallShapes2SceneJson(sceneJsonName):
                 walls.append(LineString([p1,p2]))
                 p1 = Point(o['eightPoints'][0][0],o['eightPoints'][0][2])
                 p2 = Point(o['eightPoints'][1][0],o['eightPoints'][1][2])
-                walls.append(LineString([p1,p2]))
+                walls.append(LineString([p2,p1]))
             if (obj['modelId'] == 'story-WallOutside_2f_4m_B'):
                 o = reloadAABB(obj)
                 p1 = Point(o['eightPoints'][3][0],o['eightPoints'][3][2])
@@ -255,21 +256,25 @@ def addWallShapes2SceneJson(sceneJsonName):
                     p1 = Point(bds.minx,bds.miny)
                     p2 = Point(bds.maxx,bds.maxy)
                     i = wir.index(w)
-                    w = LineString([p2,p1])   
+                    l = list(w.coords)
+                    if (l[0][0] < l[1][0]) | (l[0][1] < l[1][1]):
+                        w = LineString([p1,p2])
+                    elif (l[0][0] > l[1][0]) | (l[0][1] > l[1][1]):
+                        w = LineString([p2,p1])
                     wir[i] = w
                     wir.remove(wn)
 
     for room in sceneJson['rooms']:
         i = sceneJson['rooms'].index(room)
-        room['wallShapes'] = []
-        wallShape = {}
         wr = gpd.GeoSeries(wallInRooms[i])
         wallShapeJson = json.loads(wr.to_json())
+        # break
+        wallShapes = []
         for feature in wallShapeJson['features']:
-            wallShape['max'] = [feature['geometry']['coordinates'][0][0],MAX_WALL_HEIGHT,feature['geometry']['coordinates'][0][1]]
-            wallShape['min'] = [feature['geometry']['coordinates'][1][0],0,feature['geometry']['coordinates'][1][1]]
-            room['wallShapes'].append(wallShape)
-            
+            wallShape = {}
+            wallShape = feature['geometry']['coordinates']
+            wallShapes.append(wallShape)
+        room['wallShapes'] = wallShapes
     with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
 
@@ -304,35 +309,94 @@ def reloadAABB(obj):
         'center': center
     }
 
-def initialWallCeilingObjY(sceneJson):
+def initialObjPosition(sceneJsonName):
+    with open('./stories/' + sceneJsonName) as f:
+        sceneJson =  json.load(f)
+        
     for room in sceneJson['rooms']:
-        wallShapes = room['wallShapes']
-
+        # objOnWall = []
+        # objOnCeiling = []
+        # objOnFloor = []
         for obj in room['objList']:
-            if obj['surface' == 'wall']:
-                obj['translate'][1] = MAX_WALL_HEIGHT / 2
-                for wallShape in wallShapes:
-                    max = wallShape['max']
-                    min = wallShape['min']
-                    # 墙面投影竖着
-                    if max[0] == min[0]:
-                        obj['translate'][0] = max[0]
-                        obj['translate'][2] = (max[2] - min[2]) / 2 + min[2]
-                        reloadAABB(obj)
-                    # 横
-                    else:
-                        intervalX = max[2] - min[2]
-                        obj['translate'][2] = max[2]
-                        obj['translate'][0] = (max[0] - min[0]) / 2 + min[0]
-                        reloadAABB(obj)
-            if obj['surface'] == 'ceiling':
-                obj['translate'][1] = MAX_WALL_HEIGHT      
+            if obj['format'] == 'obj':
+                if obj['surface'] == 'wall':
+                    randomPositionOnWall(obj, room)
+                elif obj['surface'] == 'ceiling':
+                    randomPositionOnCeiling(obj,room)
+                # elif obj['surface'] == 'floor':
+                #     randomPositionOnFloor(obj,room)
+    with open('./stories/test.json', "w", encoding="utf-8") as fw:
+        json.dump(sceneJson, fw)  
+    
+def randomPositionInAreaShape(obj, room):
+    areaShape = room['areaShape']
+    area = Polygon(areaShape)
+    b = area.bounds
+    x = random.uniform(b[0],b[2])
+    y = random.uniform(b[1],b[3])
+    obj['translate'][0] = x
+    obj['translate'][2] = y
 
+def randomPositionOnFloor(obj,room):
+    randomPositionInAreaShape(obj,room)
+    obj['translate'][1] = 0
+    reloadAABB(obj)
+
+def randomPositionOnCeiling(obj,room):
+    randomPositionInAreaShape(obj,room)
+    obj['translate'][1] = MAX_WALL_HEIGHT
+    reloadAABB(obj)
+
+def randomPositionOnWall(obj, room):
+    wallShapes = room['wallShapes']
+    index = random.randint(0,len(wallShapes))
+    wall = wallShapes[index-1]
+    dx = int(wall[1][0] - wall[0][0])
+    dy = int(wall[1][1] - wall[0][1])
+    if (dy == 0) & (dx > 0):
+        # right
+        obj['rotate'] = [0, -math.pi, 0]
+        obj['translate'][0] = random.uniform(wall[0][0],wall[1][0])
+        obj['translate'][1] = MAX_WALL_HEIGHT / 2
+        obj['translate'][2] = wall[0][1]
+    elif (dy == 0) & (dx < 0):
+        # left
+        obj['rotate'] = [0, 0, 0]
+        obj['translate'][0] = random.uniform(wall[1][0],wall[0][0])
+        obj['translate'][1] = MAX_WALL_HEIGHT / 2
+        obj['translate'][2] = wall[0][1]
+    elif (dx == 0) & (dy > 0):
+        # up
+        obj['rotate'] = [0, -0.5 * math.pi, 0]
+        obj['translate'][0] = wall[0][0]
+        obj['translate'][1] = MAX_WALL_HEIGHT / 2
+        obj['translate'][2] = random.uniform(wall[1][1],wall[0][1])
+    else:
+        # down
+        obj['rotate'] = [0, 0.5 * math.pi, 0]
+        obj['translate'][0] = wall[0][0]
+        obj['translate'][1] = MAX_WALL_HEIGHT / 2
+        obj['translate'][2] = random.uniform(wall[0][1],wall[1][1])
+    reloadAABB(obj)
+
+def obj2Rectangle(obj):
+    return gpd.GeoSeries(Polygon([
+        [obj['bbox']['min'][0],obj['bbox']['min'][2]],
+        [obj['bbox']['max'][0],obj['bbox']['min'][2]],
+        [obj['bbox']['max'][0],obj['bbox']['max'][2]],
+        [obj['bbox']['min'][0],obj['bbox']['max'][2]]
+    ]))
+    
+def colisionDetect(obj1,obj2):
+    rect1 = obj2Rectangle(obj1)
+    rect2 = obj2Rectangle(obj2)
+    return rect1.overlaps(rect2)
+    
 if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
     # createEmptyRoom(scene1)
 
-    # # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
+    # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
 
@@ -343,5 +407,6 @@ if __name__ == "__main__":
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
 
     # sceneJson添加墙壁shape
-    addWallShapes2SceneJson('abandondedschool-r0.json')
+    # addWallShapes2SceneJson('abandondedschool-r0.json')
 
+    initialObjPosition('abandondedschool-r0.json')
