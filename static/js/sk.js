@@ -3,7 +3,7 @@ const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
     let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache.concat(areaList), true);
     if (manager.renderManager.cwfCache.length + areaList.length > 0 && intersects.length > 0) { 
-        if(intersects[0].object.userData){
+        if(intersects[0].object.userData && intersects[0].object.userData.roomId){
             return intersects[0].object.userData.roomId;
         }
         if(intersects[0].object.parent.userData.roomId === undefined){
