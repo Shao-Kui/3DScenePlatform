@@ -1,6 +1,7 @@
 import shapely
 import geopandas as gpd
 from shapely.geometry import Point,Polygon, MultiPolygon, LineString
+from shapely import box
 import matplotlib.pyplot as plt
 import json
 import math
@@ -66,7 +67,7 @@ def createEmptyRoom(scene):
 
     sceneJson['origin'] = themeName
     sceneJson['bbox']['min'] = [xmin, 0, ymin]
-    sceneJson['bbox']['max'] = [xmax, 3, ymax]
+    sceneJson['bbox']['max'] = [xmax, MAX_WALL_HEIGHT, ymax]
 
     wallOutside = []
     for i in range(int(ymin + STEP/2), int(ymax), 4):
@@ -195,6 +196,13 @@ def addBboxSurface2SceneJson(sceneJsonName):
     with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
 
+def addBboxSurface2Scene(obj, bboxJson):
+    modelId = obj['modelId']
+    j = next(item for item in bboxJson if item['modelId'] == modelId)
+    obj['originBbox'] = j['bbox']
+    reloadAABB(obj)
+    obj['surface'] = j['surface']
+
 def addStoryContent2SceneJson(themeName, sceneJsonName):
     with open('./stories/' + sceneJsonName) as f:
         sceneJson = json.load(f)
@@ -217,9 +225,93 @@ def addStoryContent2SceneJson(themeName, sceneJsonName):
     with open('./stories/' + sceneJsonName, "w") as outfile:
         outfile.write(sceneString)
 
-def addWallShapes2SceneJson(sceneJsonName):
-    with open('./stories/' + sceneJsonName) as f:
+def addStoryContent2Scene(obj, storyJson):
+    modelId = obj['modelId']
+    for storyPoint in storyJson['story']:
+        if(storyPoint['modelId'] == obj['modelId']):
+            if('type' in obj.keys() and obj['type'] != 'storypoint'):
+                obj['type'] = 'storypoint'
+            if not ('storyContents' in obj.keys()):
+                data = {}
+                data['storyContents'] = storyPoint['storyContents']
+                obj.update(data)
+            storyJson['story'].remove(storyPoint)
+
+def getWallProjection(sceneJson,wallInRooms):
+    walls = []
+    rooms = []
+    for room in sceneJson['rooms']:
+        rooms.append(Polygon(room['areaShape']))
+        for obj in room['objList']:
+            if obj['format'] == 'instancedMesh':
+                o = reloadAABB(obj)
+                p1 = Point(o['eightPoints'][3][0],o['eightPoints'][3][2])
+                p2 = Point(o['eightPoints'][2][0],o['eightPoints'][2][2])
+                line1 = LineString([p1,p2])
+                p1 = Point(o['eightPoints'][0][0],o['eightPoints'][0][2])
+                p2 = Point(o['eightPoints'][1][0],o['eightPoints'][1][2])
+                line2 = LineString([p2,p1])
+                if (obj['modelId'] == 'story-WallInside_4m') :
+                    walls.append(line1)
+                    walls.append(line2)
+                if (obj['modelId'] == 'story-WallOutside_2f_4m_B'):
+                    walls.append(line1)
+    for r in rooms:
+        subwall = []
+        for w in walls:
+            if r.contains(w.centroid):
+                subwall.append(w)
+        wallInRooms.append(subwall)
+    
+    combineWallProjection(wallInRooms)
+
+def combineWallProjection(wallInRooms):
+    for wir in wallInRooms:
+        for w in wir:
+            wnext = [i for i in wir if i != w]
+            for wn in wnext:
+                if((wn.centroid.x == w.centroid.x) & (abs(wn.centroid.y - w.centroid.y) == 4) | (wn.centroid.y == w.centroid.y) & (abs(wn.centroid.x - w.centroid.x) == 4)):
+                    bds = gpd.GeoSeries(wn).union(gpd.GeoSeries(w)).bounds
+                    p1 = Point(bds.minx,bds.miny)
+                    p2 = Point(bds.maxx,bds.maxy)
+                    i = wir.index(w)
+                    l = list(w.coords)
+                    if (l[0][0] < l[1][0]) | (l[0][1] < l[1][1]):
+                        w = LineString([p1,p2])
+                    elif (l[0][0] > l[1][0]) | (l[0][1] > l[1][1]):
+                        w = LineString([p2,p1])
+                    wir[i] = w
+                    wir.remove(wn)
+
+def addWallProjection2Scene(sceneJson,wallInRooms):
+    for room in sceneJson['rooms']:
+        i = sceneJson['rooms'].index(room)
+        wr = gpd.GeoSeries(wallInRooms[i])
+        wallShapeJson = json.loads(wr.to_json())
+        wallShapes = []
+        for feature in wallShapeJson['features']:
+            wallShape = {}
+            wallShape = feature['geometry']['coordinates']
+            wallShapes.append(wallShape)
+        room['wallShapes'] = wallShapes
+
+def addAllJsonData(themName):
+    with open('./stories/' + themName + '-r0.json') as f:
         sceneJson =  json.load(f)
+    with open('./prop/allBboxSurface.json') as f:
+        bboxJson  = json.load(f)
+    with open('./stories/' + themName + '-story.json') as f:
+        storyJson = json.load(f)
+    for room in sceneJson['rooms']:
+        for obj in room['objList']:
+            addBboxSurface2Scene(obj,bboxJson)
+            addStoryContent2Scene(obj,storyJson)
+    wallInRooms = []
+    getWallProjection(sceneJson, wallInRooms)
+    addWallProjection2Scene(sceneJson, wallInRooms)
+    with open('./stories/' + themName + '-r0.json', "w", encoding="utf-8") as fw:
+        json.dump(sceneJson, fw)   
+def addWallShapes2SceneJson(sceneJson):
     walls = []
     rooms = []
     for room in sceneJson['rooms']:
@@ -268,15 +360,12 @@ def addWallShapes2SceneJson(sceneJsonName):
         i = sceneJson['rooms'].index(room)
         wr = gpd.GeoSeries(wallInRooms[i])
         wallShapeJson = json.loads(wr.to_json())
-        # break
         wallShapes = []
         for feature in wallShapeJson['features']:
             wallShape = {}
             wallShape = feature['geometry']['coordinates']
             wallShapes.append(wallShape)
         room['wallShapes'] = wallShapes
-    with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
-        json.dump(sceneJson, fw)   
 
 def reloadAABB(obj):
     eightPoints = np.array([
@@ -309,25 +398,81 @@ def reloadAABB(obj):
         'center': center
     }
 
-def initialObjPosition(sceneJsonName):
-    with open('./stories/' + sceneJsonName) as f:
-        sceneJson =  json.load(f)
-        
+def getAllWallsInRoom(sceneJson):
+    walls = []
+    rooms = []
     for room in sceneJson['rooms']:
-        # objOnWall = []
-        # objOnCeiling = []
-        # objOnFloor = []
+        rooms.append(Polygon(room['areaShape']))
+        for obj in room['objList']:
+            if obj['format'] == 'instancedMesh':
+                walls.append(obj)
+    wallInRooms = []
+    for r in rooms:
+        subwall = []
+        for w in walls:
+            rect = obj2Rectangle(w)
+            if bool(r.intersects(rect)):
+                subwall.append(w)
+        wallInRooms.append(subwall)
+    return wallInRooms
+
+def initialObjPosition(themeName):
+    with open('./stories/' + themeName + '-r0.json') as f:
+        sceneJson =  json.load(f)
+
+    fig, ax1 = plt.subplots()
+    wallObjList = getAllWallsInRoom(sceneJson)
+    
+    for room in sceneJson['rooms']:
+        i = sceneJson['rooms'].index(room)
+        objOnWall = wallObjList[i]
+        objOnCeiling = wallObjList[i]
+        objOnFloor = wallObjList[i]
+        for w in objOnWall:
+            w = gpd.GeoSeries(obj2Rectangle(w))
+            w.plot(ax = ax1, color = 'pink')
+        wallShapes = room['wallShapes']
+        for w in wallShapes:
+            o = gpd.GeoSeries(LineString(w))
+            o.plot(ax = ax1, color = 'red')
         for obj in room['objList']:
             if obj['format'] == 'obj':
                 if obj['surface'] == 'wall':
                     randomPositionOnWall(obj, room)
+                    while(colisionDetectWithList(obj,objOnWall)):
+                        randomPositionOnWall(obj, room)
+                    objOnWall.append(obj)
+                    o = gpd.GeoSeries(obj2Rectangle(obj).buffer(0.1))
+                    o.plot(ax = ax1, color = 'blue')
                 elif obj['surface'] == 'ceiling':
                     randomPositionOnCeiling(obj,room)
-                # elif obj['surface'] == 'floor':
-                #     randomPositionOnFloor(obj,room)
-    with open('./stories/test.json', "w", encoding="utf-8") as fw:
-        json.dump(sceneJson, fw)  
+                    while(colisionDetectWithList(obj,objOnCeiling)):
+                        randomPositionOnCeiling(obj, room)
+                    objOnCeiling.append(obj)
+                    o = gpd.GeoSeries(obj2Rectangle(obj))
+                    o.plot(ax = ax1, color = 'green')
+                elif obj['surface'] == 'floor':
+                    randomPositionOnFloor(obj,room)
+                    while(colisionDetectWithList(obj,objOnFloor)):
+                        randomPositionOnFloor(obj, room)
+                    objOnFloor.append(obj)
+                    o = gpd.GeoSeries(obj2Rectangle(obj))
+                    o.plot(ax = ax1, color = 'yellow')
+        # break
     
+    with open('./stories/test.json', "w", encoding="utf-8") as fw:
+        json.dump(sceneJson, fw)
+    plt.show()
+
+def colisionDetectWithList(obj,objList):
+    for o in objList:
+        if colisionDetect(obj,o):
+            print(obj['modelId'],o['modelId'])
+            return True
+        elif objList.index(o) == (len(objList) - 1):
+            return False
+
+
 def randomPositionInAreaShape(obj, room):
     areaShape = room['areaShape']
     area = Polygon(areaShape)
@@ -349,30 +494,26 @@ def randomPositionOnCeiling(obj,room):
 
 def randomPositionOnWall(obj, room):
     wallShapes = room['wallShapes']
-    index = random.randint(0,len(wallShapes))
-    wall = wallShapes[index-1]
+    index = random.randint(0,len(wallShapes)-1)
+    wall = wallShapes[index]
     dx = int(wall[1][0] - wall[0][0])
     dy = int(wall[1][1] - wall[0][1])
     if (dy == 0) & (dx > 0):
-        # right
-        obj['rotate'] = [0, -math.pi, 0]
+        obj['rotate'] = [0, 0, 0]
         obj['translate'][0] = random.uniform(wall[0][0],wall[1][0])
         obj['translate'][1] = MAX_WALL_HEIGHT / 2
         obj['translate'][2] = wall[0][1]
     elif (dy == 0) & (dx < 0):
-        # left
-        obj['rotate'] = [0, 0, 0]
+        obj['rotate'] = [0, -math.pi, 0]
         obj['translate'][0] = random.uniform(wall[1][0],wall[0][0])
         obj['translate'][1] = MAX_WALL_HEIGHT / 2
         obj['translate'][2] = wall[0][1]
     elif (dx == 0) & (dy > 0):
-        # up
         obj['rotate'] = [0, -0.5 * math.pi, 0]
         obj['translate'][0] = wall[0][0]
         obj['translate'][1] = MAX_WALL_HEIGHT / 2
         obj['translate'][2] = random.uniform(wall[1][1],wall[0][1])
     else:
-        # down
         obj['rotate'] = [0, 0.5 * math.pi, 0]
         obj['translate'][0] = wall[0][0]
         obj['translate'][1] = MAX_WALL_HEIGHT / 2
@@ -380,25 +521,27 @@ def randomPositionOnWall(obj, room):
     reloadAABB(obj)
 
 def obj2Rectangle(obj):
-    return gpd.GeoSeries(Polygon([
-        [obj['bbox']['min'][0],obj['bbox']['min'][2]],
-        [obj['bbox']['max'][0],obj['bbox']['min'][2]],
-        [obj['bbox']['max'][0],obj['bbox']['max'][2]],
-        [obj['bbox']['min'][0],obj['bbox']['max'][2]]
-    ]))
+    minx = min(obj['bbox']['min'][0],obj['bbox']['max'][0])
+    maxx = max(obj['bbox']['min'][0],obj['bbox']['max'][0])
+    miny = min(obj['bbox']['min'][2],obj['bbox']['max'][2])
+    maxy = max(obj['bbox']['min'][2],obj['bbox']['max'][2])
+    return box(minx,miny,maxx,maxy)
     
+
 def colisionDetect(obj1,obj2):
     rect1 = obj2Rectangle(obj1)
     rect2 = obj2Rectangle(obj2)
-    return rect1.overlaps(rect2)
+    return bool(rect1.intersects(rect2))
     
 if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
     # createEmptyRoom(scene1)
 
-    # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
+    # # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
+
+    # addAllJsonData('')
 
     # # sceneJson添加surface和bbox
     # addBboxSurface2SceneJson('abandondedschool-r0.json')
@@ -408,5 +551,6 @@ if __name__ == "__main__":
 
     # sceneJson添加墙壁shape
     # addWallShapes2SceneJson('abandondedschool-r0.json')
+    # addAllJsonData('abandondedschool')
 
-    initialObjPosition('abandondedschool-r0.json')
+    initialObjPosition('abandondedschool')
