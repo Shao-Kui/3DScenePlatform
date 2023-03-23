@@ -38,4 +38,20 @@ sofa2teapoy; state[{origin,}:]; gtrans[{sofa2bed, -1.85123, 0.00000, 1.05443, 0.
 sofa2teapoy; state[{teapoy,}:]; gtrans[{sofa2bed, -1.85123, 0.00000, 1.05443, 0.65965, 1.00000, 1.00000, 1.00000,origin,}:]; wall[{0.53385, 1.97080, -0.00000,}:]; watchingtv; yl
 tvset2bed; state[{bed,}:]; gtrans[{nightstand2chair, -1.05878, 0.00000, 0.58548, 1.56000, 1.00000, 1.00000, 1.00000,chair,}:{nightstand2chair, 1.07779, 0.00000, 0.62394, 4.70000, 1.00000, 1.00000, 1.00000,chair,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithtv; yl
 tvset2bed; state[{bed,}:]; gtrans[{nightstand2chair, -1.05878, 0.00000, 0.58548, 1.56000, 1.00000, 1.00000, 1.00000,origin,}:{nightstand2chair, 1.07779, 0.00000, 0.62394, 4.70000, 1.00000, 1.00000, 1.00000,origin,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithtv; yl
-tvset2bed; state[{bed,}:]; gtrans[{table2shelf, 1.43613, 0.00000, -0.02894, -0.01000, 1.00000, 1.00000, 1.00000,shelf,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithshelf; ylcabinet2desk; state[{desk,}:]; wall[{0.29185, 0.80434, 0.00080,}:]; test; yl
+tvset2bed; state[{bed,}:]; gtrans[{table2shelf, 1.43613, 0.00000, -0.02894, -0.01000, 1.00000, 1.00000, 1.00000,shelf,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithshelf; ylcabinet2desk; state[{desk,}:]; wall[{0.29185, 0.80434, 0.00080,}:]; test; yl6804; scale[{1.08827, 1.00000, 1.13973,}:]; a; d
+6804; scale[{1.08827, 1.00000, 1.13973,}:]; 
+6804; scale[{1.08827, 1.00000, 1.13973,}:]; 
+1573; scale[{1.17354, 1.00000, 1.05591,}:]; gtrans[{10142, 1.03040, 0.00000, -0.89010, 0.00000, 0.91508, 1.00000, 1.41946,}:]; bedandnightstand; lyk
+story-TeacherTable; state[{origin,}:]; gtrans[{story-TeacherChair, -0.00453, 0.00000, -0.92765, -0.00835, 1.00000, 1.00000, 1.00000,origin,}:]; teacher chair and table; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-TeacherTribune, 0.28380, -2.28832, 1.72579, -0.01403, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and teacher tribune; lyk
+story-Toilet_MirrorA; state[{origin,}:]; gtrans[{story-Toilet_Sink, -0.05072, -0.89609, 0.00000, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; toilet mirror and sink; lyk
+story-Toilet_MirrorB; state[{origin,}:]; gtrans[{story-Toilet_Sink, -0.01464, -0.64970, -0.00000, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; toilet brocken mirror and sink; lyk
+story-ToiletA; state[{origin,}:]; gtrans[{story-ToiletCabin, -0.23330, 0.00000, 0.89109, 0.01311, 1.00000, 1.00000, 1.00000,origin,}:]; toilet and toiletCabin; lyk
+story-ToiletC; state[{origin,}:]; gtrans[{story-ToiletCabin_static, 0.16241, 0.00000, 0.87831, 0.01921, 1.00000, 1.00000, 1.00000,origin,}:]; toilet and toiletCabin; lyk
+story-ToiletA; state[{origin,}:]; gtrans[{story-ToiletCabin_static, -0.14435, 0.02000, 0.84618, -0.00320, 1.00000, 1.00000, 1.00000,origin,}:]; toilet and toiletCabin; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDeskB, -2.11246, -2.26514, 4.14448, 3.14096, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDeskBrokenC, 0.33057, -2.28832, 3.90502, 3.15714, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDeskBrokenA, -1.20514, -2.26832, 5.40897, 3.14326, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDesk, -1.06420, -2.28832, 4.07622, 3.12546, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDeskBrokenB, 1.86011, -2.28832, 3.90547, 3.13636, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-StudentDeskBrokenD, -2.42929, -2.28832, 5.83474, 3.14451, 1.00000, 1.00000, 1.00000,origin,}:]; blackboard and studentdesk; lyk
