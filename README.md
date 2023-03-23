@@ -7,7 +7,7 @@ Manipulating             |  Synthesis
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/manipulating.png "Manipulating & Searching")  |  ![Synthesis](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/algorithm.png "Synthesis")
 
-This is the repository of the paper "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**", "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**" and "**SceneViewer: Automating Residential Photography in Virtual Environments**". Our platform is web-based. We hope this repository can help research on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain engineering bugs and this doc may not cover all confusion. Please issue us if you have problems with this repo or e-mail us at zhangsk18@mails.tsinghua.edu.cn. 
+This is the repository of the paper "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**", "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**", "**SceneViewer: Automating Residential Photography in Virtual Environments**" and "**SceneDirector: Interactive Scene Synthesis by Simultaneously Editing Multiple Objects in Real-Time**". Our platform is web-based. We hope this repository can help research on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain engineering bugs and this doc may not cover all confusion. Please issue us if you have problems with this repo or e-mail us at zhangsk18@mails.tsinghua.edu.cn. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to use a ready clone directly. 
 
@@ -201,6 +201,22 @@ root/
 ----views.py
 ```
 The "autoview.py" contains the fundamental logic of our method, which will call functions for deriving probe views and use constraints for evaluating views. It also organizes the generated views and renders the views. One could consider it as a controller. The "views.py" contains how we generate probe views based on one-point and two-point perspectives. The "constraints.py" contains the measurements, i.e., the content and aesthetic constraints. The "utiles.py" contains several functions for geometrical computing. Finally, "inset.py" contains the "mapping" algorithm proposed in the paper. 
+# SceneDirector
+![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/OPPNTPP.png "OPPNTPP")
+
+[\[Paper\]][sceneviewerpaper] [\[Video\]][sceneviewer] [\[Supp\]][sceneviewersupp]
+
+This project is also the container for our work on automatic Photography in 3D residential scenes. The related source code includes:
+```
+root/
+--autoview.py
+--sceneviewer/
+----constraints.py
+----inset.py
+----utils.py
+----views.py
+```
+. 
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
