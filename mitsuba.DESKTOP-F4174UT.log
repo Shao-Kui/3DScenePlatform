@@ -1,0 +1,1271 @@
+2022-05-14 19:54:19 INFO  main [mitsuba.cpp:256] Mitsuba version 0.5.0 (Windows, 64 bit), Copyright (c) 2014 Wenzel Jakob
+2022-05-14 19:54:19 INFO  main [mitsuba.cpp:356] Parsing scene description from "./dataset/PathTracing/result-2022-05-14 19-54-19-96937286-d37c-11ec-9337-244bfe451683/renderconfig.xml" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\ldsampler.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\gaussian.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\hdrfilm.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\perspective.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\sky.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\path.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\roughdiffuse.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\twosided.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\rectangle.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\obj.dll" ..
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Loading geometry from "shirt04.obj" ..
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] shirt04_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt04.mtl" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\diffuse.dll" ..
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\bitmap.dll" ..
+2022-05-14 19:54:19 INFO  main [BitmapTexture] Loading texture "Sign_04h2fw_Water_a.png"
+2022-05-14 19:54:19 INFO  main [PluginManager] Loading plugin "plugins\lanczos.dll" ..
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Done with "shirt04.obj" (took 194 ms)
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] Loading geometry from "shirt04.obj" ..
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:19 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt04_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt04.mtl" ..
+2022-05-14 19:54:20 INFO  main [BitmapTexture] Loading texture "Sign_04h2fw_Water_a.png"
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "shirt04.obj" (took 193 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "pants03.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (10): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (9): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (8): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (7): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (6): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (5): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (4): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (2): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "pants03.mtl" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "pants03.obj" (took 118 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "pants03.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (10): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (9): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (8): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (7): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (6): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (5): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (4): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (2): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "pants03.mtl" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "pants03.obj" (took 88 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "pants03.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (10): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (9): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (8): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (7): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (6): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (5): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (4): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Shorts Male (2): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "pants03.mtl" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "pants03.obj" (took 87 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "skirt02.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "skirt02.mtl" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "skirt02.obj" (took 100 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "skirt02.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "skirt02.mtl" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "skirt02.obj" (took 96 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "shirt07.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_28: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_31: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_32: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_35: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt07.mtl" ..
+2022-05-14 19:54:20 INFO  main [BitmapTexture] Loading texture "Cheese_bn26cq_Var02_a.png"
+2022-05-14 19:54:20 INFO  main [BitmapTexture] Loading texture "Chips_w4tja8_Var01_a.png"
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Done with "shirt07.obj" (took 197 ms)
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Loading geometry from "shirt07.obj" ..
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] shirt07_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:20 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_28: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_31: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_32: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_35: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt07.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Cheese_bn26cq_Var02_a.png"
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Chips_w4tja8_Var01_a.png"
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shirt07.obj" (took 234 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shirt07.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_28: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_31: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_32: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt07_35: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt07.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Cheese_bn26cq_Var02_a.png"
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Chips_w4tja8_Var01_a.png"
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shirt07.obj" (took 237 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shirt03.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_16: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_23: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt03.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Bleach_irrpnt_a.png"
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shirt03.obj" (took 200 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shirt03.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_16: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_23: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_24: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_27: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt03_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt03.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "Bleach_irrpnt_a.png"
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shirt03.obj" (took 201 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shorts01.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (9): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (8): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (7): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (6): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (2): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (5): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (4): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (1): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shorts01.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "TileFloor_j8qkl9_a.png"
+2022-05-14 19:54:21 INFO  main [MIPMap] Mapped MIP map cache file "E:\3DScenePlatformDev\./dataset/PathTracing/result-2022-05-14 19-54-19-96937286-d37c-11ec-9337-244bfe451683\../../object/shorts01\../../texture/TileFloor_j8qkl9_a.mip" into memory (128.0 MiB).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shorts01.obj" (took 121 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shorts01.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (9): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (8): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (7): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (6): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (2): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (5): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (4): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_19: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_20: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Shorts Male (1): 102 triangles, 206 vertices (merged 100 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading OBJ materials from "shorts01.mtl" ..
+2022-05-14 19:54:21 INFO  main [BitmapTexture] Loading texture "TileFloor_j8qkl9_a.png"
+2022-05-14 19:54:21 INFO  main [MIPMap] Mapped MIP map cache file "E:\3DScenePlatformDev\./dataset/PathTracing/result-2022-05-14 19-54-19-96937286-d37c-11ec-9337-244bfe451683\../../object/shorts01\../../texture/TileFloor_j8qkl9_a.mip" into memory (128.0 MiB).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Done with "shorts01.obj" (took 88 ms)
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Loading geometry from "shirt05.obj" ..
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:21 INFO  main [WavefrontOBJ] shirt05: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt05.mtl" ..
+2022-05-14 19:54:22 INFO  main [BitmapTexture] Loading texture "ChocolatBox_b94wj0_a.png"
+2022-05-14 19:54:22 INFO  main [BitmapTexture] Loading texture "Cheese_ipc281_Var01_a.png"
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Done with "shirt05.obj" (took 201 ms)
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading geometry from "shirt05.obj" ..
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_0: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_8: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_15: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt05_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt05.mtl" ..
+2022-05-14 19:54:22 INFO  main [BitmapTexture] Loading texture "ChocolatBox_b94wj0_a.png"
+2022-05-14 19:54:22 INFO  main [BitmapTexture] Loading texture "Cheese_ipc281_Var01_a.png"
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Done with "shirt05.obj" (took 233 ms)
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading geometry from "skirt01.obj" ..
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading OBJ materials from "skirt01.mtl" ..
+2022-05-14 19:54:22 WARN  main [WavefrontOBJ] Unable to find texture "Sign_04h2fw_Toilet_a.png" referenced from "E:\3DScenePlatformDev\./dataset/PathTracing/result-2022-05-14 19-54-19-96937286-d37c-11ec-9337-244bfe451683\../../object/skirt01\skirt01.mtl"!
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Done with "skirt01.obj" (took 148 ms)
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading geometry from "skirt01.obj" ..
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_3: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_7: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_11: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_12: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 200 triangles, 404 vertices (merged 196 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading OBJ materials from "skirt01.mtl" ..
+2022-05-14 19:54:22 WARN  main [WavefrontOBJ] Unable to find texture "Sign_04h2fw_Toilet_a.png" referenced from "E:\3DScenePlatformDev\./dataset/PathTracing/result-2022-05-14 19-54-19-96937286-d37c-11ec-9337-244bfe451683\../../object/skirt01\skirt01.mtl"!
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Done with "skirt01.obj" (took 115 ms)
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading geometry from "shirt02.obj" ..
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (12): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (11): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_11: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_12: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_40: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_41: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_42: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_43: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_44: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_45: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_46: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_47: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt02.mtl" ..
+2022-05-14 19:54:22 INFO  main [BitmapTexture] Loading texture "Sugar_o0f6pn_a_Var02.png"
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Done with "shirt02.obj" (took 172 ms)
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Loading geometry from "shirt02.obj" ..
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (12): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (11): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_11: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_12: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] shirt02_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:22 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_40: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_41: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_42: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_43: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_44: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_45: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_46: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_47: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt02.mtl" ..
+2022-05-14 19:54:23 INFO  main [BitmapTexture] Loading texture "Sugar_o0f6pn_a_Var02.png"
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Done with "shirt02.obj" (took 205 ms)
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading geometry from "shirt02.obj" ..
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (12): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (11): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_11: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_12: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_40: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_41: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_42: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_43: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_44: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_45: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_46: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_47: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt02.mtl" ..
+2022-05-14 19:54:23 INFO  main [BitmapTexture] Loading texture "Sugar_o0f6pn_a_Var02.png"
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Done with "shirt02.obj" (took 205 ms)
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading geometry from "shirt02.obj" ..
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (12): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (11): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_3: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_4: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_5: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_6: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (10): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_7: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_8: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_9: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_10: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (9): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_11: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (3): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_12: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_13: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_14: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_15: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_16: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_17: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_18: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (2): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_19: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (1): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_20: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_21: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_22: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_23: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_24: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_25: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_26: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (7): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_27: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (6): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_28: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_29: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_30: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_31: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_32: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_33: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_34: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (5): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_35: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (8): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_36: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_37: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_38: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_39: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves (4): 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_40: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_41: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_42: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_43: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_44: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_45: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_46: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.006: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.005: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.004: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.003: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.002: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.001: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Torso Male Short Sleeves: 132 triangles, 266 vertices (merged 130 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] shirt02_47: 18 triangles, 38 vertices (merged 16 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading OBJ materials from "shirt02.mtl" ..
+2022-05-14 19:54:23 INFO  main [BitmapTexture] Loading texture "Sugar_o0f6pn_a_Var02.png"
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Done with "shirt02.obj" (took 206 ms)
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Loading geometry from "pants05.obj" ..
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] Shorts Male (3): 102 triangles, 210 vertices (merged 96 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.009_0: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.008_1: 12 triangles, 24 vertices (merged 12 vertices).
+2022-05-14 19:54:23 INFO  main [WavefrontOBJ] 立方体.007_2: 12 triangles, 24 vertices (merged 12 vertices).

@@ -1,44 +1,10 @@
 import numpy as np
 import sk
-from scipy.spatial.transform import Rotation as R
-from shapely.geometry.polygon import Polygon, LineString, Point
+from shapely.geometry.polygon import LineString, Point
 from sk import ASPECT
-
-def preloadAABBs(scene):
-    for room in scene['rooms']:
-        for obj in room['objList']:
-            if sk.objectInDataset(obj['modelId']):
-                AABB = sk.load_AABB(obj['modelId'])
-            else:
-                if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
-                    AABB = obj['bbox']
-                else:
-                    continue
-            eightPoints = np.array([
-                [AABB['max'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['min'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['max'][2]],
-                [AABB['min'][0], AABB['max'][1], AABB['min'][2]],
-                [AABB['max'][0], AABB['max'][1], AABB['min'][2]],
-            ])
-            scale = np.array(obj['scale'])
-            rX = R.from_euler('x', obj['rotate'][0], degrees=False).as_matrix()
-            rY = R.from_euler('y', obj['rotate'][1], degrees=False).as_matrix()
-            rZ = R.from_euler('z', obj['rotate'][2], degrees=False).as_matrix()
-            rotate = rZ @ rY @ rX
-            translate = np.array(obj['translate'])
-            center = (np.array(AABB['max']) + np.array(AABB['min'])) / 2
-            center = rotate @ (center * scale) + translate
-            eightPoints = eightPoints * scale
-            eightPoints = rotate @ eightPoints.T
-            eightPoints = eightPoints.T + translate
-            obj['AABB'] = {
-                'eightPoints': eightPoints,
-                'center': center
-            }
+from scipy.interpolate import interp1d
+from scipy.signal import savgol_filter
+from scipy.interpolate import splprep,splev
 
 def findTheFrontFarestCorner(probe, floorMeta, floorPoly, pd):
     MAXLEN = -1
@@ -46,9 +12,9 @@ def findTheFrontFarestCorner(probe, floorMeta, floorPoly, pd):
     for wallJndex in range(floorMeta.shape[0]):
         trobe = floorMeta[wallJndex][0:2]
         # check if the diagonal lies inside the edges of the polygon. 
-        line = LineString((probe, trobe))
-        if sk.isLineIntersectsWithEdges(line, floorMeta):
-            continue
+        # line = LineString((probe, trobe))
+        # if sk.isLineIntersectsWithEdges(line, floorMeta):
+        #     continue
         # check if some point on the diagonal is inside the polygon. 
         mPoint = Point((probe + trobe) / 2)
         if not floorPoly.contains(mPoint):
@@ -177,12 +143,12 @@ def isPointOnVisualPlanes(t, probe, direction, theta, aspect=ASPECT, isDebug=Fal
     # the projected vector w.r.t vertical and horizontal VPs. 
     projVPv = -np.dot(nVPv, probeTOt) * nVPv + probeTOt
     projVPh = -np.dot(nVPh, probeTOt) * nVPh + probeTOt
-    if isDebug:
-        print('angles: ')
-        print(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv))
-        print(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh))
-        print(np.arccos(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv)))
-        print(np.arccos(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh)))
+    # if isDebug:
+    #     print('angles: ')
+    #     print(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv))
+    #     print(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh))
+    #     print(np.arccos(np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv)))
+    #     print(np.arccos(np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh)))
     if np.dot(direction, projVPv) / np.linalg.norm(direction) / np.linalg.norm(projVPv) < cosTheta:
         return False
     if np.dot(direction, projVPh) / np.linalg.norm(direction) / np.linalg.norm(projVPh) < cosPhi:
@@ -192,7 +158,6 @@ def isPointOnVisualPlanes(t, probe, direction, theta, aspect=ASPECT, isDebug=Fal
 def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=False):
     if isDebug:
         print('Checking: ', obj['modelId'])
-    
     if obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
         t = np.array(obj['translate_frombb'])
     else:
@@ -203,10 +168,14 @@ def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=Fa
     # project the 't' to the two visual planes (VP). 
     probeTOt = t - probe
     seenVertices = 0
-    for vertex in obj['AABB']['eightPoints']:
+    seenVList = []
+    for vid, vertex in zip(range(len(obj['AABB']['eightPoints'])), obj['AABB']['eightPoints']):
         if isPointOnVisualPlanes(vertex, probe, direction, theta, ASPECT, isDebug):
             seenVertices += 1
+            seenVList.append(vid)
     # if all vertices are not seen. 
+    if isDebug:
+        print('seen vertices: ', seenVList)
     if seenVertices == 0:
         if isDebug:
             print('no vertex can be seen...')
@@ -217,14 +186,19 @@ def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=Fa
     if np.dot(direction, probeTOt) / np.linalg.norm(direction) / np.linalg.norm(probeTOt) < cosAlpha:
         return False
     """
+    if isDebug:
+        print('Start to check objects-floorMeta occlusions. ')
     if obj['coarseSemantic'] not in ['window', 'Window', 'door', 'Door']:
         line = LineString((probe[[0, 2]], t[[0, 2]]))
-        if sk.isLineIntersectsWithEdges(line, floorMeta):
+        if sk.isLineIntersectsWithEdges(line, floorMeta, isDebug):
             return False           
+    if isDebug:
+        print('Start to check objects-objects occlusions. ')
     for o in objList:
-        if 'AABB' not in o or o['id'] == obj['id']:
+        if 'AABB' not in o:
             continue
-        
+        if isDebug:
+            print(o['modelId'], obj['modelId'])
         # calculate the nearest point from center to 'probeTot'. 
         """
         magnitute = np.dot(o['AABB']['center'] - probe, probeTOt) / np.linalg.norm(probeTOt)
@@ -236,9 +210,16 @@ def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=Fa
         probeToObj = obj['AABB']['eightPoints'] - probe
         distanceToObj = np.linalg.norm(probeToObj, ord=2, axis=1)
         magnitute = np.sum(probeToObj * probeToO, axis=1) / distanceToObj
+        magnitute[magnitute > distanceToObj] = distanceToObj[magnitute > distanceToObj]
         nPs = probe + magnitute.reshape(8, 1) * (probeToObj / distanceToObj.reshape(8, 1))
-        if len(sk.inside_test(nPs, o['AABB']['eightPoints'])) == 0:
+        notOccludedVList = sk.inside_test(nPs, o['AABB']['eightPoints'])
+        seenVList = list(set(seenVList) & set(notOccludedVList))
+        if isDebug:
+            print(seenVList)
+        if len(seenVList) == 0:
             return False
+    if len(seenVList) <= 3:
+        return False
     return True
 
 def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
@@ -271,16 +252,69 @@ def toOriginAndTarget(bestView):
     bestView["up"] = calCamUpVec(np.array(bestView["origin"]), np.array(bestView["target"])).tolist()
     return bestView
 
-def redundancyRemove(hypotheses):
+def redundancyRemove(hypotheses, checkDirection=True):
     res = []
     for i in range(0, len(hypotheses)):
         for j in range(i+1, len(hypotheses)):
             hi = hypotheses[i]
             hj = hypotheses[j]
-            if np.linalg.norm(hi['probe'] - hj['probe']) < 0.01 and np.linalg.norm(hi['direction'] - hj['direction']) < 0.01:
-                hypotheses[i]['toDelete'] = True
-                break
+            if checkDirection:
+                if np.linalg.norm(hi['probe'] - hj['probe']) < 0.01 and np.linalg.norm(hi['direction'] - hj['direction']) < 0.01:
+                    hypotheses[i]['toDelete'] = True
+                    break
+            else:
+                if np.linalg.norm(hi['probe'] - hj['probe']) < 0.01:
+                    hypotheses[i]['toDelete'] = True
+                    break
     for h in hypotheses:
-        if 'toDelete' not in h:
-            res.append(h)
+        if np.isnan(np.sum(h['probe'])) or np.isnan(np.sum(h['direction'])) or 'toDelete' in h:
+            continue
+        res.append(h)
     return res
+
+S_NUM = 100
+def hamiltonInterpolate(vectors, s=0):
+    tck, u = splprep([vectors[:,0], vectors[:,1], vectors[:,2]], s=s)
+    x_knots, y_knots, z_knots = splev(tck[0], tck)
+    u_fine = np.linspace(0, 1, S_NUM)
+    newvectors = np.zeros(shape=(S_NUM, 3))
+    newvectors[:, 0], newvectors[:, 1], newvectors[:, 2] = splev(u_fine, tck)
+    return newvectors
+
+def hamiltonInterp1d(vectors, indices, kind='cubic'):
+    newvectors = np.zeros(shape=(S_NUM, 3))
+    u_fine = np.linspace(0, 1, S_NUM)
+    newvectors[:, 0] = interp1d(indices, vectors[:, 0], kind=kind)(u_fine)
+    newvectors[:, 1] = interp1d(indices, vectors[:, 1], kind=kind)(u_fine)
+    newvectors[:, 2] = interp1d(indices, vectors[:, 2], kind=kind)(u_fine)
+    return newvectors
+
+def hamiltonSmooth(res):
+    probes = []
+    targets = []
+    directions = []
+    for view in res:
+        probes.append(view['origin'])
+        targets.append(view['target'])
+        directions.append(view['direction'])
+    probes = np.array(probes)
+    targets = np.array(targets)
+    directions = np.array(directions)
+    distances = np.linalg.norm(probes[1:] - probes[0:len(probes)-1], axis=1)
+    totalLength = np.sum(distances)
+    indices = []
+    for i in range(len(distances)):
+        indices.append(np.sum(distances[0:i]) / totalLength)
+    indices.append(1.0)
+    newres = []
+    for probe, target, direction in zip(hamiltonInterpolate(probes, s=0), hamiltonInterpolate(targets), hamiltonInterp1d(directions, indices)):
+        newres.append({'origin': probe + direction * 0.03, 'target': probe + direction, 'direction': direction})
+
+    # probes[:, 0] = savgol_filter(probes[:, 0], 3, 2)
+    # probes[:, 1] = savgol_filter(probes[:, 1], 3, 2)
+    # probes[:, 2] = savgol_filter(probes[:, 2], 3, 2)
+    # directions[:, 0] = savgol_filter(directions[:, 0], 3, 2)
+    # directions[:, 1] = savgol_filter(directions[:, 1], 3, 2)
+    # directions[:, 2] = savgol_filter(directions[:, 2], 3, 2)
+
+    return newres

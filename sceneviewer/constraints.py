@@ -1,7 +1,8 @@
 import numpy as np
-from sceneviewer.utils import calCamUpVec,isObjectInSight
+from sceneviewer.utils import calCamUpVec,isObjectInSight,isPointOnVisualPlanes
 import sk
 from sk import ASPECT,getobjCat
+from shapely.geometry.polygon import Point
 
 def theLawOfTheThird(h, room, theta, aspect=ASPECT):
     """
@@ -57,12 +58,55 @@ def theLawOfTheThird(h, room, theta, aspect=ASPECT):
 def numSeenObjs(room, h, probe, direction, floorMeta, theta, isDebug=False):
     h['numObjBeSeen'] = 0
     h['objBeSeen'] = []
+    h['objBeSeenDis'] = []
+    h['objBeSeenDisRelative'] = []
     for obj in room['objList']:
         if not sk.objectInDataset(obj['modelId']):
             continue
+        # if room['roomId'] == 2 and h['type'] == 'threeWall_thin' and obj['modelId'] == '2327' and h['wallIndex'] == 3 and h['wallJndex'] == 1:
+        #     print(isObjectInSight(obj, probe, direction, floorMeta, theta, room['objList'], True))
         if isObjectInSight(obj, probe, direction, floorMeta, theta, room['objList'], isDebug):
             h['numObjBeSeen'] += 1
             h['objBeSeen'].append(obj['modelId'])
+            # further check the distance from the probe to the object. 
+            normalDis = min(
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][7], obj['AABB']['eightPoints'][6], obj['AABB']['eightPoints'][4])), # up
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][0], obj['AABB']['eightPoints'][1], obj['AABB']['eightPoints'][3])), # down
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][7], obj['AABB']['eightPoints'][4], obj['AABB']['eightPoints'][3])),
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][4], obj['AABB']['eightPoints'][5], obj['AABB']['eightPoints'][0])),
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][5], obj['AABB']['eightPoints'][1], obj['AABB']['eightPoints'][6])),
+                abs(sk.distanceToPlane(probe, obj['AABB']['eightPoints'][6], obj['AABB']['eightPoints'][2], obj['AABB']['eightPoints'][7]))
+            )
+            h['objBeSeenDis'].append(normalDis)
+            h['objBeSeenDisRelative'].append(normalDis / np.linalg.norm(probe - obj['AABB']['center']))
+
+def secondNearestWallDis(h, floorMeta):
+    pass
+
+def isObjHalfCovered(h, room):
+    pass
+    h['isHalfCoverd'] = False
+    h['halfCoverdObj'] = []
+    probe = h['probe']
+    direction = h['direction']
+    theta = h['theta']
+    objList = room['objList']
+    for obj in objList:
+        seenVertices = 0
+        for vertex in obj['AABB']['eightPoints']:
+            if isPointOnVisualPlanes(vertex, probe, direction, theta, ASPECT):
+                seenVertices += 1
+        # if all vertices are not seen. 
+        if seenVertices == 0 and len(sk.inside_test([np.array(obj['AABB']['center']) - probe], obj['AABB']['eightPoints'])) == 0:
+            h['isHalfCoverd'] = True
+            h['halfCoverdObj'].append(obj['modelId'])
+
+def isProbeOutside(h, floorPoly):
+    if not floorPoly.contains(Point(h['probe'][0] + h['direction'][0]*0.001, h['probe'][2] + h['direction'][0]*0.001)):
+        h['isProbeOutside'] = True
+        return True
+    h['isProbeOutside'] = False
+    return False
 
 def isObjCovered(h, scene, aspect=ASPECT):
     """
@@ -82,36 +126,37 @@ def isObjCovered(h, scene, aspect=ASPECT):
         for obj in room['objList']:
             if not sk.objectInDataset(obj['modelId']):
                 continue
-            if len(sk.inside_test(h['probe'].reshape(1, 3), obj['AABB']['eightPoints'])) == 0:
+            scaledAABB = (obj['AABB']['eightPoints'] - obj['AABB']['center']) * 2. + obj['AABB']['center']
+            if len(sk.inside_test(h['probe'].reshape(1, 3), scaledAABB)) == 0:
                 h['coveredBy'] = obj['modelId']
                 h['isObjCovered'] = True
                 return True
-            signpp = False
-            signpn = False
-            signnp = False
-            signnn = False
-            for vertex in obj['AABB']['eightPoints']:
-                probeTOt = vertex - h['probe']
-                # the projected vector w.r.t vertical and horizontal VPs. 
-                projVPv = -np.dot(nVPv, probeTOt) * nVPv + probeTOt
-                projVPh = -np.dot(nVPh, probeTOt) * nVPh + probeTOt
-                ct = np.dot(h['direction'], projVPv) / np.linalg.norm(h['direction']) / np.linalg.norm(projVPv)
-                cp = np.dot(h['direction'], projVPh) / np.linalg.norm(h['direction']) / np.linalg.norm(projVPh)
-                one = np.dot(nVPv, probeTOt)
-                two = np.dot(nVPh, probeTOt)
-                if ct < cosTheta and cp < cosPhi:
-                    if one > 0 and two > 0:
-                        signpp = True
-                    elif one > 0 and two < 0:
-                        signpn = True
-                    elif one < 0 and two > 0:
-                        signnp = True
-                    else:
-                        signnn = True
-            if signpp and signpn and signnp and signnn:
-                h['coveredBy'] = obj['modelId']
-                h['isObjCovered'] = True
-                return True
+            # signpp = False
+            # signpn = False
+            # signnp = False
+            # signnn = False
+            # for vertex in obj['AABB']['eightPoints']:
+            #     probeTOt = vertex - h['probe']
+            #     # the projected vector w.r.t vertical and horizontal VPs. 
+            #     projVPv = -np.dot(nVPv, probeTOt) * nVPv + probeTOt
+            #     projVPh = -np.dot(nVPh, probeTOt) * nVPh + probeTOt
+            #     ct = np.dot(h['direction'], projVPv) / np.linalg.norm(h['direction']) / np.linalg.norm(projVPv)
+            #     cp = np.dot(h['direction'], projVPh) / np.linalg.norm(h['direction']) / np.linalg.norm(projVPh)
+            #     one = np.dot(nVPv, probeTOt)
+            #     two = np.dot(nVPh, probeTOt)
+            #     if ct < cosTheta and cp < cosPhi:
+            #         if one > 0 and two > 0:
+            #             signpp = True
+            #         elif one > 0 and two < 0:
+            #             signpn = True
+            #         elif one < 0 and two > 0:
+            #             signnp = True
+            #         else:
+            #             signnn = True
+            # if signpp and signpn and signnp and signnn:
+            #     h['coveredBy'] = obj['modelId']
+            #     h['isObjCovered'] = True
+            #     return True
     return False
 
 
@@ -161,12 +206,14 @@ def tarWindoorArea2021(h, scene, floorMeta, theta, isDebug=False):
     h['totalWinArea'] = totalWinArea
     h['totalDoorArea'] = totalDoorArea
 
+LAYOUTLIST = ['L-shaped Sofa', 'Kids Bed', 'King-size Bed', 'Bookcase / jewelry Armoire',
+'Wardrobe', 'Desk', 'Dressing Table', 'Drawer Chest / Corner cabinet']
 def layoutConstraint(h, room, theta, aspect=ASPECT):
     h['layoutDirection'] = 0.
     for obj in room['objList']:
         if 'coarseSemantic' not in obj:
             continue
-        if getobjCat(obj['modelId']) not in ['L-shaped Sofa', 'King-size Bed','Wardrobe','Desk']:
+        if getobjCat(obj['modelId']) not in LAYOUTLIST:
             continue
         objDirection = np.array([np.sin(obj['orient']), np.cos(obj['orient'])])
         camDirection = np.array([h['direction'][0], h['direction'][2]])
@@ -177,7 +224,7 @@ def wallNormalOffset(h, floorMeta):
     direction = np.array([h['direction'][0], h['direction'][2]])
     direction /= np.linalg.norm(direction)
     if h['type'] == 'twoWallPerspective':
-        res = 1.
+        res = 0.
     elif h['type'] == 'againstMidWall':
         res = np.dot(direction, floorMeta[h['wallIndex']][2:4])
     else:

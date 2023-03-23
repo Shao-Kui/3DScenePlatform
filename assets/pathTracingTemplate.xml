@@ -41,10 +41,25 @@
     </film>
 </sensor>
 
+{%- if emitter == 'sky' %}
+<emitter type="sky">
+<float name="turbidity" value="9"/>
+<float name="stretch" value="2"/>
+<float name="hour" value="12"/>
+<spectrum name="albedo" value="0.5"/>
+<transform name="toWorld">
+<rotate z="1" angle="0"/>
+<translate x="0" y="0" z="0"/>
+</transform>
+<float name="samplingWeight" value="10"/>
+<float name="scale" value="3"/>
+</emitter>
+{% else %}
 <emitter type="constant">
 <spectrum name="radiance" value="1.6"/>
 <float name="samplingWeight" value="5"/>
 </emitter>
+{%- endif %}
 
 <integrator type="path">
     <!--integer name="maxDepth" value="10"/-->
@@ -67,6 +82,20 @@
     </bsdf>
     {%- endif %}
 </shape>    
+{% endfor %}
+{% for obj in scenejson.newroomobjlist %}
+<shape type="rectangle">
+    <transform name="toWorld">
+        <scale x="{{obj.scale[0]}}" y="{{obj.scale[1]}}" z="{{obj.scale[2]}}"/>
+        <rotate x="1" angle="{{ obj.rotate[0] * 180 / PI }}"/>
+        <rotate y="1" angle="{{ obj.rotate[1] * 180 / PI }}"/>
+        <rotate z="1" angle="{{ obj.rotate[2] * 180 / PI }}"/>
+        <translate x="{{obj.translate[0]}}" y="{{obj.translate[1]}}" z="{{obj.translate[2]}}"/>
+    </transform>
+    <bsdf type="twosided">
+        <bsdf type="roughdiffuse"></bsdf>
+    </bsdf>
+</shape>  
 {% endfor %}
 {% for obj in scenejson.renderobjlist %}
 <shape type="obj">

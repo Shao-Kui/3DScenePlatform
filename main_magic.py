@@ -1,11 +1,15 @@
-from flask import Blueprint, request
+from operator import mod
+from types import MethodType
+from flask import Blueprint, request, send_file
 import numpy as np
 import os
 import json
 import random
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
-from projection2d import processGeo as p2d, getobjCat, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
+from layoutmethods.projection2d import processGeo as p2d, getobjCat, objCatList, roomTypeDemo, objListCat, categoryRelation, wallRelation, categoryCodec
+from sketch_retrieval.generate_descriptor import sketch_search, sketch_search_suncg, sketch_search_non_suncg
+import sk
 
 app_magic = Blueprint('app_magic', __name__)
 
@@ -336,6 +340,103 @@ def magic_category():
     if request.method == 'GET':
         return "Do not support using GET to using magic add. "
 
+@app_magic.route("/mageAddSingle", methods=['POST', 'GET'])
+def mageAddSingle():
+    tarObj = request.json['tarObj']
+    res = {'subPrior': [], 'domPrior': [], 'belonging': []}
+    for room in request.json['rooms']:
+        for obj in room['objList']:
+            if obj is None:
+                continue
+            if 'modelId' not in obj:
+                continue
+            ppri = f'./latentspace/pos-orient-4/{obj["modelId"]}.json'
+            if os.path.exists(ppri):
+                with open(ppri) as f:
+                    pri = json.load(f)
+            else:
+                continue
+            for c_sec in pri:
+                if c_sec != sk.getobjCat(tarObj) or c_sec not in categoryRelation[getobjCat(obj['modelId'])]:
+                    continue
+                res['subPrior'] += priorTransform(pri[c_sec], obj['translate'], obj['orient'], obj['scale'])
+                res['belonging'] += np.full(len(pri[c_sec]), obj["modelId"]).tolist()
+    with open(f'./latentspace/wdot-4/{tarObj}.json') as f:
+        res['domPrior'] += json.load(f)
+    return json.dumps(res)
+
+with open('./latentspace/name_to_ls_suncgonly.json') as f:
+    name_to_ls = json.load(f)
+with open('./latentspace/ls_to_name_suncgonly.json') as f:
+    ls_to_name = json.load(f)
+with open('./dataset/obj_coarse_semantic.json') as f:
+    obj_coarse_semantic = json.load(f)
+ls = np.load("./latentspace/ls-release-2.npy")
+
+@app_magic.route("/rec_ls_euc", methods=['POST'])
+def recommendation_ls_euclidean():
+    e_room = []
+    for modelId in request.json:
+        if modelId in name_to_ls:
+            e_room.append(modelId)
+            continue
+        e_room.append(sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0])
+    dist = np.zeros((len(ls_to_name)))
+    for item in e_room:
+        test_point = ls[name_to_ls[item]].reshape(1, 2)
+        dist += np.linalg.norm(ls - test_point, axis=1)
+    indices = np.argsort(dist)
+    counter = 0
+    elements = []
+    existObjects = []
+    for i in indices:
+        if ls_to_name[str(i)] in e_room:
+            continue
+        modelId = ls_to_name[str(i)]
+        # modelId = sketch_search_non_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+        # if sk.getobjCat(modelId) == sk.getobjCat(e_room[0]):
+        #     continue
+        if obj_coarse_semantic[modelId] == obj_coarse_semantic[e_room[0]]:
+            continue
+        if modelId in existObjects:
+            continue
+        else:
+            existObjects.append(modelId)
+        elements.append({
+            'index': counter,
+            'modelId': modelId,
+            'x': ls[i, 0],
+            'y': ls[i, 1],
+            'coarseSemantic': sk.getobjCat(modelId)
+        })
+        counter += 1
+        if counter >= 20:
+            break
+    subeles = []
+    for modelId in request.json:
+        if sk.getobjCat(modelId) in categoryRelation:
+            for cat in categoryRelation[sk.getobjCat(modelId)]:
+                if len(objListCat[cat]) >= 5:
+                    subeles += random.sample(objListCat[cat], 5)
+                else:
+                    subeles += objListCat[cat]
+    # subeles += random.sample(objListCat['King-size Bed'], 1)
+    for modelId in subeles:
+        if modelId in name_to_ls:
+            suncgid = modelId
+        else:
+            suncgid = sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+        i = name_to_ls[str(suncgid)]
+        elements.append({
+            'index': counter,
+            'modelId': modelId,
+            'x': ls[i, 0],
+            'y': ls[i, 1],
+            'coarseSemantic': sk.getobjCat(modelId)
+        }) 
+        counter += 1
+    return json.dumps(elements)
+
 # code is from: https://stackoverflow.com/questions/55392019/get-random-points-within-polygon-corners
 def random_points_within(poly, num_points):
     min_x, min_y, max_x, max_y = poly.bounds
@@ -352,10 +453,70 @@ def random_points_within(poly, num_points):
 @app_magic.route("/magic_samplepoints", methods=['POST', 'GET'])
 def mageAddAuto():
     rj = request.json
-    if 'auxiliaryDomObj' in rj:
-        room_meta = rj['auxiliaryDomObj']['room_meta']
-    else:
-        room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
-    samples = random_points_within(Polygon(room_meta), 1000)
-    print(samples[0])
+    room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    room_meta = room_meta[:, 0:2]
+    samples = random_points_within(Polygon(room_meta), 500)
     return json.dumps(samples)
+
+@app_magic.route("/availableCGS/<domObjName>", methods=['GET'])
+def availableCGS(domObjName):
+    if os.path.exists(f'./layoutmethods/cgseries/{domObjName}/'):
+        return json.dumps(os.listdir(f'./layoutmethods/cgseries/{domObjName}/'))
+    else:
+        return json.dumps([])
+
+@app_magic.route("/cgsPreview/<domObjName>/<seriesName>", methods=['GET'])
+def cgsPreview(domObjName, seriesName):
+    ls = os.listdir(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/')
+    imageNames = []
+    for l in ls:
+        if '.png' in l:
+            imageNames.append(l)
+    res = max(imageNames, key=lambda x:len(x)) 
+    return send_file(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/{res}')
+
+CGSList_Bed = []
+for cgsdom in ['1034','1040','1050','1217','1238','1262','1305','1397','1409','1526','1677','3169','4338','4478','4912','5010','5259','5312','5608','6200','6313','9226','9416','9778']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Bed.append({'dom': cgsdom, 'series': cgsseries})
+CGSList_Cof = []
+for cgsdom in ['1023','1025','1049','1240','1359','1394','1484','1806','1830','1908','10126','10198','10216','10487','10909','2624','2919','4314','5933','7644','7896','8493','9532']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Cof.append({'dom': cgsdom, 'series': cgsseries})
+CGSList_Din = []
+for cgsdom in ['1041','1133','1198','1993','10568','2096','3118','3429','4839','6824','8983','9363','9704']:
+    for cgsseries in os.listdir(f'./layoutmethods/cgseries/{cgsdom}'):
+        CGSList_Din.append({'dom': cgsdom, 'series': cgsseries})
+@app_magic.route("/getCGSCat/<cat>", methods=['GET'])
+def getCGSCat(cat):
+    if cat == 'CGS-床':
+        return json.dumps(CGSList_Bed) 
+    elif cat == 'CGS-茶几':
+        return json.dumps(CGSList_Cof)
+    elif cat == 'CGS-餐桌':
+        return json.dumps(CGSList_Din)
+    return json.dumps([])
+
+@app_magic.route("/getCGS/<domObjName>/<seriesName>", methods=['GET'])
+def getCGS(domObjName, seriesName):
+    with open(f'./layoutmethods/cgseries/{domObjName}/{seriesName}/result.json') as f:
+        return json.dumps(json.load(f)) 
+
+@app_magic.route("/coherent_group_series", methods=['POST'])
+def coherent_group_series():
+    if not os.path.exists(f'./layoutmethods/cgseries/{request.json["domID"]}/'):
+        return json.dumps({})
+    else:
+        seriesNames = os.listdir(f'./layoutmethods/cgseries/{request.json["domID"]}/')
+        if len(seriesNames) == 0:
+            return json.dumps({})
+        else:
+            if 'seriesName' in request.json:
+                seriesName = request.json['seriesName']
+            else:
+                seriesName = random.choice(seriesNames)
+            with open(f'./layoutmethods/cgseries/{request.json["domID"]}/{seriesName}/result.json') as f:
+                return json.dumps(json.load(f))
+    # with open(f'./layoutmethods/cgseries/{request.json["domID"]}/index.json') as f:
+    #     cgseries = json.load(f)
+    # return json.dumps(random.choice(cgseries))

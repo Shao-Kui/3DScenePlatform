@@ -1,1 +1,0 @@
-{"name": "MVCNN", "batchSize": 8, "lr": 5e-05, "weight_decay": 0.0, "no_pretraining": false, "cnn_name": "vgg11", "num_views": 20, "train_path": "../objedge20/", "val_path": "../objedge20/", "epoch": 30, "train": false}

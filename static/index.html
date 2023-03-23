@@ -1,6 +1,7 @@
 <html>
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- 3rd party libraries -->
     <script src="/static/3rdparty/jquery-3.3.1.min.js"></script>
     <script src="/static/3rdparty/tf.min37.js"></script>
@@ -9,23 +10,43 @@
     <script src="/static/3rdparty/stats.js"></script>
     <script src="/static/3rdparty/dat.gui.min.js"></script>
     <script src="/static/3rdparty/gsap.min.js"></script>
+    <script src="/static/3rdparty/d3.min.js"></script>
     <script src="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="/static/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js"></script>
-    <script src="/static/3rdparty/three.js-r103/three.min.js"></script>
-    <script src="/static/3rdparty/three.js-r103/LoaderSupport.js"></script>
-    <script src="/static/3rdparty/three.js-r103/MTLLoader.js"></script>
-    <script src="/static/3rdparty/three.js-r103/OBJLoader2.js"></script>
-    <script src="/static/3rdparty/three.js-r103/TGALoader.js"></script>
-    <script src="/static/3rdparty/three.js-r103/OrbitControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/three.min.js"></script>
+    <script src="/static/3rdparty/three.js-r131/MTLLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/OBJLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/TGALoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/GLTFLoader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/TransformControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/EffectComposer.js"></script>
+    <script src="/static/3rdparty/three.js-r131/OutlinePass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/RenderPass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/ShaderPass.js"></script>
+    <script src="/static/3rdparty/three.js-r131/FXAAShader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/CopyShader.js"></script>
+    <script src="/static/3rdparty/three.js-r131/OrbitControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/PointerLockControls.js"></script>
+    <script src="/static/3rdparty/three.js-r131/SelectionBox.js"></script>
+    <script src="/static/3rdparty/three.js-r131/SelectionHelper.js"></script>
+    <script src="/static/3rdparty/three.js-r131/Reflector.js"></script>
+    <script src="/static/3rdparty/three.js-r131/Refractor.js"></script>
+    <script src="/static/3rdparty/three.js-r131/Water2.js"></script>
     <script src="/static/3rdparty/threex.windowresize.js"></script>
     <script src="/static/3rdparty/radial.js"></script>
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
+    <script src="/static/3rdparty/splitting.min.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css">
+    <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="/static/css/color-bootstrap.min.css" />
+    <!-- <link rel="stylesheet" href="/static/css/css2.css" /> -->
     <!-- our code -->
-    <link rel="stylesheet" href="/static/css/index.css"/>
+    <link rel="stylesheet" href="/static/css/index.css" />
+    <link rel="stylesheet" href="/static/css/tiler.css" />
+    <link rel="stylesheet" href="/static/css/splitting.css"/>
+    <link rel="stylesheet" href="/static/css/splitting-cells.css"/>
     <script src="/static/js/SceneManager.js"></script>
     <script src="/static/js/drawcanvas.js"></script>
     <script src="/static/js/render.js"></script>
@@ -34,166 +55,207 @@
     <script src="/static/js/QE.js"></script>
     <script src="/static/js/ai.js"></script>
     <script src="/static/js/search.js"></script>
+    <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script src="/static/js/MageAdd.js"></script>
     <script>
-        //Global state & variables! Careful!
-        var ALL_SCENE_READY = false;
-        var On_MOVE = false;
-        var On_ROTATE = false;
-        var On_LIFT = false;
-        var On_ADD = false;
-        var On_SCALE = false;
-        var On_xSCALE = false;
-        var On_ySCALE = false;
-        var On_zSCALE = false;
-        var On_Orth_MOVE = false;
-        var isToggle = false;
-        var Auto_Insert_Mode = false;
-        var Auto_Rec_Mode = false;
-        var AUXILIARY_MODE = false;
-        const AUXILIARY_NAME = 'auxiliaryObject'; 
-        const INSERT_NAME = 'INSERT_ON_ADD'
-        var INTERSECT_OBJ;
-        var INSERT_OBJ;
+      //Global state & variables! Careful!
+      var ALL_SCENE_READY = false;
+      var On_MOVE = false;
+      var On_ROTATE = false;
+      var On_LIFT = false;
+      var On_ADD = false;
+      var On_MAGEADD = false;
+      var On_MAGEMOVE = false;
+      var On_CGSeries = false;
+      var On_SCALE = false;
+      var On_xSCALE = false;
+      var On_ySCALE = false;
+      var On_zSCALE = false;
+      var On_Orth_MOVE = false;
+      var isToggle = false;
+      var Auto_Insert_Mode = false;
+      var Auto_Rec_Mode = false;
+      var AUXILIARY_MODE = false;
+      var LayoutViewAdjust_MODE = false;
+      var lighting_Mode = false;
+      var animaRecord_Mode = false;
+      var currentAnimation = undefined;
+      var clutterpalette_Mode = false;
+      var clutterpalettePos;
+      var shelfstocking_Mode = false;
+      const AUXILIARY_NAME = "auxiliaryObject";
+      const INSERT_NAME = "INSERT_ON_ADD";
+      const SEMANTIC_POINTLIGHT = "semanticBasedPointLight";
+      const CGSERIES_TEMPGROUPNAME = "cgseries_temp_group";
+      const GTRANS_TEMPGROUPNAME = "gtrans_temp_group"
+      const CGSERIES_GROUP = new THREE.Group();
+      const GTRANS_GROUP = new THREE.Group();
+      CGSERIES_GROUP.name = CGSERIES_TEMPGROUPNAME;
+      GTRANS_GROUP.name = GTRANS_TEMPGROUPNAME;
+      const commonSmoothDuration = 0.2;
+      var INTERSECT_OBJ;
+      var INTERSECT_WALL;
+      var INTERSECT_SHELF_PLACEHOLDERS = {};
+      var INSERT_OBJ;
+      var MAIN_OBJ;
+      var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
+      var USE_NEW_WALL = !(JSON.parse(window.sessionStorage.getItem('NotUseNewWall')) || false);
+      // var USE_NEW_WALL = false;
 
-        //Global variables, will be initialize only once.
-        var manager;
-        var menu;
-        var radial;
-        var radial_scale; 
-        var renderer;
-        var camera;
-        var scene;
-        var orbitControls;
+      //Global variables, will be initialize only once.
+      var manager;
+      var menu;
+      var radial;
+      var radial_scale;
+      var renderer;
+      var composer, renderPass, outlinePass, outlinePass2, fxaaPass; // Post-Processing. 
+      var camera;
+      var scene;
+      var orbitControls;
+      var transformControls;
 
-        var mouse = new THREE.Vector2();
-        var orthmouse = new THREE.Vector2();
-        var raycaster = new THREE.Raycaster();
-        var scenecanvas;
-        var orthcanvas;
-        var drawingCanvas;
-        var catalogItems;
-        var paint = false;
-        var drawStartPos = new THREE.Vector2();
-        var searchResults;
-        var currentRoomId;
-        var orthline;
+      var mouse = new THREE.Vector2();
+      var orthmouse = new THREE.Vector2();
+      var raycaster = new THREE.Raycaster();
+      var scenecanvas;
+      var orthcanvas;
+      var drawingCanvas;
+      var catalogItems;
+      var secondaryCatalogItems;
+      var paint = false;
+      var drawStartPos = new THREE.Vector2();
+      var searchResults;
+      var currentRoomId;
+      var currentSeqs;
+      var orthline;
+      const pressedKeys = [];
 
-        var skyBox;
-        var lx_level;
-        var lz_level;
-        var renderTime = 0.6; 
-        var axis; 
+      var skyBox;
+      var lx_level;
+      var lz_level;
+      var renderTime = 0.6;
+      var axis;
 
-        var latent_space_mode;
+      var stats;
+      var datgui;
+      var datgui_intersectfolder;
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, total: 0}
 
-        var stats;
-        var datgui; 
-        var datgui_intersectfolder; 
+      var deltaClock;
+      const animaMixers = [];
 
-        // this variable is used for determining the collaborative group a user belonging to; 
-        const onlineGroup = "{{ onlineGroup }}";
-        const onlineUserID = "{{ serverGivenUserID }}";
-        const onlineUser = {'id': "{{ serverGivenUserID }}", 'name': ''}; 
+      // this variable is used for determining the collaborative group a user belonging to;
+      const onlineGroup = "{{ onlineGroup }}";
+      const onlineUserID = "{{ serverGivenUserID }}";
+      const onlineUser = { id: "{{ serverGivenUserID }}", name: "" };
 
-        $(document).ready(function () {
-            latent_space_mode = false;
-            manager = new SceneController($("#ui")[0]);
-            renderer = manager.renderManager.renderer;
-            camera = manager.renderManager.camera;
-            scene = manager.renderManager.scene;
+      var selectionBox;
+      var selectionBoxHelper;
 
-            scenecanvas = document.getElementById('scenecanvas');
-            orthcanvas = document.getElementById('orthcanvas');
-            catalogItems = document.getElementById("catalogItems");
-            drawingCanvas = document.getElementById('drawing-canvas');
-            setting_up();
-        })
+      $(document).ready(function () {
+        manager = new SceneController($("#ui")[0]);
+        renderer = manager.renderManager.renderer;
+        camera = manager.renderManager.camera;
+        scene = manager.renderManager.scene;
 
+        scenecanvas = document.getElementById("scenecanvas");
+        orthcanvas = document.getElementById("orthcanvas");
+        catalogItems = document.getElementById("catalogItems");
+        secondaryCatalogItems = document.getElementById("secondaryCatalogItems");
+        drawingCanvas = document.getElementById("drawing-canvas");
+        setting_up();
+      });
     </script>
-</head>
-<body>
-<div id="ui">
-    <nav id="menubar" class="navbar navbar-expand-lg navbar-light bg-light" style="overflow: visible;">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand">Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a>
-            </div>
-            <div class="nav navbar-nav" style="width:85%; float:right; display:inline-block;">
-                <button id="load_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Load</button>
-                <button id="auxiliary_button" type="button" class="btn btn-lg btn-primary nav_sk_button"
-                style="width: 9%">AuxiliaryMode
-                </button>
-                <button id="layout2_button" type="button" class="btn btn-lg btn-primary nav_sk_button">layout2</button>
-                <button id="sklayout" type="button" class="btn btn-lg btn-primary nav_sk_button">Layout1</button>
-                <button id="download_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Save</button>
-                <button id="screenshot" type="button" class="btn btn-lg btn-primary nav_sk_button">Render</button>
-                <button id="axis_button" type="button" class="btn btn-lg btn-primary nav_sk_button">Axis</button>
-                <div class="btn-group" style="float:right;width: 4%;">
-                    <button type="button" id="utils_button" class="btn btn-lg btn-primary nav_sk_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Utils<span class="caret"></span></button>
-                    <ul class="dropdown-menu" style="text-align: center;">
-                        <button type="button" id="windoor_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            WinDoor</button>
-                        <button type="button" id="clear_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            Clear</button>
-                        <button type="button" id="clearALL_button"
-                        class="btn btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            ClearALL</button>
-                        <button id="autoview" type="button" 
-                        class="btn btn-lg btn-primary nav_sk_button" style="display: inline-block;width: 90%;margin-right: 5%;margin-bottom: 5px;">
-                            AutoView</button>
-                    </ul>
-                </div>
-                <a id="downloadAnchorElem" style="display:none"></a>
-            </div>
-        </div>
-    </nav>
-
-    <div id="uibody">
+  </head>
+  <body>
+    <div id="ui">
+      <div class="collapse show" id="sidebar">
         <div id="retrieve" align="center">
-            <div class="card-header">
-                <h4 class="my-0 font-weight-normal">3D Scene Platform</h4>
-            </div>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <th scope="row">Level</th>
-                        <td colspan="3" id="tab_origin"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Room ID</th>
-                        <td id="tab_roomid"></td>
-                        <th>Room Type</th>
-                        <td id="tab_roomtype"></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Model ID</th>
-                        <td id="tab_modelid"> </td>
-                        <th>Category</th>
-                        <td id="tab_category"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">AuxObj</th>
-                        <td colspan="3" id="tab_auxobj"> </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">AuxDom</th>
-                        <td colspan="3" id="tab_auxdom">ALL</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">FPSavg</th>
-                        <td id="tab_FPSavg"> </td>
-                        <th>Min-Max</th>
-                        <td id="tab_minmax"> </td>
-                    </tr>
-                </tbody>
-            </table>
-            <!--div class="card-body">
+          <div class="bg-primary p-4" style="height: 50.75px">
+            <a
+              class="dropdown-toggle h3"
+              id="title"
+              role="button"
+              href="#sceneInfo"
+              data-toggle="collapse"
+              aria-expanded="false"
+              aria-controls="sceneInfo"
+              >3D Scene Platform</a
+            >
+          </div>
+          <div class="collapse table-responsive" id="sceneInfo">
+          <table class="table text-dark">
+            <tbody>
+              <tr>
+                <th scope="row">Level</th>
+                <td colspan="3" id="tab_origin"></td>
+              </tr>
+              <tr>
+                <th scope="row">Room ID</th>
+                <td id="tab_roomid"></td>
+                <th>Room Type</th>
+                <td id="tab_roomtype"></td>
+              </tr>
+              <tr>
+                <th scope="row">Model ID</th>
+                <td id="tab_modelid"></td>
+                <th>Category</th>
+                <td id="tab_category"></td>
+              </tr>
+              <tr>
+                <th scope="row">AuxObj</th>
+                <td colspan="3" id="tab_auxobj"></td>
+              </tr>
+              <tr>
+                <th scope="row">AuxDom</th>
+                <td colspan="3" id="tab_auxdom">ALL</td>
+              </tr>
+              <tr>
+                <th scope="row">FPSavg</th>
+                <td id="tab_FPSavg"></td>
+                <th>Min-Max</th>
+                <td id="tab_minmax"></td>
+              </tr>
+              <tr>
+                <th scope="row">X</th>
+                <td id="tab_X"></td>
+                <th>Y</th>
+                <td id="tab_Y"></td>
+                <th>Z</th>
+                <td id="tab_Z"></td>
+              </tr>
+              <tr>
+                <th scope="row">Navigate</th>
+                <td id="tab_Navigate"></td>
+                <th>Add</th>
+                <td id="tab_Add"></td>
+                <th>Remove</th>
+                <td id="tab_Remove"></td>
+              </tr>
+              <tr>
+                <th scope="row">Move</th>
+                <td id="tab_Move"></td>
+                <th>Rotate</th>
+                <td id="tab_Rotate"></td>
+                <th>Scale</th>
+                <td id="tab_Scale"></td>
+              </tr>
+              <tr>
+                <th scope="row">CGS</th>
+                <td id="tab_CGS"></td>
+                <th scope="row">CLTP</th>
+                <td id="tab_CLTP"></td>
+                <th>Total</th>
+                <td id="tab_Total"></td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+
+          <!--div class="card-body">
                 <button id="text_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Text</button>
                 <button id="sketch_button" type="button" class="btn btn-lg btn-primary" style="width:32.5%;">Sketch
                 </button>
@@ -224,65 +286,865 @@
                     Collaborative Search
                 </button>
             </div-->
-            <div class="card-body">
-                <button id="autoView" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">SceneViewer</button>
-                <button id="autoViewPath" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">AutoPath</button>
-                <button id="_unknownButton2" type="button" class="btn btn-lg btn-primary" style="width:31.5%;">Unknown</button>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" value="" id="useNewWallCheckBox">
+              <label class="form-check-label" for="useNewWallCheckBox">Movable Wall</label>
             </div>
-            <div>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">双人床</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">茶几</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">餐桌</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">小圆桌</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">梳妆台</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">衣柜</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">电视柜</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">沙发</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">椅子</button>
-                <button id="" type="button" class="btn btn-lg btn-primary rapidSearch" style="width:18%;margin-bottom: 3px;">储物柜</button>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" value="" id="lodCheckBox">
+                <label class="form-check-label" for="lodCheckBox">LoD</label>
+              </div>
+          <div class="py-1 px-0">
+            <button
+              id="autoView"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              SceneViewer
+            </button>
+            <button
+              id="autoViewPath"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              AutoPath
+            </button>
+            <button
+              id="autoViewMapping"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Mapping
+            </button>
+            <button
+              id="manyTextures"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Texture
+            </button>
+            <button
+              id="scenePalette"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              ScenePalette
+            </button>
+            <button
+              id="operationTimer"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Timer
+            </button>
+            <button
+              id="operationFuture"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              Future
+            </button>
+            <button
+              id="selectRoomShapebtn"
+              type="button"
+              class="btn btn-outline-dark m-1 btn-responsive"
+            >
+              选择房型
+            </button>
+          </div>
+          <div class="py-1 px-0">
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >床</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >双层床</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >床头柜</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >茶几</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >沙发</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >电视柜</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >餐桌</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >办公桌</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >置物架</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >储藏柜</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >座椅</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >桌椅</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >长椅</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >梳妆台</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >圆桌</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >CGS</button>
+            <!-- <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >CGS-床</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >CGS-茶几</button>
+            <button
+              id=""
+              type="button"
+              class="btn btn-lg btn-outline-dark rapidSearch m-1"
+            >CGS-餐桌</button> -->
+          </div>
+
+          <div class="py-3">
+            <div class="m-3">
+              <select id="sidebarSelect" class="form-select">
+                <option value="" selected></option>
+                <option value="shelfInfoDiv">Shelf Info</option>
+                <option value="attributeSliderDiv">Attribute Slider</option>
+                <option value="drawingCanvasDiv">Drawing Canvas</option>
+                <option value="drawingCanvasDivv">Furniture Palette</option>
+                <option value="cgsAnnoDiv">CGS标注</option>
+              </select>
             </div>
-            <div id="collaborative_container">
-                <!--canvas id="drawing-canvas" height="224" width="224"></canvas>
-                <div id="sketchsearchdiv" class="form-inline mt-2 mt-md-0"
-                     style="width:100%; padding-top: 10px; padding-bottom: 10px; display:flex; width:100%; flex-direction:row;">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchsearchbtn"
-                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
+  
+            <div id="collaborative_container" class="m-4">
+              <div class="collapse container sidebarSelect_collapse" id="shelfInfoDiv">
+                <div class="h4 py-1 px-2">
+                  <div class="mb-1 text-left">Shelf Key: </div>
+                  <div id="shelfKey"></div>
+                </div>
+                
+                <div class="h4 py-1 px-2">
+                  <div class="mb-1 text-left">货架类别: </div>
+                  <div id="shelfTypeRadios"></div>
+                </div>
+              
+                <div class="h4 py-1 px-2 text-left">占位符: </div>
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 1</span>
+                    </div>
+                    <input id="shelfRow0" type="text" class="form-control" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 2</span>
+                    </div>
+                    <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([1])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 3</span>
+                    </div>
+                    <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([2])"
+                    disabled>全选</button>
+                </div>
+              
+                <div class="d-flex flex-row mb-3 justify-content-around">
+                  <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Row 4</span>
+                    </div>
+                    <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                    <div class="input-group-append">
+                      <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
+                          class="glyphicon glyphicon-minus"></i></button>
+                      <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
+                          class="glyphicon glyphicon-plus"></i></button>
+                    </div>
+                  </div>
+                  <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([3])"
+                    disabled>全选</button>
+                </div>
+              
+                <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0,1,2,3])"
+                  disabled>全选</button>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="attributeSliderDiv">
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrArea" class="form-label attrSliderText">Area</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrArea" oninput="attrValArea.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValArea"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrNumOfObjects" class="form-label attrSliderText">#Objects</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrNumOfObjects" oninput="attrValNumOfObjects.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValNumOfObjects"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrObjRichness" class="form-label attrSliderText">Richness</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrObjRichness" oninput="attrValObjRichness.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText" >
+                    <span id="attrValObjRichness"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrSpaceUtilization" class="form-label attrSliderText">Utilization</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSpaceUtilization" oninput="attrValSpaceUtilization.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValSpaceUtilization"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrDependency" class="form-label attrSliderText">Dependency</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrDependency" oninput="attrValDependency.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValDependency"></span>
+                  </div>
+                </div>
+                
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <label for="attrSmoothness" class="form-label attrSliderText">Smoothness</label>
+                  </div>
+                  <div class="col-6">
+                    <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSmoothness" oninput="attrValSmoothness.innerText=value">
+                  </div>
+                  <div class="col-2 attrSliderText">
+                    <span id="attrValSmoothness"></span>
+                  </div>
+                </div>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDiv">
+                <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
+                <div id="sketchsearchdiv" class="btn-group mx-1 my-3">
+                    <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchsearchbtn">
                         Sketch Search
                     </button>
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sketchclearbtn"
-                            style="overflow: hidden; display:block; padding-top: 5px; padding-bottom: 5px; flex-grow:1;">
+                    <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchclearbtn">
                         Sketch Clear
                     </button>
-                </div-->
-                <div class="form-inline mt-2 mt-md-0" style="width:100%; padding-top: 10px; padding-bottom: 10px;">
-                    <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search"
-                           style="width:75%;margin-left:5%;" id="searchinput">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="searchbtn">Search</button>
                 </div>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDivv">
+                <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+              </div>
+  
+              <div class="collapse container sidebarSelect_collapse" id="cgsAnnoDiv">
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username"
+                      pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
+                    <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+                  </div>
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">提交</button>
+                    </div>
+                  </div>
+                </form>
+                <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
+                <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
+              </div>
             </div>
-            <div id="rec_container" style="display: none;">
-            </div>
-            <div id="catalogItems" class="catalogSectionContent" align="center"></div>
-        </div>
+          </div>
 
-        <div id="scene">
+
+          <!-- <div>
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#shelfInfoDiv" role="button"
+              aria-expanded="false" aria-controls="shelfInfoDiv">
+              Shelf Info
+            </a>
+            
+            <div class="collapse container" id="shelfInfoDiv">
+              <div class="h4 py-1 px-2 text-left">
+                Shelf Key: <div id="shelfKey"></div>
+              </div>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 1</span>
+                  </div>
+                  <input id="shelfRow0" type="text" class="form-control" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow0MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(0)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow0PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(0)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
+                </div>
+                <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0])"
+                  disabled>全选</button>
+              </div>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 2</span>
+                  </div>
+                  <input id="shelfRow1" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow1MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(1)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow1PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(1)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
+                </div>
+                <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([1])"
+                  disabled>全选</button>
+              </div>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 3</span>
+                  </div>
+                  <input id="shelfRow2" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow2MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(2)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow2PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(2)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
+                </div>
+                <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([2])"
+                  disabled>全选</button>
+              </div>
+            
+              <div class="d-flex flex-row mb-3 justify-content-around">
+                <div class="input-group input-group-lg">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Row 4</span>
+                  </div>
+                  <input id="shelfRow3" type="text" class="form-control input-number" min="1" max="8" value="0" disabled>
+                  <div class="input-group-append">
+                    <button id="shelfRow3MinusBtn" class="btn btn-primary" onclick="shelfRowMinus(3)" disabled><i
+                        class="glyphicon glyphicon-minus"></i></button>
+                    <button id="shelfRow3PlusBtn" class="btn btn-primary" onclick="shelfRowPlus(3)" disabled><i
+                        class="glyphicon glyphicon-plus"></i></button>
+                  </div>
+                </div>
+                <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([3])"
+                  disabled>全选</button>
+              </div>
+            
+              <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0,1,2,3])"
+                disabled>全选</button>
+            </div>
+          </div>
+          <div>
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#attributeSliderDiv" role="button" aria-expanded="false" aria-controls="attributeSliderBarDiv">
+              Attribute Slider
+            </a>
+
+            <div class="collapse container" id="attributeSliderDiv">
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrArea" class="form-label attrSliderText">Area</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrArea" oninput="attrValArea.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText">
+                  <span id="attrValArea"></span>
+                </div>
+              </div>
+              
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrNumOfObjects" class="form-label attrSliderText">#Objects</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrNumOfObjects" oninput="attrValNumOfObjects.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText">
+                  <span id="attrValNumOfObjects"></span>
+                </div>
+              </div>
+              
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrObjRichness" class="form-label attrSliderText">Richness</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrObjRichness" oninput="attrValObjRichness.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText" >
+                  <span id="attrValObjRichness"></span>
+                </div>
+              </div>
+              
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrSpaceUtilization" class="form-label attrSliderText">Utilization</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSpaceUtilization" oninput="attrValSpaceUtilization.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText">
+                  <span id="attrValSpaceUtilization"></span>
+                </div>
+              </div>
+              
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrDependency" class="form-label attrSliderText">Dependency</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrDependency" oninput="attrValDependency.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText">
+                  <span id="attrValDependency"></span>
+                </div>
+              </div>
+              
+              <div class="row align-items-center">
+                <div class="col-4">
+                  <label for="attrSmoothness" class="form-label attrSliderText">Smoothness</label>
+                </div>
+                <div class="col-6">
+                  <input type="range" orient="vertical" min="0" max="1" step="0.01" id="attrSmoothness" oninput="attrValSmoothness.innerText=value">
+                </div>
+                <div class="col-2 attrSliderText">
+                  <span id="attrValSmoothness"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="collaborative_container">
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDiv" role="button" aria-expanded="false" aria-controls="drawingCanvasDiv">
+              Drawing Canvas
+            </a>
+            <div class="collapse" id="drawingCanvasDiv">
+              <canvas id="drawing-canvas" height="224" width="224" style="color: aliceblue;"></canvas>
+              <div id="sketchsearchdiv" class="btn-group mx-1 my-3">
+                  <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchsearchbtn">
+                      Sketch Search
+                  </button>
+                  <button class="btn btn-outline-primary btn-canvas-responsive" type="submit" id="sketchclearbtn">
+                      Sketch Clear
+                  </button>
+              </div>
+            </div>
+
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDivv" role="button" aria-expanded="false" aria-controls="drawingCanvasDiv">
+              Furniture Palette
+            </a>
+            <div class="collapse" id="drawingCanvasDivv">
+              <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+            </div>
+
+            <div>
+              <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#cgsAnnoDiv" role="button"
+                aria-expanded="false" aria-controls="cgsAnnoDiv">
+                CGS标注
+              </a>
+            
+              <div class="py-3 px-3 collapse container" id="cgsAnnoDiv">
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="username" placeholder="支付宝用户名" aria-label="Username"
+                      pattern="[a-zA-Z0-9_-\u3400-\u4DBF\u4E00-\u9FFF]+" required>
+                    <input type="text" class="form-control" id="alipay" placeholder="支付宝账号" aria-label="alipay" required>
+                  </div>
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="series" placeholder="风格系列" aria-label="series" required>
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitchange_button">提交</button>
+                    </div>
+                  </div>
+                </form>
+                <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
+                <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
+              </div>
+            </div> -->
+            
+            <div class="modal fade" id="commitSuccessModal" tabindex="-1" role="dialog" aria-labelledby="commitSuccessModalCenterTitle" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="commitSuccessModalCenterTitle">感谢提交！</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div id="commitSuccessMessage" class="modal-body">
+                    
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+          <div>
+            <div class="input-group input-group-lg py-2 px-3">
+              <input
+                class="form-control"
+                type="text"
+                placeholder="Search"
+                aria-label="Search"
+                id="searchinput"
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-primary"
+                  type="submit"
+                  id="searchbtn"
+                >
+                  Object
+                </button>
+                <button
+                  class="btn btn-outline-primary"
+                  type="submit"
+                  id="floorPlanbtn"
+                >
+                  Module
+                </button>
+              </div>
+            </div>
+            <!-- <form class="navbar-form navbar-left" action="/action_page.php">
+                    <div class="input-group">
+                        <input id="searchinput" type="text" class="form-control" placeholder="Search" name="search">
+                        <div class="input-group-btn">
+                            <button id="searchbtn" class="btn btn-default btn-outline-dark" type="submit">
+                            <i class="glyphicon glyphicon-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form> -->
+         </div>
+         <div class="py-2 px-3">
+          <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
+          <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
+          <form onsubmit="return false">
+            <div class="input-group input-group-lg py-1">
+              <input type="text" class="form-control" id="userOSR" placeholder="请输入您的用户名" aria-label="series" required>
+              <input type="text" class="form-control" id="nameOSR" placeholder="给关联关系起个名字" aria-label="series">
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="submit" id="usercommitOSR">提交</button>
+              </div>
+            </div>
+            <input type="checkbox" id="considerWall">考虑墙体    <input type="checkbox" id="considerWindow">考虑窗户    <input type="checkbox" id="considerDoor">考虑门    <br>
+          </form>
+          </div>
+
+        <div id="rec_container" style="display: none"></div>
+          <svg height="800" id="scenePaletteSVG" class="catalogSectionContent" style='display: none; margin: 0 auto;'>
+              <g></g>
+          </svg>
+          <div class="d-flex mb-auto">
+            <div id="catalogItems" class="catalogSectionContent"></div>
+            <div id="secondaryCatalogItems" class="catalogSectionContent border-left" style="display: none;"></div>
+          </div>
+          <div>
+            <a class="text-muted" style="overflow-wrap: break-word"
+              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
+            >
+            <!-- <a class="text-muted" style="overflow-wrap: break-word"
+              >Anonymous Authors</a
+            > -->
+          </div>
+        </div>
+      </div>
+      <div id="content">
+        <nav
+          id="menubar"
+          class="navbar navbar-expand-lg navbar-dark bg-primary py-3"
+        >
+          <button
+            class="btn btn-lg mr-auto"
+            id="sidebar_button"
+            type="button"
+            data-toggle="collapse"
+            data-target="#sidebar"
+            aria-controls="sidebar"
+            aria-expanded="true"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div id="menuBtns">
+            <button
+              id="load_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Load
+            </button>
+            <button
+              id="animaRecord_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              AnimaRecord
+            </button>
+            <button
+              id="auxiliary_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              AuxiliaryMode
+            </button>
+
+            <button
+              id="sklayout"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Layout1
+            </button>
+
+            <button
+              id="btnPlanIT"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              PlanIT
+            </button>
+
+            <button
+              id="stockshelf_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >Stock Shelf</button>
+
+            <button
+              id="clutterpalette_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >Clutterpalette</button>
+
+            <button
+              id="firstperson_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >First-Person</button>
+
+            <button
+              id="download_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Save
+            </button>
+            <button
+              id="screenshot"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Render
+            </button>
+            <button
+              id="axis_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Axis
+            </button>
+          </div>
+
+          <div class="dropdown">
+            <button
+              type="button"
+              id="utils_button"
+              class="btn btn-lg btn-outline-light dropdown-toggle mx-2"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Utils<span class="caret"></span>
+            </button>
+            <div
+              class="dropdown-menu bg-primary dropdown-menu-right"
+              aria-labelledby="utils_button"
+              style="text-align: center"
+            >
+              <button
+                type="button"
+                id="windoor_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                WinDoor
+              </button>
+              <button
+                type="button"
+                id="clear_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                Clear
+              </button>
+              <!-- <button
+                type="button"
+                id="clearALL_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                ClearALL
+              </button> -->
+              <button
+                type="button"
+                id="layoutviewadjust_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                ViewAdjust
+              </button>
+              <button
+                type="button"
+                id="bestview_button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                BestView
+              </button>
+              <button
+                id="lighting_btn"
+                type="button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                Lighting
+              </button>
+              <button
+                id="layout2_button"
+                type="button"
+                class="btn btn-outline-light my-1 nav_sk_button"
+              >
+                layout2
+              </button>
+            </div>
+          </div>
+          <a id="downloadAnchorElem" style="display: none"></a>
+        </nav>
+
+        <div id="uibody">
+          <div id="scene">
             <canvas id="scenecanvas"></canvas>
-            <canvas id="orthcanvas"></canvas>
+            <canvas id="orthcanvas" style="display: none;"></canvas>
+          </div>
         </div>
-    </div>
-
-    <div id="load_dialog" class="dialog" title="Load Scene File">
+      </div>
+      <div id="load_dialog" class="dialog" title="Load Scene File">
         <div class="form-group">
-            <label for="load_dialog_input">LoadFile</label>
-            <input type="file" class="form-control-file" id="load_dialog_input">
+          <label for="load_dialog_input">LoadFile</label>
+          <input type="file" class="form-control-file" id="load_dialog_input" />
         </div>
-        <button type="button" class="btn btn-primary" id="load_dialog_button">载入</button>
+        <button type="button" class="btn btn-primary" id="load_dialog_button">
+          载入
+        </button>
+      </div>
+
+      <div id="menu2" class="radialMenu"></div>
+      <div id="menu_scale" class="radialMenu"></div>
+      <!-- <div class="tiler" id="mappingDisplay" style="width: 0%;height: 0%;position: absolute;top: 0;left: 0;z-index: 10;display: none;pointer-events:none;">
+        <img id="mappingDisplayImg" src="/autoviewimgs/mapping/0338bdd5-e321-467e-a998-38f2218e2fdd" height="10px" width="10px"/>
+    </div> -->
     </div>
-
-
-    <div id="menu2" class="radialMenu"></div>
-    <div id="menu_scale" class="radialMenu"></div>
-</div>
-</body>
+  </body>
 </html>
-

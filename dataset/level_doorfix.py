@@ -3,7 +3,9 @@ import os
 import math
 import numpy as np
 from shapely.geometry.polygon import Polygon
+import projection2d
 from projection2d import processGeo as p2d
+projection2d.get_norm = True
 """
 This script is used to fix issues of 
 'one door belongs to multiple rooms'; 
@@ -80,8 +82,63 @@ def areDoorsInRoom(level):
                     room['objList'].append(new_obj)
     return level_doorfix
 
+def refineRoomMeta(roomMeta):
+    J = None
+    for i in range(len(roomMeta)):
+        j = (i + 1) % len(roomMeta)
+        k = (j + 1) % len(roomMeta)
+        vec1 = roomMeta[i,0:2] - roomMeta[j,0:2]
+        vec2 = roomMeta[j,0:2] - roomMeta[k,0:2]
+        res = vec1.dot(vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+        if res > 0.95: # continuos wall detected
+            roomMeta[i, 2:4] = (roomMeta[i, 2:4] + roomMeta[j, 2:4])/2
+            J = j
+            break
+    if J is None:
+        return roomMeta
+    newRoomMeta = []
+    for i in range(len(roomMeta)):
+        if i != J:
+            newRoomMeta.append(roomMeta[i])
+    return refineRoomMeta(np.array(newRoomMeta))
+
+occurrenceCounter = {}
+occurrenceList = []
+def occurrenceCount(level):
+    for room in level['rooms']:
+        for o in room['objList']:
+            if o['modelId'] in sk_to_ali or o['modelId'] in suncg:
+                if o['modelId'] not in occurrenceCounter:
+                    occurrenceCounter[o['modelId']] = 1
+                else:
+                    occurrenceCounter[o['modelId']] += 1
+
+def batchOccrrenceCount():
+    si = 0
+    levelnames = os.listdir('./alilevel_oriFix')[si:]
+    for levelname in levelnames:
+        if si % 1000 == 0:
+            print(f'start level {levelname}. ({si})')
+        si += 1
+        try:
+            with open(f'./alilevel_oriFix/{levelname}') as f:
+                level = json.load(f)
+                occurrenceCount(level)
+        except PermissionError:
+            continue
+    print(occurrenceCounter)
+    totalOccur = 0
+    for o in occurrenceCounter:
+        totalOccur += occurrenceCounter[o]
+        occurrenceList.append(occurrenceCounter[o])
+    print(totalOccur)
+    print(totalOccur / 9992)
+    print(np.std(occurrenceList))
+
 def areDoorsInRoom2021(level):
     level_doorfix = level.copy()
+    for room in level_doorfix['rooms']:
+        room['blockList'] = []
     # for each room in level, check each door; 
     for room in level_doorfix['rooms']:
         # inDatabase Check: 
@@ -94,7 +151,13 @@ def areDoorsInRoom2021(level):
             continue
         try:
             room_meta = p2d('.', 'room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+            # print('before', room_meta)
+            room_meta = refineRoomMeta(room_meta)
+            # print('after', room_meta)
             room_polygon = Polygon(room_meta[:, 0:2]) # requires python library 'shapely'
+            room['roomShape'] = room_meta[:, 0:2].tolist()
+            room['roomNorm'] = room_meta[:, 2:4].tolist()
+            room['roomOrient'] = np.arctan2(room_meta[:, 2:4][:, 0], room_meta[:, 2:4][:, 1]).tolist()
         except Exception as e:
             print(e)
             continue
@@ -104,7 +167,7 @@ def areDoorsInRoom2021(level):
                     continue
                 if 'coarseSemantic' not in obj:
                     continue
-                if obj['coarseSemantic'] not in ['door', 'Door']:
+                if obj['coarseSemantic'] not in ['door', 'window', 'Door', 'Window']:
                     continue
                 block = windoorblock_f(obj)
                 block_polygon = Polygon(block['windoorbb']).buffer(.03)
@@ -113,6 +176,10 @@ def areDoorsInRoom2021(level):
                     if 'roomIds' not in obj:
                         obj['roomIds'] = []
                     obj['roomIds'].append(room['roomId'])
+                    if obj not in room['objList']:
+                        new_obj = obj.copy()
+                        new_obj['roomId'] = room['roomId']
+                        room['blockList'].append(new_obj)
     return level_doorfix
 
 def batch():
@@ -128,7 +195,7 @@ def batch():
         except PermissionError:
             continue
         level_fix = areDoorsInRoom2021(level)
-        with open(f'./alilevel_door2021/{levelname}', 'w') as f:
+        with open(f'./Levels2021/{levelname}', 'w') as f:
             json.dump(level_fix, f)
 
 def case1():
@@ -139,4 +206,5 @@ def case1():
         json.dump(case1_fix, f)
 
 if __name__ == '__main__':
-    batch()
+    # batch()
+    batchOccrrenceCount()

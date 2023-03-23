@@ -42,44 +42,108 @@ with open('ali_to_sk.json') as f:
 with open('../latentspace/obj_coarse_semantic.json') as f:
     obj_coarse_semantic = json.load(f)
 
-def Min3d(aa,bb):
+
+def Min3d(aa, bb):
     c = []
-    for a,b in zip(aa,bb):
-        c.append(a if a<b else b)
+    for a, b in zip(aa, bb):
+        c.append(a if a < b else b)
     return c
 
-def Max3d(aa,bb):
+
+def Max3d(aa, bb):
     c = []
-    for a,b in zip(aa,bb):
-        c.append(a if a>b else b)
+    for a, b in zip(aa, bb):
+        c.append(a if a > b else b)
     return c
+
 
 def split_path(paths):
-    filepath,tempfilename = os.path.split(paths)
-    filename,extension = os.path.splitext(tempfilename)
-    return filepath,filename,extension
+    filepath, tempfilename = os.path.split(paths)
+    filename, extension = os.path.splitext(tempfilename)
+    return filepath, filename, extension
 
 
 def write_obj_with_tex(savepath, vert, face, vtex, ftcoor, imgpath=None):
-    filepath2,filename,extension = split_path(savepath)
-    with open(savepath,'w') as fid:
+    filepath2, filename, extension = split_path(savepath)
+    with open(savepath, 'w') as fid:
         fid.write('mtllib '+filename+'.mtl\n')
         fid.write('usemtl a\n')
         for v in vert:
-            fid.write('v %f %f %f\n' % (v[0],v[1],v[2]))
+            fid.write('v %f %f %f\n' % (v[0], v[1], v[2]))
         for vt in vtex:
-            fid.write('vt %f %f\n' % (vt[0],vt[1]))
+            fid.write('vt %f %f\n' % (vt[0], vt[1]))
         face = face + 1
         ftcoor = ftcoor + 1
-        for f,ft in zip(face,ftcoor):
-            fid.write('f %d/%d %d/%d %d/%d\n' % (f[0],ft[0],f[1],ft[1],f[2],ft[2]))
+        for f, ft in zip(face, ftcoor):
+            fid.write('f %d/%d %d/%d %d/%d\n' %
+                      (f[0], ft[0], f[1], ft[1], f[2], ft[2]))
     filepath, filename2, extension = split_path(imgpath)
     if os.path.exists(imgpath) and not os.path.exists(filepath2+'/'+filename+extension):
         copyfile(imgpath, filepath2+'/'+filename+extension)
     if imgpath is not None:
-        with open(filepath2+'/'+filename+'.mtl','w') as fid:
+        with open(filepath2+'/'+filename+'.mtl', 'w') as fid:
             fid.write('newmtl a\n')
             fid.write('map_Kd '+filename+extension)
+
+
+def myconcatenate(a, b=None):
+    """
+    Concatenate two or more meshes.
+    Parameters
+    ------------
+    a : trimesh.Trimesh
+      Mesh or list of meshes to be concatenated
+      object, or list of such
+    b : trimesh.Trimesh
+      Mesh or list of meshes to be concatenated
+    Returns
+    ----------
+    result : trimesh.Trimesh
+      Concatenated mesh
+    """
+    if b is None:
+        b = []
+    # stack meshes into flat list
+    meshes = np.append(a, b)
+
+    # if there is only one mesh just return the first
+    if len(meshes) == 1:
+        return meshes[0].copy()
+
+    # extract the trimesh type to avoid a circular import
+    # and assert that both inputs are Trimesh objects
+    from trimesh.util import type_named, append_faces
+    trimesh_type = type_named(meshes[0], 'Trimesh')
+
+    # append faces and vertices of meshes
+    vertices, faces = append_faces(
+        [m.vertices.copy() for m in meshes],
+        [m.faces.copy() for m in meshes])
+
+    # only save face normals if already calculated
+    face_normals = None
+    if all('face_normals' in m._cache for m in meshes):
+        face_normals = np.vstack(
+            [m.face_normals for m in meshes])
+
+    try:
+        # concatenate visuals
+        uv = np.concatenate([m.visual.uv for m in meshes])
+        visual = trimesh.visual.TextureVisuals(uv=uv)
+        # visual = meshes[0].visual.concatenate(
+        # [m.visual for m in meshes[1:]])
+    except BaseException:
+        print('shit!!')
+        visual = None
+    # create the mesh object
+    mesh = trimesh_type(vertices=vertices,
+                        faces=faces,
+                        face_normals=face_normals,
+                        visual=visual,
+                        process=False)
+
+    return mesh
+
 
 def rotation_matrix(axis, theta):
     axis = np.asarray(axis)
@@ -108,7 +172,7 @@ def quaternion_to_euler(qlist):
     # pitch (y-axis rotation)
     sinp = 2 * (q['w'] * q['y'] - q['z'] * q['x'])
     if abs(sinp) >= 1:
-        pitch = copysign(np.pi / 2, sinp) # use 90 degrees if out of range
+        pitch = copysign(np.pi / 2, sinp)  # use 90 degrees if out of range
     else:
         pitch = asin(sinp)
 
@@ -119,15 +183,21 @@ def quaternion_to_euler(qlist):
 
     return (roll, pitch, yaw)
 
+
 def orient33(matrix):
     # print(np.linalg.det(matrix[0:3, 0:3]))
     return atan2(matrix[0, 2], matrix[2, 2])
 
+
 def euler_to_matrix(thetaX, thetaY, thetaZ):
-    X = np.array([[1,0,0],[0,cos(thetaX),-sin(thetaX)],[0,sin(thetaX),cos(thetaX)]])
-    Y = np.array([[cos(thetaY),0,sin(thetaY)],[0,1,0],[-sin(thetaY),0,cos(thetaY)]])
-    Z = np.array([[cos(thetaZ),-sin(thetaZ),0],[sin(thetaZ),cos(thetaZ),0],[0,0,1]])
+    X = np.array([[1, 0, 0], [0, cos(thetaX), -sin(thetaX)],
+                 [0, sin(thetaX), cos(thetaX)]])
+    Y = np.array([[cos(thetaY), 0, sin(thetaY)], [
+                 0, 1, 0], [-sin(thetaY), 0, cos(thetaY)]])
+    Z = np.array([[cos(thetaZ), -sin(thetaZ), 0],
+                 [sin(thetaZ), cos(thetaZ), 0], [0, 0, 1]])
     return Z @ Y @ X
+
 
 def add_new_line(p):
     with open(p) as f:
@@ -136,30 +206,26 @@ def add_new_line(p):
     with open(p, 'w') as f:
         f.write(fl)
 
-def main(args):
-    with open(args.category_map_file_path,"r")as f:
-        future2suncg_cat = json.load(f)
 
+def main(args):
+    with open(args.category_map_file_path, "r")as f:
+        future2suncg_cat = json.load(f)
 
     filenames = os.listdir(args.FRONT_path)
 
     if not os.path.exists(args.save_path):
         os.mkdir(args.save_path)
-    if not os.path.exists(os.path.join(args.save_path,"alilevel")):
-        os.mkdir(os.path.join(args.save_path,"alilevel"))
-    if not os.path.exists(os.path.join(args.save_path,"room")):
-        os.mkdir(os.path.join(args.save_path,"room"))
-    if not os.path.exists(os.path.join(args.save_path,"background")):
-        os.mkdir(os.path.join(args.save_path,"background"))
-    filenames = os.listdir('../../3D-FRONT')
-    # # DEBUG 
+    if not os.path.exists(os.path.join(args.save_path, "alilevel2021")):
+        os.mkdir(os.path.join(args.save_path, "alilevel2021"))
+    if not os.path.exists(os.path.join(args.save_path, "room2021")):
+        os.mkdir(os.path.join(args.save_path, "room2021"))
+    if not os.path.exists(os.path.join(args.save_path, "backgroundobj")):
+        os.mkdir(os.path.join(args.save_path, "backgroundobj"))
+    filenames = os.listdir('F:/3DFurniture/3D-FRONT')
+    # DEBUG
     # filenames = [
     #     '00f2a7e7-a994-4734-8104-8cb81560beb0.json',
-    #     '0e02ee68-5940-49dd-bbdc-0e3667ec9e49.json',
-    #     '4b663d06-fc0a-44ca-887a-d0bfc584a3ee.json',
     #     '1aab0a4b-760c-4489-b012-da6cefdca8a4.json',
-    #     '129c9a2a-f789-4cd0-82c0-2b6d5293c45f.json',
-    #     '5a4c9099-cf8f-4439-96ee-43736096617a.json',
     #     '5c0a1757-e14e-4901-a3a3-498537689821.json',
     #     '4c1b75c2-351b-4b6b-a7df-c867a2d9b3d6.json',
     #     '274ef293-2cf8-4c9a-8125-814f91d0bc83.json',
@@ -169,54 +235,56 @@ def main(args):
     #     '7e07a2a4-fead-40b8-8172-a430c150b733.json',
     #     'be5538a6-455b-486f-a46a-fd03d864587e.json'
     #     ]
-    
-    
-    for sceneIdx,filename in tqdm(enumerate(filenames)):
-        
+
+    for sceneIdx, filename in tqdm(enumerate(filenames)):
+
         # create path to save generated models of the scene
-        if not os.path.exists(os.path.join(args.save_path,"backgroundobj",filename[:-5])):
-            os.mkdir(os.path.join(args.save_path,"backgroundobj",filename[:-5]))
-        if not os.path.exists(os.path.join(args.save_path,"room",filename[:-5])):
-            os.mkdir(os.path.join(args.save_path,"room",filename[:-5]))
+        if not os.path.exists(os.path.join(args.save_path, "backgroundobj", filename[:-5])):
+            os.mkdir(os.path.join(args.save_path,
+                     "backgroundobj", filename[:-5]))
+        if not os.path.exists(os.path.join(args.save_path, "room2021", filename[:-5])):
+            os.mkdir(os.path.join(args.save_path, "room2021", filename[:-5]))
         with open(os.path.join(args.FRONT_path, filename), 'r', encoding='utf-8') as f:
             frontJson = json.load(f)
 
-        suncgJson = {}    
-        
+        suncgJson = {}
+
         suncgJson["origin"] = frontJson["uid"]
         suncgJson["id"] = str(sceneIdx)
         suncgJson["bbox"] = {
-            "min":[INF,INF,INF],
-            "max":[-INF,-INF,-INF]
+            "min": [INF, INF, INF],
+            "max": [-INF, -INF, -INF]
         }
-        suncgJson["up"] = [0,1,0]
-        suncgJson["front"] = [0,0,1]
+        suncgJson["up"] = [0, 1, 0]
+        suncgJson["front"] = [0, 0, 1]
         suncgJson["rooms"] = []
-        
+
         meshList = frontJson["mesh"]
         meshes = {}
 
         for mesh in meshList:
             meshes[mesh["uid"]] = mesh
-            xyz = np.reshape(mesh['xyz'],(-1,3)).astype(np.float64)
-            face = np.reshape(mesh['faces'],(-1,3))
-            normal = np.reshape(mesh['normal'],(-1,3))
-            uv = np.reshape(mesh['uv'],(-1,2))
+            xyz = np.reshape(mesh['xyz'], (-1, 3)).astype(np.float64)
+            face = np.reshape(mesh['faces'], (-1, 3))
+            normal = np.reshape(mesh['normal'], (-1, 3))
+            uv = np.reshape(mesh['uv'], (-1, 2))
             # if future2suncg_cat[mesh["type"]] == "Object":
             if mesh["type"] in ["Window", "Door"]:
-                # With respect to components of the scene, we extract windows and doors and consider them as isolate objects 
-                # like other furnitures, which follows the rule of SunCG dataset. 
-                bgopath = os.path.join(args.save_path,"backgroundobj",filename[:-5],mesh["uid"].replace('/','X')+".obj")
-                trimesh.Trimesh(vertices=xyz,faces=face,vertex_normals=normal,vertex_colors=uv).export(bgopath)
-                add_new_line(bgopath)           
-            
+                # With respect to components of the scene, we extract windows and doors and consider them as isolate objects
+                # like other furnitures, which follows the rule of SunCG dataset.
+                bgopath = os.path.join(
+                    args.save_path, "backgroundobj", filename[:-5], mesh["uid"].replace('/', 'X')+".obj")
+                trimesh.Trimesh(
+                    # vertices=xyz, faces=face, vertex_normals=normal).export(bgopath)
+                    vertices=xyz, faces=face, vertex_normals=normal, visual=trimesh.visual.TextureVisuals(uv=uv)).export(bgopath)
+                add_new_line(bgopath)
+
         furnitureList = frontJson["furniture"]
         furnitures = {}
         for furniture in furnitureList:
             # We add each valid furniture models to the result and ignore others.
             if "valid" in furniture and furniture["valid"]:
                 furnitures[furniture["uid"]] = furniture
-
 
         scene = frontJson["scene"]
         rooms = scene["room"]
@@ -225,19 +293,19 @@ def main(args):
 
         for roomIdx, front_room in enumerate(rooms):
             suncg_room = {
-                "id" : "%d_%d" % (sceneIdx,room_obj_cnt),
-                "modelId":front_room["instanceid"],
-                "roomTypes" :[front_room["type"]],
-                "bbox":{
-                    "min":[INF,INF,INF],
-                    "max":[-INF,-INF,-INF]
+                "id": "%d_%d" % (sceneIdx, room_obj_cnt),
+                "modelId": front_room["instanceid"],
+                "roomTypes": [front_room["type"]],
+                "bbox": {
+                    "min": [INF, INF, INF],
+                    "max": [-INF, -INF, -INF]
                 },
                 "origin": frontJson["uid"],
                 "roomId": roomIdx,
-                "objList" :[]
+                "objList": []
             }
-            if not os.path.exists(os.path.join(args.save_path,"room",filename[:-5])):
-                os.mkdir(os.path.join(args.save_path,"room",filename[:-5])) 
+            if not os.path.exists(os.path.join(args.save_path, "room2021", filename[:-5])):
+                os.mkdir(os.path.join(args.save_path, "room2021", filename[:-5]))
             wallObjs = []
             ceilObjs = []
             floorObjs = []
@@ -246,11 +314,12 @@ def main(args):
             # For each meshes in the room, we roughly split them into two category, scene and objects.
             # Each furniture in the room of 3d-future dataset is categorized as objects of SunCG dataset,
             # as well as windows and doors of 3d-future dataset. The other models of the same category
-            # is merged into one model and considered as the scene of SunCG dataset. 
+            # is merged into one model and considered as the scene of SunCG dataset.
             for childIdx, child in enumerate(front_room["children"]):
                 if child["ref"] not in meshes and child["ref"] not in furnitures:
                     continue
-                if child["ref"] in meshes: # and future2suncg_cat[meshes[child["ref"]]["type"]] != "Object":
+                # and future2suncg_cat[meshes[child["ref"]]["type"]] != "Object":
+                if child["ref"] in meshes:
                     if future2suncg_cat[meshes[child["ref"]]["type"]] == "Wall":
                         Objs = wallObjs
                     elif future2suncg_cat[meshes[child["ref"]]["type"]] == "Floor":
@@ -262,15 +331,15 @@ def main(args):
                         Objs = wallObjs
 
                     mesh = meshes[child["ref"]]
-                    vs = np.reshape(mesh['xyz'],(-1,3)).astype(np.float64)
-                    face = np.reshape(mesh['faces'],(-1,3))
-                    normal = np.reshape(mesh['normal'],(-1,3))
-                    uv = np.reshape(mesh['uv'],(-1,2))                
+                    vs = np.reshape(mesh['xyz'], (-1, 3)).astype(np.float64)
+                    face = np.reshape(mesh['faces'], (-1, 3))
+                    normal = np.reshape(mesh['normal'], (-1, 3))
+                    uv = np.reshape(mesh['uv'], (-1, 2))
                     pos = child['pos']
                     rot = child['rot']
                     scale = child['scale']
                     vs = vs.astype(np.float64) * scale
-                    ref = [0,0,1]
+                    ref = [0, 0, 1]
                     axis = np.cross(ref, rot[1:])
                     theta = np.arccos(np.dot(ref, rot[1:]))*2
                     if np.sum(axis) != 0 and not math.isnan(theta):
@@ -279,30 +348,32 @@ def main(args):
                         vs = np.matmul(R, vs)
                         vs = np.transpose(vs)
                     vs = vs + pos
-                    Objs.append(trimesh.Trimesh(vertices=vs,faces=face,vertex_normals=normal,vertex_colors=uv))
-                    
+                    Objs.append(trimesh.Trimesh(vertices=vs, faces=face,
+                                                vertex_normals=normal, visual=trimesh.visual.TextureVisuals(uv=uv)))  # , vertex_colors=uv))
+
                     if meshes[child["ref"]]["type"] not in ['Window', "Door"]:
                         # If this mesh is a window or door, we collect it and process later.
                         continue
                 # We create a object in the form of SunCG dataset.
                 suncg_obj = {
-                    "id": "%d_%d" % (sceneIdx,room_obj_cnt),
+                    "id": "%d_%d" % (sceneIdx, room_obj_cnt),
                     "type": "Object",
-                    "modelId": meshes[child["ref"]]["uid"].replace('/','X') if child["ref"] in meshes else furnitures[child["ref"]]["jid"],
-                    "bbox":{
-                        "min":[INF,INF,INF],
-                        "max":[-INF,-INF,-INF]
+                    "modelId": meshes[child["ref"]]["uid"].replace('/', 'X') if child["ref"] in meshes else furnitures[child["ref"]]["jid"],
+                    "bbox": {
+                        "min": [INF, INF, INF],
+                        "max": [-INF, -INF, -INF]
                     },
-                    "translate":child["pos"],
-                    "scale":child["scale"],
-                    "rotate":quaternion_to_euler(child["rot"]),
+                    "translate": child["pos"],
+                    "scale": child["scale"],
+                    "rotate": quaternion_to_euler(child["rot"]),
                     "rotateOrder": "XYZ",
-                    "orient":quaternion_to_euler(child["rot"])[1],
+                    "orient": quaternion_to_euler(child["rot"])[1],
                     "coarseSemantic": meshes[child["ref"]]["type"] if child["ref"] in meshes else furnitures[child["ref"]]["category"],
-                    "roomId" : roomIdx
+                    "roomId": roomIdx
                 }
-                suncg_obj['orient'] = orient33(euler_to_matrix(suncg_obj['rotate'][0], suncg_obj['rotate'][1], suncg_obj['rotate'][2]))
-                # convert modelId in consistent with the platform; 
+                suncg_obj['orient'] = orient33(euler_to_matrix(
+                    suncg_obj['rotate'][0], suncg_obj['rotate'][1], suncg_obj['rotate'][2]))
+                # convert modelId in consistent with the platform;
                 if suncg_obj['modelId'] in ali_to_sk:
                     suncg_obj['modelId'] = ali_to_sk[suncg_obj['modelId']]
                 if suncg_obj['modelId'] not in obj_coarse_semantic:
@@ -310,13 +381,15 @@ def main(args):
                 room_obj_cnt += 1
                 obj_path = None
                 if child["ref"] in meshes:
-                    obj_path = os.path.join(args.save_path,"backgroundobj",filename[:-5],meshes[child["ref"]]["uid"].replace('/','X')+".obj")
+                    obj_path = os.path.join(
+                        args.save_path, "backgroundobj", filename[:-5], meshes[child["ref"]]["uid"].replace('/', 'X')+".obj")
                 if child["ref"] in furnitures:
-                    obj_path = os.path.join(args.FUTURE_path,furnitures[child["ref"]]["jid"],"raw_model.obj")
+                    obj_path = os.path.join(
+                        args.FUTURE_path, furnitures[child["ref"]]["jid"], "raw_model.obj")
                 assert obj_path is not None
                 assert os.path.exists(obj_path)
 
-                # some .obj files are not provided by ali, so here we need to skip them; 
+                # some .obj files are not provided by ali, so here we need to skip them;
                 try:
                     v, vt, _, faces, ftc, _ = igl.read_obj(obj_path)
                 except Exception as e:
@@ -325,11 +398,10 @@ def main(args):
                 # print("???")
                 # sys.stdout,sys.stderr = stdout,stderr
 
-
                 # We convert the coordinate representation of 3d-future models to the form of suncg coordinate.
-                pos,rot,scale = child["pos"],child["rot"],child["scale"]
+                pos, rot, scale = child["pos"], child["rot"], child["scale"]
                 v = v.astype(np.float64) * scale
-                ref = [0,0,1]
+                ref = [0, 0, 1]
                 axis = np.cross(ref, rot[1:])
                 theta = np.arccos(np.dot(ref, rot[1:]))*2
                 if np.sum(axis) != 0 and not math.isnan(theta):
@@ -344,26 +416,29 @@ def main(args):
                 suncg_obj["bbox"]["min"] = list(lb)
                 suncg_obj["bbox"]["max"] = list(ub)
                 suncg_room["objList"].append(suncg_obj)
-                
-                suncg_room["bbox"]["min"] = Min3d(suncg_room["bbox"]["min"],suncg_obj["bbox"]["min"])
-                suncg_room["bbox"]["max"] = Max3d(suncg_room["bbox"]["max"],suncg_obj["bbox"]["max"])
-                
+
+                suncg_room["bbox"]["min"] = Min3d(
+                    suncg_room["bbox"]["min"], suncg_obj["bbox"]["min"])
+                suncg_room["bbox"]["max"] = Max3d(
+                    suncg_room["bbox"]["max"], suncg_obj["bbox"]["max"])
+
             # adding a new line is because of a bug of three.js library...
-            wfcroot = os.path.join(args.save_path, "room", filename[:-5], front_room["instanceid"])
-            # We merge the components of the scene into three models, including wall, floor and ceil. 
-            if len(wallObjs) >0:
-                tmp = trimesh.util.concatenate(wallObjs)
+            wfcroot = os.path.join(
+                args.save_path, "room2021", filename[:-5], front_room["instanceid"])
+            # We merge the components of the scene into three models, including wall, floor and ceil.
+            if len(wallObjs) > 0:
+                tmp = myconcatenate(wallObjs)
                 tmp.vertex_normals
                 tmp.export(wfcroot+"w.obj")
                 add_new_line(wfcroot+"w.obj")
-            if len(floorObjs) >0:
-                tmp = trimesh.util.concatenate(floorObjs)
+            if len(floorObjs) > 0:
+                tmp = myconcatenate(floorObjs)
                 tmp.vertex_normals
                 tmp.export(wfcroot+"f.obj")
                 add_new_line(wfcroot+"f.obj")
 
-            if len(ceilObjs) >0:
-                tmp = trimesh.util.concatenate(ceilObjs)
+            if len(ceilObjs) > 0:
+                tmp = myconcatenate(ceilObjs)
                 tmp.vertex_normals
                 tmp.export(wfcroot+"c.obj")
                 add_new_line(wfcroot+"c.obj")
@@ -376,36 +451,39 @@ def main(args):
             #     obj.export(allcwfroot + f'{} + ')
 
             suncgJson["rooms"].append(suncg_room)
-            suncgJson["bbox"]["min"] = Min3d(suncgJson["bbox"]["min"],suncg_room["bbox"]["min"])
-            suncgJson["bbox"]["max"] = Max3d(suncgJson["bbox"]["max"],suncg_room["bbox"]["max"])
-        
-        with open(os.path.join(args.save_path,"alilevel",filename),"w") as f:
-            json.dump(suncgJson,f)
-        # break    
+            suncgJson["bbox"]["min"] = Min3d(
+                suncgJson["bbox"]["min"], suncg_room["bbox"]["min"])
+            suncgJson["bbox"]["max"] = Max3d(
+                suncgJson["bbox"]["max"], suncg_room["bbox"]["max"])
+
+        with open(os.path.join(args.save_path, "alilevel2021", filename), "w") as f:
+            json.dump(suncgJson, f)
+        # break
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--FUTURE_path',
-        default = '../../3D-FUTURE-model',
-        help = 'path to 3D FUTURE'
-        )
+        default='../../3D-FUTURE-model',
+        help='path to 3D FUTURE'
+    )
     parser.add_argument(
         '--FRONT_path',
-        default = '../../3D-FRONT',
-        help = 'path to 3D FRONT'
-        )
+        default='../../3D-FRONT',
+        help='path to 3D FRONT'
+    )
 
     parser.add_argument(
         '--save_path',
-        default = 'F:/3DIndoorScenePlatform/dataset',
-        help = 'path to save result dir'
-        )
+        default='F:/3DIndoorScenePlatform/dataset',
+        help='path to save result dir'
+    )
     parser.add_argument(
         '--category_map_file_path',
-        default = '3d2suncg_cat_map.json',
-        help = 'path to save result dir'
-        )
+        default='3d2suncg_cat_map.json',
+        help='path to save result dir'
+    )
 
     args = parser.parse_args()
     main(args)
