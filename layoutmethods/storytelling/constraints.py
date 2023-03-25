@@ -350,7 +350,23 @@ def addObjPairwise(dataLine):
     data['attachedObjId'] = dataLine['gtrans'][0]['attachedObjId']
     data['relativeTrans'] = [dataLine['gtrans'][0]['objPosX'], dataLine['gtrans'][0]['objPosY'], dataLine['gtrans'][0]['objPosZ']]
     data['relativeRot'] = dataLine['gtrans'][0]['objOriY']
+    print(data)
     allObjPairwise.append(data)
+
+def pairwise(room):
+    total = 0
+    for obj in room['objList']:
+        if obj['format'] != 'instancedMesh':
+            data = [d for d in allObjPairwise if obj['modelId'] == allObjPairwise['modelId']][0]
+            # data['attachedObjId']
+            # data['relativeTrans']
+            # data['relativeRot']
+            attachedObj = [i for i in room['objList'] if (i['modelId'] == data['attachedObjId'])][0]
+            derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
+            dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
+            dertaRot = attachedObj['rotate'][1] - obj['rotate'][1] - data['relativeRot']
+            total += (dertaTransSum + dertaRot)
+    return total
 
 def prior(room):
     areaShape = room['roomShapeBbox']
@@ -374,13 +390,13 @@ def prior(room):
             objPoint = Point([obj['translate'][0],obj['translate'][2]])
             for l in areaLineString:
                 areaDis.append(objPoint.distance(l))
-            minDis = min(areaDis)
-            i = areaDis.index(minDis)
-            minOrei = areaOrient[i]
+            minDis2Wall = min(areaDis)
+            i = areaDis.index(minDis2Wall)
+            orient2Wall = obj['rotate'][1] - areaOrient[i] 
             for obj2 in allObjWallRelation:
                 if modelId == obj2['modelId']:
-                    dertaMinDis = abs(obj2['nearestDistance'] - minDis)
-                    dertaOrient = abs(obj2['nearestOrient0'] - minOrei)
+                    dertaMinDis = abs(minDis2Wall - obj2['nearestDistance'])
+                    dertaOrient = abs(orient2Wall - obj2['nearestOrient0'])
                     total += dertaMinDis + dertaOrient
                     break
     return total
@@ -389,7 +405,7 @@ if __name__ == "__main__":
     # fig, ax1 = plt.subplots()
     with open('./stories/test2.json') as f:
         sceneJson = json.load(f)
-    costFunction(sceneJson)
+    # costFunction(sceneJson)
     # plt.show()
     # fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:
@@ -403,18 +419,20 @@ if __name__ == "__main__":
 
     # plt.show()
 
-    # fd = open("../object-spatial-relation-dataset.txt", 'r')
-    # LINES = fd.readlines()
+    fd = open("../object-spatial-relation-dataset.txt", 'r')
+    LINES = fd.readlines()
 
-    # data = []
-    # loadData(data, LINES)
+    data = []
+    loadData(data, LINES)
     
-    # for i in data:
-    #     if i['relationName'] == ' story wall':
-    #         addObjWallRelation(i)
-            
-    #     elif i['relationName'] == ' story pairwise':
-    #         addObjPairwise(i)
+    for i in data:
+        # print(i)
+        if i['relationName'] == ' story wall':
+            addObjWallRelation(i)
+            # print(i)
+        elif i['relationName'] == ' story pairwise':
+            addObjPairwise(i)
+            # print(i)
     # print(allObjWallRelation)
     # fd.close()
     
