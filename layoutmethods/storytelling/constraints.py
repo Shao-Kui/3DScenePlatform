@@ -125,10 +125,10 @@ def objExpandAd(obj):
 
     # offset对角线点 上左下右
     s = []
-    s.append([objPro.bounds.minx,objOff.bounds.maxy])
-    s.append([objOff.bounds.minx,objPro.bounds.miny])
-    s.append([objPro.bounds.maxx,objOff.bounds.miny])
-    s.append([objOff.bounds.maxx,objPro.bounds.maxy])
+    s.append([float(objPro.bounds.minx),float(objOff.bounds.maxy)])
+    s.append([float(objOff.bounds.minx),float(objPro.bounds.miny)])
+    s.append([float(objPro.bounds.maxx),float(objOff.bounds.miny)])
+    s.append([float(objOff.bounds.maxx),float(objPro.bounds.maxy)])
     obj['s'] = s
 
     # offset对角线长度
@@ -314,7 +314,7 @@ def costFunction(sceneJson):
         # storyObjList(room,story,other)
         
         
-        total = visibility(room) + accessibility(room)
+        total += visibility(room) + accessibility(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)
     # plt.show()
     print(total)
