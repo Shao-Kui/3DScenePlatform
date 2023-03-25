@@ -99,7 +99,7 @@ def objExpandAd(obj):
     objProjection = obj2Rectangle(obj)
     objPro = gpd.GeoSeries(objProjection)
     objOff = objOffset(objProjection)
-    # fig, ax1 = plt.subplots()
+    
     
     # objOff.plot(ax = ax1, color = 'pink')
     # objPro.plot(ax = ax1, color = 'yellow')
@@ -125,10 +125,10 @@ def objExpandAd(obj):
 
     # offset对角线点 上左下右
     s = []
-    s.append([objPro.bounds.minx,objOff.bounds.maxy])
-    s.append([objOff.bounds.minx,objPro.bounds.miny])
-    s.append([objPro.bounds.maxx,objOff.bounds.miny])
-    s.append([objOff.bounds.maxx,objPro.bounds.maxy])
+    s.append([float(objPro.bounds.minx),float(objOff.bounds.maxy)])
+    s.append([float(objOff.bounds.minx),float(objPro.bounds.miny)])
+    s.append([float(objPro.bounds.maxx),float(objOff.bounds.miny)])
+    s.append([float(objOff.bounds.maxx),float(objPro.bounds.maxy)])
     obj['s'] = s
 
     # offset对角线长度
@@ -214,9 +214,9 @@ def visibale(floorObj,wallObj):
     for v in wallObj['v']:
         i = wallObj['v'].index(v)
         f = max((1 - p.distance(Point(v)) / (b + wallObj['vd'][i])),0)
-        # if f != 0 :
-        #     visualizeAccess(floorObj)
-        #     visualizeAccess(wallObj)
+        if f != 0 :
+            visualizeAccess(floorObj)
+            visualizeAccess(wallObj)
         total += f
     return total
 
@@ -300,11 +300,25 @@ def pairwise(mainObj, attackedObj):
     d_p = Point(mainObj['translate']).distance(attackedObj['translate'])
 
 def costFunction(sceneJson):
+    fd = open("../object-spatial-relation-dataset.txt", 'r')
+    LINES = fd.readlines()
+
+    data = []
+    loadData(data, LINES)
+    
+    for i in data:
+        if i['relationName'] == ' story wall':
+            addObjWallRelation(i)
+            
+        elif i['relationName'] == ' story pairwise':
+            addObjPairwise(i)
+
     # wallInRooms = getAllWallsInRoom(sceneJson)
     total = 0.0
     for room in sceneJson['rooms']:
         for obj in room['objList']:
             objExpandAd(obj)
+            # print(obj)
     
     for room in sceneJson['rooms']:
         # i = sceneJson['rooms'].index(room)
@@ -313,10 +327,10 @@ def costFunction(sceneJson):
         # other = []
         # storyObjList(room,story,other)
         
-        
-        total = visibility(room) + accessibility(room)
+        # print(prior(room))
+        total += visibility(room) + accessibility(room) + prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)
-    # plt.show()
+    
     print(total)
     return total
 
@@ -352,6 +366,7 @@ def prior(room):
         o = -math.acos(lnr[0])
         areaOrient.append(o)
 
+    total = 0
     for obj in room['objList']:
         if obj['format'] != 'instancedMesh':
             modelId = obj['modelId']
@@ -366,12 +381,16 @@ def prior(room):
                 if modelId == obj2['modelId']:
                     dertaMinDis = abs(obj2['nearestDistance'] - minDis)
                     dertaOrient = abs(obj2['nearestOrient0'] - minOrei)
-
+                    total += dertaMinDis + dertaOrient
+                    break
+    return total
     
 if __name__ == "__main__":
-    with open('./stories/test.json') as f:
+    # fig, ax1 = plt.subplots()
+    with open('./stories/test2.json') as f:
         sceneJson = json.load(f)
     costFunction(sceneJson)
+    # plt.show()
     # fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:
     # #     for obj in room['objList']:

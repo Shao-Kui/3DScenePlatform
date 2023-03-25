@@ -207,30 +207,39 @@ def createEmptyRoom(scene):
     with open('./stories/'+ themeName + '-empty.json', "w") as outfile:
         outfile.write(sceneString)
 
-def getObjBboxAndSurface(base):
-    surface = []
-    with open('./prop/contactSurface.csv', encoding='utf-8-sig') as f:
-        sf = csv.DictReader(f)
-        surface = list(sf)
+def getObjBbox(base):
     for root, ds, fs in os.walk(base):
         for f in fs:
             if f.endswith('-AABB.json'):
                 modelId = f.split('-AABB.json')[0]
                 js = {}
-                s = next(item for item in surface if item['modelId'] == modelId)['surface']
+                
                 fullname = os.path.join(root,f)
                 with open(fullname) as f:
                     aabbJson = json.load(f)
                     js['modelId'] = modelId
                     js['bbox'] = {'max': aabbJson['max'],'min': aabbJson['min']}
-                    js['surface'] = s
+                    # js['surface'] = s
                 yield js
 
 def writeBboxSurface(base):
+    surface = []
+    with open('./prop/contactSurface.csv', encoding='utf-8-sig') as f:
+        sf = csv.DictReader(f)
+        surface = list(sf)
+    
     allObjBbox = {}
     bboxList = []
-    for i in getObjBboxAndSurface(base):
+    for i in getObjBbox(base):
+        js = i
+        for item in surface:
+            if item['modelId'] == js['modelId']:
+                js['surface'] = item['surface']
+                break
+        else:
+            js['surface'] = 'floor'
         bboxList.append(i)
+    # s = next(item for item in surface if item['modelId'] == modelId)['surface']
     allObjBbox = bboxList
     with open("./prop/allBboxSurface.json", "w", encoding="utf-8") as fw:
         json.dump(allObjBbox, fw)
@@ -515,7 +524,7 @@ def initialObjPosition(themeName):
                     o.plot(ax = ax1, color = 'yellow')
         # break
     
-    with open('./stories/test.json', "w", encoding="utf-8") as fw:
+    with open('./stories/test2.json', "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)
     plt.show()
 
@@ -597,15 +606,22 @@ if __name__ == "__main__":
     # writeBboxSurface(base)
 
     # # sceneJson添加surface和bbox
-    addBboxSurface2SceneJson('abandondedschool-r0.json')
+    # addBboxSurface2SceneJson('abandondedschool-r0.json')
 
     # 添加storycontent
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
 
     # sceneJson添加墙壁shape
-    # addWallShapes2SceneJson('abandondedschool-r0.json')
+    # with open('./stories/abandondedschool-r0.json') as f:
+    #     sceneJson =  json.load(f)
+    # addWallShapes2SceneJson(sceneJson)
+    # sceneString = json.dumps(sceneJson)
+    # with open('./stories/abandondedschool-r0.json', "w") as outfile:
+    #     outfile.write(sceneString)
+
+
     # addAllJsonData('abandondedschool')
 
-    # initialObjPosition('abandondedschool')
+    initialObjPosition('abandondedschool')
     # ['story-CardboardBoxes','story-CardboardBoxes-point','story-Locker-point','story-Lockers','story-studentDesks1','story-studentDesks2'
     # 'story-studentDesks3','story-studentDesks4-point','story-ToileT_Urinals','story-Toilet-point','story-Toilets']
