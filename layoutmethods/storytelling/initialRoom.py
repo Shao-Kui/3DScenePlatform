@@ -32,29 +32,48 @@ scene1 = {
         {
             "type": "door",
             "list": [Point([8,4]),Point([-2,2]),Point([-6,2])],
-            "modelName": "story-WallInterior_DoorwayNarrow"
+            "modelName": "story-WallInterior_DoorwayNarrow",
+            "coarseSemantic": "Door",
         },
         {
             "type": "windowSingle",
             "list": [Point([2,-6]),Point([-6,-6])],
-            "modelName": "story-WallOutside_2f_4m_WindowSingle_B"
+            "modelName": "story-WallOutside_2f_4m_WindowSingle_B",
+            "coarseSemantic": "Window"
         },
         {
             "type": "windowDouble",
             "list": [Point([6,6]),Point([-2,6]),Point([-8,4]),Point([-2,-6]),Point([6,-6])],
-            "modelName": "story-WallOutside_2f_4m_WindowDouble_B"
+            "modelName": "story-WallOutside_2f_4m_WindowDouble_B",
+            "coarseSemantic": "Window"
         }
     ]
     
 }
 
+# def initialRoomShape(room):
+    # fig, ax1 = plt.subplots()
+   
+    # append = [
+    #     ,
+    #     
+    # ]
+
+    #     area = gpd.GeoSeries(Polygon(room['roomShape']))
+    #     area.plot(ax = ax1, color = 'pink')
+    # plt.show()
+
 def createEmptyRoom(scene):
     with open('./prop/template.json') as f:
         sceneJson = json.load(f)
+    with open('./prop/allBboxSurface.json') as f:
+        bboxJson  = json.load(f)
 
     themeName = scene['theme']
     doorAndWin = scene['doorAndWin']
     door = next(item for item in doorAndWin if item['type'] == 'door')['list']
+    
+    allOutWall = doorAndWin[1:3]
     windowSingle = next(item for item in doorAndWin if item['type'] == 'windowSingle')['list']
     windowDouble = next(item for item in doorAndWin if item['type'] == 'windowDouble')['list']
     
@@ -77,14 +96,14 @@ def createEmptyRoom(scene):
         wallOutside.append(Point(j, ymin))
         wallOutside.append(Point(j, ymax))
     wallOutside = list(set(wallOutside) - set(door) - set(windowDouble) - set(windowSingle))
-    doorAndWin.append({"list":wallOutside,"modelName":"story-WallOutside_2f_4m_B"})
-    insideWallAlready = []
+    allOutWall.append({"list":wallOutside,"modelName":"story-WallOutside_2f_4m_B"})
     rooms = []
     allSet = set(wallOutside) | set(door) | set(windowDouble) | set(windowSingle)
     
     for feature in areaShapeJson['features']:
         room = {}
 
+        # sceneJson
         lo = feature['geometry']['coordinates'][0]
         lo.pop()
         room['areaShape'] = lo
@@ -93,9 +112,11 @@ def createEmptyRoom(scene):
         recYmin = feature['bbox'][1]
         recXmax = feature['bbox'][2]
         recYmax = feature['bbox'][3]
-        room['roomShapeBBox'] = {}
-        room['roomShapeBBox']['min'] = [recXmin,recYmin]
-        room['roomShapeBBox']['max'] = [recXmax,recYmax]
+
+        # sceneJson
+        # room['roomShapeBBox'] = {}
+        # room['roomShapeBBox']['min'] = [recXmin,recYmin]
+        # room['roomShapeBBox']['max'] = [recXmax,recYmax]
 
         roomAllWall = []
         
@@ -106,31 +127,51 @@ def createEmptyRoom(scene):
             roomAllWall.append(Point(j, recYmin))
             roomAllWall.append(Point(j, recYmax))
         wallInside = list(set(roomAllWall) - allSet)
+        doorInside = list(set(roomAllWall) & set(door))
 
         room['objList'] = []
         for w in wallInside:
             obj = {}
-            if not insideWallAlready.count(w):
-                obj['modelId'] = 'story-WallInside_4m'
-                obj['translate'] = [w.x, 0, w.y]
-                obj['scale'] = [1,1,1]
-                if w.x == recXmin:
-                    obj['rotate'] = [0, -0.5 * math.pi, 0]
-                elif w.x ==  recXmax:
-                    obj['rotate'] = [0, 0.5 * math.pi, 0]
-                elif w.y == recYmin:
-                    obj['rotate'] = [0, -math.pi, 0]
-                else:
-                    obj['rotate'] = [0, 0, 0]
-                obj['format'] = 'instancedMesh'
-                room['objList'].append(obj)
-                insideWallAlready.append(w)
+            obj['modelId'] = 'story-WallInside_4m'
+            obj['translate'] = [w.x, 0, w.y]
+            obj['scale'] = [1,1,1]
+            if w.x == recXmin:
+                obj['rotate'] = [0, -0.5 * math.pi, 0]
+            elif w.x ==  recXmax:
+                obj['rotate'] = [0, 0.5 * math.pi, 0]
+            elif w.y == recYmin:
+                obj['rotate'] = [0, -math.pi, 0]
+            else:
+                obj['rotate'] = [0, 0, 0]
+            obj['format'] = 'instancedMesh'
+            addBboxSurface2Scene(obj,bboxJson)
+            room['objList'].append(obj)
+        
+        for d in doorInside:
+            obj = {}
+            obj['modelId'] = 'story-WallInterior_DoorwayNarrow'
+            obj['translate'] = [d.x, 0, d.y]
+            obj['scale'] = [1,1,1]
+            if d.x == recXmin:
+                obj['rotate'] = [0, -0.5 * math.pi, 0]
+            elif d.x ==  recXmax:
+                obj['rotate'] = [0, 0.5 * math.pi, 0]
+            elif d.y == recYmin:
+                obj['rotate'] = [0, -math.pi, 0]
+            else:
+                obj['rotate'] = [0, 0, 0]
+            obj['format'] = 'instancedMesh'
+            addBboxSurface2Scene(obj,bboxJson)
+            room['objList'].append(obj)        
 
-        for item in doorAndWin:
+        for item in allOutWall:
             for w in list(set(item['list']) & set(roomAllWall)):
                 obj = {}
                 obj['modelId'] = item['modelName']
-                obj['translate'] = [w.x, 0, w.y]
+                if 'coarseSemantic' in item.keys():
+                    obj['coarseSemantic'] = item['coarseSemantic']
+                # print(w.x)
+                obj['translate'] = [float(w.x), 0, float(w.y)]
                 if w.x == xmin:
                     obj['rotate'] = [0, -0.5 * math.pi, 0]
                 elif w.x ==  xmax:
@@ -142,10 +183,23 @@ def createEmptyRoom(scene):
                 obj['scale'] = [1, 1, 1]
                 obj['format'] = 'instancedMesh'
                 room['objList'].append(obj)
+                addBboxSurface2Scene(obj,bboxJson)
                 item['list'].remove(w)
 
         room['areaType'] = 'earth'
         room['layer'] = 1
+        room['roomShapeBbox'] = []
+        
+        areaShape = room['areaShape']
+        area = gpd.GeoSeries(Polygon(areaShape))
+        for obj in room['objList']:
+            objRect = obj2Rectangle(obj)
+            area = area.difference(objRect,align=True)
+        room['roomShapeBbox'].append([float(area.bounds.minx),float(area.bounds.miny)])
+        room['roomShapeBbox'].append([float(area.bounds.minx),float(area.bounds.maxy)])
+        room['roomShapeBbox'].append([float(area.bounds.maxx),float(area.bounds.maxy)])
+        room['roomShapeBbox'].append([float(area.bounds.maxx),float(area.bounds.miny)])
+
         rooms.append(room)
 
     sceneJson['rooms'] = rooms
@@ -311,6 +365,7 @@ def addAllJsonData(themName):
     addWallProjection2Scene(sceneJson, wallInRooms)
     with open('./stories/' + themName + '-r0.json', "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
+
 def addWallShapes2SceneJson(sceneJson):
     walls = []
     rooms = []
@@ -537,14 +592,12 @@ if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
     # createEmptyRoom(scene1)
 
-    # # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
+    # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
 
-    # addAllJsonData('')
-
     # # sceneJson添加surface和bbox
-    # addBboxSurface2SceneJson('abandondedschool-r0.json')
+    addBboxSurface2SceneJson('abandondedschool-r0.json')
 
     # 添加storycontent
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
@@ -553,4 +606,6 @@ if __name__ == "__main__":
     # addWallShapes2SceneJson('abandondedschool-r0.json')
     # addAllJsonData('abandondedschool')
 
-    initialObjPosition('abandondedschool')
+    # initialObjPosition('abandondedschool')
+    # ['story-CardboardBoxes','story-CardboardBoxes-point','story-Locker-point','story-Lockers','story-studentDesks1','story-studentDesks2'
+    # 'story-studentDesks3','story-studentDesks4-point','story-ToileT_Urinals','story-Toilet-point','story-Toilets']
