@@ -188,17 +188,15 @@ def createEmptyRoom(scene):
 
         room['areaType'] = 'earth'
         room['layer'] = 1
-        room['roomShapeBbox'] = []
+        room['roomShapeBbox'] = {}
         
         areaShape = room['areaShape']
         area = gpd.GeoSeries(Polygon(areaShape))
         for obj in room['objList']:
             objRect = obj2Rectangle(obj)
             area = area.difference(objRect,align=True)
-        room['roomShapeBbox'].append([float(area.bounds.minx),float(area.bounds.miny)])
-        room['roomShapeBbox'].append([float(area.bounds.minx),float(area.bounds.maxy)])
-        room['roomShapeBbox'].append([float(area.bounds.maxx),float(area.bounds.maxy)])
-        room['roomShapeBbox'].append([float(area.bounds.maxx),float(area.bounds.miny)])
+        room['roomShapeBbox']['max'] = list([float(area.bounds.minx),float(area.bounds.miny)])
+        room['roomShapeBbox']['min'] = list([float(area.bounds.maxx),float(area.bounds.maxy)])
 
         rooms.append(room)
 
@@ -226,6 +224,7 @@ def writeBboxSurface(base):
     surface = []
     with open('./prop/contactSurface.csv', encoding='utf-8-sig') as f:
         sf = csv.DictReader(f)
+        # sw = csv.writer(f)
         surface = list(sf)
     
     allObjBbox = {}
@@ -238,6 +237,7 @@ def writeBboxSurface(base):
                 break
         else:
             js['surface'] = 'floor'
+            # sw.writerow([js['modelId'],'floor'])
         bboxList.append(i)
     # s = next(item for item in surface if item['modelId'] == modelId)['surface']
     allObjBbox = bboxList
@@ -252,10 +252,14 @@ def addBboxSurface2SceneJson(sceneJsonName):
     for room in sceneJson['rooms']:
         for obj in room['objList']:
             modelId = obj['modelId']
-            j = next(item for item in bboxJson if item['modelId'] == modelId)
-            obj['originBbox'] = j['bbox']
-            reloadAABB(obj)
-            obj['surface'] = j['surface']
+            for item in bboxJson:
+                if  item['modelId'] == modelId:
+                    obj['originBbox'] = item['bbox']
+                    reloadAABB(obj)
+                    obj['surface'] = item['surface']
+                    break
+            else:
+                print("cann't find", modelId, "in allBboxSurface.json")
     with open('./stories/' + sceneJsonName, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
 
@@ -599,14 +603,14 @@ def colisionDetect(obj1,obj2):
     
 if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
-    # createEmptyRoom(scene1)
+    createEmptyRoom(scene1)
 
     # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
 
-    # # sceneJson添加surface和bbox
-    # addBboxSurface2SceneJson('abandondedschool-r0.json')
+    # # # sceneJson添加surface和bbox
+    addBboxSurface2SceneJson('abandondedschool-manual.json')
 
     # 添加storycontent
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
@@ -622,6 +626,6 @@ if __name__ == "__main__":
 
     # addAllJsonData('abandondedschool')
 
-    initialObjPosition('abandondedschool')
+    # initialObjPosition('abandondedschool')
     # ['story-CardboardBoxes','story-CardboardBoxes-point','story-Locker-point','story-Lockers','story-studentDesks1','story-studentDesks2'
     # 'story-studentDesks3','story-studentDesks4-point','story-ToileT_Urinals','story-Toilet-point','story-Toilets']

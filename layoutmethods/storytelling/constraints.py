@@ -214,9 +214,9 @@ def visibale(floorObj,wallObj):
     for v in wallObj['v']:
         i = wallObj['v'].index(v)
         f = max((1 - p.distance(Point(v)) / (b + wallObj['vd'][i])),0)
-        if f != 0 :
-            visualizeAccess(floorObj)
-            visualizeAccess(wallObj)
+        # if f != 0 :
+        #     visualizeAccess(floorObj)
+        #     visualizeAccess(wallObj)
         total += f
     return total
 
@@ -295,32 +295,14 @@ def storyPointDetectable(story):
     else:
         return 0
 
-def pairwise(mainObj, attackedObj):
-    d_o = abs(mainObj['rotate'][1] - attackedObj['rotate'][1])
-    d_p = Point(mainObj['translate']).distance(attackedObj['translate'])
-
 def costFunction(sceneJson):
-    fd = open("../object-spatial-relation-dataset.txt", 'r')
-    LINES = fd.readlines()
-
-    data = []
-    loadData(data, LINES)
-    
-    for i in data:
-        if i['relationName'] == ' story wall':
-            addObjWallRelation(i)
-            
-        elif i['relationName'] == ' story pairwise':
-            addObjPairwise(i)
-
     # wallInRooms = getAllWallsInRoom(sceneJson)
     total = 0.0
     for room in sceneJson['rooms']:
         for obj in room['objList']:
             objExpandAd(obj)
-            # print(obj)
-    
     for room in sceneJson['rooms']:
+    # room = sceneJson['rooms'][0]
         # i = sceneJson['rooms'].index(room)
         # walls = wallInRooms[i]
         # story = []
@@ -328,13 +310,15 @@ def costFunction(sceneJson):
         # storyObjList(room,story,other)
         
         # print(prior(room))
-        total += visibility(room) + accessibility(room) + prior(room)
+        total += 0.01 * visibility(room) + 0.01 * accessibility(room) + prior(room) + pairwise(room)
+    # prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)
     
-    print(total)
+    # print(total)
     return total
 
 allObjWallRelation = []
+allObjWinRelation = []
 allObjPairwise = []
 
 def addObjWallRelation(dataLine):
@@ -344,45 +328,65 @@ def addObjWallRelation(dataLine):
     data['nearestOrient0'] = dataLine['wall'][0]['nearestOrient0']
     allObjWallRelation.append(data)
 
+def addWindRelation(dataLine):
+    data = {}
+    data['modelId'] = dataLine['mainObjId']
+    data['relativeTrans'] = [dataLine['window'][0]['objPosX'],dataLine['window'][0]['objPosX'],dataLine['window'][0]['objPosX']]
+    data['orient0'] = dataLine['window'][0]['objOriY']
+    allObjWinRelation.append(data)
+
 def addObjPairwise(dataLine):
     data = {}
     data['modelId'] = dataLine['mainObjId']
     data['attachedObjId'] = dataLine['gtrans'][0]['attachedObjId']
     data['relativeTrans'] = [dataLine['gtrans'][0]['objPosX'], dataLine['gtrans'][0]['objPosY'], dataLine['gtrans'][0]['objPosZ']]
     data['relativeRot'] = dataLine['gtrans'][0]['objOriY']
-    print(data)
     allObjPairwise.append(data)
 
 def pairwise(room):
     total = 0
     for obj in room['objList']:
         if obj['format'] != 'instancedMesh':
-            data = [d for d in allObjPairwise if obj['modelId'] == allObjPairwise['modelId']][0]
-            # data['attachedObjId']
-            # data['relativeTrans']
-            # data['relativeRot']
-            attachedObj = [i for i in room['objList'] if (i['modelId'] == data['attachedObjId'])][0]
-            derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
-            dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
-            dertaRot = attachedObj['rotate'][1] - obj['rotate'][1] - data['relativeRot']
-            total += (dertaTransSum + dertaRot)
+            for data in allObjPairwise:
+                if obj['modelId'] == data['modelId']:
+                    attachedObj = [i for i in room['objList'] if (i['modelId'] == data['attachedObjId'])][0]
+                    derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
+                    dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
+                    dertaRot = abs(attachedObj['orient'] - obj['orient'] - data['relativeRot'])
+                    print(obj['modelId'],attachedObj['modelId'],obj['translate'],attachedObj['translate'],dertaTransSum)
+                    print(obj['modelId'],attachedObj['modelId'],obj['orient'],attachedObj['orient'],dertaRot)
+                    
+                    total += (dertaTransSum + dertaRot)
+                    print(total) 
+                    break
     return total
 
 def prior(room):
-    areaShape = room['roomShapeBbox']
-    areaShape.append(areaShape[0])
+    areaShape = []
+    areaShape.append(room['roomShapeBBox']['min'])
+    areaShape.append([room['roomShapeBBox']['min'][0],room['roomShapeBBox']['max'][1]])
+    areaShape.append(room['roomShapeBBox']['max'])
+    areaShape.append([room['roomShapeBBox']['max'][0],room['roomShapeBBox']['min'][1]])
     areaShape = np.array(areaShape)
     areaOrient = []
     areaLineString = []
     for i in range(0, len(areaShape) - 1):
         areaLineString.append(LineString([areaShape[i + 1],areaShape[i]]))
-        l = areaShape[i] - areaShape[i + 1]
+        l = areaShape[i + 1] - areaShape[i]
         w = np.linalg.norm(l)
-        lnr = l / w
-        o = -math.acos(lnr[0])
+        lnr = l / w 
+        o = (math.atan2(lnr[1],lnr[0]))
+        if o >= math.pi:
+            o = -o
         areaOrient.append(o)
 
     total = 0
+    windList = []
+    for obj in room['objList']:
+        if obj['format'] == 'instancedMesh':
+            if ('coarseSemantic'in obj.keys()):
+                if obj['coarseSemantic'] == 'Window':
+                    windList.append(obj)
     for obj in room['objList']:
         if obj['format'] != 'instancedMesh':
             modelId = obj['modelId']
@@ -392,22 +396,57 @@ def prior(room):
                 areaDis.append(objPoint.distance(l))
             minDis2Wall = min(areaDis)
             i = areaDis.index(minDis2Wall)
-            orient2Wall = obj['rotate'][1] - areaOrient[i] 
+            orient2Wall = obj['orient'] - areaOrient[i] 
             for obj2 in allObjWallRelation:
                 if modelId == obj2['modelId']:
                     dertaMinDis = abs(minDis2Wall - obj2['nearestDistance'])
                     dertaOrient = abs(orient2Wall - obj2['nearestOrient0'])
                     total += dertaMinDis + dertaOrient
                     break
+            
+            for obj2 in allObjWinRelation:
+                if modelId == obj2['modelId']:
+                    disList = []
+                    o = Point([obj['translate'][0],obj['translate'][1]])
+                    for win in windList:
+                        w = Point([win['translate'][0],win['translate'][2]])
+                        disList.append(o.distance(w))
+                    i = disList.index(min(disList))
+                    nearestWin = windList[i]
+                    derataTrans = list((np.array(nearestWin['translate']) - np.array(obj['translate'])) - np.array(obj2['relativeTrans']))
+                    dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
+                    dertaRot = abs(nearestWin['rotate'][1] - obj['orient'] - obj2['orient0'])
+                    total += (dertaTransSum + dertaRot)
+                    # print(modelId,nearestWin['translate'],obj['translate'],derataTrans)
+                    # print(modelId,nearestWin['rotate'][1],obj['orient'],dertaOrient)
+                    # print(total)
+                    break
     return total
+
+def readSpatialRelationShip():
+    fd = open("./prop/object-spatial-relation-dataset.txt", 'r')
+    LINES = fd.readlines()
+
+    data = []
+    loadData(data, LINES)
     
+    for i in data:
+        if i['relationName'] == ' story wall':
+            addObjWallRelation(i)
+        elif i['relationName'] == ' story wall wind':
+            addWindRelation(i)
+            addObjWallRelation(i)
+        elif i['relationName'] == ' story pairwise':
+            addObjPairwise(i)
+
 if __name__ == "__main__":
+    readSpatialRelationShip()
     # fig, ax1 = plt.subplots()
-    with open('./stories/test2.json') as f:
+    with open('./stories/abandondedschool-random.json') as f:
         sceneJson = json.load(f)
-    # costFunction(sceneJson)
+    print(costFunction(sceneJson))
     # plt.show()
-    fig, ax1 = plt.subplots()
+    # fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:
     # #     for obj in room['objList']:
     #         # prior(obj, room)
@@ -419,23 +458,11 @@ if __name__ == "__main__":
 
     # plt.show()
 
-    fd = open("../object-spatial-relation-dataset.txt", 'r')
-    LINES = fd.readlines()
-
-    data = []
-    loadData(data, LINES)
     
-    for i in data:
-        # print(i)
-        if i['relationName'] == ' story wall':
-            addObjWallRelation(i)
-            # print(i)
-        elif i['relationName'] == ' story pairwise':
-            addObjPairwise(i)
             # print(i)
     # print(allObjWallRelation)
     # fd.close()
-    
+    # costFunction(sceneJson)
     
     # fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:

@@ -7,7 +7,7 @@ from copy import deepcopy
 random.seed() #随机种子
 no_op_cnt = 0
 
-with open("stories/test.json", "r", encoding="utf-8") as fp:
+with open("stories/abandondedschool-random.json", "r", encoding="utf-8") as fp:
     data = json.load(fp) #读入初始数据
     for i in range(len(data["rooms"])):
         for j in range(len(data["rooms"][i]["objList"])):
@@ -46,6 +46,8 @@ with open("stories/test.json", "r", encoding="utf-8") as fp:
     data_init = deepcopy(data) #备份初始数据
     data_best = deepcopy(data)
     print("init end")
+
+readSpatialRelationShip()
 
 def val(data):
     return costFunction(data)
