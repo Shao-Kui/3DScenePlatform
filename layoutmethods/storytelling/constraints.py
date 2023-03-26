@@ -8,7 +8,7 @@ import numpy as np
 import sys
 from initialRoom import *
 sys.path.append('..')
-from relationHandler import *
+from objSpatialRelationHandler import *
 
 OFFSET = 0.2
 MAX_VISIBLE_AREA = 3
@@ -407,7 +407,7 @@ if __name__ == "__main__":
         sceneJson = json.load(f)
     # costFunction(sceneJson)
     # plt.show()
-    # fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:
     # #     for obj in room['objList']:
     #         # prior(obj, room)
