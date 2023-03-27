@@ -202,21 +202,19 @@ root/
 ```
 The "autoview.py" contains the fundamental logic of our method, which will call functions for deriving probe views and use constraints for evaluating views. It also organizes the generated views and renders the views. One could consider it as a controller. The "views.py" contains how we generate probe views based on one-point and two-point perspectives. The "constraints.py" contains the measurements, i.e., the content and aesthetic constraints. The "utiles.py" contains several functions for geometrical computing. Finally, "inset.py" contains the "mapping" algorithm proposed in the paper. 
 # SceneDirector
-![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/OPPNTPP.png "OPPNTPP")
+![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "OPPNTPP")
 
-[\[Paper\]][sceneviewerpaper] [\[Video\]][sceneviewer] [\[Supp\]][sceneviewersupp]
+\[Paper\] \[Video\] \[Supp\]
 
-This project is also the container for our work on automatic Photography in 3D residential scenes. The related source code includes:
+This project is also the container for our interactive scene synthesis framework, which simulteanously edits multiple objects in each interactive session. The related source code includes:
 ```
 root/
---autoview.py
---sceneviewer/
-----constraints.py
-----inset.py
-----utils.py
-----views.py
+--sk.py
+--static/
+----js/
+------MageAdd.js
 ```
-. 
+The "cgs" function in sk.py is the entrance for preprocessing each coherent group set. The functions named using "CGS" in "MageAdd.js" are the functions for synthesizing scenes online (e.g., when a user controls the mouse). 
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
