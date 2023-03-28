@@ -310,7 +310,12 @@ def costFunction(sceneJson):
         # storyObjList(room,story,other)
         
         # print(prior(room))
-        total += 0.01 * visibility(room) + 0.01 * accessibility(room) + prior(room) + pairwise(room)
+        v = visibility(room)
+        a = accessibility(room)
+        pr = prior(room)
+        pw = pairwise(room)
+        print(v,a,pr,pw)
+        total += 0.01 * v + 0.01 * a + pr + pw
     # prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)
     
@@ -349,15 +354,18 @@ def pairwise(room):
         if obj['format'] != 'instancedMesh':
             for data in allObjPairwise:
                 if obj['modelId'] == data['modelId']:
-                    attachedObj = [i for i in room['objList'] if (i['modelId'] == data['attachedObjId'])][0]
-                    derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
-                    dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
-                    dertaRot = abs(attachedObj['orient'] - obj['orient'] - data['relativeRot'])
-                    print(obj['modelId'],attachedObj['modelId'],obj['translate'],attachedObj['translate'],dertaTransSum)
-                    print(obj['modelId'],attachedObj['modelId'],obj['orient'],attachedObj['orient'],dertaRot)
-                    
-                    total += (dertaTransSum + dertaRot)
-                    print(total) 
+                    rest = [i for i in room['objList'] if i != obj]
+                    for r in rest:
+                        if r['modelId'] == data['attachedObjId']:
+                            attachedObj = [i for i in room['objList'] if (i['modelId'] == data['attachedObjId'])][0]
+                            derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
+                            dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
+                            dertaRot = abs(attachedObj['orient'] - obj['orient'] - data['relativeRot'])
+                            # print(obj['modelId'],attachedObj['modelId'],obj['translate'],attachedObj['translate'],dertaTransSum)
+                            # print(obj['modelId'],attachedObj['modelId'],obj['orient'],attachedObj['orient'],dertaRot)
+                            total += (dertaTransSum + dertaRot)
+                            # print(total)
+                            break
                     break
     return total
 
@@ -442,7 +450,7 @@ def readSpatialRelationShip():
 if __name__ == "__main__":
     readSpatialRelationShip()
     # fig, ax1 = plt.subplots()
-    with open('./stories/abandondedschool-random.json') as f:
+    with open('./stories/abandondedschool-manual.json') as f:
         sceneJson = json.load(f)
     print(costFunction(sceneJson))
     # plt.show()
