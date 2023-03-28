@@ -362,12 +362,12 @@ def addWallProjection2Scene(sceneJson,wallInRooms):
             wallShapes.append(wallShape)
         room['wallShapes'] = wallShapes
 
-def addAllJsonData(themName):
-    with open('./stories/' + themName + '-r0.json') as f:
+def addAllJsonData(sceneJsonName,storyJsonName):
+    with open(sceneJsonName) as f:
         sceneJson =  json.load(f)
     with open('./prop/allBboxSurface.json') as f:
         bboxJson  = json.load(f)
-    with open('./stories/' + themName + '-story.json') as f:
+    with open(storyJsonName) as f:
         storyJson = json.load(f)
     for room in sceneJson['rooms']:
         for obj in room['objList']:
@@ -376,7 +376,7 @@ def addAllJsonData(themName):
     wallInRooms = []
     getWallProjection(sceneJson, wallInRooms)
     addWallProjection2Scene(sceneJson, wallInRooms)
-    with open('./stories/' + themName + '-r0.json', "w", encoding="utf-8") as fw:
+    with open(sceneJsonName, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)   
 
 def addWallShapes2SceneJson(sceneJson):
@@ -484,8 +484,8 @@ def getAllWallsInRoom(sceneJson):
         wallInRooms.append(subwall)
     return wallInRooms
 
-def initialObjPosition(themeName):
-    with open('./stories/' + themeName + '-r0.json') as f:
+def initialObjPosition(sceneJsonPath, visualizeFlag):
+    with open(sceneJsonPath) as f:
         sceneJson =  json.load(f)
 
     fig, ax1 = plt.subplots()
@@ -600,22 +600,22 @@ def colisionDetect(obj1,obj2):
     rect1 = obj2Rectangle(obj1)
     rect2 = obj2Rectangle(obj2)
     return bool(rect1.intersects(rect2))
-    
+
 if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
     createEmptyRoom(scene1)
 
-    # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json
+    # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json,如无表明接触面，则默认接触地面
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
 
     # # # sceneJson添加surface和bbox
-    addBboxSurface2SceneJson('abandondedschool-manual.json')
+    addBboxSurface2SceneJson('test4.json')
 
-    # 添加storycontent
+    # 弃用，已并到addAllJsonData中。添加storycontent
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
 
-    # sceneJson添加墙壁shape
+    # 弃用，已并到addAllJsonData中。sceneJson添加墙壁shape
     # with open('./stories/abandondedschool-r0.json') as f:
     #     sceneJson =  json.load(f)
     # addWallShapes2SceneJson(sceneJson)
@@ -623,9 +623,12 @@ if __name__ == "__main__":
     # with open('./stories/abandondedschool-r0.json', "w") as outfile:
     #     outfile.write(sceneString)
 
+    # 给sceneJson添加上述三个surface和bbox，storycontent，wallshape
+    # addAllJsonData('','')
 
-    # addAllJsonData('abandondedschool')
+    
 
+    # 
     # initialObjPosition('abandondedschool')
     # ['story-CardboardBoxes','story-CardboardBoxes-point','story-Locker-point','story-Lockers','story-studentDesks1','story-studentDesks2'
     # 'story-studentDesks3','story-studentDesks4-point','story-ToileT_Urinals','story-Toilet-point','story-Toilets']

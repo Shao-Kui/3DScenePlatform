@@ -185,6 +185,23 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         objToInsert[property] = otherInfo[property];
     }
     let object3d = objectCache[modelId].clone();
+    if (objToInsert.format ==="THInstancedObject") {
+        // assert instancedTransforms is given in otherInfo
+        let instancedTransforms = objToInsert.instancedTransforms;
+        object3d = new THREE.Group();
+        objectCache[modelId].children.forEach(c => {
+            let mesh = new THREE.InstancedMesh(c.geometry, c.material, instancedTransforms.length);
+            for (let i = 0; i < instancedTransforms.length; ++i) {
+                const temp = new THREE.Object3D();
+                temp.position.set(instancedTransforms[i].translate[0], instancedTransforms[i].translate[1], instancedTransforms[i].translate[2]);
+                temp.rotation.set(instancedTransforms[i].rotate[0], instancedTransforms[i].rotate[1], instancedTransforms[i].rotate[2]);
+                temp.scale.set(instancedTransforms[i].scale[0], instancedTransforms[i].scale[1], instancedTransforms[i].scale[2]);
+                temp.updateMatrix();
+                mesh.setMatrixAt(i, temp.matrix);
+            }
+            object3d.add(mesh);
+        });
+    }
     object3d.name = undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);

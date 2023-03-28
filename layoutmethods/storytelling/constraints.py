@@ -104,8 +104,12 @@ def objExpandAd(obj):
     # objOff.plot(ax = ax1, color = 'pink')
     # objPro.plot(ax = ax1, color = 'yellow')
     
-    AABB = reloadAABB(obj)
-    center = list(AABB['center'])
+    # AABB = reloadAABB(obj)
+    
+    center = []
+    center.append((obj['bbox']['min'][0] + obj['bbox']['max'][0]) / 2)
+    center.append((obj['bbox']['min'][1] + obj['bbox']['max'][1]) / 2)
+    center.append((obj['bbox']['min'][2] + obj['bbox']['max'][2]) / 2)
 
     # 对角线
     minP = Point([obj['bbox']['min'][0] ,obj['bbox']['min'][2] ])
@@ -174,9 +178,6 @@ def access(obj1,obj2):
     for a in obj2['a']:
         i = obj2['a'].index(a)
         f = max((1 - p.distance(Point(a)) / (b + obj2['ad'][i])),0)
-        # if f != 0 :
-        #     visualizeAccess(obj1)
-        #     visualizeAccess(obj2)
         total += f
     return total
 
@@ -190,21 +191,34 @@ def accessibility(room):
                     sum += access(obj,r)
     return sum
 
-def visualizeAccess(obj):
+def visualizeSceneJson(sceneJson):
+    for room in sceneJson['rooms']:
+        for obj in room['objList']:
+            if obj['format'] == "instancedMesh":
+                visualizeWall(obj)
+            else:
+                visualizeObj(obj)
+
+def visualizeWall(obj):
+    objProjection = obj2Rectangle(obj)
+    objPro = gpd.GeoSeries(objProjection)
+    objPro.plot(ax = ax1, color = 'blue', alpha = 0.5)
+
+def visualizeObj(obj):
     objProjection = obj2Rectangle(obj)
     objPro = gpd.GeoSeries(objProjection)
     objOff = objOffset(objProjection)
     
     objOff.plot(ax = ax1, color = 'pink', alpha = 0.5)
     objPro.plot(ax = ax1, color = 'yellow', alpha = 0.5)
-    s = obj['s']
-    for aa in obj['a']:
-        i = obj['a'].index(aa)
-        ss = s[i]
-        p1 = Point(aa)
-        p2 = Point(ss)
-        l = gpd.GeoSeries(LineString([p1,p2]))
-        l.plot(ax = ax1, color = 'red')
+    # s = obj['s']
+    # for aa in obj['a']:
+    #     i = obj['a'].index(aa)
+    #     ss = s[i]
+    #     p1 = Point(aa)
+    #     p2 = Point(ss)
+    #     l = gpd.GeoSeries(LineString([p1,p2]))
+    #     l.plot(ax = ax1, color = 'red')
 
 def visibale(floorObj,wallObj):
     # floorobj in wallObj view frustum
@@ -214,9 +228,6 @@ def visibale(floorObj,wallObj):
     for v in wallObj['v']:
         i = wallObj['v'].index(v)
         f = max((1 - p.distance(Point(v)) / (b + wallObj['vd'][i])),0)
-        # if f != 0 :
-        #     visualizeAccess(floorObj)
-        #     visualizeAccess(wallObj)
         total += f
     return total
 
@@ -227,9 +238,12 @@ def visibility(room):
             objRest = [i for i in room['objList'] if i != obj]
             for r in objRest:
                 if (r['format'] == 'obj') & (obj['surface'] != 'ceiling'):
+                    if(colisionDetect(r,obj)):
+                        visualizeObj(r)
+                        visualizeObj(obj)
                     sum += visibale(r, obj)
     return sum
-    
+fig, ax1 = plt.subplots()   
 def initStoryFromJson(obj,story):
     name = obj['modelId']
     interval = visiableDis(obj)
@@ -295,12 +309,14 @@ def storyPointDetectable(story):
     else:
         return 0
 
+
 def costFunction(sceneJson):
-    # wallInRooms = getAllWallsInRoom(sceneJson)
     total = 0.0
     for room in sceneJson['rooms']:
         for obj in room['objList']:
             objExpandAd(obj)
+            # visualizeObj(obj)
+    
     for room in sceneJson['rooms']:
     # room = sceneJson['rooms'][0]
         # i = sceneJson['rooms'].index(room)
@@ -447,12 +463,22 @@ def readSpatialRelationShip():
         elif i['relationName'] == ' story pairwise':
             addObjPairwise(i)
 
-if __name__ == "__main__":
-    readSpatialRelationShip()
-    # fig, ax1 = plt.subplots()
-    with open('./stories/abandondedschool-manual.json') as f:
-        sceneJson = json.load(f)
-    print(costFunction(sceneJson))
+# if __name__ == "__main__":
+    # readSpatialRelationShip()
+    
+    # # with open('./stories/abandondedschool-manual.json') as f:
+    # #     sceneJson = json.load(f)
+    # #     print(costFunction(sceneJson))
+    # #     visualizeSceneJson(sceneJson)
+        
+    # #     plt.show()
+    # with open('candidate.json') as f:
+    #     sceneJson = json.load(f)
+    #     print(costFunction(sceneJson))
+    #     visualizeSceneJson(sceneJson)
+    #     plt.show()
+
+    
     # plt.show()
     # fig, ax1 = plt.subplots()
     # for room in sceneJson['rooms']:

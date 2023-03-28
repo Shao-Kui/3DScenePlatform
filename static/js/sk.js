@@ -654,8 +654,8 @@ const onClutterpaletteClick = function() {
     let intersects = raycaster.intersectObjects(manager.renderManager.wfCache, true);
     if (intersects.length > 0) {
         clutterpalettePos = { x: intersects[0].point.x, y: 0, z: intersects[0].point.z };
-        while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-        while (secondaryCatalogItems.firstChild) { secondaryCatalogItems.firstChild.remove(); }
+        $("#catalogItems").empty();
+        $("#secondaryCatalogItems").empty();
         let roomId = intersects[0].object.parent.userData.roomId;
         let room = manager.renderManager.scene_json.rooms[roomId];
         let aabb = new THREE.Box3();
@@ -1949,7 +1949,7 @@ let shelfPlaceholderHandler = () => {
     $('#tab_category').text('shelf-placeholder');
     $('#tab_roomid').text(roomId);
     $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+    $("#catalogItems").empty();
 
     if (INTERSECT_SHELF_PLACEHOLDERS.size == 0) return;
     $.ajax({
@@ -1974,7 +1974,7 @@ let cancelClickingShelfPlaceholders = () => {
         claimControlObject3D(shelfKey, true);
     }
     INTERSECT_SHELF_PLACEHOLDERS = {};
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+    $("#catalogItems").empty();
 }
 
 let enterShelfStockingMode = () => {
@@ -2028,32 +2028,68 @@ let isShelfPlaceholder = function(obj) {
     return obj.name !== undefined && obj.name.startsWith('shelf-placeholder-');
 }
 
+let getNewUUID = () => {
+    let uuid;
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!uuid) uuid = THREE.MathUtils.generateUUID();
+    commandStack.push({
+        'funcName': 'removeObjectByUUID',
+        'args': [uuid, true]
+    });
+    return uuid;
+}
+
 let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
-    if (!(modelId in objectCache)) {
-        loadObjectToCache(modelId, anchor = addCommodityToShelf, anchorArgs = [shelfKey, modelId, r, c, l]);
-        return;
-    }
-    let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
-    let offsetY = shelfOffestY[r];
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let commodity = addObjectFromCache(
-        modelId = modelId,
-        transform = {
-            'translate': [shelf.position.x + offsetX, shelf.position.y + offsetY, shelf.position.z],
-            'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
-            'scale': [shelf.scale.x, shelf.scale.y, shelf.scale.z]
-        },
-        uuid = undefined,
-        origin = true,
-        otherInfo = {
-            shelfKey: shelfKey,
-            shelfRow: r,
-            shelfCol: c
+    let commodities = shelf.userData.json.commodities;
+    let roomId = shelf.userData.roomId;
+
+    let instancedTransforms = [];
+    let bbox = objectCache[modelId].boundingBox;
+    let commodityX = bbox.max.z - bbox.min.z; // rotate 90 degrees
+    let commodityY = bbox.max.y - bbox.min.y;
+    let commodityZ = bbox.max.x - bbox.min.x; // rotate 90 degrees
+    let nx = Math.max(1, Math.floor(1.2 / l / commodityX));
+    let ny = Math.max(1, Math.floor(0.4 / commodityY)); // optional
+    let nz = Math.max(1, Math.floor(0.45 / commodityZ));
+    for (let i = 0; i < nx; ++i) {
+        let offsetX = 1.2 * i / l / nx - 0.6 / l + commodityX / 2;
+        for (let j = 0; j < nz; ++j) {
+            let offsetZ = 0.4 * j / nz - 0.25 + commodityZ / 2;
+            for (let k = 0; k < ny; ++k) {
+                let offsetY = k * commodityY;
+                instancedTransforms.push({
+                    'translate': [offsetX, offsetY, offsetZ],
+                    'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees
+                    'scale': [1.0, 1.0, 1.0]
+                });
+            }
         }
-    );
-    shelf.userData.json.commodities[r][c] = { modelId: modelId, uuid: commodity.name };
+    }
+
+    let phOffsetX = (0.6 / l) * (2 * c + 1) - 0.6;
+    let phoffsetY = shelfOffestY[r];
+    let uuid = getNewUUID();
+    let transform = {
+        'translate': [shelf.position.x + phOffsetX, shelf.position.y + phoffsetY, shelf.position.z],
+        'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
+        'scale': [shelf.scale.x, shelf.scale.y, shelf.scale.z],
+        'format': 'THInstancedObject'
+    };
+    let otherInfo = {
+        'instancedTransforms': instancedTransforms,
+        'shelfKey': shelfKey,
+        'shelfRow': r,
+        'shelfCol': c
+    };
+    let object3d = addObjectByUUID(uuid, modelId, roomId, transform, otherInfo);
+    object3d.name = uuid;
+    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomId, transform, otherInfo]);
+
+    commodities[r][c] = { modelId: modelId, uuid: uuid };
     let objectProperties = {};
-    objectProperties[shelfKey] = { commodities: shelf.userData.json.commodities };
+    objectProperties[shelfKey] = { commodities: commodities };
     emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
 
@@ -2093,17 +2129,18 @@ let clearDanglingCommodities = () => {
     }
 }
 
-let addShelfPlaceholdersByRow = function(shelfKey, r, l) {
+let addShelfPlaceholdersByRow = function (shelfKey, r, l) {
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    offsetY = shelfOffestY[r]+0.2;
+    let offsetY = shelfOffestY[r] + 0.2;
     for (let c = 0; c < l; ++c) {
-        let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
+        let placeholder = getCube(1.2 / l, 0.4, 0.45, 0.2);
         let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
         placeholder.name = phKey;
-        let offsetX = (0.6/l)*(2*c+1)-0.6;
-        placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
-        placeholder.rotation.set(shelf.rotation.x, shelf.rotation.y, shelf.rotation.z);
-        placeholder.scale.set(shelf.scale.x, shelf.scale.y, shelf.scale.z);
+        let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
+        placeholder.position.copy(shelf.position);
+        placeholder.position.add(new THREE.Vector3(offsetX, offsetY, -0.025));
+        placeholder.rotation.copy(shelf.rotation);
+        placeholder.scale.copy(shelf.scale);
         placeholder.userData.shelfKey = shelfKey;
         placeholder.userData.shelfRow = r;
         placeholder.userData.shelfCol = c;
@@ -2140,7 +2177,7 @@ let changeShelfRow = function (shelfKey, r, newRow) {
     let l = newRow.length;
     for (let c = 0; c < l; ++c) {
         let modelId = newRow[c].modelId;
-        if (newRow.length === oldRow.length && newRow[c].uuid !== undefined && newRow[c].uuid !== "") {
+        if (newRow.length === oldRow.length && newRow[c].uuid) {
             continue;
         } else {
             addCommodityToShelf(shelfKey, modelId, r, c, l);
@@ -2252,7 +2289,7 @@ let shelfRowPlus = (r) => {
 
 let shelfRowSelect = (rows) => {
     outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
+    $("#catalogItems").empty();
 
     let shelfKey = $("#shelfKey").text();
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
@@ -2285,20 +2322,22 @@ let shelfRowSelect = (rows) => {
     });
 }
 
-let shelfRowClear = (rows) => {
+let shelfRowClearBtn = (rows) => {
     outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-
+    $("#catalogItems").empty();
     let shelfKey = $("#shelfKey").text();
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let commodities = shelf.userData.json.commodities;
     INTERSECT_SHELF_PLACEHOLDERS = {};
     INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+    shelfRowClear(shelfKey, rows);
+}
 
+let shelfRowClear = (shelfKey, rows) => {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
     for (let r of rows) {
         let l = commodities[r].length;
         for (let c = 0; c < l; ++c) {
-            if (commodities[r][c].uuid !== "") removeObjectByUUID(commodities[r][c].uuid);
+            if (commodities[r][c].uuid) removeObjectByUUID(commodities[r][c].uuid);
             commodities[r][c] = { modelId: '', uuid: '' };
         }
     }
