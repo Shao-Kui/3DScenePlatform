@@ -5,49 +5,7 @@ from constraints import *
 from copy import deepcopy
 
 random.seed() #随机种子
-no_op_cnt = 0
-
-with open("stories/abandondedschool-r0 (3).json", "r", encoding="utf-8") as fp:
-    data = json.load(fp) #读入初始数据
-    for i in range(len(data["rooms"])):
-        for j in range(len(data["rooms"][i]["objList"])):
-            if ("format" in data["rooms"][i]["objList"][j] and (data["rooms"][i]["objList"][j]["format"] == "obj") and (data["rooms"][i]["objList"][j]["surface"] == "floor")):
-                if ("originBbox" in data["rooms"][i]["objList"][j]): #将bbox修改为当前位置]
-                    print(str(i) + "   " + str(j))
-                    if (data["rooms"][i]["objList"][j]["rotate"][1] == 0):
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][0] = data["rooms"][i]["objList"][j]["translate"][0] + data["rooms"][i]["objList"][j]["originBbox"]["max"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["max"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][2] = data["rooms"][i]["objList"][j]["translate"][2] + data["rooms"][i]["objList"][j]["originBbox"]["max"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][0] = data["rooms"][i]["objList"][j]["translate"][0] + data["rooms"][i]["objList"][j]["originBbox"]["min"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["min"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][2] = data["rooms"][i]["objList"][j]["translate"][2] + data["rooms"][i]["objList"][j]["originBbox"]["min"][2]
-                    elif (data["rooms"][i]["objList"][j]["rotate"][1] == -math.pi / 2):
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][0] = data["rooms"][i]["objList"][j]["translate"][0] - data["rooms"][i]["objList"][j]["originBbox"]["max"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["max"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][2] = data["rooms"][i]["objList"][j]["translate"][2] + data["rooms"][i]["objList"][j]["originBbox"]["max"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][0] = data["rooms"][i]["objList"][j]["translate"][0] - data["rooms"][i]["objList"][j]["originBbox"]["min"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["min"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][2] = data["rooms"][i]["objList"][j]["translate"][2] + data["rooms"][i]["objList"][j]["originBbox"]["min"][0]
-                    elif (data["rooms"][i]["objList"][j]["rotate"][1] == math.pi):
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][0] = data["rooms"][i]["objList"][j]["translate"][0] - data["rooms"][i]["objList"][j]["originBbox"]["max"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["max"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][2] = data["rooms"][i]["objList"][j]["translate"][2] - data["rooms"][i]["objList"][j]["originBbox"]["max"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][0] = data["rooms"][i]["objList"][j]["translate"][0] - data["rooms"][i]["objList"][j]["originBbox"]["min"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["min"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][2] = data["rooms"][i]["objList"][j]["translate"][2] - data["rooms"][i]["objList"][j]["originBbox"]["min"][2]
-                    elif (data["rooms"][i]["objList"][j]["rotate"][1] == math.pi / 2):
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][0] = data["rooms"][i]["objList"][j]["translate"][0] + data["rooms"][i]["objList"][j]["originBbox"]["max"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["max"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["max"][2] = data["rooms"][i]["objList"][j]["translate"][2] - data["rooms"][i]["objList"][j]["originBbox"]["max"][0]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][0] = data["rooms"][i]["objList"][j]["translate"][0] + data["rooms"][i]["objList"][j]["originBbox"]["min"][2]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][1] = data["rooms"][i]["objList"][j]["translate"][1] + data["rooms"][i]["objList"][j]["originBbox"]["min"][1]
-                        data["rooms"][i]["objList"][j]["bbox"]["min"][2] = data["rooms"][i]["objList"][j]["translate"][2] - data["rooms"][i]["objList"][j]["originBbox"]["min"][0]
-
-    data_init = deepcopy(data) #备份初始数据
-    data_best = deepcopy(data)
-    print("init end")
-
-readSpatialRelationShip()
+no_op_cnt = 0 #记录连续未优化次数
 
 def val(data):
     return costFunction(data)
