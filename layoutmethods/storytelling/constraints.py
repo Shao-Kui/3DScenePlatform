@@ -60,7 +60,7 @@ def connectivityNum(room,walls):
         rest = roomGeo.difference(allOffsetGeo,align=True)
         j  = rest.to_json()
         y = json.loads(j)
-        print(j)
+        # print(j)
         features = y['features']
         for feature in features:
             if ('geometry' in obj.keys()):
@@ -330,7 +330,7 @@ def costFunction(sceneJson):
         a = accessibility(room)
         pr = prior(room)
         pw = pairwise(room)
-        print(v,a,pr,pw)
+        # print(v,a,pr,pw)
         total += 0.01 * v + 0.01 * a + pr + pw
     # prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)

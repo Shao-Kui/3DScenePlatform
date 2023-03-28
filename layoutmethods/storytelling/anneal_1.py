@@ -8,8 +8,14 @@ FILE = "stories/test4.json"
 no_op_round = 0
 round = 0
 T = 2000
-dT = 0.9
+dT = 0.99
+DP = 5
+DS = 0.5
+POSIBILITY = 0.05
 eps = 1e-14
+
+order = {}
+num = 0
 
 random.seed()
 
@@ -36,6 +42,18 @@ def conflict(cnt, bbox_max, bbox_min, i_num, j_num):
                 return True
     return False
 
+def choose(type, i, j):
+    if (type == 0): #随机数
+        rand_num = random.random()
+        if rand_num < POSIBILITY:
+            return True
+        return False
+    if (type == 1): #确定值
+        if order[round % num] == [i, j]:
+            return True
+        return False
+    return False
+
 readSpatialRelationShip()
 
 #第一次读入初始化，约定初态scale=1，旋转值为-pi/2，0，pi/2，pi
@@ -45,6 +63,8 @@ with open(FILE, "r", encoding="utf-8") as fp:
         for j in range(len(data["rooms"][i]["objList"])):
             if (("format" in data["rooms"][i]["objList"][j]) and (data["rooms"][i]["objList"][j]["format"] == "obj") and (data["rooms"][i]["objList"][j]["surface"] == "floor")):
                 if ("originBbox" in data["rooms"][i]["objList"][j]):
+                    order[num] = [i, j]
+                    num += 1
                     x_1 = 0 
                     x_2 = 0
                     z_1 = 0 
@@ -80,6 +100,9 @@ with open(FILE, "r", encoding="utf-8") as fp:
     data_best = deepcopy(data)
     data_init = deepcopy(data)
 
+with open("./init.json", "w", encoding="utf-8") as fw:
+    json.dump(data_init, fw)
+
 while (T > eps):
     data_next = deepcopy(data)
     round += 1
@@ -93,20 +116,19 @@ while (T > eps):
     for i in range(len(data_next["rooms"])):
         for j in range(len(data_next["rooms"][i]["objList"])):
             if (("format" in data_next["rooms"][i]["objList"][j]) and (data_next["rooms"][i]["objList"][j]["format"] == "obj") and (data_next["rooms"][i]["objList"][j]["surface"] == "floor")):
-                rand_num = random.random()
-                if (rand_num < 0.05):
+                if (choose(1, i, j)):
                     rand_num = random.random()
-                    dt0 = (rand_num * 10 - 5) * T / 2000
+                    dt0 = (rand_num * 2 * DP - DP) * T / 2000
                     rand_num = random.random()
-                    dt2 = (rand_num * 10 - 5) * T / 2000
+                    dt2 = (rand_num * 2 * DP - DP) * T / 2000
                     data_next["rooms"][i]["objList"][j]["translate"][0] += dt0
                     data_next["rooms"][i]["objList"][j]["translate"][2] += dt2
                     rand_num = random.random()
-                    ds0 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][0] + 0.5) * T / 2000
+                    ds0 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][0] + DS) * T / 2000
                     rand_num = random.random()
-                    ds1 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][1] + 0.5) * T / 2000
+                    ds1 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][1] + DS) * T / 2000
                     rand_num = random.random()
-                    ds2 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][2] + 0.5) * T / 2000
+                    ds2 = (rand_num - data_next["rooms"][i]["objList"][j]["scale"][2] + DS) * T / 2000
                     data_next["rooms"][i]["objList"][j]["scale"][0] += ds0
                     data_next["rooms"][i]["objList"][j]["scale"][1] += ds1
                     data_next["rooms"][i]["objList"][j]["scale"][2] += ds2
@@ -124,44 +146,32 @@ while (T > eps):
                     data_next["rooms"][i]["objList"][j]["rotate"][1] %= (2 * math.pi)
                     data_next["rooms"][i]["objList"][j]["rotate"][1] -= math.pi
                     if ("bbox" in data_next["rooms"][i]["objList"][j]):
-                        vector_x1 = data["rooms"][i]["objList"][j]["bbox"]["max"][0] - data["rooms"][i]["objList"][j]["translate"][0]
-                        vector_y1 = data["rooms"][i]["objList"][j]["bbox"]["max"][1] - data["rooms"][i]["objList"][j]["translate"][1]
-                        vector_z1 = data["rooms"][i]["objList"][j]["bbox"]["max"][2] - data["rooms"][i]["objList"][j]["translate"][2]
-                        vector_x2 = data["rooms"][i]["objList"][j]["bbox"]["min"][0] - data["rooms"][i]["objList"][j]["translate"][0]
-                        vector_y2 = data["rooms"][i]["objList"][j]["bbox"]["min"][1] - data["rooms"][i]["objList"][j]["translate"][1]
-                        vector_z2 = data["rooms"][i]["objList"][j]["bbox"]["min"][2] - data["rooms"][i]["objList"][j]["translate"][2]
-                        vector_x1 *= data_next["rooms"][i]["objList"][j]["scale"][0] / data["rooms"][i]["objList"][j]["scale"][0]
-                        vector_y1 *= data_next["rooms"][i]["objList"][j]["scale"][1] / data["rooms"][i]["objList"][j]["scale"][1]
-                        vector_z1 *= data_next["rooms"][i]["objList"][j]["scale"][2] / data["rooms"][i]["objList"][j]["scale"][2]
-                        vector_x2 *= data_next["rooms"][i]["objList"][j]["scale"][0] / data["rooms"][i]["objList"][j]["scale"][0]
-                        vector_y2 *= data_next["rooms"][i]["objList"][j]["scale"][1] / data["rooms"][i]["objList"][j]["scale"][1]
-                        vector_z2 *= data_next["rooms"][i]["objList"][j]["scale"][2] / data["rooms"][i]["objList"][j]["scale"][2]
-                        y1 = data["rooms"][i]["objList"][j]["translate"][1] + vector_y1
-                        y2 = data["rooms"][i]["objList"][j]["translate"][1] + vector_y2
+                        y1 = data_next["rooms"][i]["objList"][j]["translate"][1] + data_next["rooms"][i]["objList"][j]["scale"][1] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][1]
+                        y2 = data_next["rooms"][i]["objList"][j]["translate"][1] + data_next["rooms"][i]["objList"][j]["scale"][1] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][1]
                         x1 = 0
                         x2 = 0 
                         z1 = 0 
                         z2 = 0
-                        if (dr1 == -math.pi / 2):
-                            x1 = data["rooms"][i]["objList"][j]["translate"][0] - vector_z1
-                            z1 = data["rooms"][i]["objList"][j]["translate"][2] + vector_x1
-                            x2 = data["rooms"][i]["objList"][j]["translate"][0] - vector_z2
-                            z2 = data["rooms"][i]["objList"][j]["translate"][2] + vector_x2
-                        elif (dr1 == 0):
-                            x1 = data["rooms"][i]["objList"][j]["translate"][0] + vector_x1
-                            z1 = data["rooms"][i]["objList"][j]["translate"][2] + vector_z1
-                            x2 = data["rooms"][i]["objList"][j]["translate"][0] + vector_x2
-                            z2 = data["rooms"][i]["objList"][j]["translate"][2] + vector_z2
-                        elif (dr1 == math.pi / 2):
-                            x1 = data["rooms"][i]["objList"][j]["translate"][0] + vector_z1
-                            z1 = data["rooms"][i]["objList"][j]["translate"][2] - vector_x1
-                            x2 = data["rooms"][i]["objList"][j]["translate"][0] + vector_z2
-                            z2 = data["rooms"][i]["objList"][j]["translate"][2] - vector_x2
-                        elif (dr1 == math.pi):
-                            x1 = data["rooms"][i]["objList"][j]["translate"][0] - vector_x1
-                            z1 = data["rooms"][i]["objList"][j]["translate"][2] - vector_z1
-                            x2 = data["rooms"][i]["objList"][j]["translate"][0] - vector_x2
-                            z2 = data["rooms"][i]["objList"][j]["translate"][2] - vector_z2
+                        if (data_next["rooms"][i]["objList"][j]["rotate"][1] == -math.pi / 2):
+                            x1 = data_next["rooms"][i]["objList"][j]["translate"][0] - data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][2]
+                            z1 = data_next["rooms"][i]["objList"][j]["translate"][2] + data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][0]
+                            x2 = data_next["rooms"][i]["objList"][j]["translate"][0] - data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][2]
+                            z2 = data_next["rooms"][i]["objList"][j]["translate"][2] + data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][0]
+                        elif (data_next["rooms"][i]["objList"][j]["rotate"][1] == 0):
+                            x1 = data_next["rooms"][i]["objList"][j]["translate"][0] + data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][0]
+                            z1 = data_next["rooms"][i]["objList"][j]["translate"][2] + data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][2]
+                            x2 = data_next["rooms"][i]["objList"][j]["translate"][0] + data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][0]
+                            z2 = data_next["rooms"][i]["objList"][j]["translate"][2] + data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][2]
+                        elif (data_next["rooms"][i]["objList"][j]["rotate"][1] == math.pi / 2):
+                            x1 = data_next["rooms"][i]["objList"][j]["translate"][0] + data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][2]
+                            z1 = data_next["rooms"][i]["objList"][j]["translate"][2] - data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][0]
+                            x2 = data_next["rooms"][i]["objList"][j]["translate"][0] + data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][2]
+                            z2 = data_next["rooms"][i]["objList"][j]["translate"][2] - data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][0]
+                        elif (data_next["rooms"][i]["objList"][j]["rotate"][1] == math.pi):
+                            x1 = data_next["rooms"][i]["objList"][j]["translate"][0] - data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][0]
+                            z1 = data_next["rooms"][i]["objList"][j]["translate"][2] - data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][2]
+                            x2 = data_next["rooms"][i]["objList"][j]["translate"][0] - data_next["rooms"][i]["objList"][j]["scale"][0] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][0]
+                            z2 = data_next["rooms"][i]["objList"][j]["translate"][2] - data_next["rooms"][i]["objList"][j]["scale"][2] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][2]
                         data_next["rooms"][i]["objList"][j]["bbox"]["max"][0] = max(x1, x2)
                         data_next["rooms"][i]["objList"][j]["bbox"]["max"][1] = max(y1, y2)
                         data_next["rooms"][i]["objList"][j]["bbox"]["max"][2] = max(z1, z2)
@@ -195,12 +205,23 @@ while (T > eps):
 
     val1 = -costFunction(data_next)
     val2 = -costFunction(data)
+    val3 = -costFunction(data_best)
+    print(val1)
+    print(val2)
 
     if (val1 > val2):
-        no_op_round = 0
         data = deepcopy(data_next)
-        data_best = deepcopy(data_next)
-        print(str(round) + "轮结束，优化")
+        if (val1 > val3):
+            no_op_round = 0
+            data_best = deepcopy(data_next)
+            print(str(round) + "轮结束，新的优化")
+        else:
+            no_op_round += 1
+            print(str(round) + "轮结束，相比上次优化")
+            if (no_op_round == 50):
+                no_op_round = 0
+                data = deepcopy(data_best)
+                print("回滚")
     else:
         no_op_round += 1
         rand_num = random.random()
