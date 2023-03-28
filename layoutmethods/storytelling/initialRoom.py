@@ -25,8 +25,7 @@ scene1 = {
     "theme": "abandondedschool",
     "areaShapes": [
         Polygon([[8,2],[-4,2],[-4,-6],[8,-6]]),
-        Polygon([[8,6],[-8,6],[-8,2],[8,2]]),
-        Polygon([[-4, 2],[-8,2],[-8,-6],[ -4,-6]])
+        Polygon([[8,6],[-8,6],[-8,2],[8,2]])
         ],
     "doorAndWin": [
         {
@@ -37,7 +36,7 @@ scene1 = {
         },
         {
             "type": "windowSingle",
-            "list": [Point([2,-6]),Point([-6,-6])],
+            "list": [Point([2,-6])],
             "modelName": "story-WallOutside_2f_4m_WindowSingle_B",
             "coarseSemantic": "Window"
         },
@@ -188,15 +187,15 @@ def createEmptyRoom(scene):
 
         room['areaType'] = 'earth'
         room['layer'] = 1
-        room['roomShapeBbox'] = {}
+        room['roomShapeBBox'] = {}
         
         areaShape = room['areaShape']
         area = gpd.GeoSeries(Polygon(areaShape))
         for obj in room['objList']:
             objRect = obj2Rectangle(obj)
             area = area.difference(objRect,align=True)
-        room['roomShapeBbox']['max'] = list([float(area.bounds.minx),float(area.bounds.miny)])
-        room['roomShapeBbox']['min'] = list([float(area.bounds.maxx),float(area.bounds.maxy)])
+        room['roomShapeBBox']['max'] = list([float(area.bounds.minx),float(area.bounds.miny)])
+        room['roomShapeBBox']['min'] = list([float(area.bounds.maxx),float(area.bounds.maxy)])
 
         rooms.append(room)
 
@@ -484,7 +483,7 @@ def getAllWallsInRoom(sceneJson):
         wallInRooms.append(subwall)
     return wallInRooms
 
-def initialObjPosition(sceneJsonPath, visualizeFlag):
+def initialObjPosition(sceneJsonPath):
     with open(sceneJsonPath) as f:
         sceneJson =  json.load(f)
 
@@ -528,7 +527,7 @@ def initialObjPosition(sceneJsonPath, visualizeFlag):
                     o.plot(ax = ax1, color = 'yellow')
         # break
     
-    with open('./stories/test2.json', "w", encoding="utf-8") as fw:
+    with open(sceneJsonPath, "w", encoding="utf-8") as fw:
         json.dump(sceneJson, fw)
     plt.show()
 
@@ -603,24 +602,24 @@ def colisionDetect(obj1,obj2):
 
 if __name__ == "__main__":
     # 通过模板json和形状初始化一个空房间
-    createEmptyRoom(scene1)
+    # createEmptyRoom(scene1)
 
     # 根据本地的AABBjson文件和./prop/中输入的contact Surface得到allBboxSurface json,如无表明接触面，则默认接触地面
     # base = 'C:/Users/Yike Li/Desktop/storyModelsJson/'
     # writeBboxSurface(base)
 
     # # # sceneJson添加surface和bbox
-    addBboxSurface2SceneJson('test4.json')
+    # addBboxSurface2SceneJson('test4.json')
 
     # 弃用，已并到addAllJsonData中。添加storycontent
     # addStoryContent2SceneJson('abandondedschool', 'abandondedschool-r0.json')
 
     # 弃用，已并到addAllJsonData中。sceneJson添加墙壁shape
-    # with open('./stories/abandondedschool-r0.json') as f:
+    # with open('./stories/test4.json') as f:
     #     sceneJson =  json.load(f)
     # addWallShapes2SceneJson(sceneJson)
     # sceneString = json.dumps(sceneJson)
-    # with open('./stories/abandondedschool-r0.json', "w") as outfile:
+    # with open('./stories/test4.json', "w") as outfile:
     #     outfile.write(sceneString)
 
     # 给sceneJson添加上述三个surface和bbox，storycontent，wallshape
@@ -629,6 +628,6 @@ if __name__ == "__main__":
     
 
     # 
-    # initialObjPosition('abandondedschool')
+    initialObjPosition('./stories/test4.json')
     # ['story-CardboardBoxes','story-CardboardBoxes-point','story-Locker-point','story-Lockers','story-studentDesks1','story-studentDesks2'
     # 'story-studentDesks3','story-studentDesks4-point','story-ToileT_Urinals','story-Toilet-point','story-Toilets']

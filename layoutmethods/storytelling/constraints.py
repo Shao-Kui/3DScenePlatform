@@ -112,9 +112,7 @@ def objExpandAd(obj):
     center.append((obj['bbox']['min'][2] + obj['bbox']['max'][2]) / 2)
 
     # 对角线
-    minP = Point([obj['bbox']['min'][0] ,obj['bbox']['min'][2] ])
-    maxP = Point([obj['bbox']['max'][0] ,obj['bbox']['max'][2] ])
-    b = minP.distance(maxP) / 2
+    b = math.sqrt((obj['bbox']['min'][0] - obj['bbox']['max'][0]) ** 2 + (obj['bbox']['min'][2] - obj['bbox']['max'][2]) ** 2) / 2
     obj['b'] = b
 
     # offset 和 center的中点 上左下右
@@ -140,9 +138,7 @@ def objExpandAd(obj):
     for aa in a:
         i = a.index(aa)
         ss = s[i]
-        p1 = Point(aa)
-        p2 = Point(ss)
-        dis = p1.distance(p2)
+        dis = math.sqrt(((aa[0] - ss[0]) ** 2 + (aa[1] - ss[1]) ** 2))
         ad.append(dis)
     obj['ad'] = ad
         #     l = gpd.GeoSeries(LineString([p1,p2]))
@@ -165,19 +161,20 @@ def objExpandAd(obj):
             wp = Point([wx , wy])
             w.append([ wx , wy])
             # 对角线长
-            vdis = vp.distance(wp)
+            # vdis = vp.distance(wp)
+            vdis = math.sqrt((vx - wx) ** 2 + (vx - vy) ** 2)
             vd.append(vdis)
         obj['v'] = v
         obj['vd'] = vd
     
 def access(obj1,obj2):
     # 1 in 2
-    p = Point([obj1['translate'][0],obj1['translate'][2]])
     b = obj1['b']
     total = 0
     for a in obj2['a']:
         i = obj2['a'].index(a)
-        f = max((1 - p.distance(Point(a)) / (b + obj2['ad'][i])),0)
+        dis = math.sqrt((a[0] - obj1['translate'][0]) ** 2 + (a[1] - obj1['translate'][2]) ** 2)
+        f = max((1 - dis / (b + obj2['ad'][i])),0)
         total += f
     return total
 
@@ -227,7 +224,9 @@ def visibale(floorObj,wallObj):
     total = 0
     for v in wallObj['v']:
         i = wallObj['v'].index(v)
-        f = max((1 - p.distance(Point(v)) / (b + wallObj['vd'][i])),0)
+        dis = math.sqrt((v[0] - floorObj['translate'][0]) ** 2 + (v[1] - floorObj['translate'][2]) ** 2)
+        f = max((1 - dis / (b + wallObj['vd'][i])),0)
+        # f = max((1 - p.distance(Point(v)) / (b + wallObj['vd'][i])),0)
         total += f
     return total
 
@@ -330,7 +329,10 @@ def costFunction(sceneJson):
         a = accessibility(room)
         pr = prior(room)
         pw = pairwise(room)
+<<<<<<< Updated upstream
         # print(v,a,pr,pw)
+=======
+>>>>>>> Stashed changes
         total += 0.01 * v + 0.01 * a + pr + pw
     # prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)
@@ -377,10 +379,7 @@ def pairwise(room):
                             derataTrans = list((np.array(attachedObj['translate']) - np.array(obj['translate'])) - np.array(data['relativeTrans']))
                             dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
                             dertaRot = abs(attachedObj['orient'] - obj['orient'] - data['relativeRot'])
-                            # print(obj['modelId'],attachedObj['modelId'],obj['translate'],attachedObj['translate'],dertaTransSum)
-                            # print(obj['modelId'],attachedObj['modelId'],obj['orient'],attachedObj['orient'],dertaRot)
                             total += (dertaTransSum + dertaRot)
-                            # print(total)
                             break
                     break
     return total
@@ -393,16 +392,7 @@ def prior(room):
     areaShape.append([room['roomShapeBBox']['max'][0],room['roomShapeBBox']['min'][1]])
     areaShape = np.array(areaShape)
     areaOrient = []
-    areaLineString = []
-    for i in range(0, len(areaShape) - 1):
-        areaLineString.append(LineString([areaShape[i + 1],areaShape[i]]))
-        l = areaShape[i + 1] - areaShape[i]
-        w = np.linalg.norm(l)
-        lnr = l / w 
-        o = (math.atan2(lnr[1],lnr[0]))
-        if o >= math.pi:
-            o = -o
-        areaOrient.append(o)
+    areaOrient = [-0.5 * math.pi, 0, 0.5 * math.pi, - math.pi]
 
     total = 0
     windList = []
@@ -415,9 +405,10 @@ def prior(room):
         if obj['format'] != 'instancedMesh':
             modelId = obj['modelId']
             areaDis = []
-            objPoint = Point([obj['translate'][0],obj['translate'][2]])
-            for l in areaLineString:
-                areaDis.append(objPoint.distance(l))
+            areaDis.append(abs(obj['translate'][0] - room['roomShapeBBox']['min'][0]))
+            areaDis.append(abs(obj['translate'][2] - room['roomShapeBBox']['max'][1]))
+            areaDis.append(abs(obj['translate'][0] - room['roomShapeBBox']['max'][0]))
+            areaDis.append(abs(obj['translate'][2] - room['roomShapeBBox']['min'][1]))
             minDis2Wall = min(areaDis)
             i = areaDis.index(minDis2Wall)
             orient2Wall = obj['orient'] - areaOrient[i] 
@@ -434,16 +425,14 @@ def prior(room):
                     o = Point([obj['translate'][0],obj['translate'][1]])
                     for win in windList:
                         w = Point([win['translate'][0],win['translate'][2]])
-                        disList.append(o.distance(w))
+                        l = math.sqrt((obj['translate'][0] - win['translate'][0]) ** 2 + (obj['translate'][2] - win['translate'][2]) ** 2)
+                        disList.append(l)
                     i = disList.index(min(disList))
                     nearestWin = windList[i]
                     derataTrans = list((np.array(nearestWin['translate']) - np.array(obj['translate'])) - np.array(obj2['relativeTrans']))
                     dertaTransSum = abs(derataTrans[0]) + abs(derataTrans[1]) + abs(derataTrans[2])
                     dertaRot = abs(nearestWin['rotate'][1] - obj['orient'] - obj2['orient0'])
                     total += (dertaTransSum + dertaRot)
-                    # print(modelId,nearestWin['translate'],obj['translate'],derataTrans)
-                    # print(modelId,nearestWin['rotate'][1],obj['orient'],dertaOrient)
-                    # print(total)
                     break
     return total
 

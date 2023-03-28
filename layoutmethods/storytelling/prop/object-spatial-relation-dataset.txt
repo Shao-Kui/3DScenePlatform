@@ -4,10 +4,6 @@ story-Bookcase_books; state[{origin,}:]; wall[{0.17752, 0.65908, 0.00000,}:]; st
 story-TeacherTable; state[{origin,}:]; wall[{1.81689, 1.86523, -1.57080,}:]; story wall; lyk
 story-TeacherChair; state[{origin,}:]; wall[{1.22223, 1.71046, 0.00000,}:]; story wall; lyk
 story-TeacherTribune; state[{origin,}:]; wall[{1.62141, 3.84192, 0.00000,}:]; story wall; lyk
-story-studentDesks1; state[{origin,}:]; wall[{3.73775, 4.09786, 1.57239,}:]; story wall; lyk
-story-studentDesks4-point; state[{origin,}:]; wall[{3.70268, 4.29732, 1.56239,}:]; story wall; lyk
-story-studentDesks2; state[{origin,}:]; wall[{3.87156, 4.12844, 1.57239,}:]; story wall; lyk
-story-studentDesks3; state[{origin,}:]; wall[{2.96875, 3.75619, 0.00159,}:]; story wall; lyk
 story-BookcaseBrokenB; state[{origin,}:]; wall[{0.14444, 3.24708, 0.00084,}:]; story wall; lyk
 story-BookcaseBrokenA; state[{origin,}:]; wall[{0.24405, 2.17203, -0.01317,}:]; story wall; lyk
 story-Fan; state[{origin,}:]; wall[{4.00000, 4.00000, -1.57080,}:]; story wall; lyk
@@ -16,18 +12,8 @@ story-Blackboard; state[{origin,}:]; gtrans[{story-TeacherTribune, 0.11907, -1.4
 story-Blackboard; state[{origin,}:]; gtrans[{story-Bookcase_books, 3.30191, -1.48834, 0.18094, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-TeacherTable; state[{origin,}:]; gtrans[{story-TeacherChair, -0.10644, 0.00000, -0.64301, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-TeacherTribune; state[{origin,}:]; gtrans[{story-TeacherTable, -2.34118, 0.00000, 0.24382, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks1, -0.30126, -1.48834, 4.10128, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks4-point, -0.33634, -1.48834, 5.78778, 3.13319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks2, -0.16745, -1.48834, 7.63949, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks3, -0.28282, -1.48834, 9.03467, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-studentDesks1; state[{origin,}:]; gtrans[{story-studentDesks4-point, 0.03777, 0.00000, -1.68644, 6.27319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-studentDesks4-point; state[{origin,}:]; gtrans[{story-studentDesks2, -0.18445, 0.00000, -1.85022, -6.27319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-studentDesks4-point; state[{origin,}:]; gtrans[{story-studentDesks3, -0.08081, -0.00000, -3.24632, -6.27319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Fan; state[{origin,}:]; gtrans[{story-studentDesks4-point, -0.29732, -2.66506, -0.16236, 3.13319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-BlackboardSmall; state[{origin,}:]; gtrans[{story-Map, 2.81056, -0.24940, -0.01924, -0.03121, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-BookcaseBrokenB; state[{origin,}:]; gtrans[{story-BookcaseBrokenA, 1.07497, -0.00000, 0.08085, 6.26917, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-BlackboardSmall; state[{origin,}:]; gtrans[{story-studentDesks4-point, 2.06177, -1.40337, 4.22026, 4.70448, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Map; state[{origin,}:]; gtrans[{story-studentDesks4-point, -0.61616, -1.15397, 4.26080, 4.73569, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-BlackboardSmall; state[{origin,}:]; gtrans[{story-Blackboard, -3.72618, 0.08497, 3.88682, 1.57130, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-Map; state[{origin,}:]; gtrans[{story-Blackboard, -6.41169, 0.33437, 4.10810, 1.60250, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-BookcaseBrokenB; state[{origin,}:]; gtrans[{story-Blackboard, -0.80193, 1.48834, 11.83864, 3.14075, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
@@ -44,4 +30,20 @@ story-ToileT_Urinals; state[{origin,}:]; wall[{0.24652, 1.91757, 0.00000,}:]; st
 story-MirrorAndSinks; state[{origin,}:]; gtrans[{story-MirrorandSink-point, 1.95967, 0.04776, -0.00000, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-ToileT_Urinals; state[{origin,}:]; gtrans[{story-Toilets, 0.18505, 0.00000, 2.41439, 3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
 story-Toilets; state[{origin,}:]; gtrans[{story-Toilet-point, 2.00642, 0.02276, -0.01268, -6.28000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
-story-Bench; state[{origin,}:]; wall[{0.19775, 1.68247, 0.00000,}:]; window[{0.32112, 0.04643, 1.52920, -0.31775, 1.65980, 1.35840, 0.00000,}:{2.86073, 2.84303, 1.52920, -0.31775, 1.51540, 1.35840, 0.00000,}:]; story wall wind; lyk
+story-studentDesks1; state[{origin,}:]; wall[{2.58153, 4.09786, 1.57239,}:]; story wall; lyk
+story-studentDesks2; state[{origin,}:]; wall[{2.61494, 4.12631, -1.56920,}:]; story wall; lyk
+story-studentDesks4-point; state[{origin,}:]; wall[{2.20039, 5.79961, 1.56239,}:]; story wall; lyk
+story-studentDesks3; state[{origin,}:]; wall[{2.40898, 5.59102, -1.56920,}:]; story wall; lyk
+story-studentDesks5; state[{origin,}:]; wall[{2.61128, 3.88972, -1.57080,}:]; story wall; lyk
+story-studentDesks6; state[{origin,}:]; wall[{2.32109, 3.95171, 1.57080,}:]; story wall; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks1, -1.45748, -1.48834, 4.10128, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks2, 1.34605, -1.48834, 4.12973, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks4-point, -1.83862, -1.48834, 5.96869, 3.13319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks3, 1.55201, -1.48834, 5.92067, -3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks5, -1.42773, -1.48834, 8.11370, -0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-Blackboard; state[{origin,}:]; gtrans[{story-studentDesks6, 1.63990, -1.48834, 8.05171, -0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-studentDesks1; state[{origin,}:]; gtrans[{story-studentDesks2, -2.80349, -0.00000, -0.03291, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-studentDesks4-point; state[{origin,}:]; gtrans[{story-studentDesks3, -3.39010, -0.00000, 0.07653, -6.27319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-studentDesks5; state[{origin,}:]; gtrans[{story-studentDesks6, 3.06763, -0.00000, -0.06200, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-studentDesks1; state[{origin,}:]; gtrans[{story-studentDesks4-point, 0.38411, 0.00000, -1.86680, 6.27319, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk
+story-studentDesks2; state[{origin,}:]; gtrans[{story-studentDesks1, 2.80349, 0.00000, 0.03291, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:{story-studentDesks4-point, 3.18759, 0.00000, -1.83389, 6.27319, 1.00000, 1.00000, 1.00000,origin,}:{story-studentDesks3, -0.20310, -0.00000, -1.79127, 0.00000, 1.00000, 1.00000, 1.00000,origin,}:{story-studentDesks6, -0.28760, -0.00000, -3.92244, 3.14000, 1.00000, 1.00000, 1.00000,origin,}:{story-studentDesks5, 2.78012, -0.00000, -3.97955, 3.14000, 1.00000, 1.00000, 1.00000,origin,}:]; story pairwise; lyk

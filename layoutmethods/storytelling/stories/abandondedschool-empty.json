@@ -1,1 +1,1011 @@
-{"origin": "abandondedschool", "id": "40_60", "bbox": {"min": [-8.0, 0, -6.0], "max": [8.0, 4.576642, 6.0]}, "up": [0, 1, 0], "front": [0, 0, 1], "rooms": [{"areaShape": [[8.0, 2.0], [-4.0, 2.0], [-4.0, -6.0], [8.0, -6.0]], "objList": [{"modelId": "story-WallInside_4m", "translate": [2.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, 0, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [0.0, 0.0, 1.749999], "max": [4.0, 4.576642, 2.250001]}, "surface": "floor"}, {"modelId": "story-WallInside_4m", "translate": [-4.0, 0, -4.0], "scale": [1, 1, 1], "rotate": [0, -1.5707963267948966, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [-3.7499990000000003, 0.0, -6.0], "max": [-4.250000999999999, 4.576642, -2.0]}, "surface": "floor"}, {"modelId": "story-WallInside_4m", "translate": [6.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, 0, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [4.0, 0.0, 1.749999], "max": [8.0, 4.576642, 2.250001]}, "surface": "floor"}, {"modelId": "story-WallInside_4m", "translate": [-4.0, 0, 0.0], "scale": [1, 1, 1], "rotate": [0, -1.5707963267948966, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [-3.7499990000000003, 0.0, -2.0], "max": [-4.250000999999999, 4.576642, 2.0]}, "surface": "floor"}, {"modelId": "story-WallInterior_DoorwayNarrow", "translate": [-2.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, 0, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, 0.0, -0.250002]}, "bbox": {"min": [-4.0, 0.0, 1.749998], "max": [0.0, 4.576642, 2.250001]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowSingle_B", "coarseSemantic": "Window", "translate": [2.0, 0, -6.0], "rotate": [0, -3.141592653589793, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.141064, 0.645414], "min": [-2.133644, -0.074205, -0.021991]}, "bbox": {"min": [4.133644, -0.074205, -5.978009], "max": [-0.20000000000000018, 5.141064, -6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowDouble_B", "coarseSemantic": "Window", "translate": [-2.0, 0, -6.0], "rotate": [0, -3.141592653589793, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.134136, 0.645414], "min": [-2.133644, -0.074101, -0.025233]}, "bbox": {"min": [0.13364399999999987, -0.074101, -5.974767], "max": [-4.2, 5.134136, -6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowDouble_B", "coarseSemantic": "Window", "translate": [6.0, 0, -6.0], "rotate": [0, -3.141592653589793, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.134136, 0.645414], "min": [-2.133644, -0.074101, -0.025233]}, "bbox": {"min": [8.133644, -0.074101, -5.974767], "max": [3.8, 5.134136, -6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [8.0, 0, 0.0], "rotate": [0, 1.5707963267948966, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [7.999999, -0.076641, 2.0], "max": [8.645413000000001, 5.141033, -1.9999999999999998]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [8.0, 0, -4.0], "rotate": [0, 1.5707963267948966, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [7.999999, -0.076641, -2.0], "max": [8.645413000000001, 5.141033, -6.0]}, "surface": "floor"}], "areaType": "earth", "layer": 1, "roomShapeBbox": {"max": [-3.7499990000000003, -5.978009], "min": [8.0, 1.749999]}}, {"areaShape": [[8.0, 6.0], [-8.0, 6.0], [-8.0, 2.0], [8.0, 2.0]], "objList": [{"modelId": "story-WallInside_4m", "translate": [2.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, -3.141592653589793, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [4.0, 0.0, 2.2500009999999997], "max": [0.0, 4.576642, 1.7499990000000003]}, "surface": "floor"}, {"modelId": "story-WallInside_4m", "translate": [6.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, -3.141592653589793, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [8.0, 0.0, 2.2500009999999997], "max": [4.0, 4.576642, 1.7499990000000003]}, "surface": "floor"}, {"modelId": "story-WallInterior_DoorwayNarrow", "translate": [-2.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, -3.141592653589793, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, 0.0, -0.250002]}, "bbox": {"min": [0.0, 0.0, 2.250002], "max": [-4.0, 4.576642, 1.7499990000000003]}, "surface": "floor"}, {"modelId": "story-WallInterior_DoorwayNarrow", "translate": [8.0, 0, 4.0], "scale": [1, 1, 1], "rotate": [0, 1.5707963267948966, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, 0.0, -0.250002]}, "bbox": {"min": [7.749998, 0.0, 6.0], "max": [8.250001000000001, 4.576642, 2.0]}, "surface": "floor"}, {"modelId": "story-WallInterior_DoorwayNarrow", "translate": [-6.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, -3.141592653589793, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, 0.0, -0.250002]}, "bbox": {"min": [-4.0, 0.0, 2.250002], "max": [-8.0, 4.576642, 1.7499990000000003]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowDouble_B", "coarseSemantic": "Window", "translate": [6.0, 0, 6.0], "rotate": [0, 0, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.134136, 0.645414], "min": [-2.133644, -0.074101, -0.025233]}, "bbox": {"min": [3.866356, -0.074101, 5.974767], "max": [8.2, 5.134136, 6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowDouble_B", "coarseSemantic": "Window", "translate": [-2.0, 0, 6.0], "rotate": [0, 0, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.134136, 0.645414], "min": [-2.133644, -0.074101, -0.025233]}, "bbox": {"min": [-4.133644, -0.074101, 5.974767], "max": [0.20000000000000018, 5.134136, 6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowDouble_B", "coarseSemantic": "Window", "translate": [-8.0, 0, 4.0], "rotate": [0, -1.5707963267948966, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.134136, 0.645414], "min": [-2.133644, -0.074101, -0.025233]}, "bbox": {"min": [-7.974767000000001, -0.074101, 1.8663560000000001], "max": [-8.645413999999999, 5.134136, 6.2]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [-6.0, 0, 6.0], "rotate": [0, 0, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [-8.0, -0.076641, 5.999999], "max": [-4.0, 5.141033, 6.645413]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [2.0, 0, 6.0], "rotate": [0, 0, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [0.0, -0.076641, 5.999999], "max": [4.0, 5.141033, 6.645413]}, "surface": "floor"}], "areaType": "earth", "layer": 1, "roomShapeBbox": {"max": [-7.974767000000001, 2.2500009999999997], "min": [7.749998, 5.999999]}}, {"areaShape": [[-4.0, 2.0], [-8.0, 2.0], [-8.0, -6.0], [-4.0, -6.0]], "objList": [{"modelId": "story-WallInside_4m", "translate": [-4.0, 0, -4.0], "scale": [1, 1, 1], "rotate": [0, 1.5707963267948966, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [-4.250001, 0.0, -2.0], "max": [-3.7499989999999994, 4.576642, -6.0]}, "surface": "floor"}, {"modelId": "story-WallInside_4m", "translate": [-4.0, 0, 0.0], "scale": [1, 1, 1], "rotate": [0, 1.5707963267948966, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, -0.0, -0.250001]}, "bbox": {"min": [-4.250001, 0.0, 2.0], "max": [-3.7499989999999994, 4.576642, -2.0]}, "surface": "floor"}, {"modelId": "story-WallInterior_DoorwayNarrow", "translate": [-6.0, 0, 2.0], "scale": [1, 1, 1], "rotate": [0, 0, 0], "format": "instancedMesh", "originBbox": {"max": [2.0, 4.576642, 0.250001], "min": [-2.0, 0.0, -0.250002]}, "bbox": {"min": [-8.0, 0.0, 1.749998], "max": [-4.0, 4.576642, 2.250001]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_WindowSingle_B", "coarseSemantic": "Window", "translate": [-6.0, 0, -6.0], "rotate": [0, -3.141592653589793, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.2, 5.141064, 0.645414], "min": [-2.133644, -0.074205, -0.021991]}, "bbox": {"min": [-3.866356, -0.074205, -5.978009], "max": [-8.2, 5.141064, -6.645414]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [-8.0, 0, 0.0], "rotate": [0, -1.5707963267948966, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [-7.999999000000001, -0.076641, -2.0], "max": [-8.645413, 5.141033, 2.0]}, "surface": "floor"}, {"modelId": "story-WallOutside_2f_4m_B", "translate": [-8.0, 0, -4.0], "rotate": [0, -1.5707963267948966, 0], "scale": [1, 1, 1], "format": "instancedMesh", "originBbox": {"max": [2.0, 5.141033, 0.645413], "min": [-2.0, -0.076641, -1e-06]}, "bbox": {"min": [-7.999999000000001, -0.076641, -6.0], "max": [-8.645413, 5.141033, -2.0]}, "surface": "floor"}], "areaType": "earth", "layer": 1, "roomShapeBbox": {"max": [-7.999999000000001, -5.978009], "min": [-4.250001, 1.749998]}}], "PerspectiveCamera": {"fov": 75, "focalLength": 35, "origin": [3.844714601184392, 11.368958769748657, -5.457170335769212], "rotate": [-1.1785676726317735, 2.8738218512181, -3.630564395893482e-17], "target": [2.6004070753669297, 4.59614379310194e-16, -0.9218553137943457], "roomId": 0, "up": [-0.24448981286940863, 0.38224877166513194, 0.8911288391493001]}, "canvas": {"width": 1600, "height": 1150}}
+{
+    "origin": "abandondedschool",
+    "id": "40_60",
+    "bbox": {
+        "min": [
+            -8.0,
+            0,
+            -6.0
+        ],
+        "max": [
+            8.0,
+            4.576642,
+            6.0
+        ]
+    },
+    "up": [
+        0,
+        1,
+        0
+    ],
+    "front": [
+        0,
+        0,
+        1
+    ],
+    "rooms": [
+        {
+            "areaShape": [
+                [
+                    8.0,
+                    2.0
+                ],
+                [
+                    -4.0,
+                    2.0
+                ],
+                [
+                    -4.0,
+                    -6.0
+                ],
+                [
+                    8.0,
+                    -6.0
+                ]
+            ],
+            "objList": [
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        2.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            0.0,
+                            1.749999
+                        ],
+                        "max": [
+                            4.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        6.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.0,
+                            0.0,
+                            1.749999
+                        ],
+                        "max": [
+                            8.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4.0,
+                        0,
+                        0.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7499990000000003,
+                            0.0,
+                            -2.0
+                        ],
+                        "max": [
+                            -4.250000999999999,
+                            4.576642,
+                            2.0
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4.0,
+                        0,
+                        -4.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7499990000000003,
+                            0.0,
+                            -6.0
+                        ],
+                        "max": [
+                            -4.250000999999999,
+                            4.576642,
+                            -2.0
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -2.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.0,
+                            0.0,
+                            1.749998
+                        ],
+                        "max": [
+                            0.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowSingle_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        2.0,
+                        0,
+                        -6.0
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.141064,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074205,
+                            -0.021991
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.133644,
+                            -0.074205,
+                            -5.978009
+                        ],
+                        "max": [
+                            -0.20000000000000018,
+                            5.141064,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -2.0,
+                        0,
+                        -6.0
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.13364399999999987,
+                            -0.074101,
+                            -5.974767
+                        ],
+                        "max": [
+                            -4.2,
+                            5.134136,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        6.0,
+                        0,
+                        -6.0
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            8.133644,
+                            -0.074101,
+                            -5.974767
+                        ],
+                        "max": [
+                            3.8,
+                            5.134136,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        8.0,
+                        0,
+                        0.0
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.999999,
+                            -0.076641,
+                            2.0
+                        ],
+                        "max": [
+                            8.645413000000001,
+                            5.141033,
+                            -1.9999999999999998
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        8.0,
+                        0,
+                        -4.0
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.999999,
+                            -0.076641,
+                            -2.0
+                        ],
+                        "max": [
+                            8.645413000000001,
+                            5.141033,
+                            -6.0
+                        ]
+                    },
+                    "surface": "floor"
+                }
+            ],
+            "areaType": "earth",
+            "layer": 1,
+            "roomShapeBbox": {
+                "max": [
+                    -3.7499990000000003,
+                    -5.978009
+                ],
+                "min": [
+                    8.0,
+                    1.749999
+                ]
+            }
+        },
+        {
+            "areaShape": [
+                [
+                    8.0,
+                    6.0
+                ],
+                [
+                    -8.0,
+                    6.0
+                ],
+                [
+                    -8.0,
+                    2.0
+                ],
+                [
+                    8.0,
+                    2.0
+                ]
+            ],
+            "objList": [
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        2.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.0,
+                            0.0,
+                            2.2500009999999997
+                        ],
+                        "max": [
+                            0.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        6.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            8.0,
+                            0.0,
+                            2.2500009999999997
+                        ],
+                        "max": [
+                            4.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -6.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.0,
+                            0.0,
+                            2.250002
+                        ],
+                        "max": [
+                            -8.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        8.0,
+                        0,
+                        4.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.749998,
+                            0.0,
+                            6.0
+                        ],
+                        "max": [
+                            8.250001000000001,
+                            4.576642,
+                            2.0
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -2.0,
+                        0,
+                        2.0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            0.0,
+                            2.250002
+                        ],
+                        "max": [
+                            -4.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        6.0,
+                        0,
+                        6.0
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            3.866356,
+                            -0.074101,
+                            5.974767
+                        ],
+                        "max": [
+                            8.2,
+                            5.134136,
+                            6.645414
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -2.0,
+                        0,
+                        6.0
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.133644,
+                            -0.074101,
+                            5.974767
+                        ],
+                        "max": [
+                            0.20000000000000018,
+                            5.134136,
+                            6.645414
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -8.0,
+                        0,
+                        4.0
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.974767000000001,
+                            -0.074101,
+                            1.8663560000000001
+                        ],
+                        "max": [
+                            -8.645413999999999,
+                            5.134136,
+                            6.2
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        -6.0,
+                        0,
+                        6.0
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -8.0,
+                            -0.076641,
+                            5.999999
+                        ],
+                        "max": [
+                            -4.0,
+                            5.141033,
+                            6.645413
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        2.0,
+                        0,
+                        6.0
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            -0.076641,
+                            5.999999
+                        ],
+                        "max": [
+                            4.0,
+                            5.141033,
+                            6.645413
+                        ]
+                    },
+                    "surface": "floor"
+                }
+            ],
+            "areaType": "earth",
+            "layer": 1,
+            "roomShapeBbox": {
+                "max": [
+                    -7.974767000000001,
+                    2.2500009999999997
+                ],
+                "min": [
+                    7.749998,
+                    5.999999
+                ]
+            }
+        }
+    ],
+    "PerspectiveCamera": {
+        "fov": 75,
+        "focalLength": 35,
+        "origin": [
+            3.844714601184392,
+            11.368958769748657,
+            -5.457170335769212
+        ],
+        "rotate": [
+            -1.1785676726317735,
+            2.8738218512181,
+            -3.630564395893482e-17
+        ],
+        "target": [
+            2.6004070753669297,
+            4.59614379310194e-16,
+            -0.9218553137943457
+        ],
+        "roomId": 0,
+        "up": [
+            -0.24448981286940863,
+            0.38224877166513194,
+            0.8911288391493001
+        ]
+    },
+    "canvas": {
+        "width": 1600,
+        "height": 1150
+    }
+}
