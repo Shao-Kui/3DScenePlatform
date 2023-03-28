@@ -4,7 +4,7 @@ import math
 from constraints import *
 from copy import deepcopy
 
-FILE = "stories/test3.json"
+FILE = "stories/test4.json"
 no_op_round = 0
 round = 0
 T = 2000
@@ -35,6 +35,8 @@ def conflict(cnt, bbox_max, bbox_min, i_num, j_num):
                 print(str(i_num[i]) + " " + str(j_num[i]) + "物体" + str(i_num[j]) + " " + str(j_num[j]) + "物体碰撞")
                 return True
     return False
+
+readSpatialRelationShip()
 
 #第一次读入初始化，约定初态scale=1，旋转值为-pi/2，0，pi/2，pi
 with open(FILE, "r", encoding="utf-8") as fp:
@@ -176,7 +178,7 @@ while (T > eps):
                         bbox_min[cnt - 1][0] > min(data_next["rooms"][i]["roomShapeBBox"]["max"][0], data_next["rooms"][i]["roomShapeBBox"]["min"][0]) and
                         bbox_max[cnt - 1][2] < max(data_next["rooms"][i]["roomShapeBBox"]["max"][1], data_next["rooms"][i]["roomShapeBBox"]["min"][1]) and
                         bbox_min[cnt - 1][2] > min(data_next["rooms"][i]["roomShapeBBox"]["max"][1], data_next["rooms"][i]["roomShapeBBox"]["min"][1])):
-                    print(str(i) + " " + str(j) + " 物体不在房间内")
+                    print(str(i) + " " + str(j) + " " + str(data_next["rooms"][i]["objList"][j]["modelId"]) + " 物体不在房间内")
                     flag = True
                     break
         if (flag):
