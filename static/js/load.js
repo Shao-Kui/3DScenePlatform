@@ -62,7 +62,7 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
     objectLoadingQueue[modelId] = [];
     let mtlurl = `/mtl/${modelId}`;
     let meshurl = `/mesh/${modelId}`;
-    if(format === 'obj'){
+    if(format === 'obj' || format === 'THInstancedObject'){
         let objLoader = new THREE.OBJLoader();
         let mtlLoader = new THREE.MTLLoader();
         mtlLoader.load(mtlurl, function (mCreator) {
@@ -134,6 +134,22 @@ const traverseMtlToOpacity = function (object, opacity = 0.6) {
 let refreshObjectFromCache = function(objToInsert){
     if(!(objToInsert.modelId in objectCache)) return;
     let object3dFull = objectCache[objToInsert.modelId].clone();
+    if (objToInsert.format ==="THInstancedObject") {
+        let instancedTransforms = objToInsert.instancedTransforms;
+        object3dFull = new THREE.Group();
+        objectCache[objToInsert.modelId].children.forEach(c => {
+            let mesh = new THREE.InstancedMesh(c.geometry, c.material, instancedTransforms.length);
+            for (let i = 0; i < instancedTransforms.length; ++i) {
+                const temp = new THREE.Object3D();
+                temp.position.set(instancedTransforms[i].translate[0], instancedTransforms[i].translate[1], instancedTransforms[i].translate[2]);
+                temp.rotation.set(instancedTransforms[i].rotate[0], instancedTransforms[i].rotate[1], instancedTransforms[i].rotate[2]);
+                temp.scale.set(instancedTransforms[i].scale[0], instancedTransforms[i].scale[1], instancedTransforms[i].scale[2]);
+                temp.updateMatrix();
+                mesh.setMatrixAt(i, temp.matrix);
+            }
+            object3dFull.add(mesh);
+        });
+    }
     let object3d;
     if(manager.renderManager.islod){
         object3d = new THREE.LOD();
@@ -422,6 +438,7 @@ const addAreaToScene = function(mesh, room){
     mesh.rotation.x = Math.PI * 0.5;
     mesh.scale.z = -1;
     if(room.layer){mesh.position.y = room.layer*0.02;}
+    mesh.userData = {'roomId': room.roomId};
     scene.add(mesh);
     areaList.push(mesh);
 }

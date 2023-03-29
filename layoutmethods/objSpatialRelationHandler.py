@@ -162,14 +162,14 @@ def searchMainModelId(mainModelId, lines):
             return eleDict
 
 if __name__ == '__main__':
-    fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'r')
+    fd = open("object-spatial-relation-dataset.txt", 'r')
     LINES = fd.readlines()
 
     data = []
     loadData(data, LINES)
-    #for i in data:
-        #for j in i:
-            #print(j, i[j])
-        #print('\n')
+    for i in data:
+        for j in i:
+            print(j, i[j])
+        print('\n')
 
     fd.close()
