@@ -54,7 +54,8 @@ with open("./layoutmethods/shelfarrangement/Matrix/csv.csv",mode="r",encoding="u
 # print(model_kind_dict)
 # print(kind_model_dict)
 
-MINDISTANCE = 20
+MINDISTANCE = 49
+MINDISTANCEFORWHERE = 100
 DISTANCEFUNCPARAM = 0.01
 KINDDIFPARAM = 0.001
 
@@ -72,16 +73,7 @@ class shelf(object):
     def addItem(self,item):
         self.item_list.append(item)
 
-class room(object):
-    shelf_list = []
-    exit_x = 0
-    exit_y = 0
-    entrance_x = 100
-    entrance_y = 0
-    def __init__(self,slist):
-        self.shelf_list = slist
-    def addShelf(self,shelf):
-        self.shelf_list.append(shelf)
+
 
 def distanceFunc(distancesquare):
     return math.exp(-DISTANCEFUNCPARAM*distancesquare)
@@ -91,6 +83,7 @@ def disForSameKind(distancesquare):
 
 def kindRecommand(room,shelfkey):
     shelf_list = []
+    is_entrance = True
     for obj in room['objList']:
         if obj["key"] == shelfkey:
             item_list = obj["commodities"]
@@ -100,6 +93,15 @@ def kindRecommand(room,shelfkey):
                     if i["modelId"] != "":
                         item_name_list.append(i["modelId"])    
             this_shelf = shelf(float(obj["translate"][0]),float(obj["translate"][2]),item_name_list,"")
+        elif obj["modelId"] == "cgaxis_models_32_24":
+            if is_entrance:
+                is_entrance = False
+                entrance_x = float(obj["translate"][0])
+                entrance_y = float(obj["translate"][2])
+            else:
+                exit_x = float(obj["translate"][0])
+                exit_y = float(obj["translate"][2])
+            
         elif obj["modelId"] == "shelf01":
             try:
                 kind = str(obj["shelfType"])
@@ -126,16 +128,18 @@ def kindRecommand(room,shelfkey):
         p_prior = priorMatrixforKind[idx]
         p_where = 1
 
-        # distance_to_entrance = (Room.entrance_x-x)*(Room.entrance_x-x) + (Room.entrance_y - y)*(Room.entrance_y - y)
-        # distance_to_exit = (Room.exit_x-x)*(Room.exit_x-x) + (Room.exit_y - y)*(Room.exit_y - y)
-        # if distance_to_entrance < MINDISTANCE:
-        #     p_where = whereMatrix[idx][0] * distanceFunc(distance_to_entrance) * p_where
-        # else:
-        #     p_where = p_where * 1
-        # if distance_to_exit < MINDISTANCE:
-        #     p_where = whereMatrix[idx][0] * distanceFunc(distance_to_exit) * p_where
-        # else:
-        #     p_where = p_where * 1
+        distance_to_entrance = (entrance_x-this_shelf.x)*(entrance_x-this_shelf.x) + (entrance_y - this_shelf.y)*(entrance_y - this_shelf.y)
+        distance_to_exit = (exit_x-this_shelf.x)*(exit_x-this_shelf.x) + (exit_y - this_shelf.y)*(exit_y - this_shelf.y)
+        if distance_to_entrance < MINDISTANCEFORWHERE:
+            print("in range")
+            p_where = whereMatrix[idx][0] * distanceFunc(distance_to_entrance) * p_where
+        else:
+            p_where = p_where * 1
+        if distance_to_exit < MINDISTANCEFORWHERE:
+            print("in range")
+            p_where = whereMatrix[idx][0] * distanceFunc(distance_to_exit) * p_where
+        else:
+            p_where = p_where * 1
         
         p_co = 1
         p_sim = 1
@@ -180,7 +184,7 @@ def kindRecommand(room,shelfkey):
         if max_p_where != min_p_where:
             p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
         p_list.append(p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i])
-        print(p_prior_list[i],p_co_list[i],p_sim_list[i],kindlist[i],p_list[i])
+        print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
 
     for i in range(len(p_list) - 1): 
         for j in range(len(p_list) - i - 1): 

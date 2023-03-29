@@ -300,6 +300,7 @@ const traverseSceneJson = function(sj){
     });
     sj.rooms.forEach(room => {
         room.objList.forEach(o => {
+            return;
             if(modelIds.get(o.modelId) > 10 || o.format === 'instancedMesh'){
                 o.format = 'instancedMesh';
                 loadObjectToCache(o.modelId, () => {
