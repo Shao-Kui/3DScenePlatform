@@ -329,10 +329,6 @@ def costFunction(sceneJson):
         a = accessibility(room)
         pr = prior(room)
         pw = pairwise(room)
-<<<<<<< Updated upstream
-        # print(v,a,pr,pw)
-=======
->>>>>>> Stashed changes
         total += 0.01 * v + 0.01 * a + pr + pw
     # prior(room)
         # total = total + connectivityNum(room,walls) + storyPointDetectable(story) + barrier(story,other)

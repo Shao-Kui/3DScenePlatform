@@ -215,6 +215,9 @@ while (T > eps):
             no_op_round = 0
             data_best = deepcopy(data_next)
             print(str(round) + "轮结束，新的优化")
+            cont = input("请选择是否停止，输入 y 或 n")
+            if (cont == 'y'):
+                break
         else:
             no_op_round += 1
             print(str(round) + "轮结束，相比上次优化")
