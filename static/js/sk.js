@@ -2047,18 +2047,21 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
 
     let instancedTransforms = [];
     let bbox = objectCache[modelId].boundingBox;
-    let commodityX = bbox.max.z - bbox.min.z; // rotate 90 degrees
-    let commodityY = bbox.max.y - bbox.min.y;
-    let commodityZ = bbox.max.x - bbox.min.x; // rotate 90 degrees
-    let nx = Math.max(1, Math.floor(1.2 / l / commodityX));
-    let ny = Math.max(1, Math.floor(0.4 / commodityY)); // optional
-    let nz = Math.max(1, Math.floor(0.45 / commodityZ));
+    let commodityWidth = bbox.max.z - bbox.min.z; // rotate 90 degrees
+    let commodityHeight = bbox.max.y - bbox.min.y;
+    let commodityDepth = bbox.max.x - bbox.min.x; // rotate 90 degrees
+    let phWidth = 1.2 * shelf.scale.x / l;
+    let phHeight = 0.4 * shelf.scale.y;
+    let phDepth = 0.45 * shelf.scale.z;
+    let nx = Math.max(1, Math.floor(phWidth / commodityWidth));
+    let ny = Math.max(1, Math.floor(phHeight / commodityHeight)); // optional
+    let nz = Math.max(1, Math.floor(phDepth / commodityDepth));
     for (let i = 0; i < nx; ++i) {
-        let offsetX = 1.2 * i / l / nx - 0.6 / l + commodityX / 2;
+        let offsetX = phWidth * i / nx + phWidth / nx / 2 - phWidth / 2;
         for (let j = 0; j < nz; ++j) {
-            let offsetZ = 0.4 * j / nz - 0.25 + commodityZ / 2;
+            let offsetZ = phDepth * j / nz - 0.25 * shelf.scale.z + commodityDepth / 2;
             for (let k = 0; k < ny; ++k) {
-                let offsetY = k * commodityY;
+                let offsetY = k * commodityHeight;
                 instancedTransforms.push({
                     'translate': [offsetX, offsetY, offsetZ],
                     'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees
@@ -2068,13 +2071,14 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
         }
     }
 
-    let phOffsetX = (0.6 / l) * (2 * c + 1) - 0.6;
-    let phoffsetY = shelfOffestY[r];
     let uuid = getNewUUID();
+    let offset = new THREE.Vector3(((0.6 / l) * (2 * c + 1) - 0.6) * shelf.scale.x, shelfOffestY[r] * shelf.scale.y, 0);
+    let axis = new THREE.Vector3(0, 1, 0);
+    offset.applyAxisAngle(axis, shelf.rotation.y);
     let transform = {
-        'translate': [shelf.position.x + phOffsetX, shelf.position.y + phoffsetY, shelf.position.z],
+        'translate': [shelf.position.x + offset.x, shelf.position.y + offset.y, shelf.position.z + offset.z],
         'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
-        'scale': [shelf.scale.x, shelf.scale.y, shelf.scale.z],
+        'scale': [1.0, 1.0, 1.0],
         'format': 'THInstancedObject'
     };
     let otherInfo = {
@@ -2102,7 +2106,7 @@ let yulin = function (shelfKey, newCommodities) {
 let clearDanglingCommodities = () => {
     for (let key in manager.renderManager.instanceKeyCache) {
         let inst = manager.renderManager.instanceKeyCache[key];
-        if (inst.userData.modelId.startsWith('yulin-')) {
+        if (inst.userData.modelId && inst.userData.modelId.startsWith('yulin-')) {
             let r = inst.userData.json.shelfRow;
             let c = inst.userData.json.shelfCol;
             let shelfKey = inst.userData.json.shelfKey;
@@ -2137,13 +2141,17 @@ let addShelfPlaceholdersByRow = function (shelfKey, r, l) {
         let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
         placeholder.name = phKey;
         let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
+        let offset = new THREE.Vector3(offsetX * shelf.scale.x, offsetY * shelf.scale.y, -0.025 * shelf.scale.z);
+        let axis = new THREE.Vector3(0, 1, 0);
+        offset.applyAxisAngle(axis, shelf.rotation.y);
         placeholder.position.copy(shelf.position);
-        placeholder.position.add(new THREE.Vector3(offsetX, offsetY, -0.025));
+        placeholder.position.add(offset);
         placeholder.rotation.copy(shelf.rotation);
         placeholder.scale.copy(shelf.scale);
         placeholder.userData.shelfKey = shelfKey;
         placeholder.userData.shelfRow = r;
         placeholder.userData.shelfCol = c;
+        placeholder.userData.type = 'object';
         scene.add(placeholder);
         manager.renderManager.instanceKeyCache[phKey] = placeholder;
     }
@@ -2177,6 +2185,9 @@ let changeShelfRow = function (shelfKey, r, newRow) {
     let l = newRow.length;
     for (let c = 0; c < l; ++c) {
         let modelId = newRow[c].modelId;
+        if (modelId === "") {
+            continue;
+        }
         if (newRow.length === oldRow.length && newRow[c].uuid) {
             continue;
         } else {
@@ -2266,10 +2277,10 @@ let shelfRowMinus = (r) => {
         if (oldRow[i].modelId === "") {
             let newRow = [...oldRow];
             newRow.splice(i, 1);
-            changeShelfRow(shelfKey, r, newRow);
             $(`#shelfRow${r}`).val(newRow.length);
             if (newRow.length <= 1) $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
             $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
+            changeShelfRow(shelfKey, r, newRow);
             return;
         }
     }
@@ -2280,11 +2291,11 @@ let shelfRowPlus = (r) => {
     let shelfKey = $("#shelfKey").text();
     let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
     let newRow = [...oldRow];
-    newRow.push({modelId:""});
-    changeShelfRow(shelfKey, r, newRow);
+    newRow.push({ modelId: '', uuid: '' });
     $(`#shelfRow${r}`).val(newRow.length);
     if (newRow.length >= 8) $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
     $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+    changeShelfRow(shelfKey, r, newRow);
 }
 
 let shelfRowSelect = (rows) => {
