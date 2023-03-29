@@ -144,7 +144,10 @@ while (T > eps):
                         dr1 = 0
                     data_next["rooms"][i]["objList"][j]["rotate"][1] += dr1
                     data_next["rooms"][i]["objList"][j]["rotate"][1] %= (2 * math.pi)
-                    data_next["rooms"][i]["objList"][j]["rotate"][1] -= math.pi
+                    if (data_next["rooms"][i]["objList"][j]["rotate"][1] > math.pi):
+                        data_next["rooms"][i]["objList"][j]["rotate"][1] -= 2 * math.pi
+                    if (data_next["rooms"][i]["objList"][j]["rotate"][1] < -math.pi / 2):
+                        data_next["rooms"][i]["objList"][j]["rotate"][1] += 2 * math.pi
                     if ("bbox" in data_next["rooms"][i]["objList"][j]):
                         y1 = data_next["rooms"][i]["objList"][j]["translate"][1] + data_next["rooms"][i]["objList"][j]["scale"][1] * data_next["rooms"][i]["objList"][j]["originBbox"]["max"][1]
                         y2 = data_next["rooms"][i]["objList"][j]["translate"][1] + data_next["rooms"][i]["objList"][j]["scale"][1] * data_next["rooms"][i]["objList"][j]["originBbox"]["min"][1]
