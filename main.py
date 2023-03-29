@@ -26,7 +26,8 @@ from subprocess import check_output
 import difflib
 import sk
 from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
-
+from layoutmethods.shelfarrangement.FinalComputing import kindRecommand
+from layoutmethods.shelfarrangement.FinalComputing import ModelRecommand
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_magic)
@@ -327,10 +328,8 @@ def shelfType():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
         shelfKey = json.loads(request.form.get('shelfKey'))
-        # TODO: replace with yulin's method
-        ret = ["水果", "蔬菜", "肉类", "混合"]
-        random.shuffle(ret)
-        return json.dumps(ret)
+        recommond_kind = kindRecommand(room,shelfKey)
+        return json.dumps(recommond_kind)
     return "shelfType"
 
 @app.route("/shelfPlaceholder", methods=['POST', 'GET'])
@@ -338,9 +337,9 @@ def shelfPlaceholder():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
         placeholders = json.loads(request.form.get('placeholders'))
-        # TODO: replace with yulin's method
-        yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
-        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in yulinModels]
+        recommand_model = ModelRecommand(room,placeholders)
+        # yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
+        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in recommand_model]
         return json.dumps(ret)
     return "shelfPlaceholder"
 

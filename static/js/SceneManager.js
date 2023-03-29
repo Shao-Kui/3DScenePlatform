@@ -3,6 +3,7 @@ const decideTransparencyByTexture = function(m, g, offset=0){
     if(m.transparent){return true;}
     if(!g.attributes.uv){return false;}
     if(!m.map){return false;}
+    if(!m.map.image){return false;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
@@ -87,12 +88,14 @@ const traverseObjSetting = function (object) {
         checkTextureOpacity(object.material, object.geometry);
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
+                object.material[i].reflectivity = 0;
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
             if(object.material.transparent){
+                object.material.reflectivity = 0;
                 object.castShadow = false;
             }
         }

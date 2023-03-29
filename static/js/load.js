@@ -404,7 +404,7 @@ const getShapeByAreaShape = function(areaShape, interior){
     return shape;
 }
 const waterparams = {
-    color: '#ffffff',
+    color: '#0040C0',
     scale: 1,
     flowX: 10,
     flowY: 10
@@ -427,20 +427,30 @@ const addAreaToScene = function(mesh, room){
 }
 const addAreaByRoom = function(room){
     let mesh;
+    let mesh2;
     if(room.areaType === 'water'){
-        mesh = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
+
+
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)),new THREE.MeshPhongMaterial({color:0xffffff}));
+        mesh2 = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
             color: waterparams.color,
             scale: waterparams.scale,
             flowDirection: new THREE.Vector2( waterparams.flowX, waterparams.flowY ),
             textureWidth: 128,
             textureHeight: 128
         });
-        // addAreaToScene(mesh, room);return;
+        //addAreaToScene(mesh, room);
+        addAreaToScene(mesh2, room);
+        return;
     }
     if(room.areaType === 'grass'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
-    }if(room.areaType === 'earth'){
+    }
+    if(room.areaType === 'earth'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/earth01.jpg')) ;
+    }
+    if(room.areaType=='garden'){
+        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/flower01.jpg')) ;
     }
     if(room.areaType === 'road1'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/road01.jpg')) ;
@@ -470,4 +480,9 @@ const refreshArea = function(scene_json){
         setTimeout(addAreaByRoom, areaCounter * 100, room);
         areaCounter++;
     });
+}
+
+
+const addWater = function(geometry){
+    const watermaterial = 1;
 }

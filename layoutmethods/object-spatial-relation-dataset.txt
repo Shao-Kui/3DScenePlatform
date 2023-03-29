@@ -38,4 +38,7 @@ sofa2teapoy; state[{origin,}:]; gtrans[{sofa2bed, -1.85123, 0.00000, 1.05443, 0.
 sofa2teapoy; state[{teapoy,}:]; gtrans[{sofa2bed, -1.85123, 0.00000, 1.05443, 0.65965, 1.00000, 1.00000, 1.00000,origin,}:]; wall[{0.53385, 1.97080, -0.00000,}:]; watchingtv; yl
 tvset2bed; state[{bed,}:]; gtrans[{nightstand2chair, -1.05878, 0.00000, 0.58548, 1.56000, 1.00000, 1.00000, 1.00000,chair,}:{nightstand2chair, 1.07779, 0.00000, 0.62394, 4.70000, 1.00000, 1.00000, 1.00000,chair,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithtv; yl
 tvset2bed; state[{bed,}:]; gtrans[{nightstand2chair, -1.05878, 0.00000, 0.58548, 1.56000, 1.00000, 1.00000, 1.00000,origin,}:{nightstand2chair, 1.07779, 0.00000, 0.62394, 4.70000, 1.00000, 1.00000, 1.00000,origin,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithtv; yl
-tvset2bed; state[{bed,}:]; gtrans[{table2shelf, 1.43613, 0.00000, -0.02894, -0.01000, 1.00000, 1.00000, 1.00000,shelf,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithshelf; ylcabinet2desk; state[{desk,}:]; wall[{0.29185, 0.80434, 0.00080,}:]; test; yl
+tvset2bed; state[{bed,}:]; gtrans[{table2shelf, 1.43613, 0.00000, -0.02894, -0.01000, 1.00000, 1.00000, 1.00000,shelf,}:]; wall[{0.27693, 1.85737, -0.00000,}:]; sleepwithshelf; ylcabinet2desk; state[{desk,}:]; wall[{0.29185, 0.80434, 0.00080,}:]; test; yl6804; scale[{1.08827, 1.00000, 1.13973,}:]; a; d
+6804; scale[{1.08827, 1.00000, 1.13973,}:]; 
+6804; scale[{1.08827, 1.00000, 1.13973,}:]; 
+1573; scale[{1.17354, 1.00000, 1.05591,}:]; gtrans[{10142, 1.03040, 0.00000, -0.89010, 0.00000, 0.91508, 1.00000, 1.41946,}:]; bedandnightstand; lyk

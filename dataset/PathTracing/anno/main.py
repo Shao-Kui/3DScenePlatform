@@ -18,10 +18,19 @@ def countFolder(thedir):
                 sj = json.load(f)
             for r in sj['rooms']:
                 for o in r['objList']:
-                    if 'format' not in o:
+                    mid = o['modelId']
+                    if not o['inDatabase']:
                         continue
-                    if o['inDatabase'] and o['format'] in ['glb', 'obj']:
+                    if os.path.exists(f'F:/3DIndoorScenePlatform/dataset/object/{mid}'):
                         count += 1
+                        continue
+                    if os.path.exists(f'F:/3DIndoorScenePlatform/static/dataset/object/{mid}'):
+                        count += 1
+                        continue
+                    # if 'format' not in o:
+                    #     continue
+                    # if o['inDatabase'] and o['format'] in ['glb', 'obj']:
+                    #     count += 1
             scenecount += 1
     return count, scenecount
 
