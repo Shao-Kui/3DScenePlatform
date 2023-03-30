@@ -13,8 +13,8 @@ with open("./layoutmethods/shelfarrangement/Matrix/modelId.txt", 'r') as fp:
 priorMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/priorMatrix.txt")
 priorMatrixforKind = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/priorMatrixforKind.txt")
 
-liftMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/liftMatrix.txt")
-liftMatrixforKind = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/liftMatrixforKind.txt")
+liftMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/confidentMatrix.txt")
+liftMatrixforKind = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/confidentMatrixforKind.txt")
 
 liftMatrixTest = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/liftMatrixTest.txt")
 liftMatrixforKindTest = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/liftMatrixforKindTest.txt")
@@ -55,7 +55,7 @@ with open("./layoutmethods/shelfarrangement/Matrix/csv.csv",mode="r",encoding="u
 # print(kind_model_dict)
 
 MINDISTANCE = 49
-MINDISTANCEFORWHERE = 100
+MINDISTANCEFORWHERE = 49
 DISTANCEFUNCPARAM = 0.01
 KINDDIFPARAM = 0.001
 
@@ -79,7 +79,7 @@ def distanceFunc(distancesquare):
     return math.exp(-DISTANCEFUNCPARAM*distancesquare)
 
 def disForSameKind(distancesquare):
-    return math.pow(2/3,1/distancesquare)
+    return math.pow(0.7,1/distancesquare)
 
 def kindRecommand(room,shelfkey):
     shelf_list = []
@@ -131,13 +131,11 @@ def kindRecommand(room,shelfkey):
         distance_to_entrance = (entrance_x-this_shelf.x)*(entrance_x-this_shelf.x) + (entrance_y - this_shelf.y)*(entrance_y - this_shelf.y)
         distance_to_exit = (exit_x-this_shelf.x)*(exit_x-this_shelf.x) + (exit_y - this_shelf.y)*(exit_y - this_shelf.y)
         if distance_to_entrance < MINDISTANCEFORWHERE:
-            print("in range")
             p_where = whereMatrix[idx][0] * distanceFunc(distance_to_entrance) * p_where
         else:
             p_where = p_where * 1
         if distance_to_exit < MINDISTANCEFORWHERE:
-            print("in range")
-            p_where = whereMatrix[idx][0] * distanceFunc(distance_to_exit) * p_where
+            p_where = whereMatrix[idx][1] * distanceFunc(distance_to_exit) * p_where
         else:
             p_where = p_where * 1
         
@@ -147,17 +145,16 @@ def kindRecommand(room,shelfkey):
             otherx = eachshelf.x
             othery = eachshelf.y
             distance = (otherx-this_shelf.x)*(otherx-this_shelf.x) + (othery - this_shelf.y)*(othery - this_shelf.y)
-            if(distance < MINDISTANCE):
-                dis = distanceFunc(distance)
-                if(eachshelf.decided_kind == "mix"):
-                    continue
-                idx_this = kindlist.index(eachshelf.decided_kind)
-                p_co = p_co * dis * liftMatrixforKindTest[idx_this][idx]
-                p_sim = p_sim * dis * similarityMatrixforKind[idx_this][idx]
-                if(idx_this == idx):
-                    p_prior = p_prior * disForSameKind(dis)
-                    p_co = p_co * disForSameKind(dis)
-                    p_sim = p_sim * disForSameKind(dis)
+            dis = distanceFunc(distance)
+            if(eachshelf.decided_kind == "mix"):
+                continue
+            idx_this = kindlist.index(eachshelf.decided_kind)
+            p_co = p_co * dis * liftMatrixforKindTest[idx_this][idx]
+            p_sim = p_sim * dis * similarityMatrixforKind[idx_this][idx]
+            if(idx_this == idx):
+                p_prior = p_prior * disForSameKind(dis)
+                p_co = p_co * disForSameKind(dis)
+                p_sim = p_sim * disForSameKind(dis)
        
         p_co_list.append(p_co)
         p_where_list.append(p_where)
@@ -260,6 +257,7 @@ def ModelRecommand(room,placeholders):
                         p_prior = p_prior * disForSameKind(dis)
                         p_co = p_co * disForSameKind(dis)
                         p_sim = p_sim * disForSameKind(dis)
+                        p_where = p_where *disForSameKind(dis)
         
         p_co_list.append(p_co)
         p_where_list.append(p_where)
