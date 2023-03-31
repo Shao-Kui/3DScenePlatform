@@ -1,0 +1,2935 @@
+{
+    "origin": "abandondedschool",
+    "id": "40_60",
+    "bbox": {
+        "min": [
+            -8,
+            0,
+            -6
+        ],
+        "max": [
+            8,
+            4.576642,
+            6
+        ]
+    },
+    "up": [
+        0,
+        1,
+        0
+    ],
+    "front": [
+        0,
+        0,
+        1
+    ],
+    "rooms": [
+        {
+            "areaShape": [
+                [
+                    8,
+                    2
+                ],
+                [
+                    -4,
+                    2
+                ],
+                [
+                    -4,
+                    -6
+                ],
+                [
+                    8,
+                    -6
+                ]
+            ],
+            "objList": [
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        6,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.0,
+                            0.0,
+                            1.749999
+                        ],
+                        "max": [
+                            8.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "811f7b22-41cc-4774-97f6-d4d683d09457",
+                    "cumulatedCount": 0
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        2,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            0.0,
+                            1.749999
+                        ],
+                        "max": [
+                            4.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "ad72e8c9-6cde-4719-a232-d7e05a1bb581",
+                    "cumulatedCount": 1
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7499990000000003,
+                            0.0,
+                            -2.0
+                        ],
+                        "max": [
+                            -4.250000999999999,
+                            4.576642,
+                            2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "4ccab7de-05a6-4427-91cd-87b7c90ed6ab",
+                    "cumulatedCount": 2
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4,
+                        0,
+                        -4
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7499990000000003,
+                            0.0,
+                            -6.0
+                        ],
+                        "max": [
+                            -4.250000999999999,
+                            4.576642,
+                            -2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "80dac1a4-67c1-41af-a847-4930fa70e595",
+                    "cumulatedCount": 3
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -2,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.0,
+                            0.0,
+                            1.749998
+                        ],
+                        "max": [
+                            0.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "e7f64447-dac1-4d5d-a607-5525b72200c9",
+                    "cumulatedCount": 0
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowSingle_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        2,
+                        0,
+                        -6
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.141064,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074205,
+                            -0.021991
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.133644,
+                            -0.074205,
+                            -5.978009
+                        ],
+                        "max": [
+                            -0.20000000000000018,
+                            5.141064,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "743d9d22-2f2e-4375-bf3d-713d6752d36a",
+                    "cumulatedCount": 0
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        6,
+                        0,
+                        -6
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            8.133644,
+                            -0.074101,
+                            -5.974767
+                        ],
+                        "max": [
+                            3.8,
+                            5.134136,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "c8214c7d-adef-4144-bd9d-5b92b8eced65",
+                    "cumulatedCount": 0
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -2,
+                        0,
+                        -6
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.13364399999999987,
+                            -0.074101,
+                            -5.974767
+                        ],
+                        "max": [
+                            -4.2,
+                            5.134136,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "366f01a6-7061-4033-802a-2bba4ac908d1",
+                    "cumulatedCount": 1
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        8,
+                        0,
+                        0
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.999999,
+                            -0.076641,
+                            2.0
+                        ],
+                        "max": [
+                            8.645413000000001,
+                            5.141033,
+                            -1.9999999999999998
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "86949baa-88bc-4070-b966-babe5407f9ab",
+                    "cumulatedCount": 0
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        8,
+                        0,
+                        -4
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.999999,
+                            -0.076641,
+                            -2.0
+                        ],
+                        "max": [
+                            8.645413000000001,
+                            5.141033,
+                            -6.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 0,
+                    "key": "21439a5f-f777-4fa5-88b1-8fe2f7803791",
+                    "cumulatedCount": 1
+                },
+                {
+                    "modelId": "story-TeacherChair",
+                    "translate": [
+                        2.2052788413878286,
+                        0,
+                        0.680048262500458
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "328c8102-21d1-480e-b17e-d50af9c8e975",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.2331293,
+                            0.9648563,
+                            0.2104937
+                        ],
+                        "min": [
+                            -0.2284164,
+                            -1.192093e-07,
+                            -0.2104937
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            1.9768624413878286,
+                            -1.192093e-07,
+                            0.469554562500458
+                        ],
+                        "max": [
+                            2.4384081413878285,
+                            0.9648563,
+                            0.890541962500458
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-TeacherTable",
+                    "translate": [
+                        0.8599494797692522,
+                        0,
+                        -0.41233706060444586
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "df483863-3d45-4a7a-9a02-52574b1af9a6",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.3500003,
+                            0.7,
+                            0.7500004
+                        ],
+                        "min": [
+                            -0.3500003,
+                            -1.959436e-17,
+                            -0.7500004
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.5099491797692521,
+                            -1.959436e-17,
+                            -1.1623374606044459
+                        ],
+                        "max": [
+                            1.2099497797692522,
+                            0.7,
+                            0.33766333939555415
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-TeacherTribune",
+                    "translate": [
+                        -3.259004409086981,
+                        0,
+                        -1.5797312700243307
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "380f1530-787a-403f-a520-e741c8b5cdf5",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.2987981,
+                            1.019998,
+                            0.3436818
+                        ],
+                        "min": [
+                            -0.2987981,
+                            -4.71063e-08,
+                            -0.343682
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.557802509086981,
+                            -4.71063e-08,
+                            -1.9234132700243307
+                        ],
+                        "max": [
+                            -2.9602063090869812,
+                            1.019998,
+                            -1.2360494700243307
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Bookcase",
+                    "translate": [
+                        2.7565368917276087,
+                        0,
+                        -1.871868170875362
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "9c8ca907-bd21-4455-9f1f-0d6e50122a74",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.1750003,
+                            1.8,
+                            0.5000002
+                        ],
+                        "min": [
+                            -0.1713368,
+                            -1.525879e-07,
+                            -0.5000002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            2.5852000917276086,
+                            -1.525879e-07,
+                            -2.371868370875362
+                        ],
+                        "max": [
+                            2.9315371917276085,
+                            1.8,
+                            -1.3718679708753618
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Bookcase_books",
+                    "translate": [
+                        6.461458786228709,
+                        0,
+                        -1.6133560094309907
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "9e5ac3fb-c65b-4ea2-b29c-d30796592c0b",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.5400001,
+                            1.8,
+                            0.2243368
+                        ],
+                        "min": [
+                            -0.4600001,
+                            -1.591446e-07,
+                            -0.1220002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            6.001458686228709,
+                            -1.591446e-07,
+                            -1.7353562094309907
+                        ],
+                        "max": [
+                            7.0014588862287095,
+                            1.8,
+                            -1.3890192094309906
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-BookcaseBrokenA",
+                    "translate": [
+                        0.18216586164869053,
+                        0,
+                        -0.48455569305034185
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "04df4f5f-5104-4809-8962-8d9d0724791a",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.1710003,
+                            1.800435,
+                            0.5239739
+                        ],
+                        "min": [
+                            -0.1753369,
+                            0.0,
+                            -0.5200002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.00682896164869054,
+                            0.0,
+                            -1.004555893050342
+                        ],
+                        "max": [
+                            0.3531661616486905,
+                            1.800435,
+                            0.03941820694965814
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-ArchiveDrawers-point",
+                    "translate": [
+                        0.005978472293696413,
+                        0,
+                        -5.122354366111204
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "84607eda-8999-4364-ba76-490e34141d83",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.6099057,
+                            0.9999511,
+                            0.4248666
+                        ],
+                        "min": [
+                            -0.6,
+                            -7.717628e-09,
+                            -0.2
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -0.5940215277063036,
+                            -7.717628e-09,
+                            -5.322354366111204
+                        ],
+                        "max": [
+                            0.6158841722936964,
+                            0.9999511,
+                            -4.697487766111204
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-studentDesks1",
+                    "translate": [
+                        -0.46655109925674143,
+                        0,
+                        -3.8391131948078705
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "49a94135-d692-4423-860f-40c152af37e5",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            3.187442,
+                            0.7867525,
+                            0.5267325
+                        ],
+                        "min": [
+                            -3.135684,
+                            -0.003236413,
+                            -0.7152971
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.6022350992567413,
+                            -0.003236413,
+                            -4.55441029480787
+                        ],
+                        "max": [
+                            2.7208909007432585,
+                            0.7867525,
+                            -3.3123806948078705
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-studentDesks2",
+                    "translate": [
+                        4.762778649004634,
+                        0,
+                        -0.6174177832097678
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "d07b4ecb-cbc2-4c77-b331-6e5f5367ddab",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            3.177332,
+                            0.7865054,
+                            0.7729043
+                        ],
+                        "min": [
+                            -3.117988,
+                            -0.003237545,
+                            -0.3443688
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            1.644790649004634,
+                            -0.003237545,
+                            -0.9617865832097678
+                        ],
+                        "max": [
+                            7.940110649004634,
+                            0.7865054,
+                            0.15548651679023218
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-studentDesks3",
+                    "translate": [
+                        4.689319729744344,
+                        0,
+                        -5.211762933831452
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "1b35e655-98ab-4e1a-9fd6-69a7c7434d84",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            2.870682,
+                            0.7865053,
+                            0.5390836
+                        ],
+                        "min": [
+                            -3.097185,
+                            -7.713109e-08,
+                            -0.4395178
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            1.5921347297443442,
+                            -7.713109e-08,
+                            -5.651280733831452
+                        ],
+                        "max": [
+                            7.560001729744345,
+                            0.7865053,
+                            -4.672679333831453
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Blackboard",
+                    "translate": [
+                        1.6531649576492562,
+                        2.288321,
+                        1.749999
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "bf982328-60ea-46c2-9e3b-139e68839266",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            2.5,
+                            0.65,
+                            0.148
+                        ],
+                        "min": [
+                            -2.5,
+                            -0.65,
+                            0.007999972
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.153164957649256,
+                            1.638321,
+                            1.7419990279999997
+                        ],
+                        "max": [
+                            -0.8468350423507438,
+                            2.9383209999999997,
+                            1.6019990000000004
+                        ]
+                    },
+                    "surface": "wall"
+                },
+                {
+                    "modelId": "story-studentDesks4-point",
+                    "translate": [
+                        -0.4972767727448928,
+                        0,
+                        -2.5179727949176662
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "55ccfa35-6769-480a-a7c0-c4478fa6d64a",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            3.006076,
+                            0.7865053,
+                            0.4737604
+                        ],
+                        "min": [
+                            -3.248703,
+                            -4.860636e-08,
+                            -0.7411928
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7459797727448927,
+                            -4.860636e-08,
+                            -3.259165594917666
+                        ],
+                        "max": [
+                            2.5087992272551074,
+                            0.7865053,
+                            -2.044212394917666
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-BlackboardSmall",
+                    "translate": [
+                        -3.7499989999999994,
+                        2.288321,
+                        -0.3689120073813479
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "6011d14e-68e4-4fcc-8de7-687f6f49c8c5",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            1.0,
+                            0.65,
+                            0.148
+                        ],
+                        "min": [
+                            -1.0,
+                            -0.65,
+                            0.007999972
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.7419990279999995,
+                            1.638321,
+                            0.6310879926186521
+                        ],
+                        "max": [
+                            -3.6019989999999993,
+                            2.9383209999999997,
+                            -1.3689120073813479
+                        ]
+                    },
+                    "surface": "wall"
+                },
+                {
+                    "modelId": "story-Map",
+                    "translate": [
+                        5.405578341979391,
+                        2.288321,
+                        1.749999
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "c1f90051-32c0-47b6-853f-4e61dc1ffe39",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            1.00217,
+                            0.6614146,
+                            0.2777163
+                        ],
+                        "min": [
+                            -1.002117,
+                            -0.6613667,
+                            0.01020732
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            6.407695341979391,
+                            1.6269543,
+                            1.73979168
+                        ],
+                        "max": [
+                            4.403408341979391,
+                            2.9497356,
+                            1.4722827
+                        ]
+                    },
+                    "surface": "wall"
+                },
+                {
+                    "modelId": "story-BookcaseBrokenB",
+                    "translate": [
+                        7.686145864754334,
+                        0,
+                        -3.448440033905917
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 0,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "95ca2771-de03-479a-ae3d-d2496d32af20",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.2010003,
+                            1.800249,
+                            0.5290002
+                        ],
+                        "min": [
+                            -0.2027426,
+                            -5.960464e-08,
+                            -0.5144827
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.483403264754334,
+                            -5.960464e-08,
+                            -3.9629227339059168
+                        ],
+                        "max": [
+                            7.887146164754333,
+                            1.800249,
+                            -2.919439833905917
+                        ]
+                    },
+                    "surface": "floor"
+                }
+            ],
+            "areaType": "earth",
+            "layer": 1,
+            "roomShapeBBox": {
+                "max": [
+                    -3.7499990000000003,
+                    -5.978009
+                ],
+                "min": [
+                    8.0,
+                    1.749999
+                ]
+            },
+            "roomId": 0,
+            "wallShapes": [
+                [
+                    [
+                        8,
+                        1.749999
+                    ],
+                    [
+                        0,
+                        1.749999
+                    ]
+                ],
+                [
+                    [
+                        -3.7499989999999994,
+                        2
+                    ],
+                    [
+                        -3.7499990000000003,
+                        -6
+                    ]
+                ],
+                [
+                    [
+                        7.999999,
+                        -6
+                    ],
+                    [
+                        7.999999000000001,
+                        2
+                    ]
+                ],
+                [
+                    [
+                        0,
+                        1.7499989999999999
+                    ],
+                    [
+                        8,
+                        1.7499990000000003
+                    ]
+                ],
+                [
+                    [
+                        -3.7499990000000003,
+                        -6
+                    ],
+                    [
+                        -3.7499989999999994,
+                        2
+                    ]
+                ]
+            ]
+        },
+        {
+            "areaShape": [
+                [
+                    8,
+                    6
+                ],
+                [
+                    -8,
+                    6
+                ],
+                [
+                    -8,
+                    2
+                ],
+                [
+                    8,
+                    2
+                ]
+            ],
+            "objList": [
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        6,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            8.0,
+                            0.0,
+                            2.2500009999999997
+                        ],
+                        "max": [
+                            4.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "67fd8272-89dd-4ffa-b85c-1d65c7806373",
+                    "cumulatedCount": 4
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        2,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            4.0,
+                            0.0,
+                            2.2500009999999997
+                        ],
+                        "max": [
+                            0.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "e96fd46a-b329-4f23-8fae-981c369a592b",
+                    "cumulatedCount": 5
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -6,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.0,
+                            0.0,
+                            2.250002
+                        ],
+                        "max": [
+                            -8.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "76b07b1a-3de2-45f1-8a8a-f4a0da530ab2",
+                    "cumulatedCount": 1
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        8,
+                        0,
+                        4
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            7.749998,
+                            0.0,
+                            6.0
+                        ],
+                        "max": [
+                            8.250001000000001,
+                            4.576642,
+                            2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "33d39211-6a69-4b7e-9644-14b40725c08d",
+                    "cumulatedCount": 2
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -2,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            0.0,
+                            2.250002
+                        ],
+                        "max": [
+                            -4.0,
+                            4.576642,
+                            1.7499990000000003
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "0b42df76-336b-4cd7-80d1-6fb68cb956dc",
+                    "cumulatedCount": 3
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -8,
+                        0,
+                        4
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.974767000000001,
+                            -0.074101,
+                            1.8663560000000001
+                        ],
+                        "max": [
+                            -8.645413999999999,
+                            5.134136,
+                            6.2
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "1499887b-a01c-4fef-a31b-04b9350f7c04",
+                    "cumulatedCount": 2
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        6,
+                        0,
+                        6
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            3.866356,
+                            -0.074101,
+                            5.974767
+                        ],
+                        "max": [
+                            8.2,
+                            5.134136,
+                            6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "cea71bc6-ef36-4295-b8fa-903722af801f",
+                    "cumulatedCount": 3
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowDouble_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -2,
+                        0,
+                        6
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.134136,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074101,
+                            -0.025233
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.133644,
+                            -0.074101,
+                            5.974767
+                        ],
+                        "max": [
+                            0.20000000000000018,
+                            5.134136,
+                            6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "1b2ca093-e601-4f9b-bb06-dd79d549ca19",
+                    "cumulatedCount": 4
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        -6,
+                        0,
+                        6
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -8.0,
+                            -0.076641,
+                            5.999999
+                        ],
+                        "max": [
+                            -4.0,
+                            5.141033,
+                            6.645413
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "ae159ecd-2bbd-45f2-84f1-9b230081006b",
+                    "cumulatedCount": 2
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        2,
+                        0,
+                        6
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            0.0,
+                            -0.076641,
+                            5.999999
+                        ],
+                        "max": [
+                            4.0,
+                            5.141033,
+                            6.645413
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 1,
+                    "key": "1e7833f4-7e1a-4527-82de-3adfd5d23ed6",
+                    "cumulatedCount": 3
+                },
+                {
+                    "modelId": "story-Bench",
+                    "translate": [
+                        -6.496901865995019,
+                        0.02000000000000103,
+                        4.642318063201428
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "a78bc02d-1672-4ecc-8285-a4c3b26c185d",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.9968053,
+                            0.4452397,
+                            0.1661342
+                        ],
+                        "min": [
+                            -0.9968053,
+                            -1.147975e-08,
+                            -0.1661342
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.493707165995019,
+                            0.01999998852025103,
+                            4.4761838632014275
+                        ],
+                        "max": [
+                            -5.500096565995019,
+                            0.46523970000000103,
+                            4.808452263201428
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Bench",
+                    "translate": [
+                        -1.162784210540181,
+                        0.019999999999999282,
+                        4.758911408168232
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "f55cf4de-10d6-4e82-b4ef-0bb62f42ded1",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.9968053,
+                            0.4452397,
+                            0.1661342
+                        ],
+                        "min": [
+                            -0.9968053,
+                            -1.147975e-08,
+                            -0.1661342
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -2.1595895105401812,
+                            0.01999998852024928,
+                            4.592777208168232
+                        ],
+                        "max": [
+                            -0.1659789105401811,
+                            0.4652396999999993,
+                            4.925045608168232
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Bench",
+                    "translate": [
+                        6.220053703309419,
+                        0.020000000000001187,
+                        5.347353513935145
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "fc43e85c-443b-4ae7-8db8-69bf47529335",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.9968053,
+                            0.4452397,
+                            0.1661342
+                        ],
+                        "min": [
+                            -0.9968053,
+                            -1.147975e-08,
+                            -0.1661342
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            5.223248403309419,
+                            0.019999988520251186,
+                            5.181219313935145
+                        ],
+                        "max": [
+                            7.216859003309419,
+                            0.4652397000000012,
+                            5.513487713935145
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-CardboardBoxes",
+                    "translate": [
+                        -4.872316163209687,
+                        0.020000000000000795,
+                        3.574814944421513
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "9cc87d9f-d156-4882-85f6-0a3b72130736",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.558,
+                            0.7491254,
+                            0.3833876
+                        ],
+                        "min": [
+                            -0.547,
+                            -6.480928e-09,
+                            -0.3882549
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -5.419316163209687,
+                            0.019999993519072796,
+                            3.1865600444215127
+                        ],
+                        "max": [
+                            -4.314316163209687,
+                            0.7691254000000008,
+                            3.9582025444215128
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-CardboardBoxes",
+                    "translate": [
+                        -4.142666820479274,
+                        0.020000000000000906,
+                        4.077087550435283
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "58d8c6a3-d3a6-45bd-be79-cd1108ee5aec",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.558,
+                            0.7491254,
+                            0.3833876
+                        ],
+                        "min": [
+                            -0.547,
+                            -6.480928e-09,
+                            -0.3882549
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.689666820479274,
+                            0.019999993519072907,
+                            3.6888326504352826
+                        ],
+                        "max": [
+                            -3.584666820479274,
+                            0.769125400000001,
+                            4.460475150435283
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-CardboardBoxes-point",
+                    "translate": [
+                        -3.1475687110598396,
+                        0.020000000000000656,
+                        2.9568575860512545
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "f3e144cc-2ec2-4e4e-bb91-5c0bdd5b1ccc",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.752,
+                            0.7331254,
+                            0.2972664
+                        ],
+                        "min": [
+                            -0.547,
+                            -6.480928e-09,
+                            -0.3312548
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.6945687110598397,
+                            0.019999993519072657,
+                            2.6256027860512545
+                        ],
+                        "max": [
+                            -2.3955687110598394,
+                            0.7531254000000007,
+                            3.2541239860512543
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Lockers",
+                    "translate": [
+                        -7.219679179686519,
+                        0.020000000000000642,
+                        2.885343109327392
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "076f1b8f-048c-4d8d-8d27-4602a7d54b39",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.885,
+                            1.7,
+                            0.4912888
+                        ],
+                        "min": [
+                            -0.8649983,
+                            -1.244764e-08,
+                            -0.2106812
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -8.084677479686519,
+                            0.019999987552360644,
+                            2.6746619093273916
+                        ],
+                        "max": [
+                            -6.334679179686519,
+                            1.7200000000000006,
+                            3.3766319093273918
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Locker-point",
+                    "translate": [
+                        0.31651513186250035,
+                        0.02000000000000068,
+                        3.180879067826047
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 1,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "0bb249e8-9534-42d3-b995-7490f816e7e6",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            1.144438,
+                            1.737,
+                            1.345358
+                        ],
+                        "min": [
+                            -1.263999,
+                            0.0346982,
+                            -0.9416835
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -0.9474838681374997,
+                            0.05469820000000068,
+                            2.239195567826047
+                        ],
+                        "max": [
+                            1.4609531318625004,
+                            1.7570000000000008,
+                            4.526237067826047
+                        ]
+                    },
+                    "surface": "floor"
+                }
+            ],
+            "areaType": "earth",
+            "layer": 1,
+            "roomShapeBBox": {
+                "max": [
+                    -7.974767000000001,
+                    2.2500009999999997
+                ],
+                "min": [
+                    7.749998,
+                    5.999999
+                ]
+            },
+            "roomId": 1,
+            "wallShapes": [
+                [
+                    [
+                        0,
+                        2.250001
+                    ],
+                    [
+                        8,
+                        2.250001
+                    ]
+                ],
+                [
+                    [
+                        0,
+                        2.2500009999999997
+                    ],
+                    [
+                        8,
+                        2.250001
+                    ]
+                ],
+                [
+                    [
+                        -4,
+                        5.999999
+                    ],
+                    [
+                        -8,
+                        5.999999
+                    ]
+                ],
+                [
+                    [
+                        4,
+                        5.999999
+                    ],
+                    [
+                        0,
+                        5.999999
+                    ]
+                ]
+            ]
+        },
+        {
+            "areaShape": [
+                [
+                    -4,
+                    2
+                ],
+                [
+                    -8,
+                    2
+                ],
+                [
+                    -8,
+                    -6
+                ],
+                [
+                    -4,
+                    -6
+                ]
+            ],
+            "objList": [
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4,
+                        0,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.250001,
+                            0.0,
+                            2.0
+                        ],
+                        "max": [
+                            -3.7499989999999994,
+                            4.576642,
+                            -2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "27d341f1-7632-4031-9b96-56081db88ed7",
+                    "cumulatedCount": 6
+                },
+                {
+                    "modelId": "story-WallInside_4m",
+                    "translate": [
+                        -4,
+                        0,
+                        -4
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        1.5707963267948966,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.0,
+                            -0.250001
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -4.250001,
+                            0.0,
+                            -2.0
+                        ],
+                        "max": [
+                            -3.7499989999999994,
+                            4.576642,
+                            -6.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "037849a8-713a-4896-9ec9-1f59e7086acd",
+                    "cumulatedCount": 7
+                },
+                {
+                    "modelId": "story-WallInterior_DoorwayNarrow",
+                    "translate": [
+                        -6,
+                        0,
+                        2
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            4.576642,
+                            0.250001
+                        ],
+                        "min": [
+                            -2.0,
+                            0.0,
+                            -0.250002
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -8.0,
+                            0.0,
+                            1.749998
+                        ],
+                        "max": [
+                            -4.0,
+                            4.576642,
+                            2.250001
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "915a5917-0b95-4b5d-9f40-b8c5ff98348d",
+                    "cumulatedCount": 4
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_WindowSingle_B",
+                    "coarseSemantic": "Window",
+                    "translate": [
+                        -6,
+                        0,
+                        -6
+                    ],
+                    "rotate": [
+                        0,
+                        -3.141592653589793,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.2,
+                            5.141064,
+                            0.645414
+                        ],
+                        "min": [
+                            -2.133644,
+                            -0.074205,
+                            -0.021991
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -3.866356,
+                            -0.074205,
+                            -5.978009
+                        ],
+                        "max": [
+                            -8.2,
+                            5.141064,
+                            -6.645414
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "8d50f986-22fe-4c22-bcd0-029678ec9684",
+                    "cumulatedCount": 1
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        -8,
+                        0,
+                        -4
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.999999000000001,
+                            -0.076641,
+                            -6.0
+                        ],
+                        "max": [
+                            -8.645413,
+                            5.141033,
+                            -2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "414d0a0c-bc75-48cf-9cab-a7c05f2705a0",
+                    "cumulatedCount": 4
+                },
+                {
+                    "modelId": "story-WallOutside_2f_4m_B",
+                    "translate": [
+                        -8,
+                        0,
+                        0
+                    ],
+                    "rotate": [
+                        0,
+                        -1.5707963267948966,
+                        0
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "format": "instancedMesh",
+                    "originBbox": {
+                        "max": [
+                            2.0,
+                            5.141033,
+                            0.645413
+                        ],
+                        "min": [
+                            -2.0,
+                            -0.076641,
+                            -1e-06
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.999999000000001,
+                            -0.076641,
+                            -2.0
+                        ],
+                        "max": [
+                            -8.645413,
+                            5.141033,
+                            2.0
+                        ]
+                    },
+                    "surface": "floor",
+                    "roomId": 2,
+                    "key": "dd6d6f77-4381-40b8-82d4-bc7e69ac6016",
+                    "cumulatedCount": 5
+                },
+                {
+                    "modelId": "story-ToileT_Urinals",
+                    "translate": [
+                        -7.0984424982653715,
+                        0.019999999999999282,
+                        -3.2296289985474895
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 2,
+                    "rotate": [
+                        0,
+                        1.572453572878896,
+                        0
+                    ],
+                    "orient": 1.572453572878896,
+                    "key": "8cd3bd81-3213-43bb-8e02-95179b029cf1",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            1.687218,
+                            1.215571,
+                            0.2179986
+                        ],
+                        "min": [
+                            -1.683527,
+                            -1.900341e-05,
+                            -0.2170786
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.312730782915154,
+                            0.019980996589999283,
+                            -1.545744557925505
+                        ],
+                        "max": [
+                            -6.883240331771459,
+                            1.2355709999999993,
+                            -4.917205958766575
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-MirrorandSink-point",
+                    "translate": [
+                        -6.228138304933597,
+                        0.020000000000000115,
+                        0.5110779843622257
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 2,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "555a64c0-6db4-4fb1-93d8-6cdfd69be94c",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            0.2750049,
+                            1.803,
+                            0.4619448
+                        ],
+                        "min": [
+                            -0.2750048,
+                            0.159301,
+                            0.01181378
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -6.503143104933597,
+                            0.1793010000000001,
+                            0.5228917643622257
+                        ],
+                        "max": [
+                            -5.953133404933597,
+                            1.823,
+                            0.9730227843622257
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Toilets",
+                    "translate": [
+                        -5.691391777912413,
+                        0.019999999999999712,
+                        -1.29662227086123
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 2,
+                    "rotate": [
+                        0,
+                        1.5636097459226044,
+                        0
+                    ],
+                    "orient": 1.5636097459226044,
+                    "key": "1ebbd138-8e52-42a5-a7f4-f26f77cd6697",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            1.56718,
+                            2.346939,
+                            0.7916977
+                        ],
+                        "min": [
+                            -1.516235,
+                            -0.009946823,
+                            -1.35
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.052253368028422,
+                            0.010053176999999712,
+                            0.20987177418904102
+                        ],
+                        "max": [
+                            -4.888451953343418,
+                            2.3669389999999995,
+                            -2.8580722504335516
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-Toilet-point",
+                    "translate": [
+                        -5.743817686974544,
+                        0.019999999999999095,
+                        -4.0785975874473674
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 2,
+                    "rotate": [
+                        0,
+                        1.5681722183675613,
+                        0
+                    ],
+                    "orient": 1.5681722183675613,
+                    "key": "500a9150-0ba4-4958-b70f-54c0c473f78a",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "cumulatedCount": 0,
+                    "originBbox": {
+                        "max": [
+                            0.5321798,
+                            2.346939,
+                            0.7629811
+                        ],
+                        "min": [
+                            -0.5275537,
+                            -0.009946823,
+                            -1.35
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.0951973954855845,
+                            0.010053176999999094,
+                            -3.554588246110491
+                        ],
+                        "max": [
+                            -4.979442718000659,
+                            2.366938999999999,
+                            -4.608773412331361
+                        ]
+                    },
+                    "surface": "floor"
+                },
+                {
+                    "modelId": "story-MirrorAndSinks",
+                    "translate": [
+                        -5.996977044320491,
+                        0.020000000000000243,
+                        1.0924802727443002
+                    ],
+                    "scale": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "roomId": 2,
+                    "rotate": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "orient": 0,
+                    "key": "8ab0fc27-a685-482e-81ba-f17429252ed0",
+                    "format": "obj",
+                    "startState": "origin",
+                    "isSceneObj": true,
+                    "inDatabase": true,
+                    "originBbox": {
+                        "max": [
+                            1.275005,
+                            1.803,
+                            0.4619448
+                        ],
+                        "min": [
+                            -1.275005,
+                            0.159301,
+                            0.01181378
+                        ]
+                    },
+                    "bbox": {
+                        "min": [
+                            -7.271982044320491,
+                            0.17930100000000024,
+                            1.1042940527443001
+                        ],
+                        "max": [
+                            -4.7219720443204904,
+                            1.8230000000000002,
+                            1.5544250727443
+                        ]
+                    },
+                    "surface": "floor"
+                }
+            ],
+            "areaType": "earth",
+            "layer": 1,
+            "roomShapeBBox": {
+                "max": [
+                    -7.999999000000001,
+                    -5.978009
+                ],
+                "min": [
+                    -4.250001,
+                    1.749998
+                ]
+            },
+            "roomId": 2,
+            "wallShapes": [
+                [
+                    [
+                        -4.250001,
+                        -6
+                    ],
+                    [
+                        -4.250000999999999,
+                        2
+                    ]
+                ],
+                [
+                    [
+                        -4.250001,
+                        -6
+                    ],
+                    [
+                        -4.250000999999999,
+                        2
+                    ]
+                ],
+                [
+                    [
+                        -7.999999,
+                        2
+                    ],
+                    [
+                        -7.999999000000001,
+                        -6
+                    ]
+                ]
+            ]
+        }
+    ],
+    "PerspectiveCamera": {
+        "fov": 75,
+        "focalLength": 35,
+        "origin": [
+            7.587484073426722,
+            11.976587141711455,
+            4.348123133067094
+        ],
+        "rotate": [
+            -0.7020766620964314,
+            1.1528279128116035,
+            1.4541179756102618e-16
+        ],
+        "target": [
+            -5.352941006961995,
+            4.614417466628056e-18,
+            -1.3992115426102916
+        ],
+        "roomId": 1,
+        "up": [
+            -0.5902108198233741,
+            0.7635027165930056,
+            -0.2621350604526632
+        ]
+    },
+    "canvas": {
+        "width": 1600,
+        "height": 1141
+    }
+}

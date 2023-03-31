@@ -326,7 +326,7 @@ def clutterpalette():
 def shelfType():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
-        shelfKey = json.loads(request.form.get('shelfKey'))
+        shelfKeys = json.loads(request.form.get('shelfKeys'))
         # TODO: replace with yulin's method
         ret = ["水果", "蔬菜", "肉类", "混合"]
         random.shuffle(ret)

@@ -56,7 +56,7 @@ const clickCatalogItem = function (e, d=undefined) {
 const stockShelves = () => {
     On_ADD = false;
     scenecanvas.style.cursor = "auto";
-    let objectProperties = {};
+    let modelId = INSERT_OBJ.modelId;
     for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
         let shelf = manager.renderManager.instanceKeyCache[shelfKey];
         let commodities = shelf.userData.json.commodities;
@@ -64,32 +64,17 @@ const stockShelves = () => {
             let ph = manager.renderManager.instanceKeyCache[phKey];
             let r = ph.userData.shelfRow;
             let c = ph.userData.shelfCol;
-            if (commodities[r][c].uuid !== '') {
+            let l = commodities[r].length;
+            if (commodities[r][c].uuid) {
                 removeObjectByUUID(commodities[r][c].uuid)
                 commodities[r][c] = { modelId: '', uuid: '' };
             }
-            if (INSERT_OBJ.modelId !== 'yulin-empty') {
-                let commodity = addObjectFromCache(
-                    modelId = INSERT_OBJ.modelId,
-                    transform = {
-                        'translate': [ph.position.x, ph.position.y-0.2, ph.position.z+0.025],
-                        'rotate': [ph.rotation.x, ph.rotation.y, ph.rotation.z],
-                        'scale': [ph.scale.x, ph.scale.y, ph.scale.z]
-                    },
-                    uuid = undefined,
-                    origin = true,
-                    otherInfo = {
-                        shelfKey: shelfKey,
-                        shelfRow: r,
-                        shelfCol: c
-                    }
-                );
-                commodities[r][c] = { modelId: INSERT_OBJ.modelId, uuid: commodity.name }; // update this to other users
+            if (modelId !== 'yulin-empty') {
+                addCommodityToShelf(shelfKey, modelId, r, c, l);
             }
         }
-        objectProperties[shelfKey] = { commodities: shelf.userData.json.commodities };
     }
-    emitFunctionCall('updateObjectProperties', [objectProperties]);
+    cancelClickingShelfPlaceholders();
 }
 
 const clickTextureItem = function(e){
