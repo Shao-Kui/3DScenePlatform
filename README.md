@@ -204,7 +204,7 @@ The "autoview.py" contains the fundamental logic of our method, which will call 
 # SceneDirector
 ![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "OPPNTPP")
 
-\[Paper\] \[Video\] \[Supp\]
+\[Paper\] \[Video\] \[Supp\] \[Dataset\]
 
 This project is also the container for our interactive scene synthesis framework, which simulteanously edits multiple objects in each interactive session. The related source code includes:
 ```
