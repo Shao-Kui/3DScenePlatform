@@ -15,6 +15,7 @@ from datetime import datetime
 from itertools import chain, combinations
 import time
 import random
+import copy
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -904,12 +905,12 @@ def cgsUSRenderBatch():
             if not os.path.exists(f'{root}/{sname}/pt{sj["originFname"]}.png'):
             # if True:
                 pt.pathTracing(sj, 64, f'{root}/{sname}/pt{sj["originFname"]}.png')
-        if len(renderlist) == 2:
+        if len(renderlist) == 3:
             quizplanner['quizlist'].append(questionTemp.copy())
             quizplanner['quizlist'][qid]['userName'] = sname
             quizplanner['quizlist'][qid]['id'] = qid
             qid += 1
-    with open('H:/D3UserStudy/static/quiz/quizplanner.json', 'w') as f:
+    with open('H:/D3UserStudy/static/quiz/quizplanner2023.json', 'w') as f:
         json.dump(quizplanner, f)
 
 def analyzeAnswerPlanner():
@@ -983,6 +984,104 @@ def renderModel20(objname, format='obj', stateName='origin'):
             os.makedirs(RENDER20DIR)
         pt.pathTracing(scenejson, 16, f'{RENDERNAME}-{i}.png')
 
+def renderAnimationNodeResults(sjName):
+    pt.SAVECONFIG = False
+    pt.emitter = 'sky'
+    pt.USENEWWALL = True
+    pt.CAMGEN = True
+    with open(f'./static/dataset/infiniteLayout/{sjName}.json') as f:
+        sj = json.load(f)
+    taID = sj['rooms'][0]['totalAnimaID']
+    with open(f'./static/dataset/infiniteLayout/{taID}.json') as f:
+        animationFile = json.load(f)
+    if not os.path.exists(f'./static/dataset/infiniteLayout/{taID}img/'):
+        os.makedirs(f'./static/dataset/infiniteLayout/{taID}img/')
+    for origin_node in animationFile['index']:
+        for tar in animationFile['index'][origin_node]:
+            if not tar['anim_forward']:
+                continue
+            target_node = tar['target_node']
+            with open(f'./static/dataset/infiniteLayout/{taID}/{tar["anim_id"]}.json') as f:
+                animationjson = json.load(f)
+            if not os.path.exists(f'./static/dataset/infiniteLayout/{taID}img/{origin_node}.png'):
+                scenejson = copy.deepcopy(sj)
+                for i in range(len(animationjson['actions'])-1, -1, -1):
+                    for object in scenejson['rooms'][0]['objList']:
+                        if 'sforder' not in object:
+                            continue
+                        if object['sforder'] == i:
+                            break
+                    for seq in reversed(animationjson['actions'][i]):
+                        for a in reversed(seq):
+                            if a['action'] == 'move':
+                                object['translate'] = a['p1']
+                            if a['action'] == 'rotate':
+                                object['rotate'] = [0, a['r1'], 0]
+                            if a['action'] == 'transform':
+                                object['startState'] = a['s1']
+                print(f'rendering {origin_node}')
+                pt.pathTracing(scenejson, 16, f'./static/dataset/infiniteLayout/{taID}img/{origin_node}.png')
+            if not os.path.exists(f'./static/dataset/infiniteLayout/{taID}img/{target_node}.png'):
+                scenejson = copy.deepcopy(sj)
+                for i in range(len(animationjson['actions'])):
+                    for object in scenejson['rooms'][0]['objList']:
+                        if 'sforder' not in object:
+                            continue
+                        if object['sforder'] == i:
+                            break
+                    for seq in animationjson['actions'][i]:
+                        for a in seq:
+                            if a['action'] == 'move':
+                                object['translate'] = a['p2']
+                            if a['action'] == 'rotate':
+                                object['rotate'] = [0, a['r2'], 0]
+                            if a['action'] == 'transform':
+                                object['startState'] = a['s2']
+                print(f'rendering {target_node}')
+                pt.pathTracing(scenejson, 16, f'./static/dataset/infiniteLayout/{taID}img/{target_node}.png')
+
+def renderAnimationResults(sjName):
+    pt.SAVECONFIG = False
+    pt.emitter = 'sky'
+    pt.USENEWWALL = True
+    pt.CAMGEN = True
+    with open(f'./static/dataset/infiniteLayout/{sjName}.json') as f:
+        sj = json.load(f)
+    taID = sj['rooms'][0]['totalAnimaID']
+    animationjsonnames = os.listdir(f'./static/dataset/infiniteLayout/{taID}')
+    for animationjsonname in animationjsonnames:
+        if '.json' not in animationjsonname:
+            continue
+        scenejson = copy.deepcopy(sj)
+        with open(f'./static/dataset/infiniteLayout/{taID}/{animationjsonname}') as f:
+            animationjson = json.load(f)
+        for i in range(len(animationjson['actions'])):
+            for object in scenejson['rooms'][0]['objList']:
+                if 'sforder' not in object:
+                    continue
+                if object['sforder'] == i:
+                    break
+            for seq in animationjson['actions'][i]:
+                for a in seq:
+                    if a['action'] == 'move':
+                        object['translate'] = a['p2']
+                    if a['action'] == 'rotate':
+                        object['rotate'] = [0, a['r2'], 0]
+                    if a['action'] == 'transform':
+                        object['startState'] = a['s2']
+                # if(a.action === 'rotate'){
+                #     let r = [0, atsc(a.r2), 0]
+                #     standardizeRotate(r, [0, atsc(a.r1), 0]);
+                #     object3d.rotation.set(0, atsc(a.r1), 0);
+                #     setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
+                # }
+                # if(a.action === 'transform'){
+                #     setTimeout(objectToAction, a.t[0] * 1000, object3d, a.s2, a.t[1] - a.t[0], 'none');
+                # }
+        animationjsonname = animationjsonname.split('.')[0]
+        print(f'rendering ./static/dataset/infiniteLayout/{taID}/{animationjsonname}.png')
+        pt.pathTracing(scenejson, 16, f'./static/dataset/infiniteLayout/{taID}/{animationjsonname}.png')
+
 if __name__ == "__main__":
     start_time = time.time()
     # cgs('6453', None, '梳妆台哈哈')
@@ -999,12 +1098,23 @@ if __name__ == "__main__":
     # cgsBatch()
     # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
-    # renderModel20('coffee01')
-    # renderModel20('shirt02')
+    # renderModel20('streetbench2')
+
+
+
+    for modelId in ['story-Toilet_Sink','story-Toilet_MirrorB','story-Toilet_MirrorA']:
+        try:
+            renderModel20(modelId)
+        except:
+            print(modelId)
+
     # renderModel20('sofa2bed', 'glb', 'origin')
     # renderModel20('sofa2bed', 'glb', 'bed')
-    renderGLBbatch()
-    # renderModel20('shoecounter01')
+    # renderGLBbatch()
+    # renderAnimationResults('sample3_origin')
+    # renderAnimationNodeResults('sample3_origin')
+    # renderModel20('story-StudentDeskBrokenA')
+    # renderModel20('selling_holder_small')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     # cgs('1133', None, '小太阳-灰色奢华土豪')
     

@@ -700,8 +700,13 @@ const onClickIntersectObject = function(event){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 if (shelfstocking_Mode) {
                     if(INTERSECT_OBJ.userData.modelId === 'shelf01') {
-                        claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-                        clearShelfInfo();
+                        if (pressedKeys[16] && intersects[0].object.parent?.userData.modelId === 'shelf01') {
+                            addToGroupShelf(toSceneObj(intersects[0].object));
+                            return;
+                        } else {
+                            releaseGroupShelf();
+                            clearShelfInfo();
+                        }
                     }
                 }else if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
@@ -729,7 +734,9 @@ const onClickIntersectObject = function(event){
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         if (shelfstocking_Mode) {
-            if(isShelfPlaceholder(INTERSECT_OBJ)){
+            if (pressedKeys[16]) {
+                return;
+            }else if(isShelfPlaceholder(INTERSECT_OBJ)){
                 shelfPlaceholderHandler();
                 return;
             }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
@@ -1943,29 +1950,15 @@ let shelfPlaceholderHandler = () => {
         claimControlObject3D(shelfKey, false);
         outlinePass2.selectedObjects.push(INTERSECT_OBJ);
     }
+    if (Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length == 0) return;
 
     let roomId = shelf.userData.roomId;
     $('#tab_modelid').text(INTERSECT_OBJ.name);
     $('#tab_category').text('shelf-placeholder');
     $('#tab_roomid').text(roomId);
     $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
-    $("#catalogItems").empty();
 
-    if (INTERSECT_SHELF_PLACEHOLDERS.size == 0) return;
-    $.ajax({
-        type: "POST",
-        url: "/shelfPlaceholder",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
-            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
-        }
-    }).done(function (o) {
-        $('#searchinput').val('');
-        searchResults = JSON.parse(o);
-        searchResults.forEach(function (item) {
-            newCatalogItem(item);
-        });
-    });
+    recommendCommodities(roomId);
 }
 
 let cancelClickingShelfPlaceholders = () => {
@@ -2201,28 +2194,8 @@ let setIntersectShelf = () => {
     let shelfKey = INTERSECT_OBJ.userData.key;
     claimControlObject3D(shelfKey, false);
     $("#shelfKey").text(shelfKey);
-    $.ajax({
-        type: "POST",
-        url: "/shelfType",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId]),
-            shelfKey: JSON.stringify(shelfKey)
-        }
-    }).done(function (o) {
-        let intersectShelfType = INTERSECT_OBJ.userData.json.shelfType;
-        shelfTypes = JSON.parse(o);
-        shelfTypes.forEach(function (t, i) {
-            $("#shelfTypeRadios").append(`
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}')">
-                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
-                </div>
-            `);
-            if (intersectShelfType !== undefined && intersectShelfType === t) {
-                $(`#shelfTypeRadio${i}`).prop("checked", true);
-            }
-        });
-    });
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+    recommendShelfType(INTERSECT_OBJ.userData.roomId, [shelfKey]);
     let commodities = INTERSECT_OBJ.userData.json.commodities;
     for (let r = 0; r < 4; ++r) {
         let l = commodities[r].length;
@@ -2248,11 +2221,13 @@ let setIntersectShelf = () => {
 }
 
 let setShelfType = (t) => {
-    let shelfKey = $("#shelfKey").text();
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    shelf.userData.json.shelfType = t;
+    let shelfKeys = Object.keys(INTERSECT_SHELF_PLACEHOLDERS);
     let objectProperties = {};
-    objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+    for (let key of shelfKeys) {
+        let shelf = manager.renderManager.instanceKeyCache[key];
+        shelf.userData.json.shelfType = t;
+        objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+    }
     emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
 
@@ -2298,14 +2273,16 @@ let shelfRowPlus = (r) => {
     changeShelfRow(shelfKey, r, newRow);
 }
 
-let shelfRowSelect = (rows) => {
+let shelfRowSelectBtn = (rows) => {
     outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
-    $("#catalogItems").empty();
-
     let shelfKey = $("#shelfKey").text();
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    shelfRowSelect(shelfKey, rows);
+}
+
+let shelfRowSelect = (shelfKey, rows) => {
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
     let commodities = shelf.userData.json.commodities;
-    INTERSECT_SHELF_PLACEHOLDERS = {};
     INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
 
     for (let r of rows) {
@@ -2317,20 +2294,7 @@ let shelfRowSelect = (rows) => {
         }
     }
 
-    $.ajax({
-        type: "POST",
-        url: "/shelfPlaceholder",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[shelf.userData.roomId]),
-            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
-        }
-    }).done(function (o) {
-        $('#searchinput').val('');
-        searchResults = JSON.parse(o);
-        searchResults.forEach(function (item) {
-            newCatalogItem(item);
-        });
-    });
+    recommendCommodities(shelf.userData.roomId);
 }
 
 let shelfRowClearBtn = (rows) => {
@@ -2352,4 +2316,70 @@ let shelfRowClear = (shelfKey, rows) => {
             commodities[r][c] = { modelId: '', uuid: '' };
         }
     }
+}
+
+let addToGroupShelf = function(so) {
+    if (onlineGroup !== 'OFFLINE' && so.userData.controlledByID !== undefined && so.userData.controlledByID !== onlineUser.id) {
+        console.log(`This shelf is already claimed by ${so.userData.controlledByID}`);
+        return;
+    }
+    let index = outlinePass2.selectedObjects.indexOf(so);
+    if(index > -1){
+        outlinePass2.selectedObjects.splice(index, 1);
+        delete INTERSECT_SHELF_PLACEHOLDERS[so.userData.key];
+        claimControlObject3D(so.userData.key, true);
+    } else {
+        outlinePass2.selectedObjects.push(so);
+        INTERSECT_SHELF_PLACEHOLDERS[so.userData.key] = new Set();
+        claimControlObject3D(so.userData.key, false);
+    }
+    recommendShelfType(so.userData.roomId, Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+}
+
+let releaseGroupShelf = function() {
+    outlinePass2.selectedObjects = [];
+    cancelClickingShelfPlaceholders();
+}
+
+let recommendCommodities = (roomId) => {
+    $("#catalogItems").empty();
+    $.ajax({
+        type: "POST",
+        url: "/shelfPlaceholder",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
+        }
+    }).done(function (o) {
+        $('#searchinput').val('');
+        searchResults = JSON.parse(o);
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
+}
+
+let recommendShelfType = (roomId, shelfKeys) => {
+    $.ajax({
+        type: "POST",
+        url: "/shelfType",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            shelfKeys: JSON.stringify(shelfKeys)
+        }
+    }).done(function (o) {
+        $("#shelfTypeRadios").empty();
+        shelfTypes = JSON.parse(o);
+        shelfTypes.forEach(function (t, i) {
+            $("#shelfTypeRadios").append(`
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}')">
+                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
+                </div>
+            `);
+            if (INTERSECT_OBJ?.userData.json?.shelfType === t) {
+                $(`#shelfTypeRadio${i}`).prop("checked", true);
+            }
+        });
+    });
 }
