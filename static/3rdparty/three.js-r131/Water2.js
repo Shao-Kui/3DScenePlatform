@@ -148,10 +148,10 @@
 				updateTextureMatrix( camera );
 				updateFlow();
 				scope.visible = false;
-				reflector.matrixWorld.copy( scope.matrixWorld );
-				refractor.matrixWorld.copy( scope.matrixWorld );
-				reflector.onBeforeRender( renderer, scene, camera );
-				refractor.onBeforeRender( renderer, scene, camera );
+				// reflector.matrixWorld.copy( scope.matrixWorld );
+				// refractor.matrixWorld.copy( scope.matrixWorld );
+				// reflector.onBeforeRender( renderer, scene, camera );
+				// refractor.onBeforeRender( renderer, scene, camera );
 				scope.visible = true;
 
 			};
@@ -295,7 +295,7 @@
 			vec4 refractColor = texture2D( tRefractionMap, uv );
 
 			// multiply water color with the mix of both textures
-			gl_FragColor = vec4( color, 1.0 ) * mix( refractColor, reflectColor, reflectance );
+			gl_FragColor = normalColor * vec4(0.3,0.3,0.3,1) ;
 
 			#include <tonemapping_fragment>
 			#include <encodings_fragment>
