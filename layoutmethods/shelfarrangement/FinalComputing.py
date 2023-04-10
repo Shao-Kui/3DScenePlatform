@@ -83,9 +83,11 @@ def disForSameKind(distancesquare):
 
 def kindRecommand(room,shelfkey):
     shelf_list = []
+    shelfkeys = list(shelfkey)
+    these_shelves = []
     is_entrance = True
     for obj in room['objList']:
-        if obj["key"] == shelfkey:
+        if shelfkeys.count(obj["key"]) == 1:
             item_list = obj["commodities"]
             item_name_list = []
             for item in item_list:
@@ -93,6 +95,7 @@ def kindRecommand(room,shelfkey):
                     if i["modelId"] != "":
                         item_name_list.append(i["modelId"])    
             this_shelf = shelf(float(obj["translate"][0]),float(obj["translate"][2]),item_name_list,"")
+            these_shelves.append(this_shelf)
         elif obj["modelId"] == "cgaxis_models_32_24":
             if is_entrance:
                 is_entrance = False
@@ -124,12 +127,23 @@ def kindRecommand(room,shelfkey):
     p_sim_list = []
     p_prior_list = []
     idx_list = []
+
+    x_list = []
+    y_list = []
+    for i in range(0,len(these_shelves)):
+        x_list.append(these_shelves[i].x)
+        y_list.append(these_shelves[i].y)
+    
+    center_x = sum(x_list)/len(x_list)
+    center_y = sum(y_list)/len(y_list)
+
+
     for idx in range(0,len(kindlist)):
         p_prior = priorMatrixforKind[idx]
         p_where = 1
 
-        distance_to_entrance = (entrance_x-this_shelf.x)*(entrance_x-this_shelf.x) + (entrance_y - this_shelf.y)*(entrance_y - this_shelf.y)
-        distance_to_exit = (exit_x-this_shelf.x)*(exit_x-this_shelf.x) + (exit_y - this_shelf.y)*(exit_y - this_shelf.y)
+        distance_to_entrance = (entrance_x-center_x)*(entrance_x-center_x) + (entrance_y - center_y)*(entrance_y - center_y)
+        distance_to_exit = (exit_x-center_x)*(exit_x-center_x) + (exit_y - center_y)*(exit_y - center_y)
         if distance_to_entrance < MINDISTANCEFORWHERE:
             p_where = whereMatrix[idx][0] * distanceFunc(distance_to_entrance) * p_where
         else:
@@ -144,7 +158,7 @@ def kindRecommand(room,shelfkey):
         for eachshelf in shelf_list:
             otherx = eachshelf.x
             othery = eachshelf.y
-            distance = (otherx-this_shelf.x)*(otherx-this_shelf.x) + (othery - this_shelf.y)*(othery - this_shelf.y)
+            distance = (otherx-center_x)*(otherx-center_x) + (othery - center_y)*(othery - center_y)
             dis = distanceFunc(distance)
             if(eachshelf.decided_kind == "mix"):
                 continue

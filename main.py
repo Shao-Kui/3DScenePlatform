@@ -327,7 +327,7 @@ def clutterpalette():
 def shelfType():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
-        shelfKey = json.loads(request.form.get('shelfKey'))
+        shelfKey = json.loads(request.form.get('shelfKeys'))
         recommond_kind = kindRecommand(room,shelfKey)
         return json.dumps(recommond_kind)
     return "shelfType"
