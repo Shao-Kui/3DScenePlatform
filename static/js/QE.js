@@ -180,6 +180,10 @@ const onKeyDown = function(event){
         case 81: // Q
             Q_DOWN = true;
             break;
+        case 65: // A
+            if (shelfstocking_Mode && !$('#shelfSelectAllBtn').prop('disabled'))
+                $('#shelfSelectAllBtn').click();
+            break;
         case 67: // C
             orbitControls.enabled = !orbitControls.enabled;
             scenecanvas.addEventListener('click', onClickObj);
@@ -189,6 +193,10 @@ const onKeyDown = function(event){
             break;
         case 32: // white space
             topdownview();
+            break;
+        case 78: // N
+            if (shelfstocking_Mode && !$('#nextShelfBtn').prop('disabled'))
+                $('#nextShelfBtn').click();
             break;
         case 85: // U
             // start to record audio; 

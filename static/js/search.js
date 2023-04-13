@@ -225,8 +225,8 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     return [mid, midLookat]
 }
 
-const viewTransform = function(pcam){
-    cancelClickingObject3D();
+const viewTransform = function(pcam, cancelClickingObject = true){
+    if (cancelClickingObject) cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
     let direction = new THREE.Vector3(
         orbitControls.target.x - camera.position.x,
