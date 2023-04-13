@@ -215,6 +215,7 @@ const onKeyDown = function(event){
         case 78: // N
             if (shelfstocking_Mode && !$('#nextShelfBtn').prop('disabled'))
                 $('#nextShelfBtn').click();
+            break;
         case 220: // backslash
             topdownAreaview();
             break;
