@@ -60,7 +60,8 @@ element
             |objPosZ                                                                                           / 
             |width
             |height
-            |objOriY                                                                                           - orient of the main object ( + pi/2 if the window face to z-axis )
+            |objOriY                                                                                           - orient of the main object in the ORIGINAL co-ordinates
+            |direction                                                                                         - face of the window in the ORIGINAL co-ordinates
         |(item)------------------------------------------------------------------
         ...
     |door++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                              +if the door is taken into account
@@ -71,7 +72,8 @@ element
             |objPosZ                                                                                           / 
             |width
             |height
-            |objOriY                                                                                           - orient of the main object ( + pi/2 if the door face to z-axis )
+            |objOriY                                                                                           - orient of the main object in the ORIGINAL co-ordinates
+            |direction                                                                                         - face of the door in the ORIGINAL co-ordinates
         |(item)------------------------------------------------------------------
         ...
 """
@@ -104,8 +106,8 @@ def itemListHandler(lst, instr):
             return {}
     
     if instr == 'window' or instr == 'door':
-        if len(lst) == 7:
-            return {'distance' : float(lst[0]), 'objPosX' : float(lst[1]), 'objPosY' : float(lst[2]), 'objPosZ' : float(lst[3]), 'width' : float(lst[4]), 'height' : float(lst[5]), 'objOriY' : float(lst[6])}
+        if len(lst) == 8:
+            return {'distance' : float(lst[0]), 'objPosX' : float(lst[1]), 'objPosY' : float(lst[2]), 'objPosZ' : float(lst[3]), 'width' : float(lst[4]), 'height' : float(lst[5]), 'objOriY' : float(lst[6]), 'direction' : lst[7][1]}
         else:
             return {}
 

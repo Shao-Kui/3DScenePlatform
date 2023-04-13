@@ -108,6 +108,24 @@ const actionAddTime = function(duration=1){
     });
 }
 
+const topdownAreaview = function(){
+    let bbox = manager.renderManager.scene_json.bbox; 
+    let lx = (bbox.max[0] + bbox.min[0]) / 2;
+    let lz = (bbox.max[2] + bbox.min[2]) / 2;
+    let lx_length = bbox.max[0] - bbox.min[0];
+    let lz_length = bbox.max[2] - bbox.min[2];
+    camfovratio = Math.tan((camera.fov/2) * Math.PI / 180) 
+    if(lz_length > lx_length){
+        orbitControls.sphericalDelta.theta = Math.PI / 2;
+        camHeight = 0 + (bbox.max[0]/2 - bbox.min[0]/2) / camfovratio;
+    }else{
+        camHeight = 0 + (bbox.max[2]/2 - bbox.min[2]/2) / camfovratio;
+    }
+    camera.position.set(lx, camHeight, lz);
+    camera.lookAt(lx, 0, lz);
+    orbitControls.target.set(lx, 0, lz);
+}
+
 const topdownview = function(){
     let bbox = manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
     let lx = (bbox.max[0] + bbox.min[0]) / 2;
@@ -131,8 +149,8 @@ const topdownview = function(){
     let tCamUp;
     if(lz_length > lx_length){
         // let thetaTar = orbitControls.sphericalDelta.theta + Math.PI / 2;
-        orbitControls.sphericalDelta.theta += 3.14/2;
-        orbitControls.update();
+        orbitControls.sphericalDelta.theta += Math.PI / 2;
+        // orbitControls.update();
         // gsap.to(orbitControls.sphericalDelta, {
         //     duration: 1,
         //     theta: thetaTar,
@@ -197,6 +215,8 @@ const onKeyDown = function(event){
         case 78: // N
             if (shelfstocking_Mode && !$('#nextShelfBtn').prop('disabled'))
                 $('#nextShelfBtn').click();
+        case 220: // backslash
+            topdownAreaview();
             break;
         case 85: // U
             // start to record audio; 

@@ -452,7 +452,7 @@ const addAreaByRoom = function(room){
             textureWidth: 128,
             textureHeight: 128
         });
-        // addAreaToScene(mesh, room);return;
+        addAreaToScene(mesh, room);return;
     }
     if(room.areaType === 'grass'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
