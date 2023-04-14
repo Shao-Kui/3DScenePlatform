@@ -1950,7 +1950,10 @@ let shelfPlaceholderHandler = () => {
         claimControlObject3D(shelfKey, false);
         outlinePass2.selectedObjects.push(INTERSECT_OBJ);
     }
-    if (Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length == 0) return;
+    if (Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length == 0) {
+        $("#catalogItems").empty();
+        return;
+    }
 
     let roomId = shelf.userData.roomId;
     $('#tab_modelid').text(INTERSECT_OBJ.name);
@@ -2001,7 +2004,7 @@ let addShelfPlaceholders = (shelf) => {
             [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
             [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
             [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
+            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
         ];
     }
     for (let r = 0; r < 4; ++r) {
@@ -2222,6 +2225,7 @@ let setIntersectShelf = () => {
     }
     $(`#shelfSelectAllBtn`).removeAttr('disabled');
     $(`#shelfClearAllBtn`).removeAttr('disabled');
+    $('#selectShelfGroupBtn').removeAttr('disabled');
     if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
         $("#sidebarSelect").val("shelfInfoDiv").change();
     }
@@ -2260,6 +2264,7 @@ let clearShelfInfo = () => {
     }
     $(`#shelfSelectAllBtn`).attr("disabled", "true");
     $(`#shelfClearAllBtn`).attr("disabled", "true");
+    $(`#selectShelfGroupBtn`).attr("disabled", "true");
     $("#shelfTypeRadios").empty();
 }
 
@@ -2350,9 +2355,12 @@ let addToGroupShelf = function(so) {
         outlinePass2.selectedObjects.push(so);
         INTERSECT_SHELF_PLACEHOLDERS[so.userData.key] = new Set();
         claimControlObject3D(so.userData.key, false);
+        if (so.userData.json.commodities === undefined) {
+            addShelfPlaceholders(so);
+        }
     }
+    if (LOOK_AT_SHELF) lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
     recommendShelfType(so.userData.roomId, Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
-    lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
 }
 
 let releaseGroupShelf = function() {
@@ -2372,6 +2380,7 @@ let recommendCommodities = (roomId) => {
         }
     }).done(function (o) {
         $('#searchinput').val('');
+        $("#catalogItems").empty();
         searchResults = JSON.parse(o);
         searchResults.forEach(function (item) {
             newCatalogItem(item);
@@ -2380,6 +2389,7 @@ let recommendCommodities = (roomId) => {
 }
 
 let recommendShelfType = (roomId, shelfKeys) => {
+    $("#shelfTypeRadios").empty();
     $.ajax({
         type: "POST",
         url: "/shelfType",
@@ -2407,7 +2417,18 @@ let recommendShelfType = (roomId, shelfKeys) => {
 
 let lookAtShelves = (shelfKeys) => {
     if (!LOOK_AT_SHELF) return; 
-    if (shelfKeys.length > 5) return;
+    if (shelfKeys.length > 5) {
+        let aabb = new THREE.Box3();
+        for (let shelfKey of shelfKeys) {
+            aabb.expandByObject(manager.renderManager.instanceKeyCache[shelfKey]);
+        }
+        let bbox = {
+            min: [aabb.min.x, aabb.min.y, aabb.min.z],
+            max: [aabb.max.x, aabb.max.y, aabb.max.z]
+        }
+        topdownview(bbox);
+        return;
+    }
     let meanPos = new THREE.Vector3();
     for (let shelfKey of shelfKeys) {
         let shelf = manager.renderManager.instanceKeyCache[shelfKey];
@@ -2470,10 +2491,10 @@ let showTrafficFlowNetwork = () => {
         path.push(new THREE.Vector3(v[0], h, v[2]));
     }
     geometry = new THREE.BufferGeometry().setFromPoints(path);
-    const material = new THREE.LineBasicMaterial( {
+    const material = new THREE.LineBasicMaterial({
         color: 0xff0000,
         linewidth: 3
-    } );
+    });
     let pathline = new THREE.Line(geometry, material);
     scene.add(pathline);
 
@@ -2494,10 +2515,10 @@ let showShelfRoute = () => {
         path.push(new THREE.Vector3(v[0], h, v[2]));
     }
     geometry = new THREE.BufferGeometry().setFromPoints(path);
-    const material = new THREE.LineBasicMaterial( {
+    const material = new THREE.LineBasicMaterial({
         color: 0x00ff00,
         linewidth: 3
-    } );
+    });
     let pathline = new THREE.Line(geometry, material);
     scene.add(pathline);
 
@@ -2525,12 +2546,26 @@ let shelfIsStocked = (shelf) => {
 }
 
 let clearAllShelves = () => {
-    for (let key in manager.renderManager.instanceKeyCache) {
-        let inst = manager.renderManager.instanceKeyCache[key];
-        if (inst.userData?.modelId == 'shelf01') {
-            shelfRowClear(key, [0,1,2,3]);
-            inst.userData.json.shelfType = undefined;
+    for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+        if (obj?.modelId == 'shelf01' && obj.key in manager.renderManager.instanceKeyCache) {
+            shelfRowClear(obj.key, [0, 1, 2, 3]);
+            obj.shelfType = undefined;
         }
     }
     clearDanglingCommodities();
+}
+
+let selectShelfGroup = () => {
+    let shelfKey = $("#shelfKey").text();
+    let groupId = manager.renderManager.instanceKeyCache[shelfKey].userData.json.groupId;
+    let orient = manager.renderManager.instanceKeyCache[shelfKey].userData.json.orient;
+    LOOK_AT_SHELF = false;
+    for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+        if (obj?.modelId == 'shelf01' && obj.groupId == groupId && obj.key != shelfKey
+            && Math.abs(obj.orient - orient) < 0.1 && obj.key in manager.renderManager.instanceKeyCache) {
+            addToGroupShelf(manager.renderManager.instanceKeyCache[obj.key]);
+        }
+    }
+    LOOK_AT_SHELF = true;
+    lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
 }
