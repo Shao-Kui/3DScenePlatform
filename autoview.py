@@ -1242,9 +1242,11 @@ def obj_WinDoor_Relation(windoorResult, iobj, windoor):
     
     if lenx > lenz:
         width = lenx
+        windoorResult[7] = 'z'
     else :
         width = lenz
         ori += 1.5708
+        windoorResult[7] = 'x'
 
     windoorResult[0] = dis
     windoorResult[1] = posx
@@ -1371,13 +1373,13 @@ def usercommitOSR():
     if withWindow and len(windowResult) > 0:
         writeString += '; window['
         for win in windowResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6],win[7])
         writeString += ']'
 
     if withDoor and len(doorResult) > 0:
         writeString += '; door['
         for dor in doorResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6],dor[7])
         writeString += ']'
     
     if len(rela_name):

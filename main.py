@@ -323,10 +323,23 @@ def clutterpalette():
         return json.dumps(ret)
     return "clutterpalette"
 
+@app.route("/selectShelfType", methods=['POST', 'GET'])
+def selectShelfType():
+    if request.method == 'POST':
+        order = json.loads(request.form.get('order'))
+        # TODO: record it
+        print(order)
+        return json.dumps(order)
+    return "selectShelfType"
+
 @app.route("/shelfType", methods=['POST', 'GET'])
 def shelfType():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
         shelfKey = json.loads(request.form.get('shelfKeys'))
         recommond_kind = kindRecommand(room,shelfKey)
         return json.dumps(recommond_kind)
@@ -337,6 +350,10 @@ def shelfPlaceholder():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
         placeholders = json.loads(request.form.get('placeholders'))
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
         recommand_model = ModelRecommand(room,placeholders)
         # yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
         ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in recommand_model]
