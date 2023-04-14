@@ -2241,15 +2241,7 @@ let setShelfType = (t, i) => {
         objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
     }
     console.log(i)
-    $.ajax({
-        type: "POST",
-        url: "/selectShelfType",
-        data: {
-            order: i
-        }
-    }).done(function (o) {
-        // console.log(o)
-    });
+    socket.emit('selectShelfType', onlineUserID, i, onlineGroup);
     emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
 
@@ -2568,4 +2560,15 @@ let selectShelfGroup = () => {
     }
     LOOK_AT_SHELF = true;
     lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+}
+
+let startShelfPlannerExperiment = () => {
+    let mode = $("input[name='shelfModeRadio']:checked").val();
+    socket.emit('startShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
+}
+
+let endShelfPlannerExperiment = () => {
+    let mode = $("input[name='shelfModeRadio']:checked").val();
+    socket.emit('endShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
+    $("#download_button").click();
 }
