@@ -25,7 +25,6 @@ import random
 from subprocess import check_output
 import difflib
 import sk
-import time
 from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
 from layoutmethods.shelfarrangement.FinalComputing import kindRecommand,ModelRecommand,noRecommandItem,noRecommandKind,clutterRecommandItem,clutterRecommandKind
 app = Flask(__name__, template_folder='static')
@@ -45,6 +44,8 @@ class UserExp(object):
     commodity_record = []
     mode = 0
     def __init__(self,current_user,start_time,mode):
+        now = datetime.datetime.now()
+        self.start_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
         self.current_user = current_user
         self.start_time = start_time
         self.type_record =  []
@@ -52,13 +53,20 @@ class UserExp(object):
         self.mode = mode
     
     def writeFile(self):
-        user_info = {'name': self.current_user,
-            'time': (self.end_time - self.start_time)*1000,
+        now = datetime.datetime.now()
+        self.end_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
+        user_info = {
+            'name': self.current_user,
+            'time': (self.end_time - self.start_time),
             'mode':self.mode,
             'type':self.type_record,
             'commodity':self.commodity_record,
-            }
-        file_name = "shelfuserdata/"+ self.current_user + "_mode_"+ self.mode + ".json"
+            'start_datetime': self.start_dt,
+            'end_datetime': self.end_dt
+        }
+        if not os.path.exists("./layoutmethods/shelfplanner"):
+            os.makedirs("./layoutmethods/shelfplanner")
+        file_name = f'./layoutmethods/shelfplanner/{self.current_user}_{self.end_dt}_{self.mode}.json'
         file = open(file_name, "w")
         json.dump(user_info, file)
         file.close()
