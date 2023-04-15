@@ -58,7 +58,7 @@ class UserExp(object):
             'type':self.type_record,
             'commodity':self.commodity_record,
             }
-        file_name = "shelfuserdata/"+ self.current_user + ".json"
+        file_name = "shelfuserdata/"+ self.current_user + "mode"+ self.mode + ".json"
         file = open(file_name, "w")
         json.dump(user_info, file)
         file.close()
