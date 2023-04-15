@@ -461,16 +461,16 @@
                 <option value="drawingCanvasDiv">Drawing Canvas</option>
                 <option value="drawingCanvasDivv">Furniture Palette</option>
                 <option value="cgsAnnoDiv">CGS标注</option>
+                <option value="OSRAnnoDiv">物体空间关联规则标记</option>
               </select>
             </div>
   
             <div id="collaborative_container" class="m-4">
               <div class="collapse container sidebarSelect_collapse" id="shelfInfoDiv">
                 <div class="h4 py-1 px-2">
-                  <div class="mb-1 text-left">模式: </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode1" value="1">
-                    <label class="form-check-label" for="shelfMode1" id="shelfModeLabel1">无</label>
+                    <label class="form-check-label" for="shelfMode1" id="shelfModeLabel1">Alphabetical</label>
                   </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode2" value="2">
@@ -481,11 +481,17 @@
                     <label class="form-check-label" for="shelfMode3" id="shelfModeLabel3">ShelfPlanner</label>
                   </div>
                 </div>
+
+                <div class="h4 py-1 px-2">
+                  <button id="startShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap" onclick="startShelfPlannerExperiment()">开始实验</button>
+                  <button id="endShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">结束实验</button>
+                </div>
+                
                 <div class="h4 py-1 px-2">
                   <div class="mb-1 text-left">货架: </div>
                   <div id="shelfKey"></div>
                 </div>
-                
+
                 <div class="h4 py-1 px-2">
                   <div class="mb-1 text-left">货架类别: </div>
                   <div id="shelfTypeRadios"></div>
@@ -568,12 +574,15 @@
                     disabled>清空</button>
                 </div>
               
-                <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0,1,2,3])"
-                  disabled>全选</button>
-                <button id="shelfClearAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0,1,2,3])"
-                  disabled>清空</button>
-                <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()"
-                  disabled>下一个货架</button>
+                <div class="mb-3">
+                  <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0,1,2,3])"
+                    disabled>全选</button>
+                  <button id="shelfClearAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0,1,2,3])"
+                    disabled>清空</button>
+                  <button id="selectShelfGroupBtn" class="btn btn-primary text-nowrap ml-4" onclick="selectShelfGroup()"
+                    disabled>货架组全选</button>
+                  <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()" disabled>下一个货架</button>
+                </div>
               </div>
   
               <div class="collapse container sidebarSelect_collapse" id="attributeSliderDiv">
@@ -683,6 +692,23 @@
                 <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
                 <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
               </div>
+
+              <div class="collapse container sidebarSelect_collapse" id="OSRAnnoDiv">
+                <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
+                <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="userOSR" placeholder="请输入您的用户名" aria-label="series" required>
+                    <input type="text" class="form-control" id="nameOSR" placeholder="给关联关系起个名字" aria-label="series">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitOSR">提交</button>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="considerWall">考虑墙体 <input type="checkbox" id="considerWindow">考虑窗户 <input type="checkbox"
+                    id="considerDoor">考虑门 <br>
+                </form>
+              </div>
+
             </div>
           </div>
 
@@ -951,7 +977,7 @@
                     </div>
                 </form> -->
          </div>
-         <div class="py-2 px-3">
+         <!-- <div class="py-2 px-3">
           <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
           <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
           <form onsubmit="return false">
@@ -964,7 +990,7 @@
             </div>
             <input type="checkbox" id="considerWall">考虑墙体    <input type="checkbox" id="considerWindow">考虑窗户    <input type="checkbox" id="considerDoor">考虑门    <br>
           </form>
-          </div>
+          </div> -->
 
         <div id="rec_container" style="display: none"></div>
           <svg height="800" id="scenePaletteSVG" class="catalogSectionContent" style='display: none; margin: 0 auto;'>

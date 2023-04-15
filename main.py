@@ -322,14 +322,25 @@ def clutterpalette():
         return json.dumps(ret)
     return "clutterpalette"
 
-@app.route("/selectShelfType", methods=['POST', 'GET'])
-def selectShelfType():
-    if request.method == 'POST':
-        order = json.loads(request.form.get('order'))
-        # TODO: record it
-        print(order)
-        return json.dumps(order)
-    return "selectShelfType"
+@socketio.on('startShelfPlannerExperiment')
+def startShelfPlannerExperiment(userID, mode, groupName):
+    # TODO: 开始计时，准备记录用戶点击推荐内容的第几项
+    print(mode, groupName, userID)
+
+@socketio.on('selectShelfType')
+def selectShelfType(userID, order, groupName):
+    # TODO: 记录用戶点击了推荐的第几项货架类型, starting from 0
+    print(order, groupName, userID)
+
+@socketio.on('selectCommodity')
+def selectCommodity(userID, order, groupName):
+    # TODO: 记录用戶点击了推荐的第几项商品, starting from 0
+    print(order, groupName, userID)
+
+@socketio.on('endShelfPlannerExperiment')
+def endShelfPlannerExperiment(userID, mode, groupName):
+    # TODO: 结束计时，保存groupName、mode、用时、用戶点击了推荐内容(货架类型、商品)的第几项
+    print(mode, groupName, userID)
 
 @app.route("/shelfType", methods=['POST', 'GET'])
 def shelfType():
