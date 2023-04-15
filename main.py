@@ -26,8 +26,7 @@ from subprocess import check_output
 import difflib
 import sk
 from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
-from layoutmethods.shelfarrangement.FinalComputing import kindRecommand
-from layoutmethods.shelfarrangement.FinalComputing import ModelRecommand
+from layoutmethods.shelfarrangement.FinalComputing import kindRecommand,ModelRecommand,noRecommandItem,noRecommandKind,clutterRecommandItem,clutterRecommandKind
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_magic)
@@ -341,7 +340,13 @@ def shelfType():
         # mode == '3': shelfplanner
         mode = json.loads(request.form.get('mode'))
         shelfKey = json.loads(request.form.get('shelfKeys'))
-        recommond_kind = kindRecommand(room,shelfKey)
+        print(mode)
+        if mode == 1:
+            recommond_kind = noRecommandKind(room,shelfKey)
+        elif mode == 2:
+            recommond_kind = clutterRecommandKind(room,shelfKey)
+        else:
+            recommond_kind = kindRecommand(room,shelfKey)
         return json.dumps(recommond_kind)
     return "shelfType"
 
@@ -354,7 +359,12 @@ def shelfPlaceholder():
         # mode == '2': clutterpalette
         # mode == '3': shelfplanner
         mode = json.loads(request.form.get('mode'))
-        recommand_model = ModelRecommand(room,placeholders)
+        if mode == 1:
+            recommand_model = noRecommandItem(room,placeholders)
+        elif mode == 2:
+            recommand_model = clutterRecommandItem(room,placeholders)
+        else:
+            recommand_model = ModelRecommand(room,placeholders)
         # yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
         ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in recommand_model]
         return json.dumps(ret)
