@@ -182,7 +182,7 @@ def clutterRecommandKind(room,shelfkey):
         p_co_list[i] = math.log10(p_co_list[i]*100000 + 1)
         p_prior_list[i] = math.log10(p_prior_list[i]*100000 + 1)
         p_list.append(p_co_list[i] + p_prior_list[i])
-        print(p_prior_list[i],p_co_list[i],kindlist[i],p_list[i])
+        # print(p_prior_list[i],p_co_list[i],kindlist[i],p_list[i])
 
     for i in range(len(p_list) - 1): 
         for j in range(len(p_list) - i - 1): 
@@ -396,7 +396,7 @@ def kindRecommand(room,shelfkey):
         if max_p_where != min_p_where:
             p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
         p_list.append(p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i])
-        print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
+        # print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
 
     for i in range(len(p_list) - 1): 
         for j in range(len(p_list) - i - 1): 

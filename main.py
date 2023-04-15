@@ -25,6 +25,7 @@ import random
 from subprocess import check_output
 import difflib
 import sk
+import time
 from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
 from layoutmethods.shelfarrangement.FinalComputing import kindRecommand,ModelRecommand,noRecommandItem,noRecommandKind,clutterRecommandItem,clutterRecommandKind
 app = Flask(__name__, template_folder='static')
@@ -35,6 +36,35 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
 socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
+
+class UserExp(object):
+    current_user = "null"
+    start_time = 0
+    end_time = 0
+    type_record = []
+    commodity_record = []
+    mode = 0
+    def __init__(self,current_user,start_time,mode):
+        self.current_user = current_user
+        self.start_time = start_time
+        self.type_record =  []
+        self.commodity_record = []
+        self.mode = mode
+    
+    def writeFile(self):
+        user_info = {'name': self.current_user,
+            'time': (self.end_time - self.start_time)*1000,
+            'mode':self.mode,
+            'type':self.type_record,
+            'commodity':self.commodity_record,
+            }
+        file_name = "shelfuserdata/"+ self.current_user + ".json"
+        file = open(file_name, "w")
+        json.dump(user_info, file)
+        file.close()
+
+
+user_list = []
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -324,22 +354,34 @@ def clutterpalette():
 
 @socketio.on('startShelfPlannerExperiment')
 def startShelfPlannerExperiment(userID, mode, groupName):
-    # TODO: 开始计时，准备记录用戶点击推荐内容的第几项
-    print(mode, groupName, userID)
-
+    #开始计时，准备记录用戶点击推荐内容的第几项
+    global user_list
+    new_user = UserExp(groupName,time.time(),mode)
+    user_list.append(new_user)
 @socketio.on('selectShelfType')
 def selectShelfType(userID, order, groupName):
-    # TODO: 记录用戶点击了推荐的第几项货架类型, starting from 0
-    print(order, groupName, userID)
+    #记录用戶点击了推荐的第几项货架类型, starting from 0
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.type_record.append(order)
 
 @socketio.on('selectCommodity')
 def selectCommodity(userID, order, groupName):
     # TODO: 记录用戶点击了推荐的第几项商品, starting from 0
-    print(order, groupName, userID)
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.commodity_record.append(order)
 
 @socketio.on('endShelfPlannerExperiment')
 def endShelfPlannerExperiment(userID, mode, groupName):
     # TODO: 结束计时，保存groupName、mode、用时、用戶点击了推荐内容(货架类型、商品)的第几项
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.end_time = time.time()
+            user.writeFile()
     print(mode, groupName, userID)
 
 @app.route("/shelfType", methods=['POST', 'GET'])
