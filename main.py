@@ -58,7 +58,7 @@ class UserExp(object):
             'type':self.type_record,
             'commodity':self.commodity_record,
             }
-        file_name = "shelfuserdata/"+ self.current_user + "mode"+ self.mode + ".json"
+        file_name = "shelfuserdata/"+ self.current_user + "_mode_"+ self.mode + ".json"
         file = open(file_name, "w")
         json.dump(user_info, file)
         file.close()
@@ -356,6 +356,9 @@ def clutterpalette():
 def startShelfPlannerExperiment(userID, mode, groupName):
     #开始计时，准备记录用戶点击推荐内容的第几项
     global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user_list.remove(user)
     new_user = UserExp(groupName,time.time(),mode)
     user_list.append(new_user)
 @socketio.on('selectShelfType')
