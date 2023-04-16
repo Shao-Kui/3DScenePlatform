@@ -2393,14 +2393,15 @@ let recommendShelfType = (roomId, shelfKeys) => {
     }).done(function (o) {
         $("#shelfTypeRadios").empty();
         shelfTypes = JSON.parse(o);
-        shelfTypes.forEach(function (t, i) {
+        shelfTypes.forEach(function (st, i) {
+            let label = st.used ?  st.name : `<b>${st.name}</b>`;
             $("#shelfTypeRadios").append(`
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}', ${i})">
-                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
+                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${st.name}" onclick="setShelfType('${st.name}', ${i})">
+                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${label}</label>
                 </div>
             `);
-            if (INTERSECT_OBJ?.userData.json?.shelfType === t) {
+            if (INTERSECT_OBJ?.userData.json?.shelfType === st.name) {
                 $(`#shelfTypeRadio${i}`).prop("checked", true);
             }
         });

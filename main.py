@@ -411,7 +411,7 @@ def shelfType():
             recommond_kind = clutterRecommandKind(room,shelfKey)
         else:
             recommond_kind = kindRecommand(room,shelfKey)
-        ret = [{"unused":kind.flag, "name": kind.name} for kind in recommond_kind]
+        ret = [{"used":kind.flag, "name": kind.name} for kind in recommond_kind]
         return json.dumps(ret)
     return "shelfType"
 
