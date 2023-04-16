@@ -54,8 +54,8 @@ with open("./layoutmethods/shelfarrangement/Matrix/csv.csv",mode="r",encoding="u
 # print(model_kind_dict)
 # print(kind_model_dict)
 
-MINDISTANCE = 49
-MINDISTANCEFORWHERE = 49
+MINDISTANCE = 121
+MINDISTANCEFORWHERE = 64
 DISTANCEFUNCPARAM = 0.01
 KINDDIFPARAM = 10000000000
 
@@ -75,16 +75,38 @@ class shelf(object):
     def addItem(self,item):
         self.item_list.append(item)
 
+class shelfReturnType(object):
+    name = ""
+    flag = False
+    def __init__(self,name,flag):
+        self.name = name
+        self.flag = flag
 
 
 def distanceFunc(distancesquare):
     return math.exp(-DISTANCEFUNCPARAM*distancesquare)
 
 def disForSameKind(distancesquare):
-    return math.pow(0.5,1/distancesquare)
+    return math.pow(0.4,1/distancesquare)
 
 def noRecommandKind(room,shelfkey):
-    return sorted(kindlist, key=str.lower)
+    exist_type_list = []
+    new_kind_list = sorted(kindlist, key=str.lower)
+    for obj in room['objList']:
+        if obj["modelId"] == "shelf01":
+            try:
+                kind = str(obj["shelfType"])
+                exist_type_list.append(new_kind_list.index(kind))
+            except:
+                continue
+    recommond_list = []
+    for i in range(len(new_kind_list)):
+        flag = False
+        if exist_type_list.count(i) >= 1:
+            flag = True
+        recommond_list.append(shelfReturnType(new_kind_list[i],flag))
+    recommond_list.append(shelfReturnType("mix",False))
+    return recommond_list
 
 def noRecommandItem(room,placeholders):
     new_modle_list = sorted(modellist,key=str.lower)
@@ -116,7 +138,7 @@ def clutterRecommandKind(room,shelfkey):
     shelf_list = []
     shelfkeys = list(shelfkey)
     these_shelves = []
-    is_entrance = True
+    exist_type_list = []
     for obj in room['objList']:
         if shelfkeys.count(obj["key"]) == 1:
             item_list = obj["commodities"]
@@ -130,6 +152,7 @@ def clutterRecommandKind(room,shelfkey):
         elif obj["modelId"] == "shelf01":
             try:
                 kind = str(obj["shelfType"])
+                exist_type_list.append(kindlist.index(kind))
             except:
                 continue
             item_list = obj["commodities"]
@@ -192,7 +215,10 @@ def clutterRecommandKind(room,shelfkey):
     
     recommond_list = []
     for i in range(len(kindlist)):
-        recommond_list.append(kindlist[idx_list[i]])
+        flag = False
+        if exist_type_list.count(idx_list[i]) >= 1:
+            flag = True
+        recommond_list.append(shelfReturnType(kindlist[idx_list[i]],flag))
     recommond_list.append("mix")
     return recommond_list
 
@@ -279,6 +305,7 @@ def clutterRecommandItem(room,placeholders):
 
 
 def kindRecommand(room,shelfkey):
+    exist_type_list = []
     shelf_list = []
     shelfkeys = list(shelfkey)
     these_shelves = []
@@ -319,6 +346,7 @@ def kindRecommand(room,shelfkey):
             x = float(obj["translate"][0])
             y = float(obj["translate"][2])
             new_shelf = shelf(x,y,item_name_list,kind,group_id)
+            exist_type_list.append(kindlist.index(kind))
             shelf_list.append(new_shelf)
     p_list = []
     p_co_list = []
@@ -340,6 +368,7 @@ def kindRecommand(room,shelfkey):
 
 
     for idx in range(0,len(kindlist)):
+        co_kind = []
         p_prior = priorMatrixforKind[idx]
         p_where = 1
 
@@ -364,12 +393,17 @@ def kindRecommand(room,shelfkey):
             if(eachshelf.decided_kind == "mix"):
                 continue
             idx_this = kindlist.index(eachshelf.decided_kind)
+            if co_kind.count(idx_this) == 1:
+                continue
+            else:
+                co_kind.append(idx_this)
             p_co = p_co * dis * liftMatrixforKindTest[idx_this][idx]
-            p_sim = p_sim * dis * similarityMatrixforKind[idx_this][idx]
-            if(idx_this == idx and eachshelf.group_id != group_id):
-                p_prior = p_prior * disForSameKind(dis)
-                p_co = p_co * disForSameKind(dis)
-                p_sim = p_sim * disForSameKind(dis)
+            p_sim = p_sim * dis *similarityMatrixforKind[idx_this][idx]
+            if(idx_this == idx):
+                if eachshelf.group_id != group_id and distance >= 9:
+                    p_prior = p_prior * disForSameKind(dis)
+                    p_co = p_co * disForSameKind(dis)
+                    p_sim = p_sim * disForSameKind(dis)
        
         p_co_list.append(p_co)
         p_where_list.append(p_where)
@@ -377,26 +411,50 @@ def kindRecommand(room,shelfkey):
         p_prior_list.append(p_prior)
         idx_list.append(idx)
     
-    min_p_co = min(p_co_list)*0.98
-    max_p_co = max(p_co_list)*1.02
-    min_p_sim = min(p_sim_list)*0.98
-    max_p_sim = max(p_sim_list)*1.02
-    min_p_where = min(p_where_list)*0.98
-    max_p_where = max(p_where_list)*1.02
-    min_p_prior = min(p_prior_list)*0.98
-    max_p_prior = max(p_prior_list)*1.02
+    # min_p_co = min(p_co_list)*0.98
+    # max_p_co = max(p_co_list)*1.02
+    # min_p_sim = min(p_sim_list)*0.98
+    # max_p_sim = max(p_sim_list)*1.02
+    # min_p_where = min(p_where_list)*0.98
+    # max_p_where = max(p_where_list)*1.02
+    # min_p_prior = min(p_prior_list)*0.98
+    # max_p_prior = max(p_prior_list)*1.02
 
-    for i in range(len(p_co_list)): 
-        if max_p_co!=min_p_co:
-            p_co_list[i] = (p_co_list[i] - min_p_co)/(max_p_co - min_p_co)
-        if max_p_sim!=min_p_sim:
-            p_sim_list[i] = (p_sim_list[i]-min_p_sim)/(max_p_sim - min_p_sim)
-        if max_p_prior!= min_p_prior:
-            p_prior_list[i] = (p_prior_list[i]-min_p_prior)/(max_p_prior - min_p_prior)
-        if max_p_where != min_p_where:
-            p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
-        p_list.append(p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i])
-        # print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
+    # for i in range(len(p_co_list)): 
+    #     if max_p_co!=min_p_co:
+    #         p_co_list[i] = (p_co_list[i] - min_p_co)/(max_p_co - min_p_co)
+    #     if max_p_sim!=min_p_sim:
+    #         p_sim_list[i] = (p_sim_list[i]-min_p_sim)/(max_p_sim - min_p_sim)
+    #     if max_p_prior!= min_p_prior:
+    #         p_prior_list[i] = (p_prior_list[i]-min_p_prior)/(max_p_prior - min_p_prior)
+    #     if max_p_where != min_p_where:
+    #         p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
+    #     p_list.append(p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i])
+    #     print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
+
+    p_co_list = np.array(p_co_list)
+    p_sim_list = np.array(p_sim_list)
+    p_where_list = np.array(p_where_list)
+    p_prior_list = np.array(p_prior_list)
+    average_p_co = np.std(p_co_list)
+    average_p_sim = np.std(p_sim_list)
+    average_p_where = np.std(p_where_list)
+    average_p_prior = np.std(p_prior_list)
+    if average_p_co!=0:
+        p_co_list = p_co_list/average_p_co
+    if average_p_sim!=0:
+        p_sim_list = p_sim_list/average_p_sim
+    if average_p_where!= 0:
+        p_where_list = p_where_list/average_p_where
+    if average_p_prior != 0:
+        p_prior_list = p_prior_list/average_p_prior
+    p_list = p_co_list * p_sim_list * p_where_list * p_prior_list
+
+
+    for i in range(len(p_list)): 
+        print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
+
+    
 
     for i in range(len(p_list) - 1): 
         for j in range(len(p_list) - i - 1): 
@@ -406,8 +464,12 @@ def kindRecommand(room,shelfkey):
     
     recommond_list = []
     for i in range(len(kindlist)):
-        recommond_list.append(kindlist[idx_list[i]])
-    recommond_list.append("mix")
+        flag = False
+        if exist_type_list.count(idx_list[i]) >= 1:
+            flag = True
+        recommond_list.append(shelfReturnType(kindlist[idx_list[i]],flag))
+    recommond_list.append(shelfReturnType("mix",False))
+    print(recommond_list)
     return recommond_list
 
 
@@ -451,6 +513,7 @@ def ModelRecommand(room,placeholders):
     p_prior_list = []
     idx_list = []
     for idx in range(0,len(modellist)):
+        co_model = []
         p_prior = priorMatrix[idx] * 0.1
         p_where = 1
         p_co = 1
@@ -466,6 +529,10 @@ def ModelRecommand(room,placeholders):
                 for item in item_list:
                     item_class = model_class_dict[item]
                     item_idx = modellist.index(item_class)
+                    if co_model.count(item_idx) == 1:
+                        continue
+                    else:
+                        co_model.append(item_idx)
                     p_co = p_co * dis * liftMatrixTest[item_idx][idx]
                     p_sim = p_sim * dis * similarityMatrix[item_idx][idx]
                     if(item_idx == idx):
@@ -481,27 +548,49 @@ def ModelRecommand(room,placeholders):
         idx_list.append(idx)
     
 
-    min_p_co = min(p_co_list)
-    max_p_co = max(p_co_list)
-    min_p_sim = min(p_sim_list)
-    max_p_sim = max(p_sim_list)
-    min_p_where = min(p_where_list)
-    max_p_where = max(p_where_list)
-    min_p_prior = min(p_prior_list)
-    max_p_prior = max(p_prior_list)
+    # min_p_co = min(p_co_list)
+    # max_p_co = max(p_co_list)
+    # min_p_sim = min(p_sim_list)
+    # max_p_sim = max(p_sim_list)
+    # min_p_where = min(p_where_list)
+    # max_p_where = max(p_where_list)
+    # min_p_prior = min(p_prior_list)
+    # max_p_prior = max(p_prior_list)
 
-    for i in range(len(p_co_list)): 
-        if max_p_co!=min_p_co:
-            p_co_list[i] = (p_co_list[i] - min_p_co)/(max_p_co - min_p_co)
-        if max_p_sim!=min_p_sim:
-            p_sim_list[i] = (p_sim_list[i]-min_p_sim)/(max_p_sim - min_p_sim)
-        if max_p_prior!= min_p_prior:
-            p_prior_list[i] = (p_prior_list[i]-min_p_prior)/(max_p_prior - min_p_prior)
-        if max_p_where != min_p_where:
-            p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
-        new_p =p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i]
-        p_list.append(new_p)
+    # for i in range(len(p_co_list)): 
+    #     if max_p_co!=min_p_co:
+    #         p_co_list[i] = (p_co_list[i] - min_p_co)/(max_p_co - min_p_co)
+    #     if max_p_sim!=min_p_sim:
+    #         p_sim_list[i] = (p_sim_list[i]-min_p_sim)/(max_p_sim - min_p_sim)
+    #     if max_p_prior!= min_p_prior:
+    #         p_prior_list[i] = (p_prior_list[i]-min_p_prior)/(max_p_prior - min_p_prior)
+    #     if max_p_where != min_p_where:
+    #         p_where_list[i] = (p_where_list[i]-min_p_where)/(max_p_where - min_p_where)
+    #     new_p =p_co_list[i] * p_sim_list[i]*p_prior_list[i]*p_where_list[i]
+    #     p_list.append(new_p)
         # print(p_prior_list[i],p_co_list[i],p_sim_list[i],modellist[i],p_list[i])
+
+    p_co_list = np.array(p_co_list)
+    p_sim_list = np.array(p_sim_list)
+    p_where_list = np.array(p_where_list)
+    p_prior_list = np.array(p_prior_list)
+    average_p_co = np.std(p_co_list)
+    average_p_sim = np.std(p_sim_list)
+    average_p_where = np.std(p_where_list)
+    average_p_prior = np.std(p_prior_list)
+    if average_p_co!=0:
+        p_co_list = p_co_list/average_p_co
+    if average_p_sim!=0:
+        p_sim_list = p_sim_list/average_p_sim
+    if average_p_where!= 0:
+        p_where_list = p_where_list/average_p_where
+    if average_p_prior != 0:
+        p_prior_list = p_prior_list/average_p_prior
+    p_list = p_co_list * p_sim_list * p_where_list * p_prior_list
+
+
+    # for i in range(len(p_list)): 
+    #     print(p_prior_list[i],p_co_list[i],p_sim_list[i],p_where_list[i],kindlist[i],p_list[i])
     for i in range(len(p_list) - 1): 
         for j in range(len(p_list) - i - 1): 
             if p_list[j] < p_list[j+1]:
