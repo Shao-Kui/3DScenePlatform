@@ -134,6 +134,7 @@ const newCatalogItem = function(item){
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
     iDiv.dataset.order = catalogItems.childElementCount;
+    if (shelfstocking_Mode) iDiv.innerHTML = item.name.replace('yulin-', '');
     catalogItems.appendChild(iDiv);
 };
 
