@@ -219,7 +219,7 @@ def clutterRecommandKind(room,shelfkey):
         if exist_type_list.count(idx_list[i]) >= 1:
             flag = True
         recommond_list.append(shelfReturnType(kindlist[idx_list[i]],flag))
-    recommond_list.append("mix")
+    recommond_list.append(shelfReturnType("mix",False))
     return recommond_list
 
 def clutterRecommandItem(room,placeholders):
