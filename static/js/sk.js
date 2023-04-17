@@ -1683,6 +1683,15 @@ const setting_up = function () {
         }
     });
 
+    $('input[type=radio][name=shelfModeRadio]').change(function() {
+        if (this.value == '3') {
+            $('#nextShelfBtn').show();
+        }
+        else {
+            $('#nextShelfBtn').hide();
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -2409,7 +2418,7 @@ let recommendShelfType = (roomId, shelfKeys) => {
 }
 
 let lookAtShelves = (shelfKeys) => {
-    if (!LOOK_AT_SHELF) return; 
+    if (!LOOK_AT_SHELF || $("input[name='shelfModeRadio']:checked").val() != '3') return; 
     if (shelfKeys.length > 5) {
         let aabb = new THREE.Box3();
         for (let shelfKey of shelfKeys) {
