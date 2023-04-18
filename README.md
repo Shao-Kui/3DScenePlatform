@@ -202,9 +202,9 @@ root/
 ```
 The "autoview.py" contains the fundamental logic of our method, which will call functions for deriving probe views and use constraints for evaluating views. It also organizes the generated views and renders the views. One could consider it as a controller. The "views.py" contains how we generate probe views based on one-point and two-point perspectives. The "constraints.py" contains the measurements, i.e., the content and aesthetic constraints. The "utiles.py" contains several functions for geometrical computing. Finally, "inset.py" contains the "mapping" algorithm proposed in the paper. 
 # SceneDirector
-![SceneViewer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "OPPNTPP")
+![SceneDirector](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "TVCG 2023")
 
-\[Paper\] \[Video\] \[Supp\] \[Dataset\]
+[\[Paper\]][scenedirectorpaper] [\[Video\]][scenedirector] \[Supp\] [\[Dataset\]][scenedirectordataset]
 
 This project is also the container for our interactive scene synthesis framework, which simulteanously edits multiple objects in each interactive session. The related source code includes:
 ```
@@ -275,3 +275,7 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [sceneviewerpaper]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneViewer.pdf
 [sceneviewer]:https://www.bilibili.com/video/BV1Q84y1B7tb
 [sceneviewersupp]:https://ieeexplore.ieee.org/document/9920233/media#media
+[scenedirectorpaper]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneDirector.pdf
+[scenedirector]:https://www.bilibili.com/video/BV11L411e72M
+[scenedirectorsupp]:https://ieeexplore.ieee.org
+[scenedirectordataset]:https://cloud.tsinghua.edu.cn/f/dd74c0617cb144198f0e/
