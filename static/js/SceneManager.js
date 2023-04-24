@@ -3,6 +3,7 @@ const decideTransparencyByTexture = function(m, g, offset=0){
     if(m.transparent){return true;}
     if(!g.attributes.uv){return false;}
     if(!m.map){return false;}
+    if(!m.map.image){return false;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
@@ -87,12 +88,14 @@ const traverseObjSetting = function (object) {
         checkTextureOpacity(object.material, object.geometry);
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
+                object.material[i].reflectivity = 0;
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
             if(object.material.transparent){
+                object.material.reflectivity = 0;
                 object.castShadow = false;
             }
         }
@@ -186,7 +189,7 @@ class SceneManager {
     };
 
     refresh_scene = (scene_json, refresh_camera = false) => {
-        console.log('called refresh scene! ');
+        traverseSceneJson(scene_json);
         outlinePass.selectedObjects = [];
         outlinePass2.selectedObjects = [];
         if(scene_json.islod){
@@ -214,6 +217,7 @@ class SceneManager {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
+        refreshArea(this.scene_json);
     };
 
     refresh_light(){
@@ -345,12 +349,20 @@ class SceneManager {
 
     refresh_instances(){
 	    // var self=this;
+        let loadingCounter = 0;
 		this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
 		this.instanceKeyCache = {};
         this.scene_json.rooms.forEach(function(room){
             room.objList.forEach(async function(inst){ //an obj is a instance
                 if(inst === null || inst == undefined){
                     return;
+                }
+                if(inst.format === 'Door' || inst.format === 'Window'){
+                    if(inst.format === 'Door') inst.modelId = '214';
+                    if(inst.format === 'Window') inst.modelId = '126';
+                    loadObjectToCache(inst.modelId, function(){
+                        refreshObjectFromCache(inst);
+                    }, [], inst.format);
                 }
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
@@ -362,9 +374,13 @@ class SceneManager {
                 if(!('format' in inst)){
                     inst.format = 'obj';
                 }
-                loadObjectToCache(inst.modelId, function(){
+                setTimeout(loadObjectToCache, loadingCounter*100, inst.modelId, function(){
                     refreshObjectFromCache(inst);
                 }, [], inst.format);
+                loadingCounter++;
+                // loadObjectToCache(inst.modelId, function(){
+                //     refreshObjectFromCache(inst);
+                // }, [], inst.format);
             });
         });
         if('sceneFutureCache' in this.scene_json){

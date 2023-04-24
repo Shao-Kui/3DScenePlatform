@@ -1,0 +1,151 @@
+model_id,class_name,kind_name
+yulin-beer-green-tall,beer,alcohol
+yulin-beerpack1,beer,alcohol
+yulin-beerpack2,beer,alcohol
+yulin-champagne-brown-tall,champagne,alcohol
+yulin-coffee-brown-short,coffee drink,drink
+yulin-cola-red-short,cola,drink
+yulin-juice-blue-large,juice,drink
+yulin-juice-brown-large,juice,drink
+yulin-juice-white-large,juice,drink
+yulin-lemonwater-yellow-short,lemon water,drink
+yulin-milk-blue-short,milk,drink
+yulin-milkpack,milk,drink
+yulin-soda-orange-short,soda,drink
+yulin-tea-brown-short,tea drink,drink
+yulin-water-blue-tall,water,drink
+yulin-wine-green-tall,red wine,alcohol
+yulin-yogurt,yogurt,drink
+yulin-yogurt-pink,yogurt,drink
+yulin-burger,burger,bakery
+yulin-cakepack,cake,bakery
+yulin-hotdog,hotdog,bakery
+yulin-hotdog2,hotdog,bakery
+yulin-sandwich,sandwich,bakery
+yulin-toast,toast,bakery
+yulin-donut,donut,bakery
+yulin-niujiaobao,croissant,bakery
+yulin-pancakes,pancake,bakery
+yulin-pieceofcake,cake,bakery
+yulin-pretzel,pretzel,bakery
+yulin-maffins,muffin,bakery
+yulin-blackricebasket,cereal,grain
+yulin-colorricebasket,cereal,grain
+yulin-flour,flour,grain
+yulin-flour2,flour,grain
+yulin-greenricebasket,cereal,grain
+yulin-oil,oil,oil
+yulin-oil2,oil,oil
+yulin-orangericebasket,cereal,grain
+yulin-rice,rice,grain
+yulin-rice2,rice,grain
+yulin-butter,butter,dairy
+yulin-cheese,cheese,dairy
+yulin-jam,jam,condiment
+yulin-ketchup,ketchup,condiment
+yulin-pepper,pepper,condiment
+yulin-salt,salt,condiment
+yulin-sause,ketchup,condiment
+yulin-sugar,sugar,condiment
+yulin-sugar2,sugar,condiment
+yulin-pasta,pasta,frozen fast food
+yulin-pasta2,pasta,frozen fast food
+yulin-sudong1,pie,frozen fast food
+yulin-sudong2,baked rice,frozen fast food
+yulin-sudong3,pizza,frozen fast food
+yulin-sushis,sushi,frozen fast food
+yulin-sushis2,sushi,frozen fast food
+yulin-apples,apple,fruit
+yulin-artichokes,artichoke,vegetable
+yulin-avocados,avocado,fruit
+yulin-bananas,banana,fruit
+yulin-carrots,carrot,vegetable
+yulin-garlic,garlic,vegetable
+yulin-grapefruits,grapefruit,fruit
+yulin-kiwis,kiwi fruit,fruit
+yulin-lemons,lemon,fruit
+yulin-mangos,mango,fruit
+yulin-mushrooms,mushroom,vegetable
+yulin-onions,onion,vegetable
+yulin-papayas,papaya,fruit
+yulin-perrys,perry,fruit
+yulin-pineapples,pineapple,fruit
+yulin-potatos,potato,vegetable
+yulin-pumpkins,pumpkin,vegetable
+yulin-squashs,squash,vegetable
+yulin-tomatos,tomato,vegetable
+yulin-watermelons,watermelon,fruit
+yulin-zucchinis,zucchini,vegetable
+yulin-chicken,chicken,meat
+yulin-egg,egg,meat
+yulin-egg2,egg,meat
+yulin-hampack,ham,meat
+yulin-meat,ham,meat
+yulin-meat2,ham,meat
+yulin-meatpack,chicken wings,meat
+yulin-meatpack2,beef,meat
+yulin-meatpack3,pork,meat
+yulin-sausages,sausage,meat
+yulin-steak,steak,meat
+yulin-cakebag,cake,snack
+yulin-cakebag2,cake,snack
+yulin-cakebox,cake,snack
+yulin-cakebox2,cake,snack
+yulin-candy,candy,snack
+yulin-chip1,chip,snack
+yulin-chip2,chip,snack
+yulin-choco,chocolate,snack
+yulin-choco2,chocolate,snack
+yulin-chocobox,chocolate,snack
+yulin-chocopack,chocolate,snack
+yulin-coffee,coffee,snack
+yulin-cream,cream,dairy
+yulin-cream2,cream,dairy
+yulin-frenchfries,french fries,frozen fast food
+yulin-tea,tea,snack
+yulin-tincan,can,snack
+yulin-shampoo-black,shampoo,daily necessities
+yulin-shampoo-white,shampoo,daily necessities
+yulin-shampoo-green,shampoo,daily necessities
+yulin-cleaner1,cleaner,daily necessities
+yulin-bleach,bleach,daily necessities
+yulin-fastfoodcup-pink,cup,daily necessities
+yulin-fastfoodcup-red,cup,daily necessities
+yulin-glasscup-blue,glass,daily necessities
+yulin-glasscup-blue2,glass,daily necessities
+yulin-glasscup-grey,glass,daily necessities
+yulin-glasscup-grey2,glass,daily necessities
+yulin-glasscup-pink,glass,daily necessities
+yulin-glasscup-pink2,glass,daily necessities
+yulin-glassware-short-blue2,glass,daily necessities
+yulin-glassware-short-grey,glass,daily necessities
+yulin-glassware-short-grey2,glass,daily necessities
+yulin-glassware-short-orange,glass,daily necessities
+yulin-glassware-short-orange2,glass,daily necessities
+yulin-glassware-short-pink,glass,daily necessities
+yulin-glassware-tall-grey,glass,daily necessities
+yulin-glassware-tall-orange,glass,daily necessities
+yulin-glassware-tall-pink,glass,daily necessities
+yulin-holder-green,container,daily necessities
+yulin-holder-yellow,container,daily necessities
+yulin-laundry,laundry detergent,daily necessities
+yulin-laundry2,laundry detergent,daily necessities
+yulin-paperroll,toilet paper,daily necessities
+yulin-paperroll2,toilet paper,daily necessities
+yulin-rollingpin,rollingpin,daily necessities
+yulin-rollingpin2,rollingpin,daily necessities
+yulin-shortcup-brown,cup,daily necessities
+yulin-shortcup-grey,cup,daily necessities
+yulin-soap,cleaner,daily necessities
+yulin-soap2,cleaner,daily necessities
+yulin-tallcup-red,cup,daily necessities
+yulin-tallcup-yellow,cup,daily necessities
+yulin-toothpaste,toothpaste,daily necessities
+yulin-vase,vase,daily necessities
+yulin-vase2,vase,daily necessities
+yulin-plant1,plant,plant
+yulin-plant2,plant,plant
+yulin-plant3,plant,plant
+yulin-plant5,plant,plant
+yulin-seedpack,seed,snack
+yulin-seedpack2,seed,snack

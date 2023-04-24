@@ -108,8 +108,26 @@ const actionAddTime = function(duration=1){
     });
 }
 
-const topdownview = function(){
-    let bbox = manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
+const topdownAreaview = function(){
+    let bbox = manager.renderManager.scene_json.bbox; 
+    let lx = (bbox.max[0] + bbox.min[0]) / 2;
+    let lz = (bbox.max[2] + bbox.min[2]) / 2;
+    let lx_length = bbox.max[0] - bbox.min[0];
+    let lz_length = bbox.max[2] - bbox.min[2];
+    camfovratio = Math.tan((camera.fov/2) * Math.PI / 180) 
+    if(lz_length > lx_length){
+        orbitControls.sphericalDelta.theta = Math.PI / 2;
+        camHeight = 0 + (bbox.max[0]/2 - bbox.min[0]/2) / camfovratio;
+    }else{
+        camHeight = 0 + (bbox.max[2]/2 - bbox.min[2]/2) / camfovratio;
+    }
+    camera.position.set(lx, camHeight, lz);
+    camera.lookAt(lx, 0, lz);
+    orbitControls.target.set(lx, 0, lz);
+}
+
+const topdownview = function(bbox = undefined){
+    bbox = bbox ?? manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
     let lx = (bbox.max[0] + bbox.min[0]) / 2;
     let ymax = bbox.max[1];
     let lz = (bbox.max[2] + bbox.min[2]) / 2;
@@ -131,8 +149,8 @@ const topdownview = function(){
     let tCamUp;
     if(lz_length > lx_length){
         // let thetaTar = orbitControls.sphericalDelta.theta + Math.PI / 2;
-        orbitControls.sphericalDelta.theta += 3.14/2;
-        orbitControls.update();
+        orbitControls.sphericalDelta.theta += Math.PI / 2;
+        // orbitControls.update();
         // gsap.to(orbitControls.sphericalDelta, {
         //     duration: 1,
         //     theta: thetaTar,
@@ -180,6 +198,10 @@ const onKeyDown = function(event){
         case 81: // Q
             Q_DOWN = true;
             break;
+        case 65: // A
+            if (shelfstocking_Mode && !$('#shelfSelectAllBtn').prop('disabled'))
+                $('#shelfSelectAllBtn').click();
+            break;
         case 67: // C
             orbitControls.enabled = !orbitControls.enabled;
             scenecanvas.addEventListener('click', onClickObj);
@@ -189,6 +211,17 @@ const onKeyDown = function(event){
             break;
         case 32: // white space
             topdownview();
+            break;
+        case 71: // G
+            if (shelfstocking_Mode && !$('#selectShelfGroupBtn').prop('disabled'))
+                $('#selectShelfGroupBtn').click();
+            break;
+        case 78: // N
+            if (shelfstocking_Mode && !$('#nextShelfBtn').prop('disabled'))
+                $('#nextShelfBtn').click();
+            break;
+        case 220: // backslash
+            topdownAreaview();
             break;
         case 85: // U
             // start to record audio; 
@@ -201,10 +234,32 @@ const onKeyDown = function(event){
         //     downloadSceneJson();
         //     break;
         case 49: // 1
-            auxiliary_catlist(-1)
+        case 97: // 1
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow0Btn').prop('disabled')) $('#shelfSelectRow0Btn').click();
+            } else {
+                auxiliary_catlist(-1)
+            }
             break;
         case 50: // 2
-            auxiliary_catlist(1)
+        case 98: // 2
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow1Btn').prop('disabled')) $('#shelfSelectRow1Btn').click();
+            } else {
+                auxiliary_catlist(1)
+            }
+            break;
+        case 51: // 3
+        case 99: // 3
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow2Btn').prop('disabled')) $('#shelfSelectRow2Btn').click();
+            }
+            break;
+        case 52:  // 4
+        case 100: // 4
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow3Btn').prop('disabled')) $('#shelfSelectRow3Btn').click();
+            }
             break;
         case 192: // `
             auxiliary_catlist(0)
@@ -240,6 +295,7 @@ const onKeyDown = function(event){
                     'translate': [INTERSECT_OBJ.position.x+_x*Math.sin(orient), INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+_x*Math.cos(orient)], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
                     'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z],
+                    'startState': INTERSECT_OBJ.userData.json.startState,
                     'format': INTERSECT_OBJ.userData.format
                 }
             );

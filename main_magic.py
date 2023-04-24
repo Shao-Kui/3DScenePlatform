@@ -369,6 +369,8 @@ with open('./latentspace/name_to_ls_suncgonly.json') as f:
     name_to_ls = json.load(f)
 with open('./latentspace/ls_to_name_suncgonly.json') as f:
     ls_to_name = json.load(f)
+with open('./dataset/obj_coarse_semantic.json') as f:
+    obj_coarse_semantic = json.load(f)
 ls = np.load("./latentspace/ls-release-2.npy")
 
 @app_magic.route("/rec_ls_euc", methods=['POST'])
@@ -391,8 +393,10 @@ def recommendation_ls_euclidean():
         if ls_to_name[str(i)] in e_room:
             continue
         modelId = ls_to_name[str(i)]
-        modelId = sketch_search_non_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
-        if sk.getobjCat(modelId) == sk.getobjCat(e_room[0]):
+        # modelId = sketch_search_non_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+        # if sk.getobjCat(modelId) == sk.getobjCat(e_room[0]):
+        #     continue
+        if obj_coarse_semantic[modelId] == obj_coarse_semantic[e_room[0]]:
             continue
         if modelId in existObjects:
             continue

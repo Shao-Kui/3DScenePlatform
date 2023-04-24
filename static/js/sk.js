@@ -1,8 +1,11 @@
 const roomIDCaster = new THREE.Raycaster();
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
-    let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache, true);
-    if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) { 
+    let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache.concat(areaList), true);
+    if (manager.renderManager.cwfCache.length + areaList.length > 0 && intersects.length > 0) { 
+        if(intersects[0].object.userData && intersects[0].object.userData.roomId){
+            return intersects[0].object.userData.roomId;
+        }
         if(intersects[0].object.parent.userData.roomId === undefined){
             return 0;
         }else{
@@ -171,6 +174,7 @@ const updateTimerTab = function(){
     $('#tab_Rotate').text(timeCounter.rotate.toFixed(3));
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
+    $('#tab_CLTP').text(timeCounter.cltp.toFixed(3));
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
 
@@ -429,6 +433,7 @@ const onTouchObj = function (event) {
     if(On_ADD){
         On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -439,7 +444,12 @@ const onTouchObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {
@@ -639,23 +649,77 @@ const toSceneObj = function(object3d){
     return object3d;
 }
 
+const onClutterpaletteClick = function() {
+    timeCounter.cltpStart = moment();
+    let intersects = raycaster.intersectObjects(manager.renderManager.wfCache, true);
+    if (intersects.length > 0) {
+        clutterpalettePos = { x: intersects[0].point.x, y: 0, z: intersects[0].point.z };
+        $("#catalogItems").empty();
+        $("#secondaryCatalogItems").empty();
+        let roomId = intersects[0].object.parent.userData.roomId;
+        let room = manager.renderManager.scene_json.rooms[roomId];
+        let aabb = new THREE.Box3();
+        for (let obj of room.objList) {
+            if (obj.key in manager.renderManager.instanceKeyCache) {
+                aabb.setFromObject(manager.renderManager.instanceKeyCache[obj.key]);
+                obj.bbox = {
+                    min: [aabb.min.x, aabb.min.y, aabb.min.z],
+                    max: [aabb.max.x, aabb.max.y, aabb.max.z]
+                };
+            }
+        }
+        $.ajax({
+            type: "POST",
+            url: "/clutterpalette",
+            data: {
+                room: JSON.stringify(room),
+                pos: JSON.stringify(clutterpalettePos)
+            }
+        }).done(function (o) {
+            $('#searchinput').val('');
+            searchResults = JSON.parse(o);
+            searchResults.forEach(function (item) {
+                newCatalogItem(item);
+            });
+        });
+    }
+}
+
 const onClickIntersectObject = function(event){
     duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(['Door', 'Window'].includes(intersects[0].object.parent.userData.format)){
+            return;
+        }
         // start to count time consumed. 
         timeCounter.maniStart = moment();
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
-                if(pressedKeys[16]){// entering group transformation mode: 
+                if (shelfstocking_Mode) {
+                    if(INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                        if (pressedKeys[16] && intersects[0].object.parent?.userData.modelId === 'shelf01') {
+                            addToGroupShelf(toSceneObj(intersects[0].object));
+                            return;
+                        } else {
+                            releaseGroupShelf();
+                            clearShelfInfo();
+                        }
+                    }
+                }else if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
                 }else{
                     releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
+                }
+            }else{
+                // user keeps clicking the same object
+                if (shelfstocking_Mode && INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                    return;
                 }
             }
         }
@@ -669,6 +733,19 @@ const onClickIntersectObject = function(event){
         }
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        if (shelfstocking_Mode) {
+            if (pressedKeys[16]) {
+                return;
+            }else if(isShelfPlaceholder(INTERSECT_OBJ)){
+                shelfPlaceholderHandler();
+                return;
+            }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
+                setIntersectShelf();
+                return;
+            }else{
+                cancelClickingShelfPlaceholders();
+            }
+        }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
@@ -677,8 +754,13 @@ const onClickIntersectObject = function(event){
         return;
     }else{
         cancelClickingObject3D();
+        if (clutterpalette_Mode) { onClutterpaletteClick(); }
+        if (shelfstocking_Mode) {
+            cancelClickingShelfPlaceholders();
+            clearShelfInfo();
+        }
         // return; // if you want to disable movable wall, just uncomment this line. 
-        if (INTERSECT_WALL == undefined) {
+        /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
             intersects = raycaster.intersectObjects(newWallCache, true);
             if (intersects.length > 0) {
@@ -690,7 +772,7 @@ const onClickIntersectObject = function(event){
         } else {
             if (INTERSECT_WALL != undefined)
                 unselectWall();
-        }
+        }*/
     }
 }
 
@@ -727,7 +809,8 @@ var onClickObj = function (event) {
     }
     if (On_ADD) {
         On_ADD = false;
-        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache).concat(areaList)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -740,7 +823,12 @@ var onClickObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {
@@ -852,12 +940,14 @@ function onDocumentMouseMove(event) {
     }
     else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(toSceneObj(intersects[0].object.parent))) {
         outlinePass.selectedObjects = [toSceneObj(intersects[0].object.parent), GTRANS_GROUP];
+    }else if(shelfstocking_Mode && instanceKeyCache.length > 0 && intersects.length > 0 && intersects[0].object.name.startsWith('shelf-placeholder-')){
+        outlinePass.selectedObjects = [intersects[0].object]
     }else{
         outlinePass.selectedObjects = [GTRANS_GROUP]
     }  
     // currentMovedTimeStamp = moment();
     tf.engine().startScope();
-    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined){
+    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined && !clutterpalette_Mode){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         if(intersects.length > 0){
             let ip = intersects[0].point
@@ -1222,6 +1312,18 @@ const downloadSceneJson =  function(){
     dlAnchorElem.click();
 }
 
+const numberOfObjectsInTheScene = function(){
+    let count = 0;
+    manager.renderManager.scene_json.rooms.forEach(r => {
+        r.objList.forEach(o => {
+            if(o.inDatabase){
+                count += 1;
+            }
+        });
+    });
+    console.log(count);
+}
+
 var temp;
 const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
@@ -1327,7 +1429,13 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
-    $("#operationFuture").click(refreshSceneFutureRoomTypes);
+    $("#operationFuture").click(function(){
+        let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, function (data) {
+            currentAnimation = data;
+            operationFuture();
+        });
+    });
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1339,6 +1447,7 @@ const setting_up = function () {
         timeCounter.rotate - ${timeCounter.rotate}\r\n
         timeCounter.scale - ${timeCounter.scale}\r\n
         timeCounter.cgs - ${timeCounter.cgs}\r\n
+        timeCounter.cltp - ${timeCounter.cltp}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
         timeCounter.navigate = 0;
@@ -1346,10 +1455,35 @@ const setting_up = function () {
         timeCounter.rotate = 0;
         timeCounter.scale = 0;
         timeCounter.cgs = 0;
+        timeCounter.cltp = 0;
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;
         timeCounter.totalStart = moment();
+    });
+    $("#clutterpalette_button").click(function() {
+        let button = document.getElementById("clutterpalette_button");
+        clutterpalette_Mode = !clutterpalette_Mode;
+        if(clutterpalette_Mode){
+            button.style.backgroundColor = '#9400D3';
+            $("#secondaryCatalogItems").show();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            $("#secondaryCatalogItems").hide();
+            // while (catalogItems.firstChild) {catalogItems.firstChild.remove();}
+            // while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
+        }
+    });
+    $("#stockshelf_button").click(function() {
+        let button = document.getElementById("stockshelf_button");
+        shelfstocking_Mode = !shelfstocking_Mode;
+        if(shelfstocking_Mode){
+            button.style.backgroundColor = '#9400D3';
+            enterShelfStockingMode();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            exitShelfStockingMode();
+        }
     });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
@@ -1541,6 +1675,23 @@ const setting_up = function () {
         
     });
 
+    $("#sidebarSelect").change(()=>{
+        $('.sidebarSelect_collapse').collapse("hide");
+        if ($("#sidebarSelect").val() !== "") {
+            let selector = "#" + $("#sidebarSelect").val();
+            $(selector).collapse("show");
+        }
+    });
+
+    $('input[type=radio][name=shelfModeRadio]').change(function() {
+        if (this.value == '3') {
+            $('#nextShelfBtn').show();
+        }
+        else {
+            $('#nextShelfBtn').hide();
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1562,7 +1713,7 @@ const setting_up = function () {
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#searchbtn').click();
+        $('#floorPlanbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){
@@ -1777,4 +1928,657 @@ const initAttributes = function() {
         // console.log('attrSmoothness', $('#attrSmoothness').val());
         CGSERIES_GROUP.attrS = +$('#attrSmoothness').val();
     });
+}
+
+let shelfPlaceholderHandler = () => {
+    let shelfKey = INTERSECT_OBJ.userData.shelfKey;
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    if (onlineGroup !== 'OFFLINE' && shelf.userData.controlledByID !== undefined && shelf.userData.controlledByID !== onlineUser.id) {
+        console.log(`This shelf is already claimed by ${shelf.userData.controlledByID}`);
+        INTERSECT_OBJ = undefined;
+        return;
+    }
+    if (shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
+        if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].has(INTERSECT_OBJ.name)) {
+            // cancel
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].delete(INTERSECT_OBJ.name);
+            let index = outlinePass2.selectedObjects.indexOf(INTERSECT_OBJ);
+            if(index > -1){
+                outlinePass2.selectedObjects.splice(index, 1);
+            }
+            if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].size === 0) {
+                claimControlObject3D(shelfKey, true);
+                delete INTERSECT_SHELF_PLACEHOLDERS[shelfKey];
+            }
+        } else {
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(INTERSECT_OBJ.name);
+            outlinePass2.selectedObjects.push(INTERSECT_OBJ);
+        }
+    } else {
+        INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set([INTERSECT_OBJ.name]);
+        claimControlObject3D(shelfKey, false);
+        outlinePass2.selectedObjects.push(INTERSECT_OBJ);
+    }
+    if (Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length == 0) {
+        $("#catalogItems").empty();
+        return;
+    }
+
+    let roomId = shelf.userData.roomId;
+    $('#tab_modelid').text(INTERSECT_OBJ.name);
+    $('#tab_category').text('shelf-placeholder');
+    $('#tab_roomid').text(roomId);
+    $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
+    lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+    recommendCommodities(roomId);
+}
+
+let cancelClickingShelfPlaceholders = () => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
+        claimControlObject3D(shelfKey, true);
+    }
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    $("#catalogItems").empty();
+}
+
+let enterShelfStockingMode = () => {
+    cancelClickingObject3D();
+    for (let key in manager.renderManager.instanceKeyCache) {
+        let inst = manager.renderManager.instanceKeyCache[key];
+        if (inst.userData.json.modelId === 'shelf01') {
+            addShelfPlaceholders(inst);
+        }
+    }
+    if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
+        $("#sidebarSelect").val("shelfInfoDiv").change();
+    }
+    $('#nextShelfBtn').removeAttr('disabled');
+}
+
+let getCube = (width, height, depth, opacity) => {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = new THREE.MeshBasicMaterial();
+    material.transparent = true;
+    material.opacity = opacity;
+    const cube = new THREE.Mesh(geometry, material);
+    return cube;
+}
+
+const shelfOffestY = [1.565, 1.116, 0.666, 0.200];
+
+let addShelfPlaceholders = (shelf) => {
+    if (shelf.userData.json.commodities == undefined) {
+        shelf.userData.json.commodities = [
+            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
+        ];
+    }
+    for (let r = 0; r < 4; ++r) {
+        addShelfPlaceholdersByRow(shelf.userData.key, r, shelf.userData.json.commodities[r].length);
+    }
+}
+
+let exitShelfStockingMode = () => {
+    cancelClickingShelfPlaceholders();
+    for (let key in manager.renderManager.instanceKeyCache) {
+        if (key.startsWith('shelf-placeholder-')) {
+            scene.remove(manager.renderManager.instanceKeyCache[key]);
+            delete manager.renderManager.instanceKeyCache[key];
+        }
+    }
+    clearShelfInfo();
+    $('#nextShelfBtn').attr("disabled", "true");
+}
+
+let isShelfPlaceholder = function(obj) {
+    return obj.name !== undefined && obj.name.startsWith('shelf-placeholder-');
+}
+
+let getNewUUID = () => {
+    let uuid;
+    loadMoreServerUUIDs(1);
+    if(!uuid) uuid = serverUUIDs.pop(); 
+    if(!uuid) uuid = THREE.MathUtils.generateUUID();
+    commandStack.push({
+        'funcName': 'removeObjectByUUID',
+        'args': [uuid, true]
+    });
+    return uuid;
+}
+
+let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    let roomId = shelf.userData.roomId;
+
+    let instancedTransforms = [];
+    let bbox = objectCache[modelId].boundingBox;
+    let commodityWidth = bbox.max.z - bbox.min.z; // rotate 90 degrees
+    let commodityHeight = bbox.max.y - bbox.min.y;
+    let commodityDepth = bbox.max.x - bbox.min.x; // rotate 90 degrees
+    let phWidth = 1.2 * shelf.scale.x / l;
+    let phHeight = 0.4 * shelf.scale.y;
+    let phDepth = 0.45 * shelf.scale.z;
+    let nx = Math.max(1, Math.floor(phWidth / commodityWidth));
+    let ny = Math.max(1, Math.floor(phHeight / commodityHeight)); // optional
+    let nz = Math.max(1, Math.floor(phDepth / commodityDepth));
+    for (let i = 0; i < nx; ++i) {
+        let offsetX = phWidth * i / nx + phWidth / nx / 2 - phWidth / 2;
+        for (let j = 0; j < nz; ++j) {
+            let offsetZ = phDepth * j / nz - 0.25 * shelf.scale.z + commodityDepth / 2;
+            for (let k = 0; k < ny; ++k) {
+                let offsetY = k * commodityHeight;
+                instancedTransforms.push({
+                    'translate': [offsetX, offsetY, offsetZ],
+                    'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees
+                    'scale': [1.0, 1.0, 1.0]
+                });
+            }
+        }
+    }
+
+    let uuid = getNewUUID();
+    let offset = new THREE.Vector3(((0.6 / l) * (2 * c + 1) - 0.6) * shelf.scale.x, shelfOffestY[r] * shelf.scale.y, 0);
+    let axis = new THREE.Vector3(0, 1, 0);
+    offset.applyAxisAngle(axis, shelf.rotation.y);
+    let transform = {
+        'translate': [shelf.position.x + offset.x, shelf.position.y + offset.y, shelf.position.z + offset.z],
+        'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
+        'scale': [1.0, 1.0, 1.0],
+        'format': 'THInstancedObject'
+    };
+    let otherInfo = {
+        'instancedTransforms': instancedTransforms,
+        'shelfKey': shelfKey,
+        'shelfRow': r,
+        'shelfCol': c
+    };
+    let object3d = addObjectByUUID(uuid, modelId, roomId, transform, otherInfo);
+    object3d.name = uuid;
+    emitFunctionCall('addObjectByUUID', [uuid, modelId, roomId, transform, otherInfo]);
+
+    commodities[r][c] = { modelId: modelId, uuid: uuid };
+    let objectProperties = {};
+    objectProperties[shelfKey] = { commodities: commodities };
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
+}
+
+let yulin = function (shelfKey, newCommodities) {
+    for (let r = 0; r < 4; ++r) {
+        changeShelfRow(shelfKey, r, newCommodities[r]);
+    }
+}
+
+let clearDanglingCommodities = () => {
+    for (let key in manager.renderManager.instanceKeyCache) {
+        let inst = manager.renderManager.instanceKeyCache[key];
+        if (inst.userData.modelId && inst.userData.modelId.startsWith('yulin-')) {
+            let r = inst.userData.json.shelfRow;
+            let c = inst.userData.json.shelfCol;
+            let shelfKey = inst.userData.json.shelfKey;
+            if (shelfKey in manager.renderManager.instanceKeyCache) {
+                let commodities = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities;
+                if (commodities[r][c].uuid !== key) {
+                    removeObjectByUUID(key);
+                }
+            } else {
+                // the shelf is gone
+                removeObjectByUUID(key);
+            }
+        } else if (inst.userData.modelId === 'shelf01') {
+            let commodities = inst.userData.json.commodities;
+            for (let r = 0; r < 4; ++r) {
+                let l = commodities[r].length;
+                for (let c = 0; c < l; ++c) {
+                    if (!(commodities[r][c].uuid in manager.renderManager.instanceKeyCache)) {
+                        commodities[r][c] = { modelId: '', uuid: '' };
+                    }
+                }
+            }
+        }
+    }
+}
+
+let addShelfPlaceholdersByRow = function (shelfKey, r, l) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let offsetY = shelfOffestY[r] + 0.2;
+    for (let c = 0; c < l; ++c) {
+        let placeholder = getCube(1.2 / l, 0.4, 0.45, 0.2);
+        let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+        placeholder.name = phKey;
+        let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
+        let offset = new THREE.Vector3(offsetX * shelf.scale.x, offsetY * shelf.scale.y, -0.025 * shelf.scale.z);
+        let axis = new THREE.Vector3(0, 1, 0);
+        offset.applyAxisAngle(axis, shelf.rotation.y);
+        placeholder.position.copy(shelf.position);
+        placeholder.position.add(offset);
+        placeholder.rotation.copy(shelf.rotation);
+        placeholder.scale.copy(shelf.scale);
+        placeholder.userData.shelfKey = shelfKey;
+        placeholder.userData.shelfRow = r;
+        placeholder.userData.shelfCol = c;
+        placeholder.userData.type = 'object';
+        scene.add(placeholder);
+        manager.renderManager.instanceKeyCache[phKey] = placeholder;
+    }
+}
+
+// newRow = [{modelId: 'yulin-xxx'}, {modelId: ''}, ...]
+let changeShelfRow = function (shelfKey, r, newRow) {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let oldRow = shelf.userData.json.commodities[r];
+    if (oldRow !== undefined) {
+        for (let c = 0; c < oldRow.length; ++c) {
+            if (newRow.length === oldRow.length && newRow[c].modelId === oldRow[c].modelId) {
+                // same commodity
+                newRow[c].uuid = oldRow[c].uuid;
+            } else {
+                if (oldRow[c].uuid !== "") {
+                    removeObjectByUUID(oldRow[c].uuid)
+                }
+            }
+        }
+    }
+    if (newRow.length !== oldRow.length) {
+        for (let c = 0; c < oldRow.length; ++c) {
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+            scene.remove(manager.renderManager.instanceKeyCache[phKey]);
+            delete manager.renderManager.instanceKeyCache[phKey];
+        }
+        addShelfPlaceholdersByRow(shelfKey, r, newRow.length);
+    }
+    shelf.userData.json.commodities[r] = newRow;
+    let l = newRow.length;
+    for (let c = 0; c < l; ++c) {
+        let modelId = newRow[c].modelId;
+        if (modelId === "") {
+            continue;
+        }
+        if (newRow.length === oldRow.length && newRow[c].uuid) {
+            continue;
+        } else {
+            addCommodityToShelf(shelfKey, modelId, r, c, l);
+        }
+    }
+}
+
+let setIntersectShelf = () => {
+    if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
+    if (INTERSECT_OBJ.userData.json.commodities === undefined) {
+        addShelfPlaceholders(INTERSECT_OBJ);
+    }
+    let shelfKey = INTERSECT_OBJ.userData.key;
+    claimControlObject3D(shelfKey, false);
+    $("#shelfKey").text(shelfKey);
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+    recommendShelfType(INTERSECT_OBJ.userData.roomId, [shelfKey]);
+    let commodities = INTERSECT_OBJ.userData.json.commodities;
+    for (let r = 0; r < 4; ++r) {
+        let l = commodities[r].length;
+        $(`#shelfRow${r}`).val(l);
+        if (l === 1) {
+            $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+        } else {
+            $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+        }
+        if (l >= 8) {
+            $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+        } else {
+            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
+        }
+        $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
+        $(`#shelfClearRow${r}Btn`).removeAttr('disabled');
+    }
+    $(`#shelfSelectAllBtn`).removeAttr('disabled');
+    $(`#shelfClearAllBtn`).removeAttr('disabled');
+    $('#selectShelfGroupBtn').removeAttr('disabled');
+    if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
+        $("#sidebarSelect").val("shelfInfoDiv").change();
+    }
+    lookAtShelves([shelfKey]);
+}
+
+let setShelfType = (t, i) => {
+    let shelfKeys = Object.keys(INTERSECT_SHELF_PLACEHOLDERS);
+    let objectProperties = {};
+    for (let key of shelfKeys) {
+        let shelf = manager.renderManager.instanceKeyCache[key];
+        shelf.userData.json.shelfType = t;
+        objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+    }
+    console.log(i)
+    socket.emit('selectShelfType', onlineUserID, i, onlineGroup);
+    emitFunctionCall('updateObjectProperties', [objectProperties]);
+}
+
+let clearShelfInfo = () => {
+    $("#shelfKey").text("");
+    for (let r = 0; r < 4; ++r) {
+        $(`#shelfRow${r}`).val(0);
+        $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+        $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+        $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
+        $(`#shelfClearRow${r}Btn`).attr("disabled", "true");
+    }
+    $(`#shelfSelectAllBtn`).attr("disabled", "true");
+    $(`#shelfClearAllBtn`).attr("disabled", "true");
+    $(`#selectShelfGroupBtn`).attr("disabled", "true");
+    $("#shelfTypeRadios").empty();
+}
+
+let shelfRowMinus = (r) => {
+    let shelfKey = $("#shelfKey").text();
+    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
+    for (let i = oldRow.length - 1; i >= 0; --i) {
+        if (oldRow[i].modelId === "") {
+            let newRow = [...oldRow];
+            newRow.splice(i, 1);
+            $(`#shelfRow${r}`).val(newRow.length);
+            if (newRow.length <= 1) $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
+            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
+            changeShelfRow(shelfKey, r, newRow);
+            return;
+        }
+    }
+    alert("不能再减了！");
+}
+
+let shelfRowPlus = (r) => {
+    let shelfKey = $("#shelfKey").text();
+    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
+    let newRow = [...oldRow];
+    newRow.push({ modelId: '', uuid: '' });
+    $(`#shelfRow${r}`).val(newRow.length);
+    if (newRow.length >= 8) $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
+    $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
+    changeShelfRow(shelfKey, r, newRow);
+}
+
+let shelfRowSelectBtn = (rows) => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    let shelfKey = $("#shelfKey").text();
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    shelfRowSelect(shelfKey, rows);
+}
+
+let shelfRowSelect = (shelfKey, rows) => {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+
+    for (let r of rows) {
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
+            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(phKey);
+            outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[phKey]);
+        }
+    }
+
+    recommendCommodities(shelf.userData.roomId);
+}
+
+let shelfRowClearBtn = (rows) => {
+    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
+    $("#catalogItems").empty();
+    let shelfKey = $("#shelfKey").text();
+    INTERSECT_SHELF_PLACEHOLDERS = {};
+    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
+    shelfRowClear(shelfKey, rows);
+}
+
+let shelfRowClear = (shelfKey, rows) => {
+    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+    let commodities = shelf.userData.json.commodities;
+    for (let r of rows) {
+        let l = commodities[r].length;
+        for (let c = 0; c < l; ++c) {
+            if (commodities[r][c].uuid) removeObjectByUUID(commodities[r][c].uuid);
+            commodities[r][c] = { modelId: '', uuid: '' };
+        }
+    }
+}
+
+let addToGroupShelf = function(so) {
+    if (onlineGroup !== 'OFFLINE' && so.userData.controlledByID !== undefined && so.userData.controlledByID !== onlineUser.id) {
+        console.log(`This shelf is already claimed by ${so.userData.controlledByID}`);
+        return;
+    }
+    let index = outlinePass2.selectedObjects.indexOf(so);
+    if(index > -1){
+        outlinePass2.selectedObjects.splice(index, 1);
+        delete INTERSECT_SHELF_PLACEHOLDERS[so.userData.key];
+        claimControlObject3D(so.userData.key, true);
+    } else {
+        outlinePass2.selectedObjects.push(so);
+        INTERSECT_SHELF_PLACEHOLDERS[so.userData.key] = new Set();
+        claimControlObject3D(so.userData.key, false);
+        if (so.userData.json.commodities === undefined) {
+            addShelfPlaceholders(so);
+        }
+    }
+    if (LOOK_AT_SHELF) lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+    recommendShelfType(so.userData.roomId, Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+}
+
+let releaseGroupShelf = function() {
+    outlinePass2.selectedObjects = [];
+    cancelClickingShelfPlaceholders();
+}
+
+let recommendCommodities = (roomId) => {
+    $("#catalogItems").empty();
+    $.ajax({
+        type: "POST",
+        url: "/shelfPlaceholder",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS),
+            mode: $("input[name='shelfModeRadio']:checked").val()
+        }
+    }).done(function (o) {
+        $('#searchinput').val('');
+        $("#catalogItems").empty();
+        searchResults = JSON.parse(o);
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
+}
+
+let recommendShelfType = (roomId, shelfKeys) => {
+    $("#shelfTypeRadios").empty();
+    $.ajax({
+        type: "POST",
+        url: "/shelfType",
+        data: {
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            shelfKeys: JSON.stringify(shelfKeys),
+            mode: $("input[name='shelfModeRadio']:checked").val()
+        }
+    }).done(function (o) {
+        $("#shelfTypeRadios").empty();
+        shelfTypes = JSON.parse(o);
+        shelfTypes.forEach(function (st, i) {
+            let label = st.used ?  st.name : `<b>${st.name}</b>`;
+            $("#shelfTypeRadios").append(`
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${st.name}" onclick="setShelfType('${st.name}', ${i})">
+                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${label}</label>
+                </div>
+            `);
+            if (INTERSECT_OBJ?.userData.json?.shelfType === st.name) {
+                $(`#shelfTypeRadio${i}`).prop("checked", true);
+            }
+        });
+    });
+}
+
+let lookAtShelves = (shelfKeys) => {
+    if (!LOOK_AT_SHELF || $("input[name='shelfModeRadio']:checked").val() != '3') return; 
+    if (shelfKeys.length > 5) {
+        let aabb = new THREE.Box3();
+        for (let shelfKey of shelfKeys) {
+            aabb.expandByObject(manager.renderManager.instanceKeyCache[shelfKey]);
+        }
+        let bbox = {
+            min: [aabb.min.x, aabb.min.y, aabb.min.z],
+            max: [aabb.max.x, aabb.max.y, aabb.max.z]
+        }
+        topdownview(bbox);
+        return;
+    }
+    let meanPos = new THREE.Vector3();
+    for (let shelfKey of shelfKeys) {
+        let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+        meanPos.add(shelf.position);
+    }
+    meanPos.divideScalar(shelfKeys.length);
+    let offset = new THREE.Vector3(0, 0, 1.8);
+    let axis = new THREE.Vector3(0, 1, 0);
+    offset.applyAxisAngle(axis, manager.renderManager.instanceKeyCache[shelfKeys[0]].rotation.y);
+    viewTransform({ 
+        origin: [meanPos.x + offset.x, 1.5, meanPos.z + offset.z], 
+        direction: [-offset.x, 0, -offset.z], 
+        target: [meanPos.x, 1, meanPos.z]
+    }, false);
+    LAST_EDITED_SHELF = manager.renderManager.instanceKeyCache[shelfKeys[0]];
+}
+
+let nextShelf = () => {
+    let objList = manager.renderManager.scene_json.rooms[0].objList;
+    let idx = objList.indexOf(LAST_EDITED_SHELF?.userData.json);
+    if (++idx === objList.length) {
+        idx = 0;
+    }
+    let nextShelf = manager.renderManager.instanceKeyCache[objList[idx].key];
+    let finishFlag = false;
+    while (nextShelf?.userData.modelId !== 'shelf01' || shelfIsStocked(nextShelf)) {
+        if (++idx === objList.length) {
+            idx = 0;
+            if (finishFlag) {
+                alert("所有貨架已布滿！");
+                return;
+            } else {
+                finishFlag = true;
+            }
+        }
+        nextShelf = manager.renderManager.instanceKeyCache[objList[idx].key];
+    }
+    INTERSECT_OBJ = nextShelf;
+    LAST_EDITED_SHELF = nextShelf;
+    setIntersectShelf();
+}
+
+let showTrafficFlowNetwork = () => {
+    let h = 1.5
+    let trafficFlowNetwork = manager.renderManager.scene_json.rooms[0].trafficFlowNetwork;
+    let points = [];
+    for (let e of trafficFlowNetwork.edges) {
+        let v0 = trafficFlowNetwork.vertices[e[0]];
+        let v1 = trafficFlowNetwork.vertices[e[1]];
+        points.push(new THREE.Vector3(v0[0], h, v0[2]));
+        points.push(new THREE.Vector3(v1[0], h, v1[2]));
+    }
+    let geometry = new THREE.BufferGeometry().setFromPoints(points);
+    let line = new THREE.LineSegments(geometry);
+    scene.add(line);
+
+    let path = [];
+    for (let p of trafficFlowNetwork.path) {
+        let v = trafficFlowNetwork.vertices[p];
+        path.push(new THREE.Vector3(v[0], h, v[2]));
+    }
+    geometry = new THREE.BufferGeometry().setFromPoints(path);
+    const material = new THREE.LineBasicMaterial({
+        color: 0xff0000,
+        linewidth: 3
+    });
+    let pathline = new THREE.Line(geometry, material);
+    scene.add(pathline);
+
+    for (let vId in trafficFlowNetwork.vertices) {
+        let v = trafficFlowNetwork.vertices[vId];
+        c = getCube(0.1,0.1,0.1,0.8);
+        c.position.set(v[0], h, v[2]);
+        scene.add(c)
+    }
+}
+
+let showShelfRoute = () => {
+    let h = 1.5
+    let shelfRoute = manager.renderManager.scene_json.rooms[0].shelfRoute;
+    let path = [];
+    for (let p of shelfRoute.path) {
+        let v = shelfRoute.vertices[p];
+        path.push(new THREE.Vector3(v[0], h, v[2]));
+    }
+    geometry = new THREE.BufferGeometry().setFromPoints(path);
+    const material = new THREE.LineBasicMaterial({
+        color: 0x00ff00,
+        linewidth: 3
+    });
+    let pathline = new THREE.Line(geometry, material);
+    scene.add(pathline);
+
+    for (let vId in shelfRoute.vertices) {
+        let v = shelfRoute.vertices[vId];
+        c = getCube(0.1,0.1,0.1,0.8);
+        c.position.set(v[0], h, v[2]);
+        scene.add(c)
+    }
+}
+
+let shelfIsStocked = (shelf) => {
+    if (shelf.userData.json.commodities === undefined) {
+        addShelfPlaceholders(shelf);
+        return false;
+    }
+    for (let row of shelf.userData.json.commodities) {
+        for (let c of row) {
+            if (c.modelId === "") {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+let clearAllShelves = () => {
+    for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+        if (obj?.modelId == 'shelf01' && obj.key in manager.renderManager.instanceKeyCache) {
+            shelfRowClear(obj.key, [0, 1, 2, 3]);
+            obj.shelfType = undefined;
+        }
+    }
+    clearDanglingCommodities();
+}
+
+let selectShelfGroup = () => {
+    let shelfKey = $("#shelfKey").text();
+    let groupId = manager.renderManager.instanceKeyCache[shelfKey].userData.json.groupId;
+    let orient = manager.renderManager.instanceKeyCache[shelfKey].userData.json.orient;
+    LOOK_AT_SHELF = false;
+    for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+        if (obj?.modelId == 'shelf01' && obj.groupId == groupId && obj.key != shelfKey
+            && Math.abs(obj.orient - orient) < 0.1 && obj.key in manager.renderManager.instanceKeyCache) {
+            addToGroupShelf(manager.renderManager.instanceKeyCache[obj.key]);
+        }
+    }
+    LOOK_AT_SHELF = true;
+    lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
+}
+
+let startShelfPlannerExperiment = () => {
+    let mode = $("input[name='shelfModeRadio']:checked").val();
+    socket.emit('startShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
+}
+
+let endShelfPlannerExperiment = () => {
+    let mode = $("input[name='shelfModeRadio']:checked").val();
+    socket.emit('endShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
+    $("#download_button").click();
 }

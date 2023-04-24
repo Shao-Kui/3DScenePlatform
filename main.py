@@ -25,7 +25,8 @@ import random
 from subprocess import check_output
 import difflib
 import sk
-
+from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
+from layoutmethods.shelfarrangement.FinalComputing import kindRecommand,ModelRecommand,noRecommandItem,noRecommandKind,clutterRecommandItem,clutterRecommandKind
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_magic)
@@ -34,6 +35,44 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
 socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
+
+class UserExp(object):
+    current_user = "null"
+    start_time = 0
+    end_time = 0
+    type_record = []
+    commodity_record = []
+    mode = 0
+    def __init__(self,current_user,start_time,mode):
+        now = datetime.datetime.now()
+        self.start_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
+        self.current_user = current_user
+        self.start_time = start_time
+        self.type_record =  []
+        self.commodity_record = []
+        self.mode = mode
+    
+    def writeFile(self):
+        now = datetime.datetime.now()
+        self.end_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
+        user_info = {
+            'name': self.current_user,
+            'time': (self.end_time - self.start_time),
+            'mode':self.mode,
+            'type':self.type_record,
+            'commodity':self.commodity_record,
+            'start_datetime': self.start_dt,
+            'end_datetime': self.end_dt
+        }
+        if not os.path.exists("./layoutmethods/shelfplanner"):
+            os.makedirs("./layoutmethods/shelfplanner")
+        file_name = f'./layoutmethods/shelfplanner/{self.current_user}_{self.end_dt}_{self.mode}.json'
+        file = open(file_name, "w")
+        json.dump(user_info, file)
+        file.close()
+
+
+user_list = []
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -163,6 +202,19 @@ with open('./dataset/ChineseMapping.json', encoding='utf-8') as f:
     ChineseMapping = json.load(f)
 with open('./dataset/transModuleIndex.json', encoding='utf-8') as f:
     transModuleIndex = json.load(f)
+
+@app.route("/queryModule")
+def queryModule():
+    ret = []
+    kw = flask.request.args.get('kw', default = "", type = str) # keyword
+    catMatches = difflib.get_close_matches(kw, list(transModuleIndex.keys()), 1)
+    if len(catMatches) != 0:
+        print(f'Transformable Query: {catMatches[0]}. (queryModule)')
+        modules = transModuleIndex[catMatches[0]]
+        ret += [{"name": module['modelId'], "status": module['status'], "semantic":catMatches[0], "format": 'glb',
+        "thumbnail":f"/thumbnailTransformable/{module['modelId']}/{module['status']}"} for module in modules]
+    return json.dumps(ret)
+
 @app.route("/query2nd")
 def query2nd():
     ret = []
@@ -200,6 +252,10 @@ def query2nd():
         'sofa_small', 'speaker', 'Stove', 'Stovetop', 'table', 'table1', 'TableAngular', 'Table_Black', 'Table_original', 
         'Table_White', 'toilet', 'Trash', 'tv', 'tv_table', 'wall_lighter', 'washbasin', 'Washer', 'word_table', 'work_chair']
         ret += [{"name":modelId, "semantic": 'Unknown', "thumbnail":f"/thumbnail/{modelId}"} for modelId in xiaoyiids1]
+    if kw == 'yulin':
+        with open('./dataset/yulin.json') as f:
+            yulin = json.load(f)
+        ret += [{"name":modelId, "semantic": 'Shop', "thumbnail":f"/thumbnail/{modelId}"} for modelId in yulin]
     if kw == '灰色现代风':
         greyMordenStyle = ['2624','1456','1138','3740','6129','8829','6855','7735','2715','3088','7209,1394','1806','5933','3232','4455',
         '5253','6096','1993','8983','10198','10855','2043','9767','8185','5010','7763','10414','1830','1288','10053','5218','10480','9018',
@@ -294,6 +350,90 @@ def set_scene_configuration():
         return "POST scene configuration. "
     if request.method == 'GET':
         return "Do not support using GET to configurate scene. "
+
+@app.route("/clutterpalette", methods=['POST', 'GET'])
+def clutterpalette():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        pos = json.loads(request.form.get('pos'))
+        ret = clutterpaletteQuery(room, pos)
+        return json.dumps(ret)
+    return "clutterpalette"
+
+@socketio.on('startShelfPlannerExperiment')
+def startShelfPlannerExperiment(userID, mode, groupName):
+    #开始计时，准备记录用戶点击推荐内容的第几项
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user_list.remove(user)
+    new_user = UserExp(groupName,time.time(),mode)
+    user_list.append(new_user)
+@socketio.on('selectShelfType')
+def selectShelfType(userID, order, groupName):
+    #记录用戶点击了推荐的第几项货架类型, starting from 0
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.type_record.append(order)
+
+@socketio.on('selectCommodity')
+def selectCommodity(userID, order, groupName):
+    # TODO: 记录用戶点击了推荐的第几项商品, starting from 0
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.commodity_record.append(order)
+
+@socketio.on('endShelfPlannerExperiment')
+def endShelfPlannerExperiment(userID, mode, groupName):
+    # TODO: 结束计时，保存groupName、mode、用时、用戶点击了推荐内容(货架类型、商品)的第几项
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.end_time = time.time()
+            user.writeFile()
+    print(mode, groupName, userID)
+
+@app.route("/shelfType", methods=['POST', 'GET'])
+def shelfType():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
+        shelfKey = json.loads(request.form.get('shelfKeys'))
+        print(mode)
+        if mode == 1:
+            recommond_kind = noRecommandKind(room,shelfKey)
+        elif mode == 2:
+            recommond_kind = clutterRecommandKind(room,shelfKey)
+        else:
+            recommond_kind = kindRecommand(room,shelfKey)
+        ret = [{"used":kind.flag, "name": kind.name} for kind in recommond_kind]
+        return json.dumps(ret)
+    return "shelfType"
+
+@app.route("/shelfPlaceholder", methods=['POST', 'GET'])
+def shelfPlaceholder():
+    if request.method == 'POST':
+        room = json.loads(request.form.get('room'))
+        placeholders = json.loads(request.form.get('placeholders'))
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
+        if mode == 1:
+            recommand_model = noRecommandItem(room,placeholders)
+        elif mode == 2:
+            recommand_model = clutterRecommandItem(room,placeholders)
+        else:
+            recommand_model = ModelRecommand(room,placeholders)
+        # yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
+        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in recommand_model]
+        return json.dumps(ret)
+    return "shelfPlaceholder"
 
 @app.route("/sketch", methods=['POST', 'GET'])
 def sketch():
@@ -400,7 +540,7 @@ def save_online_scenes():
         with open(f'./examples/onlineScenes/{groupName}.json', 'w') as f:
             json.dump(onlineScenes[groupName], f)
 schesk = BackgroundScheduler()
-schesk.add_job(func=save_online_scenes, trigger="interval", seconds=600)
+schesk.add_job(func=save_online_scenes, trigger="interval", seconds=6000)
 schesk.start()
 atexit.register(lambda: schesk.shutdown()) # Register the function to be called on exit
 
@@ -553,7 +693,8 @@ def functionCall(fname, arguments, groupName):
             'uuid': arguments[0],
             'modelId': arguments[1],
             'roomID': arguments[2],
-            'transform': arguments[3]
+            'transform': arguments[3], 
+            'otherInfo': {} if len(arguments) == 4 else arguments[4]
         }), room=groupName, include_self=False)
     if fname == 'removeObjectByUUID':
         emit('functionCallUnity', ({
@@ -577,6 +718,11 @@ def functionCall(fname, arguments, groupName):
             'fname': 'refreshRoomByID',
             'roomId': arguments[0],
             'objList': arguments[1]
+        }), room=groupName, include_self=False)
+    if fname == 'updateObjectProperties':
+        emit('functionCallUnity', ({
+            'fname': 'updateObjectProperties',
+            'objectProperties': arguments[0]
         }), room=groupName, include_self=False)
 
 object3DControlledByList = {}

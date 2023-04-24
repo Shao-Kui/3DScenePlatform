@@ -1,0 +1,95 @@
+{
+    "story" : [
+        {
+            "modelId": "story-ArchiveDrawersClosed",
+            "storyContents": [
+                {
+                    "storyIndex": "1",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "3",
+                    "guidType": "lookat",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "story-Blackboard",
+            "storyContents": [
+                {
+                    "storyIndex": "2",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation",
+                    "resutlSound": "name of sound"
+                }
+            ]
+        },
+        {
+            "modelId": "story-CardboardBoxA",
+            "storyContents": [
+                {
+                    "storyIndex": "4",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "story-Fan",
+            "storyContents": [
+                {
+                    "storyIndex": "5",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation",
+                    "resutlSound": "name of sound"
+                }
+            ]
+        },
+        {
+            "modelId": "story-LampFluoHangingA_ON",
+            "storyContents": [
+                {
+                    "storyIndex": "8",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "9",
+                    "guidType": "lookat",
+                    "guideAnimation": "name of animation",
+                    "resultAnimation": "name of animation"
+                },
+                {
+                    "storyIndex": "6",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        },
+        {
+            "modelId": "story-StudentDeskB",
+            "storyContents": [
+                {
+                    "storyIndex": "7",
+                    "guideType": "any",
+                    "guideAnimation": "name of animation",
+                    "guideSound": "name of sound",
+                    "resultAnimation": "name of animation"
+                }
+            ]
+        }
+    ]
+}
