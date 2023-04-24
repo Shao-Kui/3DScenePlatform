@@ -88,12 +88,14 @@ const traverseObjSetting = function (object) {
         checkTextureOpacity(object.material, object.geometry);
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
+                object.material[i].reflectivity = 0;
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
             if(object.material.transparent){
+                object.material.reflectivity = 0;
                 object.castShadow = false;
             }
         }

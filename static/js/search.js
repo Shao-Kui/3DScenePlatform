@@ -34,6 +34,11 @@ const clickCatalogItem = function (e, d=undefined) {
         timeCounter.addStart = moment();
     }
     scenecanvas.style.cursor = "crosshair";
+    if (shelfstocking_Mode) {
+        let order = $(e.target).data("order");
+        if (catalogItems.firstChild.getAttribute('objectname') == 'yulin-empty') order -= 1;
+        if (order != -1) socket.emit('selectCommodity', onlineUserID, order, onlineGroup);
+    }
     loadObjectToCache(INSERT_OBJ.modelId, ()=>{
         if (shelfstocking_Mode && INSERT_OBJ.modelId.startsWith('yulin') && Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length !== 0) {
             stockShelves();
@@ -128,6 +133,8 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('format', item.format);
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
+    iDiv.dataset.order = catalogItems.childElementCount;
+    if (shelfstocking_Mode) iDiv.innerHTML = item.name.replace('yulin-', '');
     catalogItems.appendChild(iDiv);
 };
 
@@ -225,8 +232,8 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     return [mid, midLookat]
 }
 
-const viewTransform = function(pcam){
-    cancelClickingObject3D();
+const viewTransform = function(pcam, cancelClickingObject = true){
+    if (cancelClickingObject) cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
     let direction = new THREE.Vector3(
         orbitControls.target.x - camera.position.x,

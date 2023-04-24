@@ -34,12 +34,12 @@
 			const textureMatrix = new THREE.Matrix4();
 			const clock = new THREE.Clock(); // internal components
 
-			if ( THREE.Reflector === undefined ) {
+			// if ( THREE.Reflector === undefined ) {
 
-				console.error( 'THREE.Water: Required component THREE.Reflector not found.' );
-				return;
+			// 	console.error( 'THREE.Water: Required component THREE.Reflector not found.' );
+			// 	return;
 
-			}
+			// }
 
 			if ( THREE.Refractor === undefined ) {
 
@@ -48,26 +48,26 @@
 
 			}
 
-			const reflector = new THREE.Reflector( geometry, {
-				textureWidth: textureWidth,
-				textureHeight: textureHeight,
-				clipBias: clipBias,
-				encoding: encoding
-			} );
+			// const reflector = new THREE.Reflector( geometry, {
+			// 	textureWidth: textureWidth,
+			// 	textureHeight: textureHeight,
+			// 	clipBias: clipBias,
+			// 	encoding: encoding
+			// } );
 			const refractor = new THREE.Refractor( geometry, {
 				textureWidth: textureWidth,
 				textureHeight: textureHeight,
 				clipBias: clipBias,
 				encoding: encoding
 			} );
-			reflector.matrixAutoUpdate = false;
+			// reflector.matrixAutoUpdate = false;
 			refractor.matrixAutoUpdate = false; // material
 
 			this.material = new THREE.ShaderMaterial( {
 				uniforms: THREE.UniformsUtils.merge( [ THREE.UniformsLib[ 'fog' ], shader.uniforms ] ),
 				vertexShader: shader.vertexShader,
 				fragmentShader: shader.fragmentShader,
-				transparent: true,
+				transparent: false,
 				fog: true
 			} );
 
@@ -91,7 +91,7 @@
 
 			normalMap0.wrapS = normalMap0.wrapT = THREE.RepeatWrapping;
 			normalMap1.wrapS = normalMap1.wrapT = THREE.RepeatWrapping;
-			this.material.uniforms[ 'tReflectionMap' ].value = reflector.getRenderTarget().texture;
+			//this.material.uniforms[ 'tReflectionMap' ].value = reflector.getRenderTarget().texture;
 			this.material.uniforms[ 'tRefractionMap' ].value = refractor.getRenderTarget().texture;
 			this.material.uniforms[ 'tNormalMap0' ].value = normalMap0;
 			this.material.uniforms[ 'tNormalMap1' ].value = normalMap1; // water
