@@ -475,6 +475,8 @@ def generateObjectsUUIDs(sceneJson):
     # standardize roomids & generate uuid for each object: 
     for room,roomId in zip(sceneJson['rooms'], range(len(sceneJson['rooms']))):
         room['roomId'] = roomId
+        if 'objList' not in room:
+            room['objList'] = []
         for obj in room['objList']:
             if obj is None:
                 continue
