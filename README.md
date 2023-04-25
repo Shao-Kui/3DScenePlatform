@@ -204,7 +204,7 @@ The "autoview.py" contains the fundamental logic of our method, which will call 
 # SceneDirector
 ![SceneDirector](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "TVCG 2023")
 
-[\[Paper\]][scenedirectorpaper] [\[Video\]][scenedirector] \[Supp\] [\[Dataset\]][scenedirectordataset]
+[\[Paper\]][scenedirectorpaper] [\[Video\]][scenedirector] [\[Supp\]][scenedirectorsupp] [\[Dataset\]][scenedirectordataset]
 
 This project is also the container for our interactive scene synthesis framework, which simulteanously edits multiple objects in each interactive session. The related source code includes:
 ```
@@ -246,11 +246,13 @@ This repo will continuously update with more functions, features and open-source
 # Acknowledgement
 This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Wei-Yu Xie is involved in voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang are involved with the Unity-based client for VR. Tian-Xing Xu is involved in the format conversion of 3D-Front. Xiang-Li Li is involved in sketch searching, refining datasets and dataset converting. 
 
-Our layout framework is designed and implemented by [Shao-Kui Zhang][shaokui], Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
+Our layout framework is designed and implemented by Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
 
-The MageAdd is designed and implemented by [Shao-Kui Zhang][shaokui], Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], and Song-Hai Zhang. 
+The MageAdd is designed and implemented by Shao-Kui Zhang, Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], and Song-Hai Zhang. 
 
-The SceneViewer is designed and implemented by [Shao-Kui Zhang][shaokui], Hou Tam, Yi-Xiao Li, Tai-Jiang Mu, and Song-Hai Zhang. 
+The SceneViewer is designed and implemented by Shao-Kui Zhang, Hou Tam, Yi-Xiao Li, [Tai-Jiang Mu][taijiangpage], and Song-Hai Zhang. 
+
+The SceneDirector is designed and implemented by Shao-Kui Zhang, Hou Tam, Yike Li, Ke-Xin Ren, [Hongbo Fu][hongbopage], and Song-Hai Zhang. 
 
 # Copyright
 This platform is developed for research, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT guaranteed security if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
@@ -277,5 +279,7 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [sceneviewersupp]:https://ieeexplore.ieee.org/document/9920233/media#media
 [scenedirectorpaper]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneDirector.pdf
 [scenedirector]:https://www.bilibili.com/video/BV11L411e72M
-[scenedirectorsupp]:https://ieeexplore.ieee.org
+[scenedirectorsupp]:https://ieeexplore.ieee.org/document/10106472/media#media
 [scenedirectordataset]:https://cloud.tsinghua.edu.cn/f/dd74c0617cb144198f0e/
+[hongbopage]:https://www.scm.cityu.edu.hk/people/fu-hongbo
+[taijiangpage]:https://cg.cs.tsinghua.edu.cn/people/~mtj/
