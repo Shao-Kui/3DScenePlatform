@@ -34,7 +34,7 @@ app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
-socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
+socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*", max_http_buffer_size=100000000)
 
 class UserExp(object):
     current_user = "null"

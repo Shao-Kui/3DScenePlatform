@@ -161,7 +161,7 @@ const refreshSceneByJson = function(thejson){
 
 const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}, otherInfo={}){
     if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform, otherInfo]);
+        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform, otherInfo], transform.format);
         return; 
     }
     // check room ID: 
