@@ -444,6 +444,9 @@ const addAreaToScene = function(mesh, room){
 }
 const addAreaByRoom = function(room){
     let mesh;
+    if(!room.areaType){
+        room.areaType = 'earth'
+    }
     let mesh2;
     if(room.areaType === 'water'){
 
@@ -480,6 +483,10 @@ const addAreaByRoom = function(room){
         setTimeout(addAreaByRoom, 1000, room);
         return;
     }
+    // const vertices = mesh.geometry.attributes.position.array;
+    // for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+    //     vertices[ j + 2 ] = Math.random() * 3;
+    // }
     addAreaToScene(mesh, room);
 }
 

@@ -2251,7 +2251,7 @@ let setShelfType = (t, i) => {
         shelf.userData.json.shelfType = t;
         objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
     }
-    console.log(i)
+    console.log('selectShelfType', i);
     socket.emit('selectShelfType', onlineUserID, i, onlineGroup);
     emitFunctionCall('updateObjectProperties', [objectProperties]);
 }
@@ -2583,4 +2583,21 @@ let endShelfPlannerExperiment = () => {
     let mode = $("input[name='shelfModeRadio']:checked").val();
     socket.emit('endShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
     $("#download_button").click();
+}
+
+let randomCommodities = () => {
+    let yulinModels = ['yulin-apples', 'yulin-artichokes', 'yulin-avocados', 'yulin-bananas', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-blackricebasket', 'yulin-bleach', 'yulin-burger', 'yulin-butter', 'yulin-cakebag', 'yulin-cakebag2', 'yulin-cakebox', 'yulin-cakebox2', 'yulin-cakepack', 'yulin-candy', 'yulin-carrots', 'yulin-champagne-brown-tall', 'yulin-cheese', 'yulin-chicken', 'yulin-chip1', 'yulin-chip2', 'yulin-choco', 'yulin-choco2', 'yulin-chocobox', 'yulin-chocopack', 'yulin-cleaner1', 'yulin-cleaner2', 'yulin-coffee', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-colorricebasket', 'yulin-cream', 'yulin-cream2', 'yulin-donut', 'yulin-egg', 'yulin-egg2', 'yulin-fastfoodcup-pink', 'yulin-fastfoodcup-red', 'yulin-flour', 'yulin-flour2', 'yulin-frenchfries', 'yulin-garlic', 'yulin-glasscup-blue', 'yulin-glasscup-blue2', 'yulin-glasscup-grey', 'yulin-glasscup-grey2', 'yulin-glasscup-pink', 'yulin-glasscup-pink2', 'yulin-glassware-short-blue2', 'yulin-glassware-short-grey', 'yulin-glassware-short-grey2', 'yulin-glassware-short-orange', 'yulin-glassware-short-orange2', 'yulin-glassware-short-pink', 'yulin-glassware-tall-grey', 'yulin-glassware-tall-orange', 'yulin-glassware-tall-pink', 'yulin-grapefruits', 'yulin-greenricebasket', 'yulin-hampack', 'yulin-holder-green', 'yulin-holder-yellow', 'yulin-hotdog', 'yulin-hotdog2', 'yulin-jam', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-ketchup', 'yulin-kiwis', 'yulin-laundry', 'yulin-laundry2', 'yulin-lemons', 'yulin-lemonwater-yellow-short', 'yulin-maffins', 'yulin-mangos', 'yulin-meat', 'yulin-meat2', 'yulin-meatpack', 'yulin-meatpack2', 'yulin-meatpack3', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-mushrooms', 'yulin-niujiaobao', 'yulin-oil', 'yulin-oil2', 'yulin-onions', 'yulin-orangericebasket', 'yulin-pancakes', 'yulin-papayas', 'yulin-paperroll', 'yulin-paperroll2', 'yulin-pasta', 'yulin-pasta2', 'yulin-pepper', 'yulin-perrys', 'yulin-pieceofcake', 'yulin-pineapples', 'yulin-plant1', 'yulin-plant2', 'yulin-plant3', 'yulin-plant5', 'yulin-potatos', 'yulin-pretzel', 'yulin-pumpkins', 'yulin-rice', 'yulin-rice2', 'yulin-rollingpin', 'yulin-rollingpin2', 'yulin-salt', 'yulin-sandwich', 'yulin-sausages', 'yulin-sause', 'yulin-seedpack', 'yulin-seedpack2', 'yulin-shampoo-black', 'yulin-shampoo-green', 'yulin-shampoo-white', 'yulin-shortcup-brown', 'yulin-shortcup-grey', 'yulin-soap', 'yulin-soap2', 'yulin-soda-orange-short', 'yulin-squashs', 'yulin-steak', 'yulin-sudong1', 'yulin-sudong2', 'yulin-sudong3', 'yulin-sugar', 'yulin-sugar2', 'yulin-sushis', 'yulin-sushis2', 'yulin-tallcup-red', 'yulin-tallcup-yellow', 'yulin-tea', 'yulin-tea-brown-short', 'yulin-tincan', 'yulin-toast', 'yulin-tomatos', 'yulin-toothpaste', 'yulin-vase', 'yulin-vase2', 'yulin-water-blue-tall', 'yulin-watermelons', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink', 'yulin-zucchinis'];
+    for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
+        if (obj?.modelId == 'shelf01') {
+            let model = yulinModels[Math.floor(Math.random()*151)];
+            console.log(model)
+            let rows = [];
+            for (let i = 0; i < 4; i++) {
+                rows.push([{modelId: model}]);
+            }
+            loadObjectToCache(model, ()=>{
+                yulin(obj.key, rows);
+            }, [], 'obj');
+        }
+    }
 }

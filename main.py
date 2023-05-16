@@ -34,7 +34,7 @@ app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
-socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
+socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*", max_http_buffer_size=100000000)
 
 class UserExp(object):
     current_user = "null"
@@ -566,6 +566,8 @@ def generateObjectsUUIDs(sceneJson):
     # standardize roomids & generate uuid for each object: 
     for room,roomId in zip(sceneJson['rooms'], range(len(sceneJson['rooms']))):
         room['roomId'] = roomId
+        if 'objList' not in room:
+            room['objList'] = []
         for obj in room['objList']:
             if obj is None:
                 continue
