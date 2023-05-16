@@ -2010,10 +2010,10 @@ const shelfOffestY = [1.565, 1.116, 0.666, 0.200];
 let addShelfPlaceholders = (shelf) => {
     if (shelf.userData.json.commodities == undefined) {
         shelf.userData.json.commodities = [
-            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-            [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
+            [{ modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }],
+            [{ modelId: '', uuid: '' }]
         ];
     }
     for (let r = 0; r < 4; ++r) {
@@ -2070,7 +2070,9 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
         for (let j = 0; j < nz; ++j) {
             let offsetZ = phDepth * j / nz - 0.25 * shelf.scale.z + commodityDepth / 2;
             for (let k = 0; k < ny; ++k) {
-                let offsetY = k * commodityHeight;
+                let offsetY = k * commodityHei
+                
+                ght;
                 instancedTransforms.push({
                     'translate': [offsetX, offsetY, offsetZ],
                     'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees
