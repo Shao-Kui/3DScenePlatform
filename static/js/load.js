@@ -95,6 +95,7 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
             instance.scene.format = format;
             loadObjectToCacheContent(instance.scene);
             anchor.apply(null, anchorArgs);
+            console.log(instance.scene)
         })
     }
 };
@@ -447,12 +448,8 @@ const addAreaByRoom = function(room){
     if(!room.areaType){
         room.areaType = 'earth'
     }
-    let mesh2;
     if(room.areaType === 'water'){
-
-
-        mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)),new THREE.MeshPhongMaterial({color:0xffffff}));
-        mesh2 = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
+        mesh = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
             color: waterparams.color,
             scale: waterparams.scale,
             flowDirection: new THREE.Vector2( waterparams.flowX, waterparams.flowY ),

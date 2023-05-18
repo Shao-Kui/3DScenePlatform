@@ -35,11 +35,21 @@ NOWALL = False
 USENEWWALL = False
 CAMGEN = False
 TRAV = False
+AREACAM = False
 WALLHEIGHT = 2.6
 
 def autoPerspectiveCamera(scenejson):
     PerspectiveCamera = {}
-    roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+    roomShape = []
+    if AREACAM:
+        for room in scenejson['rooms']:
+            if 'areaShape' in room:
+                roomShape += room['areaShape']
+        roomShape = np.array(roomShape)
+        wh = 0
+    else:
+        roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+        wh = WALLHEIGHT
     lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
     lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
     camfovratio = np.tan((sk.DEFAULT_FOV/2) * np.pi / 180) 
@@ -47,13 +57,12 @@ def autoPerspectiveCamera(scenejson):
     lz_length = (np.max(roomShape[:, 1]) - np.min(roomShape[:, 1]))
     if lz_length > lx_length:
         PerspectiveCamera['up'] = [1,0,0]
-        camHeight = WALLHEIGHT + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+        camHeight = wh + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
     else:
         PerspectiveCamera['up'] = [0,0,1]
-        camHeight = WALLHEIGHT + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
+        camHeight = wh + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
     PerspectiveCamera['origin'] = [lx, camHeight, lz]
     PerspectiveCamera['target'] = [lx, 0, lz]
-    PerspectiveCamera['up'] = [0,0,1]
     PerspectiveCamera['rotate'] = [0,0,0]
     PerspectiveCamera['fov'] = sk.DEFAULT_FOV
     PerspectiveCamera['focalLength'] = 35
@@ -200,6 +209,18 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson['newroomobjlist'] = []
     blocks = []
     for room in scenejson['rooms']:
+        if 'objList' not in room:
+            room['objList'] = []
+        if 'areaType' not in room:
+            room['areaType'] = 'unknown'
+        if os.path.exists(f'./dataset/area/{scenejson["id"]}/{room["modelId"]}.obj'):
+            scenejson['renderroomobjlist'].append({
+                'modelPath': f'../../area/{scenejson["id"]}/{room["modelId"]}.obj',
+                'translate': [0,0,0],
+                'rotate': [0,0,0],
+                'scale': [1,1,1],
+                'areaType': room['areaType']
+            })
         for obj in room['objList']:
             if 'coarseSemantic' in obj:
                 if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
@@ -386,6 +407,8 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                         'scale': [1,1,1]
                     })
         for obj in room['objList']:
+            if obj['modelId'] == 'noUse':
+                continue
             if 'inDatabase' in obj:
                 if not obj['inDatabase']:
                     continue
@@ -523,7 +546,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav=", "areacam="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -538,7 +561,6 @@ if __name__ == "__main__":
             cameraType = arg
         elif opt in ("--wm"):
             wallMaterial = bool(int(arg))
-            print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
         elif opt in ("--camgen"):
@@ -549,6 +571,8 @@ if __name__ == "__main__":
             NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
             emitter = arg
+        elif opt in ("--areacam"):
+            AREACAM = bool(int(arg))
         elif opt in ("--task"):
             # defaultTast = getattr(__name__, arg)
             defaultTast = globals()[arg]
