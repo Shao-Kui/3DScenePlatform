@@ -343,6 +343,8 @@
               id="operationFuture"
               type="button"
               class="btn btn-outline-dark m-1 btn-responsive"
+              data-toggle="modal"
+              data-target="#operationFutureModal"
             >
               Future
             </button>
@@ -935,6 +937,22 @@
                   </div>
                   <div id="commitSuccessMessage" class="modal-body">
                     
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal fade" id="operationFutureModal" tabindex="-1" role="dialog" aria-labelledby="operationFutureModal" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="operationFutureTitle">Future</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div id="operationFutureModalBody" class="modal-body">
+                    123456
                   </div>
                 </div>
               </div>
