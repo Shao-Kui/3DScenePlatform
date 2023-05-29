@@ -16,6 +16,7 @@ from itertools import chain, combinations
 import time
 import random
 import copy
+import math
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -1120,4 +1121,473 @@ if __name__ == "__main__":
     # renderModel20('selling_holder_small')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     # cgs('1133', None, '小太阳-灰色奢华土豪')
+
+# 计算房间各类型的权重
+def calculate_room_type_values(srcpath:str,dstpath:str):
+    if not srcpath.endswith('.json'):
+        return
+    not_on_ground_factor = 0.5
+    exist_factor = 0.7
+    prior_factor = 0.3
+    room_map = {
+        "LivingDiningRoom":{"livingroom","diningroom"},
+        "LivingRoom":{"livingroom"},
+        "MasterBedroom":{"bedroom"},
+        "Bedroom":{"bedroom"},
+        "Library":{"office"},
+        "DiningRoom":{"diningroom"},
+        "SecondBedroom":{"bedroom"},
+    }
+    def wfunc(num):
+        return num*num
+    # Loading room occurence data
+    objects = json.load(open('static/dataset/dynamic_objects_data.json'))
+    objects_category_occurence = json.load(open('dataset/occurrenceCount/res_ratio.json'))
+    with open('dataset/objCatListAliv2.json') as f:
+        objCatListAliv2 = json.load(f)
+    room_objects = {"livingroom","bedroom","diningroom","office"}
+    newpath = dstpath
+    def getObjCat(modelId):
+        if len(objCatListAliv2[modelId]) == 0:
+            return None
+        else:
+            return objCatListAliv2[modelId][0]
+    def itemListHandler(lst, instr):
+        if instr == 'scale':
+            if len(lst) == 3:
+                return {'objScaleX' : float(lst[0]),  'objScaleY' : float(lst[1]), 'objScaleZ' : float(lst[2])}
+            else:
+                return {}
+
+        if instr == 'state':
+            if len(lst) == 1:
+                return {'currentState' : lst[0]}
+            else:
+                return {}
+        
+        if instr == 'gtrans':
+            if len(lst) == 8:
+                return {'attachedObjId' : lst[0], 'objPosX' : float(lst[1]), 'objPosY' : float(lst[2]), 'objPosZ' : float(lst[3]), 'objOriY' : float(lst[4]), 'objScaleX' : float(lst[5]), 'objScaleY' : float(lst[6]), 'objScaleZ' : float(lst[7])}
+            elif len(lst) == 9:
+                return {'attachedObjId' : lst[0], 'objPosX' : float(lst[1]), 'objPosY' : float(lst[2]), 'objPosZ' : float(lst[3]), 'objOriY' : float(lst[4]), 'objScaleX' : float(lst[5]), 'objScaleY' : float(lst[6]), 'objScaleZ' : float(lst[7]), 'currentState' : lst[8]}
+            else:
+                return {}
+
+        if instr == 'wall':
+            if len(lst) == 3:
+                return {'nearestDistance' : float(lst[0]), 'secondDistance' : float(lst[1]), 'nearestOrient0' : float(lst[2])}
+            else:
+                return {}
+        
+        if instr == 'window' or instr == 'door':
+            if len(lst) == 8:
+                return {'distance' : float(lst[0]), 'objPosX' : float(lst[1]), 'objPosY' : float(lst[2]), 'objPosZ' : float(lst[3]), 'width' : float(lst[4]), 'height' : float(lst[5]), 'objOriY' : float(lst[6]), 'direction' : lst[7][1]}
+            else:
+                return {}
+    def elementHandler(eleDict, element):
+        if element.count('[') == 0:
+            if 'relationName' in eleDict:
+                return -1
+            else:
+                eleDict['relationName'] = element
+            return 1
+        idx = element.index('[')
+        eleName = element[1:idx] #skip the blank space
+        eleContent = element[idx+1:] #skip [
+        lst = eleContent.split(':')[:-1] #skip ]
+        if not(eleName in ['scale', 'state', 'gtrans', 'wall', 'window', 'door']):
+            print('elementHandler : wrong attribute')
+            return -1
+        
+        eleDict[eleName] = []
+        for itms in lst:
+            itmLst = itms[1:].split(',')[:-1] #get rid of '{ }'
+            ret = itemListHandler(itmLst, eleName)
+            if len(ret) :
+                eleDict[eleName].append(ret)
+            else:
+                print('elementHandler : item %s length error'%(eleName))
+                return -1
+
+        return 1
+    # TODO: after adding prior in room data delete this part
+
+    def calarea(objpath):
+        vertices = []
+        with open(objpath,encoding='utf-8') as objf:
+            for line in objf:
+                if line.startswith("#"):
+                    continue
+                values = line.split()
+                if len(values) == 0:
+                    continue
+                if values[0] == 'v':
+                    v = list(map(float, values[1:4]))
+                    vertices.append([v[0], v[1], v[2]])
+        l0 = [a[0] for a in vertices]
+        l2 = [a[2] for a in vertices]
+        return (max(l0)-min(l0))*(max(l2)-min(l2))
+    room_input = json.load(open(srcpath))
+    for room in room_input["rooms"]:
+        room_values = {key:0 for key in room_objects}
+        # print(room['modelId']+":")
+        totarea = 0
+        for i in range(1,len(room['roomShape'])-1):
+            totarea += (room['roomShape'][i][0]-room['roomShape'][0][0])*(room['roomShape'][i+1][1]-room['roomShape'][0][1])\
+            -(room['roomShape'][i][1]-room['roomShape'][0][1])*(room['roomShape'][i+1][0]-room['roomShape'][0][0])
+        totarea = abs(totarea) / 2
+        fl=True
+        wmap={}
+        for obj in room["objList"]:
+            # print(obj['modelId']+":")
+            if os.path.exists('dataset/object/'+obj['modelId']):
+                area = calarea('dataset/object/'+obj['modelId']+'/'+obj['modelId']+'.obj')
+            elif os.path.exists('static/dataset/object/'+obj['modelId']):
+                area = calarea('static/dataset/object/'+obj['modelId']+'/'+obj['startState']+'.obj')
+            else:
+                continue
+            area = obj['scale'][0]*obj['scale'][2]*area
+            obj['area']=area
+            w=area
+            wmap[obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')]=w
+            # print("w:"+str(w))
+            obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
+            if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
+                if getObjCat(obj['modelId']) in objects_category_occurence:
+                    for room_type in objects_category_occurence[getObjCat(obj['modelId'])]:
+                        if room_type in room_map:
+                            for mapped_room_type in room_map[room_type]:
+                                room_values[mapped_room_type]+=w*objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])
+                                # print((mapped_room_type,objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])))    
+            elif obj_name in objects:
+                # calculating room type
+                for room_type in room_objects:
+                    room_values[room_type]+=w*objects[obj_name]['labelvalue'][room_type]
+                    # print((room_type,objects[obj_name]['labelvalue'][room_type]))
+            else:
+                print("object not found---------------")
+                exit(0)
+        
+        for key in room_values:
+            room_values[key]=room_values[key]*exist_factor
+        
+        for obj in room['objList']:
+            if 'attachedObj' in obj:
+                temp_room_values={key:0 for key in room_values}
+                obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
+                if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
+                    if getObjCat(obj['modelId']) in objects_category_occurence:
+                        for room_type in objects_category_occurence[getObjCat(obj['modelId'])]:
+                            if room_type in room_map:
+                                for mapped_room_type in room_map[room_type]:
+                                    temp_room_values[mapped_room_type]+=obj['area']*objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])
+                    elif obj_name in objects:
+                    # calculating room type
+                        for room_type in room_objects:
+                            temp_room_values[room_type]+=obj['area']*objects[obj_name]['labelvalue'][room_type]
+                            # print((room_type,objects[obj_name]['labelvalue'][room_type]))
+                    sub_room_values={key:0 for key in room_values}
+                    for subobj in obj['attachedObj']:
+                        obj_name = subobj.replace('#','_')
+                        if subobj['modelId'] in objCatListAliv2 and getObjCat(subobj['modelId']) != None:
+                            if getObjCat(subobj['modelId']) in objects_category_occurence:
+                                for room_type in objects_category_occurence[getObjCat(subobj['modelId'])]:
+                                    if room_type in room_map:
+                                        for mapped_room_type in room_map[room_type]:
+                                            temp_room_values[mapped_room_type]+=subobj['area']*objects_category_occurence[getObjCat(subobj['modelId'])][room_type]/len(room_map[room_type])
+                        elif obj_name in objects:
+                        # calculating room type
+                            for room_type in room_objects:
+                                temp_room_values[room_type]+=subobj['area']*objects[obj_name]['labelvalue'][room_type]
+                                # print((room_type,objects[obj_name]['labelvalue'][room_type]))
+                    for key in room_values:
+                        room_values[key]+=math.sqrt(temp_room_values[key])*math.sqrt(sub_room_values[key])*prior_factor
+
+        output={"evaluation":[],"description":""}
+        sv=0
+        for key in room_values:
+            sv+=wfunc(room_values[key])
+        if sv==0:
+            print("Cannot calculate")
+        else:
+            for key in room_values:
+                room_values[key]=wfunc(room_values[key])/sv
+            # print("Room type evaluation:")
+            for key in room_values:
+                # print(key+":"+str(room_values[key]))
+                output['evaluation'].append({"room":key,"value":room_values[key]})
+        sorted_room_values = [{"roomtype":key,"value":value} for key,value in room_values.items()]
+        sorted_room_values.sort(key=lambda x:x['value'],reverse=True)
+        description="The room type is "
+        maincount=3
+        for i in range(1,4):
+            if sorted_room_values[i]["value"]/sorted_room_values[0]["value"]<0.7:
+                maincount=i-1
+                break
+        if maincount==0:
+            description += sorted_room_values[0]["roomtype"]
+        else:
+            description += "a combination of "
+            for i in range(0,maincount-1):
+                description+=sorted_room_values[i]["roomtype"]+", "
+            description += sorted_room_values[maincount-1]["roomtype"]+" and "+sorted_room_values[maincount]["roomtype"]
+        
+        subcount=3
+        for i in range(maincount+1,4):
+            if sorted_room_values[i]["value"]/sorted_room_values[0]["value"]<0.4:
+                subcount=i-1
+                break
+        if subcount!=maincount:
+            description+=", with some functionality of "
+            for i in range(maincount+1,subcount):
+                description+=sorted_room_values[i]["roomtype"]+", "
+            description+=sorted_room_values[subcount]["roomtype"]
+            description+=" as well"
+        description+="."
+        # print(description)
+        output['description']=description
+        json.dump(output,open(newpath,"w"))
+
+from typing import List, Optional
+# 计算用于构建树结构的数据
+def calculate_tree_data(path:str,groupName:str):
+    Room_label: int = 4
+    Room_num: int = 10
+    # norm = norm3
+    class Layout:
+        def __init__(self, room_label: int = 4):
+            self.property = [0.0] * Room_label
+            self.flag = ""
+            self.id: str = ""
+
+    class LayoutNode:
+        def __init__(self):
+            self.layout_set: List[Layout] = []
+            self.parent: Optional['LayoutNode'] = None
+            self.next_nodes: List['LayoutNode'] = []
+            self.name: str = ""
+            self.meta = {}
+
+    def max_weight(node: Layout) -> int:
+        max_num = 0
+        max_ind = -1
+        for i in range(len(node.property)):
+            if node.property[i] > max_num:
+                max_num = node.property[i]
+                max_ind = i
+        return max_ind
+
+    def display_layout(l: Layout):
+        print(" 编号为：", l.flag, " ", end="")
+        print(" 权重为： ", end="")
+        for i in range(len(l.property)):
+            print(l.property[i], " ", end="")
+        print()
+
+    def display_index(ln: Optional[LayoutNode]):
+        if ln is None:
+            print("空指针")
+        elif len(ln.layout_set) == 0:
+            print("空")
+        else:
+            for l in ln.layout_set:
+                print(l.flag, " ", end="")
+            print()
+
+    def display(origin: Optional[LayoutNode]):
+        if origin is None:
+            return
+        print("")
+        print("此布局结点的父母布局为：", end="")
+        display_index(origin.parent)
+        print("此布局结点的集合中的布局个数为", len(origin.layout_set), " ，编号为：", end="")
+        display_index(origin)
+        print("此布局的子布局结点共有", len(origin.next_nodes), "个")
+        for node_ptr in origin.next_nodes:
+            display(node_ptr)
+
+    # 一个结点的集合中只有一个布局
+    def norm1(l1: Layout, l2: Layout, j:int) -> bool:
+        return False
+
+    # 一个结点的集合中可以有多个布局，不过需要全部一样
+    def norm2(l1: Layout, l2: Layout, j:int) -> bool:
+        diff: int = 0
+        for i in range(Room_label):
+            diff += abs(l1.property[i] - l2.property[i])
+        if diff <= 0:
+            return True
+        return False
+
+    # 一个结点的集合中可以有多个布局，只要它们的1-范数小于等于参数maxDiff，默认为2
+    def norm3(l1: Layout, l2: Layout, j:int, maxDiff:float = 0.02) -> bool:
+        # return True
+        diff = 0
+        for i in range(Room_label):
+            diff += abs(l1.property[i] - l2.property[i])
+        if diff <= maxDiff:
+            return True
+        return False
+
+    anim_data = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))
+    anim_map={}
+    for meta in anim_data["index"][anim_data['center']+'_0']:
+        anim_map[meta['anim_id']]=meta
+
+    def divide(nodes: List[Layout], parent: Optional[LayoutNode] = None):
+        if len(nodes) == 0:
+            return
+
+        # room_label = len(nodes[0].property)
+        nodes_vec = [[] for _ in range(Room_label)]
+        for node in nodes:
+            ind = max_weight(node)
+            if ind == -1:
+                continue
+            nodes_vec[ind].append(node)
+
+        for i in range(len(nodes_vec)):
+            if len(nodes_vec[i]) == 0:
+                continue
+            nodes_vec[i].sort(key=lambda l: l.property[i])
+
+            t = LayoutNode()
+            t.layout_set.append(nodes_vec[i].pop())
+            it = 0
+            while it < len(nodes_vec[i]):
+                if norm(nodes_vec[i][it], t.layout_set[0], i):
+                    t.layout_set.append(nodes_vec[i].pop(it))
+                else:
+                    it += 1
+            for j in range(len(nodes_vec[i])):
+                nodes_vec[i][j].property[i] = 0
+            t.parent = parent
+            t.parent.next_nodes.append(t)
+
+            # t.name = giveName()
+            # t.name = "".join('房{} '.format(x.flag) for x in t.layout_set) + ":{}".format(len(t.layout_set))
+            t.name = "房{}".format(t.layout_set[0].flag) + "等{}套".format(len(t.layout_set))
+            t.meta = anim_map[int(t.layout_set[0].id)] if t.layout_set[0].id != anim_data['center']+'_0' else {'root':anim_data['center']+'_0'}
+            divide(nodes_vec[i].copy(), t)
+
+    def normalize_layout(t: Layout):
+        total = sum(t.property)
+        if total == 0:
+            return
+        for i in range(len(t.property)):
+            t.property[i] *= (Room_label+1)
+            t.property[i] //= total
+
+    def random_layout(t: Layout):
+        for i in range(len(t.property)):
+            t.property[i] = random.randint(0, 5)
+        normalize_layout(t)
+
+    def treeMethod():
+        random.seed()  # 生成随机布局
+
+        n = 200  # 总布局结点数量
+        # n = Room_num
+
+        weightJsonUrl = path # 房间属性权重文件的文件夹
+        
+        files =  os.listdir(weightJsonUrl)
+        n = len(files)
+
+        nodes_all = [Layout() for _ in range(n+1)]
+        temp_count = 0
+        f = open(f'./static/dataset/infiniteLayout/{groupName}_origin_values.json')
+        data = json.load(f)
+        temp_count_weight = 0
+        for weightInfoPair in data["evaluation"]:
+            nodes_all[temp_count].property[temp_count_weight] = weightInfoPair['value']
+            temp_count_weight += 1
+            # print(weightInfoPair)
+        nodes_all[temp_count].flag = f'/static/dataset/infiniteLayout/{groupName}_origin_values'
+        nodes_all[temp_count].id = anim_data['center']+'_0'
+        # print(nodes_all[temp_count].flag)
+        temp_count += 1
+        for filename in files:
+            if filename == 'layoutTree.json':
+                continue
+            if not filename.endswith('.json'):
+                continue
+            f = open(weightJsonUrl + f"/{filename}")
+            data = json.load(f)
+            temp_count_weight = 0
+            for weightInfoPair in data["evaluation"]:
+                nodes_all[temp_count].property[temp_count_weight] = weightInfoPair['value']
+                temp_count_weight += 1
+                # print(weightInfoPair)
+            nodes_all[temp_count].flag = f'/static/dataset/infiniteLayout/{groupName}_animimg/'+filename.replace('.json','')
+            nodes_all[temp_count].id = filename.replace('.json','')
+            # print(nodes_all[temp_count].flag)
+            temp_count += 1
+
+
+        # 读入所有布局结点操作
+        # TODO
+
+        # 测试用随机生成
+        # for i in range(n):
+        #     random_layout(nodes_all[i])
+        #     nodes_all[i].flag = "{}".format(i)
+
+
+        origin = LayoutNode()
+        origin.name = "一切的起源"
+        origin.layout_set.append(nodes_all[0])
+        origin.meta = {"root": anim_data['center']+'_0'}
+
+
+        for l in nodes_all:
+            display_layout(l)
+
+        nodes_all_1 = nodes_all[1:]
+
+        divide(nodes_all_1, origin)
+
+        rootDir = os.listdir('./')
+
+        write_json(origin, path+"/{}.json".format('layoutTree'))
+        
+        with open(path+"/{}.js".format('layoutTree'), 'w') as f:
+        # with open("{}.js".format(new_data), 'w') as f:
+            f.write("data1='[")
+            with open(path+"/{}.json".format('layoutTree')) as prefix:
+                f.write(prefix.read())
+            f.write("]';")
+
+
+        # display(origin)
+
+    def create_body(origin: LayoutNode):
+        parent_name = "null"
+        if origin.parent:
+            parent_name = origin.parent.name
+        dictionary = {
+            "name" : origin.name,  "parent" : parent_name, "pics" : [x.flag for x in origin.layout_set],
+            "meta" : origin.meta,
+            # "children" : []
+        }
+        if(len(origin.next_nodes)):
+            dictionary["children"] = []
+            for x in origin.next_nodes:
+                tmp = create_body(x)
+                dictionary["children"].append(tmp)
+
+
+        return dictionary
     
+    def write_json(origin:LayoutNode, file_path):
+        dictionary = create_body(origin)
+        # print(dictionary)
+        json_object = json.dumps(dictionary)
+        with open(file_path, 'w') as outfile:
+            outfile.write(json_object)
+
+    Room_label: int = 4
+    Room_num: int = 10
+    norm = norm3
+
+    treeMethod()

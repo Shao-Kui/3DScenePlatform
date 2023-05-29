@@ -2070,7 +2070,9 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
         for (let j = 0; j < nz; ++j) {
             let offsetZ = phDepth * j / nz - 0.25 * shelf.scale.z + commodityDepth / 2;
             for (let k = 0; k < ny; ++k) {
-                let offsetY = k * commodityHeight;
+                let offsetY = k * commodityHei
+                
+                ght;
                 instancedTransforms.push({
                     'translate': [offsetX, offsetY, offsetZ],
                     'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees

@@ -345,9 +345,15 @@
               class="btn btn-outline-dark m-1 btn-responsive"
               data-toggle="modal"
               data-target="#operationFutureModal"
+              onclick="sendSignalToCalculate()"
             >
               Future
             </button>
+            <script>
+              function sendSignalToCalculate(){
+                fetch('future/layout/{{onlineGroup}}');
+              }
+            </script>
             <button
               id="selectRoomShapebtn"
               type="button"
@@ -480,26 +486,26 @@
                   </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode3" value="3" checked="checked">
-                    <label class="form-check-label" for="shelfMode3" id="shelfModeLabel3">ShelfPlanner</label>
+                    <label class="form-check-label" for="shelfMode3" id="shelfModeLabel3">StoreSketcher</label>
                   </div>
                 </div>
 
                 <div class="h4 py-1 px-2">
-                  <button id="startShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap" onclick="startShelfPlannerExperiment()">开始实验</button>
-                  <button id="endShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">结束实验</button>
+                  <button id="startShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap" onclick="startShelfPlannerExperiment()">Start Experiment</button>
+                  <button id="endShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">End Experiment</button>
                 </div>
                 
                 <div class="h4 py-1 px-2">
-                  <div class="mb-1 text-left">货架: </div>
+                  <div class="mb-1 text-left">Shelf: </div>
                   <div id="shelfKey"></div>
                 </div>
 
                 <div class="h4 py-1 px-2">
-                  <div class="mb-1 text-left">货架类别: </div>
+                  <div class="mb-1 text-left">Shelf Category: </div>
                   <div id="shelfTypeRadios"></div>
                 </div>
               
-                <div class="h4 py-1 px-2 text-left">占位符: </div>
+                <div class="h4 py-1 px-2 text-left">Placeholders: </div>
                 <div class="d-flex flex-row mb-3 justify-content-around">
                   <div class="input-group input-group-lg">
                     <div class="input-group-prepend">
@@ -514,9 +520,9 @@
                     </div>
                   </div>
                   <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0])"
-                    disabled>全选</button>
+                    disabled>Select All</button>
                   <button id="shelfClearRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0])"
-                    disabled>清空</button>
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -533,9 +539,9 @@
                     </div>
                   </div>
                   <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([1])"
-                    disabled>全选</button>
+                    disabled>Select All</button>
                   <button id="shelfClearRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([1])"
-                    disabled>清空</button>
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -552,9 +558,9 @@
                     </div>
                   </div>
                   <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([2])"
-                    disabled>全选</button>
+                    disabled>Select All</button>
                   <button id="shelfClearRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([2])"
-                    disabled>清空</button>
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -571,19 +577,19 @@
                     </div>
                   </div>
                   <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([3])"
-                    disabled>全选</button>
+                    disabled>Select All</button>
                   <button id="shelfClearRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([3])"
-                    disabled>清空</button>
+                    disabled>Clear</button>
                 </div>
               
                 <div class="mb-3">
                   <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0,1,2,3])"
-                    disabled>全选</button>
+                    disabled>Select All</button>
                   <button id="shelfClearAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0,1,2,3])"
-                    disabled>清空</button>
+                    disabled>Clear</button>
                   <button id="selectShelfGroupBtn" class="btn btn-primary text-nowrap ml-4" onclick="selectShelfGroup()"
-                    disabled>货架组全选</button>
-                  <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()" disabled>下一个货架</button>
+                    disabled>Select Shelf Group</button>
+                  <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()" disabled>Next Shelf</button>
                 </div>
               </div>
   
@@ -942,17 +948,74 @@
               </div>
             </div>
 
-            <div class="modal fade" id="operationFutureModal" tabindex="-1" role="dialog" aria-labelledby="operationFutureModal" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
+            <style>
+
+              .link {
+                fill: none;
+                stroke: #ccc;
+                stroke-width: 2px;
+              }
+
+              .customModalXXLSize {
+                width:1200px;
+              }
+
+              </style>
+
+            <div class="modal fade" id="operationFutureModal" tabindex="-1" 
+            role="dialog" aria-labelledby="operationFutureModal" aria-hidden="true"
+            
+            >
+              <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: none; width:1800px" role="document"  >
+                <div class="modal-content" >
                   <div class="modal-header">
                     <h5 class="modal-title" id="operationFutureTitle">Future</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                       <span aria-hidden="true">&times;</span>
                     </button>
                   </div>
+
+
+
                   <div id="operationFutureModalBody" class="modal-body">
                     123456
+
+                    <input id="chart1Info" type="text" style="display: none;" value="test.json">
+                    <!-- <input id="chart2Info" type="text" style="display: none;" value="main.json"> -->
+                  
+                  
+                    <div class="">
+                      <div class="row">
+                        <div class="col-8" id="generatedTree">
+                          <script src="/static/3rdparty/d3.v3.min.js"></script>
+                          <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script>
+                          <!-- <script type="text/javascript" src="41.js"></script> -->
+                  
+                          <script type="text/javascript" src="/static/infiniteLayout/treeWindow.js"></script>
+                          <script src="/static/infiniteLayout/d3.js"></script>
+                  
+                  
+                        </div>
+                        <div class="col-4" id="charts">
+                  
+                          
+                          <svg width="620" height="400" id="fig1"></svg>
+                  
+                  
+                          <!-- </script> -->
+                          <svg width="620" height="400" id="fig2"></svg>
+                  
+                  
+                  
+                        </div>
+                      </div>
+                      <script src="/static/infiniteLayout/chart1.js"></script>
+                      <script src="/static/infiniteLayout/chart2.js"></script>
+                      <script src="/static/infiniteLayout/d3Zoom.js"></script>
+                  
+                    </div>
+                    <script src="/static/3rdparty/d3.min.js"></script>
+
                   </div>
                 </div>
               </div>
