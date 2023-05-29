@@ -1120,8 +1120,8 @@ if __name__ == "__main__":
     # cgs('1133', None, '小太阳-灰色奢华土豪')
 
 # 计算房间各类型的权重
-def calculate_room_type_values(path:str):
-    if not path.endswith('.json'):
+def calculate_room_type_values(srcpath:str,dstpath:str):
+    if not srcpath.endswith('.json'):
         return
     not_on_ground_factor = 0.5
     exist_factor = 0.7
@@ -1143,7 +1143,7 @@ def calculate_room_type_values(path:str):
     with open('dataset/objCatListAliv2.json') as f:
         objCatListAliv2 = json.load(f)
     room_objects = {"livingroom","bedroom","diningroom","office"}
-    newpath = 'result_'+path
+    newpath = dstpath
     def getObjCat(modelId):
         if len(objCatListAliv2[modelId]) == 0:
             return None
@@ -1207,23 +1207,8 @@ def calculate_room_type_values(path:str):
                 return -1
 
         return 1
-    def loadData(DATA, lines):
-        for line in lines:
-            elements = line.split(';')
-            eleDict = {'mainObjId' :  elements[0], 'userName' : elements[-1][:-1]}
-
-            for element in elements[1:-1]:
-                if elementHandler(eleDict, element) < 0 :
-                    break
-        
-            DATA.append(eleDict)
-    # Load the prior data
     # TODO: after adding prior in room data delete this part
-    fd = open("layoutmethods/object-spatial-relation-dataset.txt", 'r')
-    LINES = fd.readlines()
 
-    priordata = []
-    loadData(priordata, LINES)
     def calarea(objpath):
         vertices = []
         with open(objpath,encoding='utf-8') as objf:
@@ -1239,10 +1224,10 @@ def calculate_room_type_values(path:str):
         l0 = [a[0] for a in vertices]
         l2 = [a[2] for a in vertices]
         return (max(l0)-min(l0))*(max(l2)-min(l2))
-    room_input = json.load(open(path))
+    room_input = json.load(open(srcpath))
     for room in room_input["rooms"]:
         room_values = {key:0 for key in room_objects}
-        print(room['modelId']+":")
+        # print(room['modelId']+":")
         totarea = 0
         for i in range(1,len(room['roomShape'])-1):
             totarea += (room['roomShape'][i][0]-room['roomShape'][0][0])*(room['roomShape'][i+1][1]-room['roomShape'][0][1])\
@@ -1324,9 +1309,9 @@ def calculate_room_type_values(path:str):
         else:
             for key in room_values:
                 room_values[key]=wfunc(room_values[key])/sv
-            print("Room type evaluation:")
+            # print("Room type evaluation:")
             for key in room_values:
-                print(key+":"+str(room_values[key]))
+                # print(key+":"+str(room_values[key]))
                 output['evaluation'].append({"room":key,"value":room_values[key]})
         sorted_room_values = [{"roomtype":key,"value":value} for key,value in room_values.items()]
         sorted_room_values.sort(key=lambda x:x['value'],reverse=True)
@@ -1356,20 +1341,21 @@ def calculate_room_type_values(path:str):
             description+=sorted_room_values[subcount]["roomtype"]
             description+=" as well"
         description+="."
-        print(description)
+        # print(description)
         output['description']=description
         json.dump(output,open(newpath,"w"))
 
 from typing import List, Optional
 # 计算用于构建树结构的数据
-def calculate_tree_data(path:str):
+def calculate_tree_data(path:str,groupName:str):
     Room_label: int = 4
     Room_num: int = 10
-    norm = norm2
+    # norm = norm3
     class Layout:
         def __init__(self, room_label: int = 4):
             self.property = [0.0] * Room_label
             self.flag = ""
+            self.id: str = ""
 
     class LayoutNode:
         def __init__(self):
@@ -1377,6 +1363,7 @@ def calculate_tree_data(path:str):
             self.parent: Optional['LayoutNode'] = None
             self.next_nodes: List['LayoutNode'] = []
             self.name: str = ""
+            self.meta = {}
 
     def max_weight(node: Layout) -> int:
         max_num = 0
@@ -1430,13 +1417,19 @@ def calculate_tree_data(path:str):
         return False
 
     # 一个结点的集合中可以有多个布局，只要它们的1-范数小于等于参数maxDiff，默认为2
-    def norm3(l1: Layout, l2: Layout, j:int, maxDiff:int = 2) -> bool:
+    def norm3(l1: Layout, l2: Layout, j:int, maxDiff:float = 0.02) -> bool:
+        # return True
         diff = 0
         for i in range(Room_label):
             diff += abs(l1.property[i] - l2.property[i])
         if diff <= maxDiff:
             return True
         return False
+
+    anim_data = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))
+    anim_map={}
+    for meta in anim_data["index"][anim_data['center']+'_0']:
+        anim_map[meta['anim_id']]=meta
 
     def divide(nodes: List[Layout], parent: Optional[LayoutNode] = None):
         if len(nodes) == 0:
@@ -1471,6 +1464,7 @@ def calculate_tree_data(path:str):
             # t.name = giveName()
             # t.name = "".join('房{} '.format(x.flag) for x in t.layout_set) + ":{}".format(len(t.layout_set))
             t.name = "房{}".format(t.layout_set[0].flag) + "等{}套".format(len(t.layout_set))
+            t.meta = anim_map[int(t.layout_set[0].id)] if t.layout_set[0].id != anim_data['center']+'_0' else {'root':anim_data['center']+'_0'}
             divide(nodes_vec[i].copy(), t)
 
     def normalize_layout(t: Layout):
@@ -1490,15 +1484,31 @@ def calculate_tree_data(path:str):
         random.seed()  # 生成随机布局
 
         n = 200  # 总布局结点数量
-        n = Room_num
+        # n = Room_num
 
         weightJsonUrl = path # 房间属性权重文件的文件夹
+        
         files =  os.listdir(weightJsonUrl)
         n = len(files)
 
-        nodes_all = [Layout() for _ in range(n)]
+        nodes_all = [Layout() for _ in range(n+1)]
         temp_count = 0
+        f = open(f'./static/dataset/infiniteLayout/{groupName}_origin_values.json')
+        data = json.load(f)
+        temp_count_weight = 0
+        for weightInfoPair in data["evaluation"]:
+            nodes_all[temp_count].property[temp_count_weight] = weightInfoPair['value']
+            temp_count_weight += 1
+            # print(weightInfoPair)
+        nodes_all[temp_count].flag = f'/static/dataset/infiniteLayout/{groupName}_origin_values'
+        nodes_all[temp_count].id = anim_data['center']+'_0'
+        # print(nodes_all[temp_count].flag)
+        temp_count += 1
         for filename in files:
+            if filename == 'layoutTree.json':
+                continue
+            if not filename.endswith('.json'):
+                continue
             f = open(weightJsonUrl + f"/{filename}")
             data = json.load(f)
             temp_count_weight = 0
@@ -1506,7 +1516,8 @@ def calculate_tree_data(path:str):
                 nodes_all[temp_count].property[temp_count_weight] = weightInfoPair['value']
                 temp_count_weight += 1
                 # print(weightInfoPair)
-            nodes_all[temp_count].flag = filename[7:-5]
+            nodes_all[temp_count].flag = f'/static/dataset/infiniteLayout/{groupName}_animimg/'+filename.replace('.json','')
+            nodes_all[temp_count].id = filename.replace('.json','')
             # print(nodes_all[temp_count].flag)
             temp_count += 1
 
@@ -1523,6 +1534,7 @@ def calculate_tree_data(path:str):
         origin = LayoutNode()
         origin.name = "一切的起源"
         origin.layout_set.append(nodes_all[0])
+        origin.meta = {"root": anim_data['center']+'_0'}
 
 
         for l in nodes_all:
@@ -1534,11 +1546,12 @@ def calculate_tree_data(path:str):
 
         rootDir = os.listdir('./')
 
-
-        with open("{}.js".format('layoutTree'), 'w') as f:
+        write_json(origin, path+"/{}.json".format('layoutTree'))
+        
+        with open(path+"/{}.js".format('layoutTree'), 'w') as f:
         # with open("{}.js".format(new_data), 'w') as f:
             f.write("data1='[")
-            with open("{}.json".format('layoutTree')) as prefix:
+            with open(path+"/{}.json".format('layoutTree')) as prefix:
                 f.write(prefix.read())
             f.write("]';")
 
@@ -1550,7 +1563,8 @@ def calculate_tree_data(path:str):
         if origin.parent:
             parent_name = origin.parent.name
         dictionary = {
-            "name" : origin.name,  "parent" : parent_name, "pics" : [x.flag for x in origin.layout_set]
+            "name" : origin.name,  "parent" : parent_name, "pics" : [x.flag for x in origin.layout_set],
+            "meta" : origin.meta,
             # "children" : []
         }
         if(len(origin.next_nodes)):
@@ -1561,9 +1575,16 @@ def calculate_tree_data(path:str):
 
 
         return dictionary
+    
+    def write_json(origin:LayoutNode, file_path):
+        dictionary = create_body(origin)
+        # print(dictionary)
+        json_object = json.dumps(dictionary)
+        with open(file_path, 'w') as outfile:
+            outfile.write(json_object)
 
     Room_label: int = 4
     Room_num: int = 10
-    norm = norm2
+    norm = norm3
 
     treeMethod()

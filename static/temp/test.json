@@ -1,0 +1,6 @@
+[
+    {"room":"livingroom","value":0.4},
+    {"room":"bedroom","value":0.3},
+    {"room":"diningroom","value":0.2},
+    {"room":"office","value":0.1}
+]
