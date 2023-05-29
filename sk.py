@@ -101,7 +101,9 @@ def load_AABB_glb(i, state):
     return AABBcache[i+state]
 
 def preloadAABB(obj):
-    if objectInDataset(obj['modelId']):
+    if 'startState' in obj:
+        AABB = load_AABB_glb(obj['modelId'], obj['startState'])
+    elif objectInDataset(obj['modelId']):
         AABB = load_AABB(obj['modelId'])
         if 'coarseSemantic' not in obj:
             obj['coarseSemantic'] = getobjCat(obj['modelId'])
@@ -973,7 +975,7 @@ def renderModel20(objname, format='obj', stateName='origin'):
     with open('./examples/initth.json') as f:
         scenejson = json.load(f)
     for i, camera_position in zip(range(len(camera_positions)), camera_positions):
-        scenejson = {'rooms': [{'objList': [obj], 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': ''}
+        scenejson = {'id': 'Ghost', 'rooms': [{'objList': [obj], 'modelId': 'null'}], "PerspectiveCamera": {}, 'origin': ''}
         scenejson['canvas'] = {'height': 384, 'width': 384}
         origin = camera_position
         scenejson["PerspectiveCamera"]["origin"] = origin.tolist()
@@ -1099,14 +1101,15 @@ if __name__ == "__main__":
     # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
     # renderModel20('streetbench2')
+    render_names=['new_shrub01','new_shrub02','new_shrub03','newTree1','newTree2','newTree3','newTree4','newTreeSmall','newTreeSmall2']
+    for name in render_names:
+        renderModel20(name)
 
-
-
-    for modelId in ['story-Toilet_Sink','story-Toilet_MirrorB','story-Toilet_MirrorA']:
-        try:
-            renderModel20(modelId)
-        except:
-            print(modelId)
+    # for modelId in ['story-TeacherChair']:
+    #     try:
+    #         renderModel20(modelId)
+    #     except:
+    #         print(modelId)
 
     # renderModel20('sofa2bed', 'glb', 'origin')
     # renderModel20('sofa2bed', 'glb', 'bed')
