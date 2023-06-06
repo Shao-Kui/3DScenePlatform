@@ -1133,6 +1133,7 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
     not_on_ground_factor = 0.5
     exist_factor = 0.7
     prior_factor = 0.3
+    required_not_found_penalty = 0.25
     room_map = {
         "LivingDiningRoom":{"livingroom","diningroom"},
         "LivingRoom":{"livingroom"},
@@ -1141,6 +1142,10 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
         "Library":{"office"},
         "DiningRoom":{"diningroom"},
         "SecondBedroom":{"bedroom"},
+    }
+    object_requirement = {
+        "bedroom":["bed"],
+        "diningroom":["diningtable","andchair"],
     }
     def wfunc(num):
         return num*num
@@ -1234,6 +1239,7 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
     room_input = json.load(open(srcpath))
     for room in room_input["rooms"]:
         room_values = {key:0 for key in room_objects}
+        roomtype_meet_requirement = set()
         # print(room['modelId']+":")
         totarea = 0
         for i in range(1,len(room['roomShape'])-1):
@@ -1246,7 +1252,7 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
             # print(obj['modelId']+":")
             if os.path.exists('dataset/object/'+obj['modelId']):
                 area = calarea('dataset/object/'+obj['modelId']+'/'+obj['modelId']+'.obj')
-            elif os.path.exists('static/dataset/object/'+obj['modelId']):
+            elif os.path.exists('static/dataset/object/'+obj['modelId']): 
                 area = calarea('static/dataset/object/'+obj['modelId']+'/'+obj['startState']+'.obj')
             else:
                 continue
@@ -1257,20 +1263,37 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
             # print("w:"+str(w))
             obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
             if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
-                if getObjCat(obj['modelId']) in objects_category_occurence:
-                    for room_type in objects_category_occurence[getObjCat(obj['modelId'])]:
+                objcat = getObjCat(obj['modelId'])
+                if objcat in objects_category_occurence:
+                    for room_type in room_objects:
+                        if room_type in object_requirement:
+                            for required_object in object_requirement[room_type]:
+                                if objcat.lower.replace(' ','').endswith(required_object):
+                                    roomtype_meet_requirement.add(room_type)
+                    for room_type in objects_category_occurence[objcat]:
                         if room_type in room_map:
                             for mapped_room_type in room_map[room_type]:
-                                room_values[mapped_room_type]+=w*objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])
+                                room_values[mapped_room_type]+=w*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
                                 # print((mapped_room_type,objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])))    
             elif obj_name in objects:
                 # calculating room type
+                if not 'startState' in obj:
+                    objcat = ''
+                elif obj['startState']== 'origin':
+                    objcat = obj['modelId'].split('2')[-2]
+                else:
+                    objcat = obj['startState']
+                objcat = objcat.lower().replace(' ','')
+                for room_type in room_objects:
+                    if room_type in object_requirement:
+                        for required_object in object_requirement[room_type]:
+                            if objcat.endswith(required_object):
+                                roomtype_meet_requirement.add(room_type)
                 for room_type in room_objects:
                     room_values[room_type]+=w*objects[obj_name]['labelvalue'][room_type]
                     # print((room_type,objects[obj_name]['labelvalue'][room_type]))
             else:
                 print("object not found---------------")
-                exit(0)
         
         for key in room_values:
             room_values[key]=room_values[key]*exist_factor
@@ -1280,33 +1303,45 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
                 temp_room_values={key:0 for key in room_values}
                 obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
                 if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
-                    if getObjCat(obj['modelId']) in objects_category_occurence:
-                        for room_type in objects_category_occurence[getObjCat(obj['modelId'])]:
+                    objcat = getObjCat(obj['modelId'])
+                    if objcat in objects_category_occurence:
+                        for room_type in objects_category_occurence[objcat]:
                             if room_type in room_map:
                                 for mapped_room_type in room_map[room_type]:
-                                    temp_room_values[mapped_room_type]+=obj['area']*objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])
+                                    temp_room_values[mapped_room_type]+=obj['area']*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
+                elif obj_name in objects:
+                # calculating room type
+                    for room_type in room_objects:
+                        temp_room_values[room_type]+=obj['area']*objects[obj_name]['labelvalue'][room_type]
+                        # print((room_type,objects[obj_name]['labelvalue'][room_type]))
+                sub_room_values={key:0 for key in room_values}
+                for subobj in obj['attachedObj']:
+                    obj_name = subobj.replace('#','_')
+                    if obj_name in objCatListAliv2 and getObjCat(obj_name) != None:
+                        if getObjCat(obj_name) in objects_category_occurence:
+                            objcat = getObjCat(obj_name)
+                            for room_type in objects_category_occurence[objcat]:
+                                if room_type in room_map:
+                                    for mapped_room_type in room_map[room_type]:
+                                        temp_room_values[mapped_room_type]+=wmap[obj_name+'_origin']*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
                     elif obj_name in objects:
                     # calculating room type
                         for room_type in room_objects:
-                            temp_room_values[room_type]+=obj['area']*objects[obj_name]['labelvalue'][room_type]
+                            temp_room_values[room_type]+=wmap[obj_name]*objects[obj_name]['labelvalue'][room_type]
                             # print((room_type,objects[obj_name]['labelvalue'][room_type]))
-                    sub_room_values={key:0 for key in room_values}
-                    for subobj in obj['attachedObj']:
-                        obj_name = subobj.replace('#','_')
-                        if subobj['modelId'] in objCatListAliv2 and getObjCat(subobj['modelId']) != None:
-                            if getObjCat(subobj['modelId']) in objects_category_occurence:
-                                for room_type in objects_category_occurence[getObjCat(subobj['modelId'])]:
-                                    if room_type in room_map:
-                                        for mapped_room_type in room_map[room_type]:
-                                            temp_room_values[mapped_room_type]+=subobj['area']*objects_category_occurence[getObjCat(subobj['modelId'])][room_type]/len(room_map[room_type])
-                        elif obj_name in objects:
-                        # calculating room type
-                            for room_type in room_objects:
-                                temp_room_values[room_type]+=subobj['area']*objects[obj_name]['labelvalue'][room_type]
-                                # print((room_type,objects[obj_name]['labelvalue'][room_type]))
-                    for key in room_values:
-                        room_values[key]+=math.sqrt(temp_room_values[key])*math.sqrt(sub_room_values[key])*prior_factor
-
+                hasdifferentobj = False
+                for subobj in obj['attachedObj']:
+                    if subobj.replace('#','_')!=obj_name:
+                        hasdifferentobj=True
+                        break
+                if not hasdifferentobj:
+                    continue
+                for key in room_values:
+                    room_values[key]+=math.sqrt(temp_room_values[key])*math.sqrt(sub_room_values[key])*prior_factor
+        
+        for key in room_values:
+            if key in object_requirement.keys() and not key in roomtype_meet_requirement:
+                room_values[key]=room_values[key]*required_not_found_penalty
         output={"evaluation":[],"description":""}
         sv=0
         for key in room_values:
@@ -1432,6 +1467,13 @@ def calculate_tree_data(path:str,groupName:str):
         if diff <= maxDiff:
             return True
         return False
+    
+    def norm4(l1: Layout, l2: Layout, j:int, maxDiff:float = 0.02, indexMin: float = 0.5)->bool:
+        if norm3(l1, l2, j):    
+            if l1.property[j] <= indexMin:
+                return False
+            return True
+        return False
 
     anim_data = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))
     anim_map={}
@@ -1465,6 +1507,18 @@ def calculate_tree_data(path:str,groupName:str):
                     it += 1
             for j in range(len(nodes_vec[i])):
                 nodes_vec[i][j].property[i] = 0
+
+            if filterLayoutSet:
+                it = 0
+                while it < len(t.layout_set):
+                    if t.layout_set[it].property[i] < filterValue :
+                        t.layout_set.pop(it)
+                    else:
+                        it += 1
+
+            if len(t.layout_set) == 0:
+                continue
+
             t.parent = parent
             t.parent.next_nodes.append(t)
 
@@ -1592,6 +1646,8 @@ def calculate_tree_data(path:str,groupName:str):
 
     Room_label: int = 4
     Room_num: int = 10
-    norm = norm3
+    norm = norm4
+    filterLayoutSet = True
+    filterValue = 0.03
 
     treeMethod()

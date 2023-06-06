@@ -83,6 +83,8 @@ const draw1 = (data_dir) => {
         .text(d.description==null?'':d.description)
         .attr('style','font-size: 12px; fill: #888;');
     });
+
+    // container.attr('width', '40vw')
 };
 // draw1();
 

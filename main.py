@@ -768,15 +768,18 @@ def futureLayoutCalculation(groupName):
     # /static/dataset/futurelayout/<groupName>
     # generate_future_layout.main(groupName,onlineScenes[groupName])
     
-    root_id = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))['center']+'_0'
-    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_origin_values.png'):
-        return make_response('')
-    # shutil.copy(f'./static/dataset/infiniteLayout/{groupName}_animimg/{root_id}.png',f'./static/dataset/infiniteLayout/{groupName}_origin_values.png')
-    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg'):
+    root_id = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))['center']
+    # if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_origin_values.png'):
+    #     return make_response('')
+    if not os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg'):
+        os.mkdir(f'./static/dataset/infiniteLayout/{groupName}_animimg')
+    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg/center.png'):
+        shutil.copy(f'./static/dataset/infiniteLayout/{groupName}_animimg/center.png',f'./static/dataset/infiniteLayout/{groupName}_origin_values.png')
+    elif os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg/{int(root_id[::-1],2)}0.png'):
+        shutil.copy(f'./static/dataset/infiniteLayout/{groupName}_animimg/{int(root_id[::-1],2)}0.png',f'./static/dataset/infiniteLayout/{groupName}_origin_values.png')
+    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_origin_values.json'):
         sk.calculate_tree_data(f'./static/dataset/infiniteLayout/{groupName}_animimg',groupName)
         return make_response('')
-    else:
-        os.mkdir(f'./static/dataset/infiniteLayout/{groupName}_animimg')
     sk.calculate_room_type_values(f'./static/dataset/infiniteLayout/{groupName}_origin.json',f'./static/dataset/infiniteLayout/{groupName}_origin_values.json')
     for file in os.listdir(f'./static/dataset/infiniteLayout/{groupName}_scenes'):
         sk.calculate_room_type_values(f'./static/dataset/infiniteLayout/{groupName}_scenes/{file}',f'./static/dataset/infiniteLayout/{groupName}_animimg/{file}')
