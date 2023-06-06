@@ -1052,6 +1052,8 @@ def renderAnimationResults(sjName):
         sj = json.load(f)
     taID = sj['rooms'][0]['totalAnimaID']
     animationjsonnames = os.listdir(f'./static/dataset/infiniteLayout/{taID}')
+    if not os.path.exists(f'./static/dataset/infiniteLayout/{taID}img/'):
+        os.makedirs(f'./static/dataset/infiniteLayout/{taID}img/')
     for animationjsonname in animationjsonnames:
         if '.json' not in animationjsonname:
             continue
@@ -1083,17 +1085,13 @@ def renderAnimationResults(sjName):
                 # }
         animationjsonname = animationjsonname.split('.')[0]
         print(f'rendering ./static/dataset/infiniteLayout/{taID}/{animationjsonname}.png')
-        pt.pathTracing(scenejson, 16, f'./static/dataset/infiniteLayout/{taID}/{animationjsonname}.png')
+        pt.pathTracing(scenejson, 16, f'./static/dataset/infiniteLayout/{taID}img/{animationjsonname}.png')
+    pt.pathTracing(sj, 16, f'./static/dataset/infiniteLayout/{taID}img/center.png')
 
 if __name__ == "__main__":
     start_time = time.time()
     # cgs('6453', None, '梳妆台哈哈')
     # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
-    # cgs('7644', None, '系列啊')
-    # cgs('5010', None, '灰色现代风')
-    # cgs('5933', None, '灰色现代风')
-    # cgs('6824', None, '灰色现代风')
-    # cgs('8185', None, '灰色现代风')
     # cgs('10198', None, '灰色现代风')
     # cgs('5810', None, '新中式简约风')
     # cgs('1133', None, 'rkx-优雅田园风')
@@ -1102,9 +1100,9 @@ if __name__ == "__main__":
     # cgsUSRenderBatch()
     # cgs('5010', None, '李雪晴-灰色现代风')
     # renderModel20('streetbench2')
-    render_names=['new_shrub01','new_shrub02','new_shrub03','newTree1','newTree2','newTree3','newTree4','newTreeSmall','newTreeSmall2']
-    for name in render_names:
-        renderModel20(name)
+    # render_names=['new_shrub01','new_shrub02','new_shrub03','newTree1','newTree2','newTree3','newTree4','newTreeSmall','newTreeSmall2']
+    # for name in render_names:
+    #     renderModel20(name)
 
     # for modelId in ['story-TeacherChair']:
     #     try:
@@ -1116,7 +1114,13 @@ if __name__ == "__main__":
     # renderModel20('sofa2bed', 'glb', 'bed')
     # renderGLBbatch()
     # renderAnimationResults('sample3_origin')
-    # renderAnimationNodeResults('sample3_origin')
+    renderAnimationResults('out_12_origin')
+    renderAnimationResults('out_13_origin')
+    renderAnimationResults('out_14_origin')
+    renderAnimationResults('out_16_origin')
+    for i in range(0,482):
+        if os.path.exists(f'./static/dataset/infiniteLayout/output0_{i}_origin.json'):
+            renderAnimationResults(f'output0_{i}_origin')
     # renderModel20('story-StudentDeskBrokenA')
     # renderModel20('selling_holder_small')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
