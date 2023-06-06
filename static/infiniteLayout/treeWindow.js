@@ -18,6 +18,7 @@ var diagonal = d3.svg.diagonal()
 
 var svg = d3.select("body").select("#generatedTree").append("svg")
     .attr("width", width + margin.right + margin.left)
+    .attr("width", '50vw')
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -74,7 +75,11 @@ function update(source) {
 
     let z_index = arr_len;
 
-
+    function raise() {
+        d3.select(this).raise()
+        // console.log('彳亍')
+        // console.log(this)
+    }
 
     nodeEnter.append("svg:image") 
         .attr("xlink:href", function (d) {
@@ -95,6 +100,7 @@ function update(source) {
         .style('position', 'relative')
         .style('z-index', 1)
         .on('mouseover', function (d) {
+            // console.log(this)
             currentid = this.id;
             // console.log(currentid)
             this.isHere = true;
@@ -111,7 +117,7 @@ function update(source) {
             this.style.zIndex = z_index;
             this.style.z_index = z_index
 
-            let scale = 12;
+            let scale = 6;
 
             d3.select(this)
                 // .attr("opacity", 0.5)
@@ -121,13 +127,15 @@ function update(source) {
                 .attr("x", -width / scale)
                 .attr("y", -width / scale)
                 .attr("width", width / (scale / 2))
-                .attr("height", width / (scale / 2));
+                .attr("height", width / (scale / 2))
+            
+            d3.select(this.parentNode).raise()
 
             
             
             
 
-            console.log(this.style.zIndex)
+            // console.log(this.style.zIndex)
 
             // 这里的思路是对每个结点加上一个eventListener，但是为了防止一个结点加太多次，就用一个表来记录有无加过
             if(listenrArray[thisId] == true) {
@@ -174,6 +182,7 @@ function update(source) {
 
 
         })
+        // .on('mouseover', raise)
         .on('mouseout', function (d) {
             this.isHere = false;
             d3.select(this)
@@ -241,6 +250,9 @@ function update(source) {
                     
                 }
             }
+            // document.querySelector("#operationFutureModal")
+            // .style.display="none";
+            $('#operationFutureModal').modal('hide')
         })
         ;
 
