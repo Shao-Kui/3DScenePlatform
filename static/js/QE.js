@@ -195,6 +195,17 @@ const onKeyDown = function(event){
     if(event.target.matches("input")) return;
     pressedKeys[event.keyCode] = true;
     switch ( event.keyCode ) {
+        case 39: // →
+            let functionalNode = d3.selectAll('rect').filter(d => d.imgindex >= 0);
+            if(functionalNode.size() === 1){
+                let datum = functionalNode.datum();
+                datum.imgindex  = (datum.imgindex + 1) % datum.pics.length;
+                d3.select(`#image${datum.id}`).attr("href", datum.pics[datum.imgindex] + ".png");
+                let file_dir = datum.pics[datum.imgindex] + ".json";
+                draw1(file_dir);
+                draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
+            }
+            break;
         case 81: // Q
             Q_DOWN = true;
             break;

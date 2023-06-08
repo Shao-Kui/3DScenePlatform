@@ -53,7 +53,7 @@ function update(source) {
         .attr("class", "node")
         .attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
-        });
+    });
 
 
 
@@ -75,129 +75,63 @@ function update(source) {
 
     let z_index = arr_len;
 
-    function raise() {
-        d3.select(this).raise()
-        // console.log('彳亍')
-        // console.log(this)
-    }
+    let defs = svg.append('defs');
+    defs.selectAll('.mypattern').data(nodes).enter().append('pattern')
+    .attr('class', 'mypattern')
+    .attr("id", d => `imgdef${d.id}`)
+    .attr("width", 1)
+    .attr("height", 1)
+    .attr("patternUnits", "objectBoundingBox")
+    .append("image").attr('id', d => `image${d.id}`)
+    .attr("href", d => d.pics[0] + ".png")
+    .attr('preserveAspectRatio', "xMidYMid meet")
+    .attr("width", len)
+    .attr("height", len);
 
-    nodeEnter.append("svg:image") 
-        .attr("xlink:href", function (d) {
-            // console.log(this.zIndex)
-            return d.pics[0] + ".png";
-            // return "images/" + (parseInt(d.pics[0]) % 3 + 1) + ".png";
-            // return "images/" + d.pics[0] + ".png";
-        })
-        // .attr("xlink:href", "https://github.com/favicon.ico")
+    nodeEnter.append("rect") 
+    //.attr("href", d => d.pics[0] + ".png")
+    .attr("fill", d => `url(#imgdef${d.id})`).attr('stroke-width', 3)
+    .attr("x", -len / 2)
+    .attr("y", -len / 2)
+    .attr("width", len)
+    .attr("height", len)
+    .attr("id", function(d){
+        id = id+1;
+        return id;
+    })
+    //.attr('stroke', 'black').attr('stroke-width', '2px')
+    .on('mouseover', function (d) {
+        let file_dir = d.pics[0] + ".json";
+        let scale = 6;
+        d.imgindex = 0;
+        d3.select(this.parentNode).raise()
+        d3.select(this).transition()
+        .attr("x", -width / scale)
+        .attr("y", -width / scale)
+        .attr("width", width / (scale / 2))
+        .attr("height", width / (scale / 2))
+        d3.select(`#image${d.id}`).transition()
+        .attr("width", width / (scale / 2))
+        .attr("height", width / (scale / 2))
+        draw1(d.pics[d.imgindex] + ".json")
+        draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
+    })
+    .on('mouseout', function (d) {
+        // this.isHere = false;
+        d3.select(this)
+        .transition()
         .attr("x", -len / 2)
         .attr("y", -len / 2)
         .attr("width", len)
-        .attr("height", len)
-        .attr("id", function(d){
-            id = id+1;
-            return id;
-        })
-        .style('position', 'relative')
-        .style('z-index', 1)
-        .on('mouseover', function (d) {
-            // console.log(this)
-            currentid = this.id;
-            // console.log(currentid)
-            this.isHere = true;
-            let file_dir = d.pics[0] + ".json";
-            const pics_array = d.pics;
-
-            let thisId = this.id;
-            let ptr = this;
-
-            this.style.position = 'relative';
-            const thisLayout = document.getElementById(thisId)
-            thisLayout.href.baseVal = d.pics[pic_index] + ".png"
-            z_index += 1;
-            this.style.zIndex = z_index;
-            this.style.z_index = z_index
-
-            let scale = 6;
-
-            d3.select(this)
-                // .attr("opacity", 0.5)
-                // .attr("stroke", "white")
-                // .attr("stroke-width", 6);
-                .transition()
-                .attr("x", -width / scale)
-                .attr("y", -width / scale)
-                .attr("width", width / (scale / 2))
-                .attr("height", width / (scale / 2))
-            
-            d3.select(this.parentNode).raise()
-
-            
-            
-            
-
-            // console.log(this.style.zIndex)
-
-            // 这里的思路是对每个结点加上一个eventListener，但是为了防止一个结点加太多次，就用一个表来记录有无加过
-            if(listenrArray[thisId] == true) {
-                listenrArray[thisId] = false;
-                document.addEventListener('keydown', function(e) {
-                   
-                    if(currentid == thisId) {
-                        if(d.pics.length <= 1) return ;
-                        // console.log()
-                        if(e.key == 'ArrowLeft') {
-                            pic_index -= 1;
-                            pic_index = (pic_index + d.pics.length) % d.pics.length
-                        } 
-                        else if(e.key == 'ArrowRight') {
-                            pic_index += 1;
-                            pic_index %= d.pics.length
-                        } 
-                        else return ;
-                        d3.select('#fig1').selectAll('g').remove();
-                        d3.select('#fig1').selectAll('path').remove();
-                        d3.select('#fig2').selectAll('g').remove();
-                        // console.log(pic_index)
-                        // ptr.parentElement.attr("xlink:href", d.pics[pic_index % d.pics.length] + ".png")
-                        const thisLayout = document.getElementById(thisId)
-                        thisLayout.href.baseVal = d.pics[pic_index] + ".png"
-                        z_index += 1;
-                        thisLayout.style.zIndex = z_index;
-                        // console.log(thisLayout.href.baseVal)
-                        // thisLayout.attr("xlink:href", d.pics[pic_index % d.pics.length] + ".png")
-                        file_dir = d.pics[pic_index] + ".json";
-
-
-                        draw1(d.pics[pic_index % d.pics.length] + ".json")
-                        draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
-
-        
-                    }
-                })
-            }
-
-            draw1(d.pics[0] + ".json")
-            draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
-
-
-
-        })
-        // .on('mouseover', raise)
-        .on('mouseout', function (d) {
-            this.isHere = false;
-            d3.select(this)
-                .transition()
-                .attr("x", -len / 2)
-                .attr("y", -len / 2)
-                .attr("width", len)
-                .attr("height", len);
-                // .attr("opacity", 1)
-                // .attr("stroke", "black")
-                // .attr("stroke-width", 1);
-            d3.select('#fig1').selectAll('g').remove();
-            d3.select('#fig1').selectAll('path').remove();
-            d3.select('#fig2').selectAll('g').remove();
-        })
+        .attr("height", len);
+        d3.select(`#image${d.id}`).transition()
+        .attr("width", len)
+        .attr("height", len);
+        d3.select('#fig1').selectAll('g').remove();
+        d3.select('#fig1').selectAll('path').remove();
+        d3.select('#fig2').selectAll('g').remove();
+        d.imgindex = -1;
+    })
         .on('click',(d)=>{
             //Require that all the animations goes from the root or to the root
             let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
@@ -265,11 +199,5 @@ function update(source) {
     link.enter().insert("path", "g")
         .attr("class", "link")
         .attr("d", diagonal);
-
-
-
-
-
-
 }
 
