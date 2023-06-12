@@ -1223,7 +1223,8 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
 
     def calarea(objpath):
         vertices = []
-        with open(objpath,encoding='utf-8') as objf:
+        try:
+            objf=open(objpath,encoding='utf-8')
             for line in objf:
                 if line.startswith("#"):
                     continue
@@ -1233,6 +1234,18 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
                 if values[0] == 'v':
                     v = list(map(float, values[1:4]))
                     vertices.append([v[0], v[1], v[2]])
+        except:
+            objf=open(objpath,encoding='gbk')
+            for line in objf:
+                if line.startswith("#"):
+                    continue
+                values = line.split()
+                if len(values) == 0:
+                    continue
+                if values[0] == 'v':
+                    v = list(map(float, values[1:4]))
+                    vertices.append([v[0], v[1], v[2]])
+        
         l0 = [a[0] for a in vertices]
         l2 = [a[2] for a in vertices]
         return (max(l0)-min(l0))*(max(l2)-min(l2))
@@ -1609,12 +1622,12 @@ def calculate_tree_data(path:str,groupName:str):
 
         write_json(origin, path+"/{}.json".format('layoutTree'))
         
-        with open(path+"/{}.js".format('layoutTree'), 'w') as f:
-        # with open("{}.js".format(new_data), 'w') as f:
-            f.write("data1='[")
-            with open(path+"/{}.json".format('layoutTree')) as prefix:
-                f.write(prefix.read())
-            f.write("]';")
+        # with open(path+"/{}.js".format('layoutTree'), 'w') as f:
+        # # with open("{}.js".format(new_data), 'w') as f:
+        #     f.write("data1='[")
+        #     with open(path+"/{}.json".format('layoutTree')) as prefix:
+        #         f.write(prefix.read())
+        #     f.write("]';")
 
 
         # display(origin)

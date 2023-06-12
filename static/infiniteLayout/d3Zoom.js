@@ -23,7 +23,6 @@ function update2() {
 
 initZoom();
 // updateData();
-update();
 
 const inputChart1 = document.getElementById('chart1Info');
 let previousValue = inputChart1.value;

@@ -218,6 +218,12 @@ class SceneManager {
         }
         ALL_SCENE_READY = true;
         refreshArea(this.scene_json);
+        if(this.scene_json.rooms[0].totalAnimaID){
+            $.getJSON(`/static/dataset/infiniteLayout/${this.scene_json.rooms[0].totalAnimaID}img/layoutTree.json`, function (data) {
+                console.log(data);
+                updateTreeWindow(data); // This code initialize the Tree for InfiniteLayout. 
+            });
+        }
     };
 
     refresh_light(){

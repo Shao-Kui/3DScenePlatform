@@ -529,7 +529,7 @@ const objectToAction = function(object3d, actionName, duration=1){
         actionForthToTarget(object3d.actions[actionName], duration);
     }
     if(actionName != 'origin'){
-        console.log(actionName, 'origin')
+        // console.log(object3d.userData.modelId, actionName)
         object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
     }
 }
@@ -1431,9 +1431,8 @@ const setting_up = function () {
     timeCounter.totalStart = moment();
     $("#operationFuture").click(function(){
         let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
-        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, function (data) {
+        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
             currentAnimation = data;
-            operationFuture();
         });
     });
     $("#operationTimer").click(function(){
@@ -1528,10 +1527,12 @@ const setting_up = function () {
         let button = document.getElementById("animaRecord_button");
         animaRecord_Mode = !animaRecord_Mode;
         if(animaRecord_Mode){
-            currentSeqs = [...Array(manager.renderManager.scene_json.rooms[currentRoomId].objList.length)].map(e => [[]]);
-            for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
-                manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
-            }
+            let numofglbs = 0;
+            manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
+            currentSeqs = [...Array(mnumofglbs)].map(e => [[]]);
+            // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
+            //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
+            // }
             button.style.backgroundColor = '#9400D3';
         }else{
             button.style.backgroundColor = 'transparent';
@@ -1713,7 +1714,7 @@ const setting_up = function () {
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#floorPlanbtn').click();
+        $('#modulebtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){
@@ -1729,24 +1730,6 @@ const setting_up = function () {
     onWindowResize();
     deltaClock = new THREE.Clock();
     gameLoop();
-    const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
-    const params = {
-        color: '#ffffff',
-        scale: 4,
-        flowX: 1,
-        flowY: 1
-    };
-    water = new THREE.Water( waterGeometry, {
-        color: params.color,
-        scale: params.scale,
-        flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
-        textureWidth: 1024,
-        textureHeight: 1024
-    } );
-
-    water.position.y = 1;
-    water.rotation.x = Math.PI * - 0.5;
-    // scene.add( water );
 };
 
 var autocollapse = function (menu, maxHeight) {
