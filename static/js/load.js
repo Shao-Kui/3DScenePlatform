@@ -95,7 +95,6 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
             instance.scene.format = format;
             loadObjectToCacheContent(instance.scene);
             anchor.apply(null, anchorArgs);
-            console.log(instance.scene)
         })
     }
 };
@@ -496,6 +495,7 @@ const refreshArea = function(scene_json){
     });
     areaList.length = 0;
     scene_json.rooms.forEach(room => {
+        if(!room.areaShape){return;}
         setTimeout(addAreaByRoom, areaCounter * 100, room);
         areaCounter++;
     });

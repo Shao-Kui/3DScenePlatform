@@ -139,54 +139,19 @@ const topdownview = function(bbox = undefined){
         // prevent if there is NaN in datasets; 
         camHeight = 6;
     }
-
     camera.position.set(lx, camHeight, lz);
     camera.lookAt(lx, 0, lz);
     orbitControls.target.set(lx, 0, lz);
-
     let lx_length = bbox.max[0] - bbox.min[0];
     let lz_length = bbox.max[2] - bbox.min[2];
     let tCamUp;
     if(lz_length > lx_length){
         // let thetaTar = orbitControls.sphericalDelta.theta + Math.PI / 2;
         orbitControls.sphericalDelta.theta += Math.PI / 2;
-        // orbitControls.update();
-        // gsap.to(orbitControls.sphericalDelta, {
-        //     duration: 1,
-        //     theta: thetaTar,
-        // });
-        // tCamUp = gsap.to(camera.up, {
-        //     duration: 1,
-        //     x: 1,
-        //     y: 0,
-        //     z: 0
-        // });
     }else{
-        // tCamUp = gsap.to(camera.up, {
-        //     duration: 1,
-        //     x: 0,
-        //     y: 0,
-        //     z: 1
-        // });
+
     }
-    // gsap.to(camera.position, {
-    //     duration: 1,
-    //     x: lx,
-    //     y: camHeight,
-    //     z: lz
-    // });
-    // gsap.to(orbitControls.target, {
-    //     duration: 1,
-    //     x: lx,
-    //     y: 0,
-    //     z: lz
-    // });
-    // gsap.to(camera.up, {
-    //     duration: 1,
-    //     x: 0,
-    //     y: 1,
-    //     z: 0
-    // });
+    orbitControls.sphericalDelta.theta += Math.PI;
 };
 
 var ctrlPressing = false;

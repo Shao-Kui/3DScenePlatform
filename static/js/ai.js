@@ -309,12 +309,10 @@ const getDerivationByID = function(totalAnimaID, derivationID){
 }
 
 const getCurrentIndexing = function(){
+    // Note that for InfiniteLayout, we only consider a single room, so every floorplan starts from the first room. 
     let index = [];
     manager.renderManager.scene_json.rooms[0].objList.forEach(o => {if('sforder' in o){index.push(0);}});
     manager.renderManager.scene_json.rooms[0].objList.forEach(o => {if('sforder' in o){index[o.sforder] = currentAnimation.state_encoding[o.sforder].indexOf(o.startState);}});
-    // if(manager.renderManager.scene_json.rooms[0].sflayoutid === undefined){
-    //     manager.renderManager.scene_json.rooms[0].sflayoutid = 0;
-    // }
     return index.join("") + "_0" // `_${manager.renderManager.scene_json.rooms[0].sflayoutid}`;
 }
 
@@ -388,6 +386,25 @@ const sceneTransformFirst = function(derivation, name){
             if(derivation[j][k].action === 'rotate' && name === 'rotate'){
                 return derivation[j][k].r1;
             }
+            if(derivation[j][k].action === 'transform' && name === 'transform'){
+                return derivation[j][k].s1;
+            }
+        }
+    }
+}
+
+const sceneTransformLast = function(derivation, name){
+    for(let j = derivation.length-1; j >= 0; j--){
+        for(let k = derivation[j].length-1; k >= 0; k--){
+            if(derivation[j][k].action === 'move' && name === 'move'){
+                return derivation[j][k].p2;
+            }
+            if(derivation[j][k].action === 'rotate' && name === 'rotate'){
+                return derivation[j][k].r2;
+            }
+            if(derivation[j][k].action === 'transform' && name === 'transform'){
+                return derivation[j][k].s2;
+            }
         }
     }
 }
@@ -415,6 +432,9 @@ const sceneTransformTo = function(derivations){
         if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
         let initr = sceneTransformFirst(derivations[i], 'rotate');
         if(initr){object3d.rotation.set(0, initr, 0);}
+        let inits = sceneTransformFirst(derivations[i], 'transform');
+        if(inits){objectToAction(object3d, inits, 0.1);}
+        // console.log(object3d.userData.json.modelId, initp, initr, inits)
         derivations[i].forEach(seq => {
             seq.forEach(a => {
                 if(a.action === 'move'){
@@ -433,7 +453,7 @@ const sceneTransformTo = function(derivations){
         });
         setTimeout(synchronize_json_object, T * 1000, object3d);
     }
-    setTimeout(operationFuture, T * 1000 + 200);
+    // setTimeout(operationFuture, T * 1000 + 200);
 }
 
 const sceneTransformBack = function(derivations){
@@ -447,10 +467,17 @@ const sceneTransformBack = function(derivations){
             }
         }
         if(object === undefined){
-            console.log('error! sceneTransformTo finds a undefined object? ');
+            console.log('error! sceneTransformBack finds a undefined object? ');
             continue;
         }
         let object3d = manager.renderManager.instanceKeyCache[object.key];
+        let initp = sceneTransformLast(derivations[i], 'move');
+        if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
+        let initr = sceneTransformLast(derivations[i], 'rotate');
+        if(initr){object3d.rotation.set(0, initr, 0);}
+        let inits = sceneTransformLast(derivations[i], 'transform');
+        if(inits){objectToAction(object3d, inits, 0.1);}
+        // console.log(object3d.userData.json.modelId, initp, initr, inits)
         derivations[i].slice().reverse().forEach(seq => {
             seq.slice().reverse().forEach(a => {
                 if(a.action === 'move'){
@@ -469,5 +496,5 @@ const sceneTransformBack = function(derivations){
             setTimeout(synchronize_json_object, T * 1000, object3d);
         })
     }
-    setTimeout(operationFuture, T * 1000 + 200);
+    // setTimeout(operationFuture, T * 1000 + 200);
 }
