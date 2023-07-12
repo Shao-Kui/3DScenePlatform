@@ -1621,7 +1621,7 @@ const setting_up = function () {
 
     $("#usercommitOSR").click(() => {
         userOSR = $("#userOSR").val();
-        nameOSR = $("#nameOSR").val();
+        nameOSR = $("#searchinput").val() + '_' + $("#nameOSR").val();
         if (userOSR == "") {
             alert("请填写您的用户名");
         }
