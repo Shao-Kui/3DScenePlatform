@@ -581,6 +581,7 @@ const setNewIntersectObj = function(event = undefined){
                         "s2": $(e.target).attr("actionName"),
                         "t": [startTime, startTime+1]
                     });
+                    updateAnimationSlider(index)
                 }
                 objectToAction(object3d, $(e.target).attr("actionName"), 1);
                 synchronize_json_object(object3d);
@@ -872,7 +873,11 @@ var onClickObj = function (event) {
             let index = INTERSECT_OBJ.userData.json.sforder;
             let a = currentSeqs[index][0].at(-1);
             a.r2 = INTERSECT_OBJ.rotation.y;
-            a.t[1] = a.t[0]+1;
+            let dr = Math.abs(a.r1 - a.r2);
+            dr = Math.min(dr, Math.PI * 2 - dr);
+            let duration = dr / Math.PI;
+            a.t[1] = a.t[0] + duration;
+            updateAnimationSlider(index);
         }
         return;
     }
@@ -1529,15 +1534,22 @@ const setting_up = function () {
         if(animaRecord_Mode){
             let numofglbs = 0;
             manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
-            currentSeqs = [...Array(mnumofglbs)].map(e => [[]]);
+            currentSeqs = [...Array(numofglbs)].map(e => [[]]);
             // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
             //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
             // }
             button.style.backgroundColor = '#9400D3';
+            if ($("#sidebarSelect").val() !== "AnimationRecordDiv") {
+                $("#sidebarSelect").val("AnimationRecordDiv").change();
+            }
+            // document.getElementById("AnimationRecordDiv").addEventListener("wheel", AnimationRecordDivWheelHandler);
+            updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
+            $("#AnimationRecordDiv").empty();
+            // document.getElementById("AnimationRecordDiv").removeEventListener("wheel", AnimationRecordDivWheelHandler);
         }
-    });    
+    });
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
     $("#useNewWallCheckBox").click(() => {
         window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
@@ -1979,12 +1991,14 @@ let enterShelfStockingMode = () => {
     $('#nextShelfBtn').removeAttr('disabled');
 }
 
-let getCube = (width, height, depth, opacity) => {
+let getCube = (width, height, depth, opacity, color) => {
     const geometry = new THREE.BoxGeometry(width, height, depth);
     const material = new THREE.MeshBasicMaterial();
     material.transparent = true;
     material.opacity = opacity;
     const cube = new THREE.Mesh(geometry, material);
+    //cube.material.color.setHex( color );
+    //cube.material.toneMapped = false;
     return cube;
 }
 
@@ -2494,8 +2508,15 @@ let showTrafficFlowNetwork = () => {
 }
 
 let showShelfRoute = () => {
-    let h = 1.5
-    let shelfRoute = manager.renderManager.scene_json.rooms[0].shelfRoute;
+    drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute, 0x00ff00);
+    if (manager.renderManager.scene_json.rooms[0].shelfRoute1)
+        drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute1, 0xFFBA55);
+    if (manager.renderManager.scene_json.rooms[0].shelfRoute2)
+        drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute2, 0x58B6E5);
+}
+
+let drawShelfRoute = (shelfRoute, color) => {
+    let h = 1.75
     let path = [];
     for (let p of shelfRoute.path) {
         let v = shelfRoute.vertices[p];
@@ -2503,7 +2524,7 @@ let showShelfRoute = () => {
     }
     geometry = new THREE.BufferGeometry().setFromPoints(path);
     const material = new THREE.LineBasicMaterial({
-        color: 0x00ff00,
+        color: color,
         linewidth: 3
     });
     let pathline = new THREE.Line(geometry, material);
@@ -2511,7 +2532,7 @@ let showShelfRoute = () => {
 
     for (let vId in shelfRoute.vertices) {
         let v = shelfRoute.vertices[vId];
-        c = getCube(0.1,0.1,0.1,0.8);
+        c = getCube(0.1,0.1,0.1,0.8, color);
         c.position.set(v[0], h, v[2]);
         scene.add(c)
     }
