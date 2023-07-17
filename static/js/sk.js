@@ -1539,15 +1539,10 @@ const setting_up = function () {
             //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
             // }
             button.style.backgroundColor = '#9400D3';
-            if ($("#sidebarSelect").val() !== "AnimationRecordDiv") {
-                $("#sidebarSelect").val("AnimationRecordDiv").change();
-            }
-            // document.getElementById("AnimationRecordDiv").addEventListener("wheel", AnimationRecordDivWheelHandler);
             updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
             $("#AnimationRecordDiv").empty();
-            // document.getElementById("AnimationRecordDiv").removeEventListener("wheel", AnimationRecordDivWheelHandler);
         }
     });
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
