@@ -3,19 +3,6 @@ class AnimationSlider {
 
     constructor(selector, props = {}) {
         this.defaultProps = {
-            animations: [{
-                "action": "transform",
-                "t": [0, 1]
-            }, {
-                "action": "transform",
-                "t": [2, 3]
-            }, {
-                "action": "rotate",
-                "t": [5, 6]
-            }, {
-                "action": "move",
-                "t": [10, 11]
-            }],
             colors: {
                 move: "rgb(210, 110, 127)",
                 rotate: "rgb(25, 118, 210)",
@@ -23,13 +10,12 @@ class AnimationSlider {
                 rail: "rgba(25, 118, 210, 0.4)"
             },
             pointRadius: 10,
-            railHeight: 5,
+            fontSize: 15
         };
 
         this.allProps = {
             ...this.defaultProps,
             ...props,
-            // max: props.max || this.defaultProps.max,
             colors: {
                 ...this.defaultProps.colors,
                 ...props.colors
@@ -46,8 +32,7 @@ class AnimationSlider {
 
         this.timeline = this.initTimeline();
 
-        this.points = this.initPoints(this.allProps.animations.length);
-        this.points.forEach(point => this.container.appendChild(point));
+        this.points = this.initPoints();
 
         this.pointMouseupHandler = this.pointMouseupHandler.bind(this);
         this.pointMouseMoveHandler = this.pointMouseMoveHandler.bind(this);
@@ -76,8 +61,6 @@ class AnimationSlider {
         const rail = document.createElement("span");
         rail.classList.add("animationslider-rail");
         rail.style.background = this.allProps.colors.rail;
-        // rail.style.height = this.allProps.railHeight + "px";
-        // rail.style.top = this.allProps.pointRadius + "px";
         rail.style.height = 1 + "px";
         rail.style.top = this.allProps.pointRadius * 2 + "px";
         return rail;
@@ -89,7 +72,7 @@ class AnimationSlider {
     initTimeline() {
         const text1 = document.createElement("span");
         text1.innerText = '0';
-        text1.style.fontSize = '12px';
+        text1.style.fontSize = this.allProps.fontSize + 'px';
         text1.style.top = this.allProps.pointRadius * 2 + 2 + "px";
         text1.style.position = 'absolute';
         text1.style.left = '0%';
@@ -98,7 +81,7 @@ class AnimationSlider {
 
         const text2 = document.createElement("span");
         text2.innerText = AnimationSlider.max / 4;
-        text2.style.fontSize = '12px';
+        text2.style.fontSize = this.allProps.fontSize + 'px';
         text2.style.top = this.allProps.pointRadius * 2 + 2 + "px";
         text2.style.position = 'absolute';
         text2.style.left = '25%';
@@ -107,7 +90,7 @@ class AnimationSlider {
 
         const text3 = document.createElement("span");
         text3.innerText = AnimationSlider.max / 2;
-        text3.style.fontSize = '12px';
+        text3.style.fontSize = this.allProps.fontSize + 'px';
         text3.style.top = this.allProps.pointRadius * 2 + 2 + "px";
         text3.style.position = 'absolute';
         text3.style.left = '50%';
@@ -116,7 +99,7 @@ class AnimationSlider {
 
         const text4 = document.createElement("span");
         text4.innerText = AnimationSlider.max * 3 / 4;
-        text4.style.fontSize = '12px';
+        text4.style.fontSize = this.allProps.fontSize + 'px';
         text4.style.top = this.allProps.pointRadius * 2 + 2 + "px";
         text4.style.position = 'absolute';
         text4.style.left = '75%';
@@ -125,7 +108,7 @@ class AnimationSlider {
 
         const text5 = document.createElement("span");
         text5.innerText = AnimationSlider.max;
-        text5.style.fontSize = '12px';
+        text5.style.fontSize = this.allProps.fontSize + 'px';
         text5.style.top = this.allProps.pointRadius * 2 + 2 + "px";
         text5.style.position = 'absolute';
         text5.style.left = '100%';
@@ -133,31 +116,21 @@ class AnimationSlider {
         this.container.appendChild(text5);
     }
 
-    /**
-     * Initialize all points
-     * @param  {number} count
-     */
-    initPoints(count) {
-        let points = [];
-        for (let i = 0; i < count; i++) {
-            points.push(this.initPoint(i));
-        }
-        return points;
+    initPoints() {
+        return this.allProps.animations.map((seq, seqId) =>
+            seq.map((anim) => this.initPoint(anim, seqId))
+        );
     }
 
-    /**
-     * Initialize single track at specific index position
-     * @param  {number} index
-     */
-    initPoint(index) {
+    initPoint(anim, seqId) {
         const point = document.createElement("span");
         point.classList.add("animationslider-point");
 
-        let anim = this.allProps.animations[index];
         anim.t[0] = this.round(anim.t[0], 1);
         anim.t[1] = this.round(anim.t[1], 1);
         anim.duration = anim.t[1] - anim.t[0];
         point.anim = anim;
+        point.seqId = seqId;
         point.style.width = (anim.duration / AnimationSlider.max) * 100 + "%";
         point.style.height = this.allProps.pointRadius * 2 + "px";
         let t = (anim.t[0] + anim.t[1]) / 2;
@@ -179,6 +152,7 @@ class AnimationSlider {
             this.pointContextMenuHandler(e)
         );
 
+        this.container.appendChild(point)
         return point;
     }
 
@@ -239,7 +213,6 @@ class AnimationSlider {
 
     pointClickHandler(e) {
         e.preventDefault();
-        console.log(e.target.anim);
         this.selectedPoint = e.target;
         document.addEventListener("mouseup", this.pointMouseupHandler);
         document.addEventListener("mousemove", this.pointMouseMoveHandler);
@@ -258,9 +231,9 @@ class AnimationSlider {
     pointContextMenuHandler(e) {
         let targetPoint = e.target;
         console.log('Delete: ', targetPoint.anim);
-        const index = this.allProps.animations.indexOf(targetPoint.anim);
+        const index = this.allProps.animations[targetPoint.seqId].indexOf(targetPoint.anim);
         if (index > -1) {
-            this.allProps.animations.splice(index, 1);
+            this.allProps.animations[targetPoint.seqId].splice(index, 1);
         }
         targetPoint.remove();
     }
@@ -314,62 +287,60 @@ class AnimationSlider {
     }
 
     update() {
-        for (let i = this.points.length; i < this.allProps.animations.length; i++) {
-            let point = this.initPoint(i);
-            this.points.push(point);
-            this.container.appendChild(point)
-        }
+        this.allProps.animations.forEach((seq, seqId) => {
+            for (let i = this.points[seqId].length; i < seq.length; i++) {
+                let point = this.initPoint(seq[i], seqId);
+                this.points[seqId].push(point);
+            }
+        });
     }
 }
 
 const updateAnimationRecordDiv = (sliderMax = undefined) => {
+    if ($("#sidebarSelect").val() !== "AnimationRecordDiv") {
+        $("#sidebarSelect").val("AnimationRecordDiv").change();
+    }
     $("#AnimationRecordDiv").empty();
     let animaMax = Math.max(sliderMax || 4, 4);
-    for (let i = 0; i < currentSeqs.length; i++) {
-        let anim = currentSeqs[i][0];
-        for (let j = 0; j < anim.length; j++) {
-            animaMax = Math.max(animaMax, anim[j].t[1]);
-        }
-    }
+    currentSeqs.forEach((seqs) => {
+        seqs.forEach((seq) => {
+            seq.forEach((anim) => {
+                animaMax = Math.max(animaMax, anim.t[1]);
+            });
+        });
+    });
     AnimationSlider.max = Math.ceil(animaMax / 4) * 4;
     animaSliders = {};
     let animaRecDiv = document.getElementById("AnimationRecordDiv");
     manager.renderManager.scene_json.rooms[0].objList.sort((a, b) => a.sforder - b.sforder);
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {
+    manager.renderManager.scene_json.rooms[0].objList.forEach(o => {
         if (o.format === 'glb' && o.sforder !== undefined) {
-            let slider = new AnimationSlider("AnimationRecordDiv", { animations: currentSeqs[o.sforder][0] });
+            let slider = new AnimationSlider("AnimationRecordDiv", { animations: currentSeqs[o.sforder] });
             slider.container.id = `sforder${o.sforder}`;
             animaSliders[o.sforder] = slider;
             let label = document.createElement("label");
             label.innerText = o.modelId;
+            label.style.fontSize = '18px';
+            label.classList.add("mb-3");
             animaRecDiv.appendChild(label);
         }
     });
 }
 
 const updateAnimationSlider = (index) => {
-    let t1 = currentSeqs[index][0].at(-1).t[1];
-    if (t1 > AnimationSlider.max) {
-        updateAnimationRecordDiv(Math.ceil(t1 / 4) * 4);
+    let animaMax = 0;
+    currentSeqs[index].forEach((seq) => {
+        seq.forEach((anim) => {
+            animaMax = Math.max(animaMax, anim.t[1]);
+        });
+    });
+    if (animaMax > AnimationSlider.max) {
+        updateAnimationRecordDiv(Math.ceil(animaMax / 4) * 4);
     } else {
         animaSliders[index].update();
     }
 }
 
-const AnimationRecordDivWheelHandler = (event) => {
+const AnimationRecordDivWheelHandler = (e) => {
     return;
-    if (!animaRecord_Mode) return;
-    if (event.deltaY > 0) {
-        updateAnimationRecordDiv(AnimationSlider.max + 4);
-    } else {
-        let animaMax = 4;
-        for (let i = 0; i < currentSeqs.length; i++) {
-            let anim = currentSeqs[i][0];
-            for (let j = 0; j < anim.length; j++) {
-                animaMax = Math.max(animaMax, anim[j].t[1]);
-            }
-        }
-        animaMax = Math.ceil(animaMax / 4) * 4;
-        updateAnimationRecordDiv(Math.max(AnimationSlider.max - 4, animaMax));
-    }
-}
+};
