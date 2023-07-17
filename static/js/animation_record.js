@@ -323,20 +323,15 @@ class AnimationSlider {
 }
 
 const updateAnimationRecordDiv = (sliderMax = undefined) => {
-    // $("#AnimationRecordDiv").empty();
-    // let colorScale = d3.scale.ordinal().range(['#6b0000', '#ef9b0f', '#ffee00']).domain(['apple', 'orange', 'lemon']);
-    // let chart = d3.timeline().colors(colorScale).colorProperty('fruit');
-    // let svg = d3.select("#AnimationRecordDiv").append("svg").attr("width", "100%")
-    //     .datum([
-    //         { class:"a", label: "A", times:[{starting_time:1355752800000, ending_time: 1355759900000},{starting_time:1355767900000, ending_time: 1355774400000}] },
-    //         { class:"b", label: "B", times:[{starting_time:1355759910000, ending_time: 1355761900000}] },
-    //         { class:"c", label: "C", times:[{starting_time:1355761900000, ending_time: 1355759900000},{starting_time:1355767900000, ending_time: 1355763910000}] }
-    //     ]).call(chart);
-    // return;
     $("#AnimationRecordDiv").empty();
-    if (sliderMax) {
-        AnimationSlider.max = sliderMax;
+    let animaMax = Math.max(sliderMax || 4, 4);
+    for (let i = 0; i < currentSeqs.length; i++) {
+        let anim = currentSeqs[i][0];
+        for (let j = 0; j < anim.length; j++) {
+            animaMax = Math.max(animaMax, anim[j].t[1]);
+        }
     }
+    AnimationSlider.max = Math.ceil(animaMax / 4) * 4;
     animaSliders = {};
     let animaRecDiv = document.getElementById("AnimationRecordDiv");
     manager.renderManager.scene_json.rooms[0].objList.sort((a, b) => a.sforder - b.sforder);
