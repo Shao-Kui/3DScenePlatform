@@ -335,7 +335,7 @@ const updateAnimationRecordDiv = (sliderMax = undefined) => {
     animaSliders = {};
     let animaRecDiv = document.getElementById("AnimationRecordDiv");
     manager.renderManager.scene_json.rooms[0].objList.sort((a, b) => a.sforder - b.sforder);
-    manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {
+    manager.renderManager.scene_json.rooms[0].objList.forEach(o => {
         if (o.format === 'glb' && o.sforder !== undefined) {
             let slider = new AnimationSlider("AnimationRecordDiv", { animations: currentSeqs[o.sforder][0] });
             slider.container.id = `sforder${o.sforder}`;
