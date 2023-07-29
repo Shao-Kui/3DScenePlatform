@@ -36,6 +36,12 @@ This platform cooperates with other organizations, so other packages may be requ
 # Datasets
 This section discusses how we organize datasets. This platform follows **S**hao**K**ui-Format, the Scalable and Kross-Platform Format. Note that we have no copyright to distribute datasets, especially SUNCG. 3D-Front is available. Please refer to their [website][3dfront] for downloading. Our platform has its organization of datasets, so the downloaded datasets should be reorganized to 'root/dataset'. A [script][3dfront2suncg] exists for converting 3D-Front to SK-Format. The below paragraphs also illustrate our format in detail. 
 
+Please refer to the following link for the dataset with the exact version we are using. 
+```
+https://pan.baidu.com/s/1HqHcCOnHKK0VdNhiHmMDoA?pwd=fvya 
+Extraction Code: fvya 
+```
+
 ## Models
 Since models are reusable in multiple scenes. The repository of models is separated from the repo of scenes. Please organize models in the ```object``` folder of the ```dataset``` folder:  
 <pre>
