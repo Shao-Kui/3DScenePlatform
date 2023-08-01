@@ -224,7 +224,7 @@ The "cgs" function in sk.py is the entrance for preprocessing each coherent grou
 # CommercialScene
 ![CommercialScene](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teasermm23.png "MM 2023")
 
-[\[Paper\]] [\[Video\]] [\[Supp\]] [\[Dataset\]]
+[\[Paper\]] [\[Video\]][trafficflow] [\[Supp\]] 
 
 This project includes our algorithm for generating commercial scenes. The related source code is all in the following directory:
 ```
@@ -298,5 +298,6 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [scenedirector]:https://www.bilibili.com/video/BV11L411e72M
 [scenedirectorsupp]:https://ieeexplore.ieee.org/document/10106472/media#media
 [scenedirectordataset]:https://cloud.tsinghua.edu.cn/f/dd74c0617cb144198f0e/
+[trafficflow]:https://www.bilibili.com/video/BV1gV4y1i7VN
 [hongbopage]:https://www.scm.cityu.edu.hk/people/fu-hongbo
 [taijiangpage]:https://cg.cs.tsinghua.edu.cn/people/~mtj/
