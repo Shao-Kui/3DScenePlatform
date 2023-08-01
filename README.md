@@ -221,6 +221,17 @@ root/
 ------MageAdd.js
 ```
 The "cgs" function in sk.py is the entrance for preprocessing each coherent group set. The functions named using "CGS" in "MageAdd.js" are the functions for synthesizing scenes online (e.g., when a user controls the mouse). 
+# CommercialScene
+![CommercialScene](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teasermm23.png "MM 2023")
+
+[\[Paper\]] [\[Video\]] [\[Supp\]] [\[Dataset\]]
+
+This project includes our algorithm for generating commercial scenes. The related source code is all in the following directory:
+```
+root/
+--layoutmethods/
+----trafficflow/
+```
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
