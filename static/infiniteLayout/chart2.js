@@ -11,8 +11,9 @@ let height2 = 400;
 
 const draw2 = (old_dir, new_dir) => {
     const container = d3.select('#fig2');
-    const width = container.attr('width');
-    const height = container.attr('height');
+    const boundingrect=container.node().getBoundingClientRect();
+    const width = boundingrect.width;
+    const height = boundingrect.height;
     const chart = container;
     const margin = { top: 30, right: 30, bottom: 30, left: 150 };
     const innerWidth = width - margin.left - margin.right;
