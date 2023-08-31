@@ -581,7 +581,6 @@ const setNewIntersectObj = function(event = undefined){
                         "s2": $(e.target).attr("actionName"),
                         "t": [startTime, startTime+1]
                     });
-                    updateAnimationSlider(index)
                 }
                 objectToAction(object3d, $(e.target).attr("actionName"), 1);
                 synchronize_json_object(object3d);
@@ -873,11 +872,7 @@ var onClickObj = function (event) {
             let index = INTERSECT_OBJ.userData.json.sforder;
             let a = currentSeqs[index][0].at(-1);
             a.r2 = INTERSECT_OBJ.rotation.y;
-            let dr = Math.abs(a.r1 - a.r2);
-            dr = Math.min(dr, Math.PI * 2 - dr);
-            let duration = dr / Math.PI;
-            a.t[1] = a.t[0] + duration;
-            updateAnimationSlider(index);
+            a.t[1] = a.t[0]+1;
         }
         return;
     }
@@ -1437,7 +1432,12 @@ const setting_up = function () {
     $("#operationFuture").click(function(){
         let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
         $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+            console.log(data);
             currentAnimation = data;
+            $.getJSON(`/static/dataset/infiniteLayout/${taID}img/layoutTree.json`, function (data) {
+                console.log(data);
+                updateTreeWindow(data); // This code initialize the Tree for InfiniteLayout. 
+            });
         });
     });
     $("#operationTimer").click(function(){
@@ -1534,17 +1534,15 @@ const setting_up = function () {
         if(animaRecord_Mode){
             let numofglbs = 0;
             manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
-            currentSeqs = [...Array(numofglbs)].map(e => [[]]);
+            currentSeqs = [...Array(mnumofglbs)].map(e => [[]]);
             // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
             //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
             // }
             button.style.backgroundColor = '#9400D3';
-            updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
-            $("#AnimationRecordDiv").empty();
         }
-    });
+    });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
     $("#useNewWallCheckBox").click(() => {
         window.sessionStorage.setItem('NotUseNewWall', USE_NEW_WALL)
@@ -1986,14 +1984,12 @@ let enterShelfStockingMode = () => {
     $('#nextShelfBtn').removeAttr('disabled');
 }
 
-let getCube = (width, height, depth, opacity, color) => {
+let getCube = (width, height, depth, opacity) => {
     const geometry = new THREE.BoxGeometry(width, height, depth);
     const material = new THREE.MeshBasicMaterial();
     material.transparent = true;
     material.opacity = opacity;
     const cube = new THREE.Mesh(geometry, material);
-    //cube.material.color.setHex( color );
-    //cube.material.toneMapped = false;
     return cube;
 }
 
@@ -2503,15 +2499,8 @@ let showTrafficFlowNetwork = () => {
 }
 
 let showShelfRoute = () => {
-    drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute, 0x00ff00);
-    if (manager.renderManager.scene_json.rooms[0].shelfRoute1)
-        drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute1, 0xFFBA55);
-    if (manager.renderManager.scene_json.rooms[0].shelfRoute2)
-        drawShelfRoute(manager.renderManager.scene_json.rooms[0].shelfRoute2, 0x58B6E5);
-}
-
-let drawShelfRoute = (shelfRoute, color) => {
-    let h = 1.75
+    let h = 1.5
+    let shelfRoute = manager.renderManager.scene_json.rooms[0].shelfRoute;
     let path = [];
     for (let p of shelfRoute.path) {
         let v = shelfRoute.vertices[p];
@@ -2519,7 +2508,7 @@ let drawShelfRoute = (shelfRoute, color) => {
     }
     geometry = new THREE.BufferGeometry().setFromPoints(path);
     const material = new THREE.LineBasicMaterial({
-        color: color,
+        color: 0x00ff00,
         linewidth: 3
     });
     let pathline = new THREE.Line(geometry, material);
@@ -2527,7 +2516,7 @@ let drawShelfRoute = (shelfRoute, color) => {
 
     for (let vId in shelfRoute.vertices) {
         let v = shelfRoute.vertices[vId];
-        c = getCube(0.1,0.1,0.1,0.8, color);
+        c = getCube(0.1,0.1,0.1,0.8);
         c.position.set(v[0], h, v[2]);
         scene.add(c)
     }
