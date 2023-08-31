@@ -56,6 +56,7 @@ const transformControlsConfig = function(){
                 let a = currentSeqs[index][0].at(-1);
                 a.p2 = [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z];
                 a.t[1] = a.t[0] + Math.sqrt(Math.pow(a.p1[0]-a.p2[0], 2) + Math.pow(a.p1[1]-a.p2[1], 2) + Math.pow(a.p1[2]-a.p2[2], 2)) / 4;
+                updateAnimationSlider(index)
             }
         }
     });
@@ -106,6 +107,7 @@ const actionAddTime = function(duration=1){
         "action": "pause",
         "t": [startTime, startTime+duration]
     });
+    updateAnimationSlider(index)
 }
 
 const topdownAreaview = function(){
@@ -240,7 +242,26 @@ const onKeyDown = function(event){
         case 192: // `
             auxiliary_catlist(0)
             break;
-
+        case 107: // +
+        case 187: // + 
+            if (animaRecord_Mode) {
+                updateAnimationRecordDiv(AnimationSlider.max + 4);
+            }
+            break;
+        case 109: // -
+        case 189: // -
+            if (animaRecord_Mode) {
+                let animaMax = 4;
+                for (let i = 0; i < currentSeqs.length; i++) {
+                    let anim = currentSeqs[i][0];
+                    for (let j = 0; j < anim.length; j++) {
+                        animaMax = Math.max(animaMax, anim[j].t[1]);
+                    }
+                }
+                animaMax = Math.ceil(animaMax / 4) * 4;
+                updateAnimationRecordDiv(Math.max(AnimationSlider.max - 4, animaMax));
+            }
+            break;
         case 188: // ,
             transformControls.setMode('translate');
             break;
