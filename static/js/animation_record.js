@@ -296,6 +296,13 @@ class AnimationSlider {
     }
 }
 
+const downloadJson = (data, fileName) => {
+    var downloadAnchorElem = document.getElementById('downloadAnchorElem');
+    downloadAnchorElem.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)));
+    downloadAnchorElem.setAttribute("download", `${fileName}.json`);
+    downloadAnchorElem.click();
+}
+
 const updateAnimationRecordDiv = (sliderMax = undefined) => {
     if ($("#sidebarSelect").val() !== "AnimationRecordDiv") {
         $("#sidebarSelect").val("AnimationRecordDiv").change();
@@ -312,6 +319,21 @@ const updateAnimationRecordDiv = (sliderMax = undefined) => {
     AnimationSlider.max = Math.ceil(animaMax / 4) * 4;
     animaSliders = {};
     let animaRecDiv = document.getElementById("AnimationRecordDiv");
+    let previewButton = document.createElement("button");
+    previewButton.innerHTML = "Preview";
+    previewButton.classList.add("btn", "btn-primary", "mx-2");
+    previewButton.addEventListener('click', (e) => {
+        sceneTransformTo(currentSeqs);
+    });
+    animaRecDiv.appendChild(previewButton);
+    let finishButton = document.createElement("button");
+    finishButton.innerHTML = "Finish";
+    finishButton.classList.add("btn", "btn-primary", "mx-2");
+    finishButton.addEventListener('click', (e) => {
+        console.log(currentSeqs);
+        downloadJson(currentSeqs, onlineGroup);
+    });
+    animaRecDiv.appendChild(finishButton);
     manager.renderManager.scene_json.rooms[0].objList.sort((a, b) => a.sforder - b.sforder);
     manager.renderManager.scene_json.rooms[0].objList.forEach(o => {
         if (o.format === 'glb' && o.sforder !== undefined) {
