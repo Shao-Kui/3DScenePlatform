@@ -581,6 +581,7 @@ const setNewIntersectObj = function(event = undefined){
                         "s2": $(e.target).attr("actionName"),
                         "t": [startTime, startTime+1]
                     });
+                    updateAnimationSlider(index);
                 }
                 objectToAction(object3d, $(e.target).attr("actionName"), 1);
                 synchronize_json_object(object3d);
@@ -872,7 +873,11 @@ var onClickObj = function (event) {
             let index = INTERSECT_OBJ.userData.json.sforder;
             let a = currentSeqs[index][0].at(-1);
             a.r2 = INTERSECT_OBJ.rotation.y;
-            a.t[1] = a.t[0]+1;
+            let dr = Math.abs(a.r1 - a.r2);
+            dr = Math.min(dr, Math.PI * 2 - dr);
+            let duration = dr / Math.PI;
+            a.t[1] = a.t[0] + duration;
+            updateAnimationSlider(index);
         }
         return;
     }
@@ -1534,13 +1539,15 @@ const setting_up = function () {
         if(animaRecord_Mode){
             let numofglbs = 0;
             manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
-            currentSeqs = [...Array(mnumofglbs)].map(e => [[]]);
+            currentSeqs = [...Array(numofglbs)].map(e => [[]]);
             // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
             //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
             // }
             button.style.backgroundColor = '#9400D3';
+            updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
+            $("#AnimationRecordDiv").empty();
         }
     });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
