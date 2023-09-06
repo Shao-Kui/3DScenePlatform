@@ -7,7 +7,7 @@ Manipulating             |  Synthesis
 :-------------------------:|:-------------------------:
 ![Manipulating](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/manipulating.png "Manipulating & Searching")  |  ![Synthesis](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/3dscenesys/algorithm.png "Synthesis")
 
-This is the repository of the paper "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**", "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**", "**SceneViewer: Automating Residential Photography in Virtual Environments**" and "**SceneDirector: Interactive Scene Synthesis by Simultaneously Editing Multiple Objects in Real-Time**". Our platform is web-based. We hope this repository can help research on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain engineering bugs and this doc may not cover all confusion. Please issue us if you have problems with this repo or e-mail us at zhangsk18@mails.tsinghua.edu.cn. 
+This is the repository of the paper "**Geometry-Based Layout Generation with Hyper-Relations AMONG Objects**", "**MageAdd: Real-Time Interaction Simulation for Scene Synthesis**", "**SceneViewer: Automating Residential Photography in Virtual Environments**" and "**SceneDirector: Interactive Scene Synthesis by Simultaneously Editing Multiple Objects in Real-Time**". Our platform is web-based. We hope this repository can help research on 3D scenes and reproducing our framework. Because our group is small, this repo may potentially contain engineering bugs and this doc may not cover all confusion. Please issue us if you have problems with this repo or e-mail us at shaokui@tsinghua.edu.cn. 
 
 We assume developers and researchers would first deploy this platform. The [manuals](#Manuals) are available in the latter of this doc if you wish to use a ready clone directly. 
 
@@ -261,7 +261,7 @@ This repo will continuously update with more functions, features and open-source
 * The navigation of the mini-map (Bottom-Left) is currently defunct. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](zhangsk18@mails.tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Wei-Yu Xie is involved in voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang are involved with the Unity-based client for VR. Tian-Xing Xu is involved in the format conversion of 3D-Front. Xiang-Li Li is involved in sketch searching, refining datasets and dataset converting. 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](shaokui@tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Wei-Yu Xie is involved in voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang are involved with the Unity-based client for VR. Tian-Xing Xu is involved in the format conversion of 3D-Front. Xiang-Li Li is involved in sketch searching, refining datasets and dataset converting. 
 
 Our layout framework is designed and implemented by Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
 
