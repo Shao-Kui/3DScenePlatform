@@ -59,6 +59,7 @@
     <script src="/static/js/search.js"></script>
     <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/stockshelf.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script src="/static/js/MageAdd.js"></script>
@@ -994,12 +995,16 @@
                     <input id="chart1Info" type="text" style="display: none;" value="test.json">
                     <!-- <input id="chart2Info" type="text" style="display: none;" value="main.json"> -->
                   
-                  
+                    <style type="text/css">
+                      .outer-border{
+                        border: 2px solid black
+                      }
+                    </style>
                     <div class="">
                       <div class="row">
-                        <div class="col-8" id="generatedTree">
+                        <div class="col-8 border" id="generatedTree">
                           <script src="/static/3rdparty/d3.v3.min.js"></script>
-                          <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script>
+                          <!-- <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script> -->
                           <!-- <script type="text/javascript" src="41.js"></script> -->
                   
                           <script type="text/javascript" src="/static/infiniteLayout/treeWindow.js"></script>
@@ -1007,15 +1012,12 @@
                   
                   
                         </div>
-                        <div class="col-4" id="charts">
+                        <div class="col-4 border" id="charts">
                   
-                          
-                          <svg width="620" height="400" id="fig1"></svg>
-                  
+                          <svg width="100%" height="50%" id="fig1"></svg>
                   
                           <!-- </script> -->
-                          <svg width="620" height="400" id="fig2"></svg>
-                  
+                          <svg width="100%" height="30%" id="fig2"></svg>
                   
                   
                         </div>

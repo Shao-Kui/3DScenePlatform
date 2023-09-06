@@ -1,14 +1,14 @@
 // ************** Generate the tree diagram	 *****************
-var margin = { top: 40, right: 20, bottom: 20, left: 20 }, width = 10000 - margin.right - margin.left, height = 800 - margin.top - margin.bottom;
-width = 1200;
-height = 1200;
+var margin = { top: 0, right: 0, bottom: 0, left: 0 };
+var width = 1200;
+var height = 1200;
 var i = 0;
 var tree = d3.layout.tree().size([height, width]);
 var diagonal = d3.svg.diagonal().projection(function (d) { return [d.x, d.y]; });
 var svg = d3.select("body").select("#generatedTree").append("svg")
-    .attr("width", width + margin.right + margin.left)
-    .attr("width", '50vw')
-    .attr("height", height + margin.top + margin.bottom)
+    // .attr("width", width + margin.right + margin.left)
+    .attr("width", '100%')
+    .attr("height", height-margin.top-margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 // 获得树的数据
@@ -25,8 +25,6 @@ const updateTreeWindow = function(root) {
     // Declare the nodes…
     let node = svg.selectAll("g.node")
     .data(nodes, function (d) { return d.id || (d.id = ++i); });
-
-    console.log(nodes)
     
     if(!manager.renderManager.scene_json.rooms[0].sflayoutid){
         manager.renderManager.scene_json.rooms[0].sflayoutid = getCurrentIndexing()

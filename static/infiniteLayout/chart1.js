@@ -28,12 +28,11 @@ const draw1 = (data_dir) => {
     // console.log(data_dir)
 
     const container = d3.select('#fig1');
-    const width = container.attr('width');
-    const height = container.attr('height');
+    const boundingrect=container.node().getBoundingClientRect();
+    const width = boundingrect.width;
+    const height = boundingrect.height;
     const chart = container;
     const margin = { top: 30, right: 30, bottom: 30, left: 30 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
     container.append('g')
         .attr('transform', `translate(${margin.left}, ${margin.top})`)
     // const xValue = d => d.globalsale;
@@ -77,9 +76,14 @@ const draw1 = (data_dir) => {
             .style('opacity', 0)
             .transition().delay(1000).style('opacity', 1);
         const caption=chart.append('g').attr('class','caption');
-        caption.append('text').attr('x',width/2)
-        .attr('y',parseInt(height)-10)
-        .attr('text-anchor','middle')
+        caption.append("foreignObject")
+        .attr('y',parseInt(height)-36)
+        .attr("width", width)
+        .attr("height", 36)
+        .append("xhtml:p")
+        .attr('style','word-wrap: break-word; text-align:center;')
+        .append('text')
+        // .attr('text-anchor','middle')
         .text(d.description==null?'':d.description)
         .attr('style','font-size: 12px; fill: #888;');
     });
