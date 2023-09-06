@@ -175,6 +175,7 @@ const updateTimerTab = function(){
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
     $('#tab_CLTP').text(timeCounter.cltp.toFixed(3));
+    $('#tab_Clicks').text(timeCounter.clicks);
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
 
@@ -1434,12 +1435,12 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
-    $("#operationFuture").click(function(){
-        let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
-        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
-            currentAnimation = data;
-        });
-    });
+    // $("#operationFuture").click(function(){
+    //     let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    //     $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+    //         currentAnimation = data;
+    //     });
+    // });
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1454,6 +1455,16 @@ const setting_up = function () {
         timeCounter.cltp - ${timeCounter.cltp}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/clickTimer`,
+            async: false,
+            data: JSON.stringify({methodName: $("#nameOSR").val(), usern: $("#userOSR").val(), homeType:$("#searchinput").val(), timeC: timeCounter, json: getDownloadSceneJson()}),
+            success: function (msg) {
+                alert(msg);
+            }
+        });
         timeCounter.navigate = 0;
         timeCounter.move = 0;
         timeCounter.rotate = 0;
@@ -1463,8 +1474,10 @@ const setting_up = function () {
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;
+        timeCounter.clicks = 0;
         timeCounter.totalStart = moment();
     });
+    document.addEventListener('click', function(){timeCounter.clicks+=1;});
     $("#clutterpalette_button").click(function() {
         let button = document.getElementById("clutterpalette_button");
         clutterpalette_Mode = !clutterpalette_Mode;
@@ -2062,9 +2075,7 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
         for (let j = 0; j < nz; ++j) {
             let offsetZ = phDepth * j / nz - 0.25 * shelf.scale.z + commodityDepth / 2;
             for (let k = 0; k < ny; ++k) {
-                let offsetY = k * commodityHei
-                
-                ght;
+                let offsetY = k * commodityHeight;
                 instancedTransforms.push({
                     'translate': [offsetX, offsetY, offsetZ],
                     'rotate': [0, Math.PI / 2, 0], // rotate 90 degrees

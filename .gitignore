@@ -10,6 +10,7 @@ yltmp/*
 /layoutmethods/cgseries
 /layoutmethods/cgseriesFull
 /layoutmethods/cgseriesSim
+/layoutmethods/shelfplanner/*
 /deprecated
 /examples
 /rooms

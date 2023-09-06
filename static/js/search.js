@@ -740,13 +740,13 @@ const searchPanelInitialization = function(){
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
     $("#selectRoomShapebtn").click(clickSelectRoomShape);
-    // $("#floorPlanbtn").click(() => {
-    //     let origin = document.getElementById("searchinput").value;
-    //     $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
-    //         socket.emit('sceneRefresh', result, onlineGroup);
-    //     });
-    // })
-    $("#floorPlanbtn").click(clickModuleSearchButton);
+    $("#floorPlanbtn").click(() => {
+        let origin = document.getElementById("searchinput").value;
+        $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
+            socket.emit('sceneRefresh', result, onlineGroup);
+        });
+    })
+    $("#modulebtn").click(clickModuleSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#manyTextures").click(() => {
