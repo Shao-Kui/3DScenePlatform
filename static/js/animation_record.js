@@ -1,5 +1,6 @@
 class AnimationSlider {
     static max = 4;
+    static initStates;
 
     constructor(selector, props = {}) {
         this.defaultProps = {
@@ -40,6 +41,9 @@ class AnimationSlider {
 
         this.changeHandlers = [];
 
+        let object = manager.renderManager.scene_json.rooms[0].objList.filter(obj=>obj.sforder === this.allProps.sforder)[0];
+        this.allProps.objectKey = object.key;
+
         return this;
     }
 
@@ -70,50 +74,16 @@ class AnimationSlider {
      * Initialize Timeline
      */
     initTimeline() {
-        const text1 = document.createElement("span");
-        text1.innerText = '0';
-        text1.style.fontSize = this.allProps.fontSize + 'px';
-        text1.style.top = this.allProps.pointRadius * 2 + 2 + "px";
-        text1.style.position = 'absolute';
-        text1.style.left = '0%';
-        text1.style.transform = 'translateX(-50%)';
-        this.container.appendChild(text1);
-
-        const text2 = document.createElement("span");
-        text2.innerText = AnimationSlider.max / 4;
-        text2.style.fontSize = this.allProps.fontSize + 'px';
-        text2.style.top = this.allProps.pointRadius * 2 + 2 + "px";
-        text2.style.position = 'absolute';
-        text2.style.left = '25%';
-        text2.style.transform = 'translateX(-50%)';
-        this.container.appendChild(text2);
-
-        const text3 = document.createElement("span");
-        text3.innerText = AnimationSlider.max / 2;
-        text3.style.fontSize = this.allProps.fontSize + 'px';
-        text3.style.top = this.allProps.pointRadius * 2 + 2 + "px";
-        text3.style.position = 'absolute';
-        text3.style.left = '50%';
-        text3.style.transform = 'translateX(-50%)';
-        this.container.appendChild(text3);
-
-        const text4 = document.createElement("span");
-        text4.innerText = AnimationSlider.max * 3 / 4;
-        text4.style.fontSize = this.allProps.fontSize + 'px';
-        text4.style.top = this.allProps.pointRadius * 2 + 2 + "px";
-        text4.style.position = 'absolute';
-        text4.style.left = '75%';
-        text4.style.transform = 'translateX(-50%)';
-        this.container.appendChild(text4);
-
-        const text5 = document.createElement("span");
-        text5.innerText = AnimationSlider.max;
-        text5.style.fontSize = this.allProps.fontSize + 'px';
-        text5.style.top = this.allProps.pointRadius * 2 + 2 + "px";
-        text5.style.position = 'absolute';
-        text5.style.left = '100%';
-        text5.style.transform = 'translateX(-50%)';
-        this.container.appendChild(text5);
+        for (let i = 0; i < 5; i++) {
+            const text = document.createElement("span");
+            text.innerText = i * AnimationSlider.max / 4;
+            text.style.fontSize = this.allProps.fontSize + 'px';
+            text.style.top = this.allProps.pointRadius * 2 + 2 + "px";
+            text.style.position = 'absolute';
+            text.style.left = (25 * i) + '%';
+            text.style.transform = 'translateX(-50%)';
+            this.container.appendChild(text);
+        }
     }
 
     initPoints() {
@@ -192,11 +162,16 @@ class AnimationSlider {
         let mousePosition = this.getMouseRelativePosition(e.pageX);
         let t = mousePosition / this.container.offsetWidth * AnimationSlider.max;
         let anim = this.selectedPoint.anim;
+        let prev = 0, next = AnimationSlider.max;
+        let seq = this.allProps.animations.flat();
+        let animIdx = seq.indexOf(anim);
+        if (animIdx > 0) prev = seq[animIdx - 1].t[1];
+        if (animIdx !== -1 && animIdx + 1 < seq.length) next = seq[animIdx + 1].t[0];
         let halfDuration = anim.duration / 2;
-        if (t < halfDuration) {
-            t = halfDuration;
-        } else if (t > AnimationSlider.max - halfDuration) {
-            t = AnimationSlider.max - halfDuration;
+        if (t < prev + halfDuration) {
+            t = prev + halfDuration;
+        } else if (t > next - halfDuration) {
+            t = next - halfDuration;
         }
         let t0 = this.round(t - halfDuration, 1);
         anim.t[0] = t0;
@@ -218,6 +193,60 @@ class AnimationSlider {
         document.addEventListener("mousemove", this.pointMouseMoveHandler);
     }
 
+    previewAnim(targetPoint) {
+        let anim = targetPoint.anim;
+        anim.isPreviewing = true;
+        let seq = this.allProps.animations.flat();
+        let animIdx = seq.indexOf(anim);
+        let object3d = manager.renderManager.instanceKeyCache[this.allProps.objectKey];
+        let initP, initR, initS;
+        for (let i = animIdx-1; i >= 0; i--) {
+            if (initP !== undefined && initR !== undefined && initS !== undefined) break;
+            if (initP === undefined && seq[i].action === 'move') initP = seq[i].p2;
+            if (initR === undefined && seq[i].action === 'rotate') initR = seq[i].r2;
+            if (initS === undefined && seq[i].action === 'transform') initS = seq[i].s2;
+        }
+        initP = initP ?? AnimationSlider.initStates[this.allProps.sforder].p;
+        initR = initR ?? AnimationSlider.initStates[this.allProps.sforder].r;
+        initS = initS ?? AnimationSlider.initStates[this.allProps.sforder].s;
+        object3d.position.set(initP[0], object3d.position.y, initP[2]);
+        object3d.rotation.set(0, initR, 0);
+        objectToAction(object3d, initS, 0);
+
+        if (anim.action === 'move') {
+            setTimeout(transformObject3DOnly, 100, this.allProps.objectKey, [anim.p2[0], anim.p2[1], anim.p2[2]], 'position', true, anim.t[1] - anim.t[0], 'none');
+        }
+        if (anim.action === 'rotate') {
+            let r = [0, atsc(anim.r2), 0];
+            standardizeRotate(r, [0, atsc(anim.r1), 0]);
+            object3d.rotation.set(0, atsc(anim.r1), 0);
+            setTimeout(transformObject3DOnly, 100, this.allProps.objectKey, r, 'rotation', true, anim.t[1] - anim.t[0], 'none');
+        }
+        if (anim.action === 'transform') {
+            setTimeout(objectToAction, 100, object3d, anim.s2, anim.t[1] - anim.t[0]);
+        }
+    }
+
+    endPreviewAnim(targetPoint) {
+        delete targetPoint.anim.isPreviewing;
+        let seq = this.allProps.animations.flat();
+        if (seq.filter(anim=>anim.isPreviewing).length > 0) return;
+        let object3d = manager.renderManager.instanceKeyCache[this.allProps.objectKey];
+        let initP, initR, initS;
+        for (let i = seq.length-1; i >= 0; i--) {
+            if (initP !== undefined && initR !== undefined && initS !== undefined) break;
+            if (initP === undefined && seq[i].action === 'move') initP = seq[i].p2;
+            if (initR === undefined && seq[i].action === 'rotate') initR = seq[i].r2;
+            if (initS === undefined && seq[i].action === 'transform') initS = seq[i].s2;
+        }
+        initP = initP ?? AnimationSlider.initStates[this.allProps.sforder].p;
+        initR = initR ?? AnimationSlider.initStates[this.allProps.sforder].r;
+        initS = initS ?? AnimationSlider.initStates[this.allProps.sforder].s;
+        object3d.position.set(initP[0], object3d.position.y, initP[2]);
+        object3d.rotation.set(0, initR, 0);
+        objectToAction(object3d, initS, 0);
+    }
+
     pointMouseOverHandler(e) {
         let targetPoint = e.target;
         if (!this.selectedPoint) {
@@ -226,9 +255,11 @@ class AnimationSlider {
         }
         this.tooltip.style.transform = "translate(-50%, -60%) scale(1)";
         this.showTooltip(targetPoint);
+        this.previewAnim(targetPoint);
     }
 
     pointContextMenuHandler(e) {
+        e.preventDefault();
         let targetPoint = e.target;
         console.log('Delete: ', targetPoint.anim);
         const index = this.allProps.animations[targetPoint.seqId].indexOf(targetPoint.anim);
@@ -236,6 +267,7 @@ class AnimationSlider {
             this.allProps.animations[targetPoint.seqId].splice(index, 1);
         }
         targetPoint.remove();
+        setTimeout(() => { this.endPreviewAnim(e.target); }, 100);
     }
 
     /**
@@ -260,12 +292,28 @@ class AnimationSlider {
         return color;
     }
 
+    static setInitStates() {
+        AnimationSlider.initStates = manager.renderManager.scene_json.rooms[currentRoomId].objList
+            .filter(o => o.sforder !== undefined)
+            .sort((a, b) => a.sforder - b.sforder)
+            .map(o => {
+                let object3d = manager.renderManager.instanceKeyCache[o.key];
+                return {
+                    p: [object3d.position.x, object3d.position.y, object3d.position.z], 
+                    r: object3d.rotation.y, 
+                    s: object3d.userData.json.startState
+                };
+            });
+        console.log(AnimationSlider.initStates);
+    }
+
     pointMouseOutHandler(e) {
         if (!this.selectedPoint) {
             let targetPoint = e.target;
             targetPoint.style.boxShadow = "none";
             this.tooltip.style.transform = "translate(-50%, -60%) scale(0)";
         }
+        setTimeout(() => { this.endPreviewAnim(e.target); }, 100);
     }
 
     /**
@@ -337,7 +385,7 @@ const updateAnimationRecordDiv = (sliderMax = undefined) => {
     manager.renderManager.scene_json.rooms[0].objList.sort((a, b) => a.sforder - b.sforder);
     manager.renderManager.scene_json.rooms[0].objList.forEach(o => {
         if (o.format === 'glb' && o.sforder !== undefined) {
-            let slider = new AnimationSlider("AnimationRecordDiv", { animations: currentSeqs[o.sforder] });
+            let slider = new AnimationSlider("AnimationRecordDiv", { sforder: o.sforder, animations: currentSeqs[o.sforder] });
             slider.container.id = `sforder${o.sforder}`;
             animaSliders[o.sforder] = slider;
             let label = document.createElement("label");

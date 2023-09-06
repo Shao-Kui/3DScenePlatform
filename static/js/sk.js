@@ -748,6 +748,12 @@ const onClickIntersectObject = function(event){
                 cancelClickingShelfPlaceholders();
             }
         }
+        if (animaRecord_Mode) {
+            $("#AnimationRecordDiv label").removeClass("fw-bold text-danger");
+            let sforder = INTERSECT_OBJ.userData.json.sforder;
+            if (sforder !== undefined)
+                $(`#AnimationRecordDiv > label:eq(${sforder})`).addClass("fw-bold text-danger");
+        }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
@@ -1563,6 +1569,7 @@ const setting_up = function () {
             //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
             // }
             button.style.backgroundColor = '#9400D3';
+            AnimationSlider.setInitStates();
             updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';

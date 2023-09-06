@@ -572,7 +572,8 @@ def generateObjectsUUIDs(sceneJson):
             if obj is None:
                 continue
             obj['roomId'] = roomId
-            obj['key'] = str(uuid.uuid4())
+            if obj['modelId'] != 'shelf01' and not obj['modelId'].startswith('yulin-'):
+                obj['key'] = str(uuid.uuid4())
     return sceneJson
 
 def loadOnlineGroup(groupName):
