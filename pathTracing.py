@@ -58,15 +58,21 @@ def autoPerspectiveCamera(scenejson):
     if lz_length > lx_length:
         PerspectiveCamera['up'] = [1,0,0]
         camHeight = wh + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+        imgwidthratio = lz_length / lx_length
     else:
         PerspectiveCamera['up'] = [0,0,1]
         camHeight = wh + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
+        imgwidthratio = lx_length / lz_length
     PerspectiveCamera['origin'] = [lx, camHeight, lz]
     PerspectiveCamera['target'] = [lx, 0, lz]
     PerspectiveCamera['rotate'] = [0,0,0]
     PerspectiveCamera['fov'] = sk.DEFAULT_FOV
     PerspectiveCamera['focalLength'] = 35
     scenejson['PerspectiveCamera'] = PerspectiveCamera
+    scenejson['canvas'] = {
+        'height': 1080,
+        'width': int(1080 * imgwidthratio)
+    }
     return PerspectiveCamera
 
 # @app.task
@@ -207,6 +213,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson['renderobjlist'] = []
     scenejson['renderroomobjlist'] = []
     scenejson['newroomobjlist'] = []
+    scenejson['rendercubeobjlist'] = []
     blocks = []
     for room in scenejson['rooms']:
         if 'objList' not in room:
@@ -239,6 +246,8 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             #         'scale': [xScale,yScale,1]
             #     })
             initialWallPlanes = []
+            if 'roomOrient' not in room:
+                room['roomOrient'] = np.arctan2(np.array(room['roomNorm'])[:, 0], np.array(room['roomNorm'])[:, 1]).tolist()
             for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
                 next = room['roomShape'][(index+1)%len(room['roomShape'])]
                 initialWallPlanes.append({
@@ -409,9 +418,9 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         for obj in room['objList']:
             if obj['modelId'] == 'noUse':
                 continue
-            if 'inDatabase' in obj:
-                if not obj['inDatabase']:
-                    continue
+            # if 'inDatabase' in obj:
+            #     if not obj['inDatabase']:
+            #         continue
             if sk.getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
                 print('A lamp is removed. ')
                 continue
@@ -420,8 +429,25 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 obj['format'] = 'obj'
             if obj['format'] == 'glb':
                 obj['modelPath'] = '../../../static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])
-            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])) or os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+            if obj['format'] == 'sfy':
+                obj['cubescale'] = [
+                    (obj['bbox']['max'][0] - obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] - obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] - obj['bbox']['min'][2])/2
+                ]
+                obj['cubetranslate'] = [
+                    (obj['bbox']['max'][0] + obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] + obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] + obj['bbox']['min'][2])/2
+                ]
+                scenejson['rendercubeobjlist'].append(obj)
+                continue
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
                 scenejson['renderobjlist'].append(obj)
+                continue
+            if 'startState' in obj and os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+                scenejson['renderobjlist'].append(obj)
+                continue
     output = template.render(
         scenejson=scenejson, 
         PI=np.pi, 

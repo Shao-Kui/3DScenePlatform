@@ -189,6 +189,18 @@ class SceneManager {
     };
 
     refresh_scene = (scene_json, refresh_camera = false) => {
+        // this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
+        this.scene_remove( (userData) => (userData.type === "object" && this.instanceKeyCache[userData.key]) );
+        this.scene_remove(function (userData) {
+            if (userData.type === 'w' ||
+                userData.type === 'f' ||
+                userData.type === 'd' ||
+                userData.type === 'c' ||
+                userData.type === 'object') {
+                return true;
+            }
+        });
+        this.instanceKeyCache = {};
         traverseSceneJson(scene_json);
         outlinePass.selectedObjects = [];
         outlinePass2.selectedObjects = [];
@@ -199,15 +211,6 @@ class SceneManager {
             this.islod = false;
             $("#lodCheckBox").prop('checked', false);
         }
-        this.scene_remove(function (userData) {
-            if (userData.type === 'w' ||
-                userData.type === 'f' ||
-                userData.type === 'd' ||
-                userData.type === 'c' ||
-                userData.type === 'object') {
-                return true;
-            }
-        });
         this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg');
         this.scene_json = scene_json;
         this.refresh_wall_and_floor();
@@ -219,9 +222,12 @@ class SceneManager {
         ALL_SCENE_READY = true;
         refreshArea(this.scene_json);
         if(this.scene_json.rooms[0].totalAnimaID){
-            $.getJSON(`/static/dataset/infiniteLayout/${this.scene_json.rooms[0].totalAnimaID}img/layoutTree.json`, function (data) {
-                console.log(data);
-                updateTreeWindow(data); // This code initialize the Tree for InfiniteLayout. 
+            let taID = this.scene_json.rooms[0].totalAnimaID;
+            $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+                currentAnimation = data;
+                $.getJSON(`/static/dataset/infiniteLayout/${this.scene_json.rooms[0].totalAnimaID}img/layoutTree.json`, function (nextdata) {
+                    updateTreeWindow(nextdata); // This code initialize the Tree for InfiniteLayout. 
+                });
             });
         }
     };
@@ -356,8 +362,6 @@ class SceneManager {
     refresh_instances(){
 	    // var self=this;
         let loadingCounter = 0;
-		this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
-		this.instanceKeyCache = {};
         this.scene_json.rooms.forEach(function(room){
             room.objList.forEach(async function(inst){ //an obj is a instance
                 if(inst === null || inst == undefined){

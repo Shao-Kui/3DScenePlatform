@@ -316,6 +316,33 @@ const traverseSceneJson = function(sj){
                 }, []);
                 addObjectUsingInstance(o);
             }
+            if(o.format === 'sfy'){
+                let geometry = new THREE.BoxGeometry( 
+                    (o.bbox.max[0] - o.bbox.min[0]), 
+                    (o.bbox.max[1] - o.bbox.min[1]), 
+                    (o.bbox.max[2] - o.bbox.min[2])
+                ); 
+                let material = new THREE.MeshBasicMaterial({color: 0xd92511});
+                material.transparent = true;
+                material.opacity = 0.5
+                let object3d = new THREE.Mesh( geometry, material );
+                object3d.position.set(
+                    (o.bbox.max[0] + o.bbox.min[0]) / 2,
+                    (o.bbox.max[1] + o.bbox.min[1]) / 2,
+                    (o.bbox.max[2] + o.bbox.min[2]) / 2
+                ); 
+                manager.renderManager.instanceKeyCache[o.key] = object3d;
+                object3d.userData = {
+                    "type": 'object',
+                    "key": o.key,
+                    "roomId": o.roomId,
+                    "modelId": o.modelId,
+                    "format": o.format,
+                    "coarseSemantic": o.coarseSemantic,
+                    "isSceneObj": true
+                };
+                scene.add(object3d); 
+            }
         })
     });
 }

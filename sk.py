@@ -20,7 +20,7 @@ import math
 
 AABBcache = {}
 ASPECT = 16 / 9
-DEFAULT_FOV = 75
+DEFAULT_FOV = 55 # 75
 with open('./dataset/objCatListLG.json') as f:
     objCatList = json.load(f)
 with open('./dataset/objListCataAliv4.json') as f:
@@ -102,12 +102,15 @@ def load_AABB_glb(i, state):
     return AABBcache[i+state]
 
 def preloadAABB(obj):
+    print(obj['coarseSemantic'])
     if 'startState' in obj:
         AABB = load_AABB_glb(obj['modelId'], obj['startState'])
     elif objectInDataset(obj['modelId']):
         AABB = load_AABB(obj['modelId'])
         if 'coarseSemantic' not in obj:
             obj['coarseSemantic'] = getobjCat(obj['modelId'])
+    elif 'format' in obj and obj['format'] == 'sfy':
+        AABB = obj['bbox']
     else:
         if 'coarseSemantic' in obj and obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
             AABB = obj['bbox']
@@ -149,6 +152,12 @@ def preloadAABBs(scene):
         for obj in room['objList']:
             preloadAABB(obj)
 
+def assignRoomIds(scenejson):
+    for roomId, room in zip(range(len(scenejson['rooms'])), scenejson['rooms']):
+        room['roomId'] = roomId
+        for obj in room['objList']:
+            obj['roomId'] = roomId
+
 # https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
 def powerset(iterable):
     "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
@@ -164,6 +173,8 @@ def getMeshVertices(meshPath):
     return mesh.vertices
 
 def objectInDataset(modelId):
+    if modelId == "":
+        return False
     if os.path.exists(f'./dataset/object/{modelId}/'):
         return True
     else:
@@ -1114,13 +1125,14 @@ if __name__ == "__main__":
     # renderModel20('sofa2bed', 'glb', 'bed')
     # renderGLBbatch()
     # renderAnimationResults('sample3_origin')
-    renderAnimationResults('out_12_origin')
-    renderAnimationResults('out_13_origin')
-    renderAnimationResults('out_14_origin')
     renderAnimationResults('out_16_origin')
-    for i in range(0,482):
-        if os.path.exists(f'./static/dataset/infiniteLayout/output0_{i}_origin.json'):
-            renderAnimationResults(f'output0_{i}_origin')
+    renderAnimationResults('out_11_origin')
+    # renderAnimationResults('out_13_origin')
+    # renderAnimationResults('out_14_origin')
+    # renderAnimationResults('out_16_origin')
+    # for i in range(0,482):
+    #     if os.path.exists(f'./static/dataset/infiniteLayout/output0_{i}_origin.json'):
+    #         renderAnimationResults(f'output0_{i}_origin')
     # renderModel20('story-StudentDeskBrokenA')
     # renderModel20('selling_holder_small')
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
