@@ -147,7 +147,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
-      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, total: 0}
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, clicks: 0, total: 0}
 
       var deltaClock;
       const animaMixers = [];
@@ -255,6 +255,10 @@
                 <td id="tab_CLTP"></td>
                 <th>Total</th>
                 <td id="tab_Total"></td>
+              </tr>
+              <tr>
+                <th scope="row">Clicks</th>
+                <td id="tab_Clicks"></td>
               </tr>
             </tbody>
           </table>
@@ -1097,7 +1101,7 @@
           </div>
           <div>
             <a class="text-muted" style="overflow-wrap: break-word"
-              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
+              >Dev. Shao-Kui. shaokui@tsinghua.edu.cn</a
             >
             <!-- <a class="text-muted" style="overflow-wrap: break-word"
               >Anonymous Authors</a
