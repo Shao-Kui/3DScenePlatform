@@ -412,6 +412,7 @@ const sceneTransformLast = function(derivation, name){
 const sceneTransformTo = function(derivations){
     currentSeqs = derivations;
     updateAnimationRecordDiv();
+    AnimationSlider.showPreviewAnim = false;
     const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
     for(let i = 0; i < derivations.length; i++){
         let object = undefined;
@@ -455,6 +456,7 @@ const sceneTransformTo = function(derivations){
         });
         setTimeout(synchronize_json_object, T * 1000 + 500, object3d);
     }
+    setTimeout(() => { AnimationSlider.showPreviewAnim = true; }, T * 1000 + 500);
     // setTimeout(operationFuture, T * 1000 + 200);
 }
 

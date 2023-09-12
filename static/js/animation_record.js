@@ -1,5 +1,6 @@
 class AnimationSlider {
     static max = 4;
+    static showPreviewAnim = true;
     static initStates;
 
     constructor(selector, props = {}) {
@@ -99,6 +100,10 @@ class AnimationSlider {
         anim.t[0] = this.round(anim.t[0], 1);
         anim.t[1] = this.round(anim.t[1], 1);
         anim.duration = anim.t[1] - anim.t[0];
+        if (anim.duration < 0.1) {
+            anim.duration = 0.1;
+            anim.t[1] = anim.t[0] + anim.duration;
+        }
         point.anim = anim;
         point.seqId = seqId;
         point.style.width = (anim.duration / AnimationSlider.max) * 100 + "%";
@@ -194,6 +199,7 @@ class AnimationSlider {
     }
 
     previewAnim(targetPoint) {
+        if (!AnimationSlider.showPreviewAnim) return;
         let anim = targetPoint.anim;
         anim.isPreviewing = true;
         let seq = this.allProps.animations.flat();
@@ -228,6 +234,7 @@ class AnimationSlider {
     }
 
     endPreviewAnim(targetPoint) {
+        if (!AnimationSlider.showPreviewAnim) return;
         delete targetPoint.anim.isPreviewing;
         let seq = this.allProps.animations.flat();
         if (seq.filter(anim=>anim.isPreviewing).length > 0) return;
@@ -264,9 +271,11 @@ class AnimationSlider {
         console.log('Delete: ', targetPoint.anim);
         const index = this.allProps.animations[targetPoint.seqId].indexOf(targetPoint.anim);
         if (index > -1) {
-            this.allProps.animations[targetPoint.seqId].splice(index, 1);
+            this.allProps.animations[targetPoint.seqId].splice(index);
+            for (let i = this.points[targetPoint.seqId].length-1; i >= index; i--) 
+                this.points[targetPoint.seqId][i].remove();
+            this.points[targetPoint.seqId].splice(index);
         }
-        targetPoint.remove();
         setTimeout(() => { this.endPreviewAnim(e.target); }, 100);
     }
 
