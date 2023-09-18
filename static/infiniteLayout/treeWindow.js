@@ -20,7 +20,8 @@ const updateTreeWindow = function(root) {
         links = tree.links(nodes);
 
     // Normalize for fixed-depth.
-    nodes.forEach(function (d) { d.y = d.depth * 100; });
+    nodes.forEach(function (d) { d.y = d.depth * 200; });
+    nodes.forEach(function (d) { d.x = d.x * 2.5; })
 
     // Declare the nodes…
     let node = svg.selectAll("g.node")
@@ -41,6 +42,7 @@ const updateTreeWindow = function(root) {
     // Enter the nodes.
     var nodeEnter = node.enter().append("g")
         .attr("class", "node")
+        .attr("id", d => `node${d.id}`)
         .attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
     });
@@ -61,7 +63,17 @@ const updateTreeWindow = function(root) {
     .attr("width", len)
     .attr("height", len);
 
+    // Declare the links…
+    var link = svg.selectAll("path.link")
+        .data(links, function (d) { return d.target.id; });
+
+    // Enter the links.
+    link.enter().insert("path", "g")
+        .attr("class", "link")
+        .attr("d", diagonal);
+
     nodeEnter.append("rect") 
+    .attr("class","imagerect")
     //.attr("href", d => d.pics[0] + ".png")
     .attr("fill", d => `url(#imgdef${d.id})`).attr('stroke-width', 3)
     .attr("x", -len / 2)
@@ -86,8 +98,12 @@ const updateTreeWindow = function(root) {
         d3.select(`#image${d.id}`).transition()
         .attr("width", width / (scale / 2))
         .attr("height", width / (scale / 2))
-        draw1(d.pics[d.imgindex] + ".json")
-        draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
+        draw1(d.pics[d.imgindex] + ".json");
+        draw1b(d.pics[d.imgindex] + ".json" , d.depth);
+        if(manager.renderManager.scene_json.rooms[0].currentTransMeta.root != undefined)
+            draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
+        else
+            draw2('/static/dataset/infiniteLayout/'+onlineGroup+`_animimg/${manager.renderManager.scene_json.rooms[0].currentTransMeta.anim_id}.json`,file_dir);
     })
     .on('mouseout', function (d) {
         // this.isHere = false;
@@ -100,14 +116,15 @@ const updateTreeWindow = function(root) {
         d3.select(`#image${d.id}`).transition()
         .attr("width", len)
         .attr("height", len);
-        d3.select('#fig1').selectAll('g').remove();
-        d3.select('#fig1').selectAll('path').remove();
+        d3.select('#fig1a').selectAll('g').remove();
+        d3.select('#fig1a').selectAll('path').remove();
+        d3.select('#fig1b').selectAll('g').remove();
+        d3.select('#fig1b').selectAll('path').remove();
         d3.select('#fig2').selectAll('g').remove();
         d.imgindex = -1;
     })
     .on('click', d => { // value d is the datum of the clicked primitive. 
         // require that all the animations goes from the root or to the root
-        console.log(d);
         let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
         // if(!manager.renderManager.scene_json.rooms[0].currentTransMeta){
         //     for(let i = 0; i < nodes.length; i++){
@@ -119,7 +136,6 @@ const updateTreeWindow = function(root) {
         // }
         if(manager.renderManager.scene_json.rooms[0].currentTransMeta.root === undefined){
             if(d.meta.root === undefined){
-                console.log('if if')
                 $.getJSON(`/static/dataset/infiniteLayout/${taID}/${manager.renderManager.scene_json.rooms[0].currentTransMeta.anim_id}.json`, function(result1){
                     const T = Math.max(...result1.actions.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
                     sceneTransformBack(result1.actions);
@@ -136,7 +152,6 @@ const updateTreeWindow = function(root) {
                 });
             }
             else{
-                console.log('if else')
                 $.getJSON(`/static/dataset/infiniteLayout/${taID}/${manager.renderManager.scene_json.rooms[0].currentTransMeta.anim_id}.json`, function(result1){
                     sceneTransformBack(result1.actions);
                     manager.renderManager.scene_json.rooms[0].currentTransMeta = d.meta;
@@ -144,7 +159,6 @@ const updateTreeWindow = function(root) {
                 manager.renderManager.scene_json.rooms[0].sflayoutid = d.meta.root;
             }
         }else{
-            console.log('else')
             if(d.meta.root === undefined){
                 $.getJSON(`/static/dataset/infiniteLayout/${taID}/${d.meta.anim_id}.json`, function(result2){
                     sceneTransformTo(result2.actions);
@@ -170,14 +184,59 @@ const updateTreeWindow = function(root) {
         $('#operationFutureModal').modal('hide')
     });
 
+    // add the surrounding pie graph
+    nodeEnter.each(function(d,i){
+        d3.json(d.pics[0] + ".json").then(data => {
+            if(data.evaluation != null)data = data.evaluation;
+            let outerrooms = [];
+            for(let i = 1; i < d.depth; i++)
+            {
+                let mxv = -1.0, mxpos = -1;
+                for(let j = 0; j < data.length; j++)
+                {
+                    if(data[j].value > mxv)
+                    {
+                        mxv = data[j].value;
+                        mxpos = j;
+                    }
+                }
+                outerrooms.push(data.map(d => {return {"room":d.room,"value":0.0}}));
+                outerrooms[i-1][mxpos].value = 1;
+                data[mxpos].value = 0;
+            }
+            const pie = d3.pie().value(d => d.value);
+            // console.log(d);
+            d3.select(this).selectAll('path.pieplot').data(pie(data))
+            .enter()
+            .append("path")
+            .attr("class","pieplot")
+            .attr("id",`pieplot${d.id}`)
+            .attr("d", d3.arc().innerRadius(0).outerRadius(100 - 10 * Math.max(0 , d.depth - 1)))
+            .attr('fill', d => {
+                const color = d3.scaleOrdinal()
+                .domain(data.map(dat => dat.room))
+                .range(d3.schemeSet2.concat(d3.schemeSet3));
+                return color(d.data.room);
+            });
+            for(let i = 0; i + 1 < d.depth; i++)
+            {
+                d3.select(this).selectAll(`path#pieplot${d.id}-${i}`).data(pie(outerrooms[i]))
+                .enter()
+                .append("path")
+                .attr("class","pieplot")
+                .attr("id",`pieplot${d.id}-${i}`)
+                .attr("d", d3.arc().innerRadius(100 - 10 * (i+1)).outerRadius(100 - 10 * i))
+                .attr('fill', d => {
+                    const color = d3.scaleOrdinal()
+                    .domain(data.map(dat => dat.room))
+                    .range(d3.schemeSet2.concat(d3.schemeSet3));
+                    return color(d.data.room);
+                });
+            }
+            d3.selectAll(`path#pieplot${d.id}`).lower();
+            for(let i = 0; i + 1 < d.depth; i++)
+                d3.selectAll(`path#pieplot${d.id}-${i}`).lower();
+        })
+    });
 
-    // Declare the links…
-    var link = svg.selectAll("path.link")
-        .data(links, function (d) { return d.target.id; });
-
-    // Enter the links.
-    link.enter().insert("path", "g")
-        .attr("class", "link")
-        .attr("d", diagonal);
 }
-
