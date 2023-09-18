@@ -126,6 +126,14 @@ const updateTreeWindow = function(root) {
     .on('click', d => { // value d is the datum of the clicked primitive. 
         // require that all the animations goes from the root or to the root
         let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+        // if(!manager.renderManager.scene_json.rooms[0].currentTransMeta){
+        //     for(let i = 0; i < nodes.length; i++){
+        //         if(manager.renderManager.scene_json.rooms[0].sflayoutid === nodes[i].meta.target_node || manager.renderManager.scene_json.rooms[0].sflayoutid === nodes[i].meta.root){
+        //             manager.renderManager.scene_json.rooms[0].currentTransMeta = nodes[i].meta;
+        //             break;
+        //         }
+        //     }
+        // }
         if(manager.renderManager.scene_json.rooms[0].currentTransMeta.root === undefined){
             if(d.meta.root === undefined){
                 $.getJSON(`/static/dataset/infiniteLayout/${taID}/${manager.renderManager.scene_json.rooms[0].currentTransMeta.anim_id}.json`, function(result1){
@@ -157,6 +165,20 @@ const updateTreeWindow = function(root) {
                     manager.renderManager.scene_json.rooms[0].currentTransMeta = d.meta;
                     manager.renderManager.scene_json.rooms[0].sflayoutid = d.meta.target_node;                        
                 });  
+            }else{ // This branch indicates a root -> root situation, so just reset the scene. 
+                // $.getJSON(`/static/dataset/infiniteLayout/${taID}/${currentAnimation.index[manager.renderManager.scene_json.rooms[0].currentTransMeta.root][0].anim_id}.json`, function(result2){
+                $.getJSON(`/static/dataset/infiniteLayout/${manager.renderManager.scene_json.rooms[0].totalAnimaID.split('_anim')[0]}_origin.json`, function(originjson){
+                    manager.renderManager.scene_json.rooms[0].objList.forEach(o => {
+                        if(o.sforder === undefined){return}
+                        let origino = originjson.rooms[0].objList.find(oo => oo.sforder === o.sforder);
+                        let object3d = manager.renderManager.instanceKeyCache[o.key];
+                        object3d.position.set(origino.translate[0], origino.translate[1], origino.translate[2]);
+                        object3d.rotation.set(origino.rotate[0], origino.rotate[1], origino.rotate[2]);
+                        console.log(o.sforder, origino.startState, 0.1)
+                        objectToAction(object3d, origino.startState, 0.1);
+                        synchronizeObjectJsonByObject3D(object3d);
+                    })               
+                })
             }
         }
         $('#operationFutureModal').modal('hide')

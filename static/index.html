@@ -59,6 +59,7 @@
     <script src="/static/js/search.js"></script>
     <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/stockshelf.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script src="/static/js/MageAdd.js"></script>
@@ -147,7 +148,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
-      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, total: 0}
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, clicks: 0, total: 0}
 
       var deltaClock;
       const animaMixers = [];
@@ -255,6 +256,10 @@
                 <td id="tab_CLTP"></td>
                 <th>Total</th>
                 <td id="tab_Total"></td>
+              </tr>
+              <tr>
+                <th scope="row">Clicks</th>
+                <td id="tab_Clicks"></td>
               </tr>
             </tbody>
           </table>
@@ -1049,11 +1054,18 @@
                   Object
                 </button>
                 <button
+                 class="btn btn-outline-primary"
+                 type="submit"
+                 id="modulebtn"
+                >
+                 Module
+                </button>
+                <button
                   class="btn btn-outline-primary"
                   type="submit"
                   id="floorPlanbtn"
                 >
-                  Module
+                  floorPlan
                 </button>
               </div>
             </div>
@@ -1093,7 +1105,7 @@
           </div>
           <div>
             <a class="text-muted" style="overflow-wrap: break-word"
-              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
+              >Dev. Shao-Kui. shaokui@tsinghua.edu.cn</a
             >
             <!-- <a class="text-muted" style="overflow-wrap: break-word"
               >Anonymous Authors</a

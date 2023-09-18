@@ -410,7 +410,9 @@ const sceneTransformLast = function(derivation, name){
 }
 
 const sceneTransformTo = function(derivations){
+    currentSeqs = derivations;
     updateAnimationRecordDiv();
+    AnimationSlider.showPreviewAnim = false;
     const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
     for(let i = 0; i < derivations.length; i++){
         let object = undefined;
@@ -439,21 +441,22 @@ const sceneTransformTo = function(derivations){
         derivations[i].forEach(seq => {
             seq.forEach(a => {
                 if(a.action === 'move'){
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000 + 500, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'rotate'){
                     let r = [0, atsc(a.r2), 0];
                     standardizeRotate(r, [0, atsc(a.r1), 0]);
                     object3d.rotation.set(0, atsc(a.r1), 0);
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000 + 500, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'transform'){
-                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.s2, a.t[1] - a.t[0], 'none');
+                    setTimeout(objectToAction, a.t[0] * 1000 + 500, object3d, a.s2, a.t[1] - a.t[0], 'none');
                 }
             })
         });
-        setTimeout(synchronize_json_object, T * 1000, object3d);
+        setTimeout(synchronize_json_object, T * 1000 + 500, object3d);
     }
+    setTimeout(() => { AnimationSlider.showPreviewAnim = true; }, T * 1000 + 500);
     // setTimeout(operationFuture, T * 1000 + 200);
 }
 
