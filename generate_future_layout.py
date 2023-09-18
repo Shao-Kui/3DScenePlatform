@@ -4,6 +4,7 @@ from tqdm import tqdm
 from math import *
 import numpy as np
 import sys
+import math
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
@@ -191,7 +192,7 @@ class TransformableModule:
         seq, far_p = get_path(self.sforder, rotate(self.state_list[self.state].poly, -self.rotation, (0, 0), True),
                               rotate(self.state_list[target_state].poly, -target_rotation, (0, 0), True), info, self.p,
                               target_p, self.y, self.rotation, target_rotation, self.state_list[self.state].name,
-                              self.state_list[target_state].name, space, obstacles, end_obstacles, far_p_check)
+                              self.state_list[target_state].name, space, obstacles, end_obstacles, far_p_check, self.name == 'sofa2bench')
         if seq == None:
             # print('fail')
             pass
@@ -320,7 +321,7 @@ class ActionSequence:
                     total_trans_time += abs(info.rotate_angle) / ROTATE_SPEED
                 timelist.append(timelist[i - 1] + total_trans_time)
             else:
-                dis = dist(new_path[i], new_path[i - 1])
+                dis = math.dist(new_path[i], new_path[i - 1])
                 timelist.append(timelist[i - 1] + dis / MOVE_SPEED)
         self.timelist = timelist
         self.keep_time = 0
@@ -598,7 +599,7 @@ def get_all_paths(start_mods: List[TransformableModule], end_mods: List[Transfor
 
 def get_path(sforder: int, poly1: Polygon, poly2: Polygon, info: TransformInfo, p1: np.ndarray, p2: np.ndarray,
              path_y: float, rotation1: float, rotation2: float, state1: str, state2: str, space: TwoDimSpace,
-             obstacles: List[Polygon], end_obstacles: List[Polygon], far_p_check: bool):
+             obstacles: List[Polygon], end_obstacles: List[Polygon], far_p_check: bool, hack_bound: bool):
     # start_t = time()
     if_rotate, if_transform, relation = info.if_rotate, info.if_transform, info.relation
     xl, yl, xh, yh = space.xl, space.yl, space.xh, space.yh
@@ -792,6 +793,18 @@ def get_path(sforder: int, poly1: Polygon, poly2: Polygon, info: TransformInfo, 
     reachable_index3 = list(set(reachable_index1).intersection(set(reachable_index2)))
     path_index3 = list(set(path_index1).intersection(set(path_index2)))
 
+    if hack_bound:
+        idx3_remove = []
+        for idx in reachable_index3:
+            new_poly1 = scale(poly1, 1.2, 2.5)
+            new_poly2 = scale(poly2, 1.2, 2.5)
+            new_poly = new_poly1.union(new_poly2)
+            new_x, new_y = x_web[idx[0]], y_web[idx[1]]
+            if not intersect_check(translate(new_poly, new_x, new_y), space, obstacles, False):
+                idx3_remove.append(idx)
+        for idx in idx3_remove:
+            reachable_index3.remove(idx)
+
     # get the full path
     seq, far_p = None, None
     new_info = info
@@ -935,7 +948,7 @@ def parse_scene(scene: json, scene_name: str):
             init_rotation = (obj['orient']) % (2 * pi)
             scale = np.array(obj['scale'], 'float32')
 
-            module_data_json = open('object/{}_data.json'.format(name), 'r')
+            module_data_json = open('./static/dataset/object_json/{}_data.json'.format(name), 'r')
             module_data = json.load(module_data_json)
             relation_list = module_data['relation']
             state_list = []
@@ -985,7 +998,7 @@ def parse_scene(scene: json, scene_name: str):
         obj_i += 1
     space = TwoDimSpace(shape, doors, windows)
 
-    with open('./static/dataset/futurelayout/outputs/{}_origin.json'.format(scene_name), 'w') as out:
+    with open('./static/dataset/infinitelayout/{}_origin.json'.format(scene_name), 'w') as out:
         json.dump(origin, out)
     return space, mods
 
@@ -1049,7 +1062,7 @@ def output_scene(mods: List[TransformableModule], scene: json, idx: int, scene_n
         # obj_info['seqs'] = seqs
         out['actions'].append(seqs)
 
-    with open('./static/dataset/futurelayout/outputs/{}/{}.json'.format(scene_name, idx), 'w') as outf:
+    with open('./static/dataset/infinitelayout/{}_anim/{}.json'.format(scene_name, idx), 'w') as outf:
         json.dump(out, outf)
 
     origin = deepcopy(scene)
@@ -1070,7 +1083,7 @@ def output_scene(mods: List[TransformableModule], scene: json, idx: int, scene_n
                 obj['attachedObj'] = []
             mod_idx += 1
 
-    with open('./static/dataset/futurelayout/outputs/{}_scenes/{}.json'.format(scene_name, idx), 'w') as testf:
+    with open('./static/dataset/infinitelayout/{}_scenes/{}.json'.format(scene_name, idx), 'w') as testf:
         json.dump(origin, testf)
 
 def output_scene_2(mods: List[TransformableModule], scene: json, idx: int, scene_name: str, target_attributes: list):
@@ -1519,8 +1532,11 @@ def action_2(mods: List[TransformableModule], space: TwoDimSpace, subject_to: Li
     length = len(mods)
     for mod in mods:
         mod.state = mod.target_state
+    # Fixed. But why?
+    # top_parents = [top_parent(subject_to, k) for k in range(length)]
     top_idxes, main_idxes = set(), set()
     for i in range(length):
+        # if top_parent[i] == i:
         if subject_to[i] == -1:
             top_idxes.add(i)
         if target_attributes[i] != -1:
@@ -1547,7 +1563,12 @@ def action_2(mods: List[TransformableModule], space: TwoDimSpace, subject_to: Li
     for idx in top_idxes:
         mod = mods[idx]
         poly_bounds, scalex, scalez = mod.state_list[mod.target_state].poly.bounds, mod.scale[0], mod.scale[2]
+        # try:
         attribute = mod.state_list[mod.target_state].attribute_list[target_attributes[idx]]
+        # except:
+        #     print(len(mod.state_list[mod.target_state].attribute_list),target_attributes)
+        #     raise AttributeError
+            # exit(1)
         gtrans, wall_rel, door_rel, window_rel = attribute.gtrans, attribute.wall, attribute.door, attribute.window
 
         tmp_completed = [idx]
@@ -1935,7 +1956,7 @@ def search(mods: List[TransformableModule], space: TwoDimSpace, scene: json, sce
                 indexes[src_layout_str] = [content]
     animation_json['index'] = indexes
 
-    with open('outputs/{}_anim.json'.format(scene_name), 'w') as anim_f:
+    with open('./static/dataset/infinitelayout/{}_anim.json'.format(scene_name), 'w') as anim_f:
         json.dump(animation_json, anim_f)
 
 
@@ -1944,18 +1965,18 @@ def main(groupName:str='sample3',scenejson:any=None):
     random.seed()
     space, mods = None, None
     name = groupName
-    if os.path.exists('./static/dataset/futurelayout/outputs/{}'.format(name)):
-        for file in os.listdir('./static/dataset/futurelayout/outputs/{}'.format(name)):
-            os.remove('./static/dataset/futurelayout/outputs/{}/{}'.format(name, file))
+    if os.path.exists('./static/dataset/infinitelayout/{}_anim'.format(name)):
+        for file in os.listdir('./static/dataset/infinitelayout/{}_anim'.format(name)):
+            os.remove('./static/dataset/infinitelayout/{}_anim'.format(name, file))
     else:
-        os.mkdir('./static/dataset/futurelayout/outputs/{}'.format(name))
-    if os.path.exists('./static/dataset/futurelayout/outputs/{}_scenes'.format(name)):
-        for file in os.listdir('./static/dataset/futurelayout/outputs/{}_scenes'.format(name)):
-            os.remove('./static/dataset/futurelayout/outputs/{}_scenes/{}'.format(name, file))
+        os.mkdir('./static/dataset/infinitelayout/{}_anim'.format(name))
+    if os.path.exists('./static/dataset/infinitelayout/{}_scenes'.format(name)):
+        for file in os.listdir('./static/dataset/infinitelayout/{}_scenes'.format(name)):
+            os.remove('./static/dataset/infinitelayout/{}_scenes/{}'.format(name, file))
     else:
-        os.mkdir('./static/dataset/futurelayout/outputs/{}_scenes'.format(name))
+        os.mkdir('./static/dataset/infinitelayout/{}_scenes'.format(name))
     if scenejson == None:
-        with open('./static/dataset/futurelayout/scenes/{}.json'.format(name), 'r') as scene:
+        with open('./static/dataset/infinitelayout/{}_origin.json'.format(groupName), 'r') as scene:
             scenejson = json.load(scene)
     space, mods = parse_scene(scenejson, name)
 
@@ -2021,7 +2042,7 @@ def rot(point: np.ndarray, angle: float):
 
 
 if __name__ == '__main__':
-    main()
+    main(groupName='output0_105')
 
     pass
 
