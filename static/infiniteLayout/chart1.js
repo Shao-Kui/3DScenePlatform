@@ -10,23 +10,34 @@ let height1 = 400;
 
 let draw_array = [1]
 
+const tweenDash = function(){
+    let l = this.getTotalLength(),
+        i = d3.interpolateString("0," + l, l + "," + l);
+    return function (t) { return i(t); };
+}
+
+const isGoodAngle = function(d){
+    return (d.endAngle - d.startAngle) >= 0.3;
+};
+
+const midAngle = function(d){
+    return d.startAngle + (d.endAngle - d.startAngle)/2;
+};
 
 const draw1 = (data_dir) => {
-
-    // console.log(data_dir)
-    const arcGenerator = d3.arc()
-    .innerRadius(20).outerRadius(80);
+    const arcGenerator = d3.arc().innerRadius(20).outerRadius(80);
+    const outerArcGenerator = d3.arc().innerRadius(40).outerRadius(175);
     const arcTween = function (d) {
-    var init_startAngle = 0;
-    var init_endAngle = 0;
-    var interpolate_start = d3.interpolate(init_startAngle, d.startAngle);
-    var interpolate_end = d3.interpolate(init_endAngle, d.endAngle);
-    return function (t) {
-        d.startAngle = interpolate_start(t);
-        d.endAngle = interpolate_end(t);
-        return arcGenerator(d)
-    }
-};
+        var init_startAngle = 0;
+        var init_endAngle = 0;
+        var interpolate_start = d3.interpolate(init_startAngle, d.startAngle);
+        var interpolate_end = d3.interpolate(init_endAngle, d.endAngle);
+        return function (t) {
+            d.startAngle = interpolate_start(t);
+            d.endAngle = interpolate_end(t);
+            return arcGenerator(d)
+        }
+    };
 
     const container = d3.select('#fig1a');
     const boundingrect=container.node().getBoundingClientRect();
@@ -61,6 +72,17 @@ const draw1 = (data_dir) => {
             .attr('fill', d => color(d.data.room))
             .transition().duration(1000).attrTween('d', arcTween);
 
+        chart.selectAll('polyline').data(arcData).join('polyline').attr('class', 'upperpoly')
+        .attr('transform', `translate(${width / 2}, ${height / 2})`)
+        .attr('opacity', d => isGoodAngle(d)? 1:0)
+        .attr('stroke', 'black').attr('stroke-width', '2px').attr('fill', 'none')
+        .attr('points', d => {
+            let pos = outerArcGenerator.centroid(d);
+            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+            return [arcGenerator.centroid(d), outerArcGenerator.centroid(d), pos]
+        }).raise()
+        .transition().duration(1000).attrTween("stroke-dasharray", tweenDash);
+
         const dictOfRoom = {
             'diningroom': '餐厅',
             'livingroom' : '客厅',
@@ -68,14 +90,16 @@ const draw1 = (data_dir) => {
             'bedroom':'卧室',
         }
 
-        const arcOuter = d3.arc().innerRadius(50).outerRadius(50);
-        chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
-            .selectAll('text').data(arcData).join('text')
-            .attr('transform', d => `translate(${arcOuter.centroid(d)})`)
-            .attr('text-anchor', 'middle')
-            .text(d => dictOfRoom[d.data.room] )
-            .style('opacity', 0)
-            .transition().delay(1000).style('opacity', 1);
+        chart.append('g')
+        .selectAll('text').data(arcData).join('text')
+        .attr('transform', d => {
+            let pos = outerArcGenerator.centroid(d);
+            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+            return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
+        }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
+        .text(d => dictOfRoom[d.data.room])
+        .attr('opacity', 0)
+        .transition().duration(1000).attr('opacity', d => isGoodAngle(d)? 1:0);
         const caption=chart.append('g').attr('class','caption');
         caption.append("foreignObject")
         .attr('y',parseInt(height)-36)
@@ -84,7 +108,6 @@ const draw1 = (data_dir) => {
         .append("xhtml:p")
         .attr('style','word-wrap: break-word; text-align:center;')
         .append('text')
-        // .attr('text-anchor','middle')
         .text(d.description==null?'':d.description)
         .attr('style','font-size: 12px; fill: #888;');
     });
@@ -95,8 +118,8 @@ const draw1 = (data_dir) => {
 const draw1b = (data_dir , depth) => {
 
     // console.log(data_dir)
-    const arcGenerator = d3.arc()
-    .innerRadius(20).outerRadius(80 - 10 * Math.max(depth-1,0));
+    const arcGenerator = d3.arc().innerRadius(20).outerRadius(80 - 10 * Math.max(depth-1,0));
+    const outerArcGenerator = d3.arc().innerRadius(40).outerRadius(175);
     const arcTween = function (d) {
     var init_startAngle = 0;
     var init_endAngle = 0;
@@ -163,17 +186,19 @@ const draw1b = (data_dir , depth) => {
             'bedroom':'卧室',
         }
 
-        const arcOuter = d3.arc().innerRadius(50 - 7.5 * depth).outerRadius(50 - 7.5 * depth);
-        chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
-            .selectAll('text').data(arcData).join('text')
-            .attr('transform', d => `translate(${arcOuter.centroid(d)})`)
-            .attr('text-anchor', 'middle')
-            .text(d => {
-                if(d.data.value > 0)return dictOfRoom[d.data.room];
-                else return '';
-            })
-            .style('opacity', 0)
-            .transition().delay(1000).style('opacity', 1);
+        chart.selectAll('text').data(arcData).join('text')
+        .attr('transform', d => {
+            let pos = outerArcGenerator.centroid(d);
+            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+            return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
+        }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
+        .text(d => {
+            if(d.data.value > 0)return dictOfRoom[d.data.room];
+            else return '';
+        })
+        .attr('opacity', 0)
+        .transition().duration(1000).attr('opacity', d => isGoodAngle(d)? 1:0);
+        
         for(let i = 0; i + 1 < depth; i++)
         {
             chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
@@ -197,6 +222,17 @@ const draw1b = (data_dir , depth) => {
                 .style('opacity', 0)
                 .transition().delay(1000).style('opacity', 1);
         }
+
+        chart.selectAll('polyline').data(arcData).join('polyline').attr('class', 'upperpoly')
+        .attr('transform', `translate(${width / 2}, ${height / 2})`)
+        .attr('opacity', d => isGoodAngle(d)? 1:0)
+        .attr('stroke', 'black').attr('stroke-width', '2px').attr('fill', 'none')
+        .attr('points', d => {
+            let pos = outerArcGenerator.centroid(d);
+            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+            return [arcGenerator.centroid(d), outerArcGenerator.centroid(d), pos]
+        }).raise()
+        .transition().duration(1000).attrTween("stroke-dasharray", tweenDash);
     });
 
     // container.attr('width', '40vw')

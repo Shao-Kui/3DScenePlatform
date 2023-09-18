@@ -1341,7 +1341,7 @@ const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
     render_initialization();
-    orth_initialization();
+    // orth_initialization();
     searchPanelInitialization();
     radial_initialization();
     onlineInitialization();
@@ -1744,10 +1744,10 @@ const setting_up = function () {
     scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-    orthcanvas.addEventListener('mousedown', orth_mousedown);
-    orthcanvas.addEventListener('mouseup', orth_mouseup);
-    orthcanvas.addEventListener('mousemove', orth_mousemove);
-    orthcanvas.addEventListener('click', orth_mouseclick);
+    // orthcanvas.addEventListener('mousedown', orth_mousedown);
+    // orthcanvas.addEventListener('mouseup', orth_mouseup);
+    // orthcanvas.addEventListener('mousemove', orth_mousemove);
+    // orthcanvas.addEventListener('click', orth_mouseclick);
 
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {

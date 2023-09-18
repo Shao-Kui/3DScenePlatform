@@ -410,8 +410,8 @@ class SceneManager {
         this.camera.lookAt(lx, 0, lz);
         orbitControls.target.set(lx, 0, lz);
         //Start to set orthogonal camera.
-        var width = bbox.max[0] - bbox.min[0];
-        var height = bbox.max[2] - bbox.min[2];
+        var width = (bbox.max[0] - bbox.min[0]) + 1;
+        var height = (bbox.max[2] - bbox.min[2]) + 1;
         this.orthcamera.left = width / -2;
         this.orthcamera.right = width / 2;
         this.orthcamera.top = height / 2;

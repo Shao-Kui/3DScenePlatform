@@ -118,8 +118,11 @@ const updateTreeWindow = function(root) {
         .attr("height", len);
         d3.select('#fig1a').selectAll('g').remove();
         d3.select('#fig1a').selectAll('path').remove();
+        d3.select('#fig1a').selectAll('polyline').remove();
         d3.select('#fig1b').selectAll('g').remove();
         d3.select('#fig1b').selectAll('path').remove();
+        d3.select('#fig1b').selectAll('polyline').remove();
+        d3.select('#fig1b').selectAll('text').remove();
         d3.select('#fig2').selectAll('g').remove();
         d.imgindex = -1;
     })
