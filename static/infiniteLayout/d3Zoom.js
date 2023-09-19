@@ -1,25 +1,22 @@
-let zoom = d3.zoom()
-    .on('zoom', handleZoom);
+let zoom = d3.zoom().on('zoom', handleZoom);
 
 function handleZoom(e) {
-    d3.select('svg g')
-        .attr('transform', e.transform);
+    d3.select('#infiniteGroup').attr('transform', e.transform);
 }
 
 function initZoom() {
-    d3.select('svg')
-        .call(zoom);
+    d3.select('#infiniteSVG').call(zoom);
 }
 
-function update2() {
-    d3.select('svg g')
-        .selectAll('circle')
-        .data(data)
-        .join('circle')
-        .attr('cx', function (d) { return d.x; })
-        .attr('cy', function (d) { return d.y; })
-        .attr('r', 3);
-}
+// function update2() {
+//     d3.select('svg g')
+//         .selectAll('circle')
+//         .data(data)
+//         .join('circle')
+//         .attr('cx', function (d) { return d.x; })
+//         .attr('cy', function (d) { return d.y; })
+//         .attr('r', 3);
+// }
 
 initZoom();
 // updateData();

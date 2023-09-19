@@ -1,23 +1,24 @@
 // ************** Generate the tree diagram	 *****************
-var margin = { top: 0, right: 0, bottom: 0, left: 0 };
-var width = 1200;
-var height = 1200;
+let infinitePanelWidth = window.innerWidth;//document.getElementById('infinitePanel').offsetWidth;
+let infinitePanelHeight = window.innerHeight;//document.getElementById('infinitePanel').offsetHeight;
+var margin = { top: infinitePanelHeight * 0.2, right: 0, bottom: 0, left: infinitePanelWidth * 0.01 };
+var width = infinitePanelWidth;
+var height = infinitePanelHeight;
 var i = 0;
 var tree = d3.layout.tree().size([height, width]);
 var diagonal = d3.svg.diagonal().projection(function (d) { return [d.x, d.y]; });
-var svg = d3.select("body").select("#generatedTree").append("svg")
-    // .attr("width", width + margin.right + margin.left)
-    .attr("width", '100%')
-    .attr("height", height-margin.top-margin.bottom)
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-// 获得树的数据
+var svg = d3.select("body").select("#generatedTree").append("svg").attr('id', 'infiniteSVG').attr('opacity', '1')
+// .attr("width", width + margin.right + margin.left)
+.attr("width", '100%')
+.attr("height", height-margin.top-margin.bottom)
+.append("g").attr('id', 'infiniteSuperGroup').attr("transform", "translate(" + margin.left + "," + margin.top + ") scale(1.15)")
+.append("g").attr('id', 'infiniteGroup').attr('opacity', '1');
 
 const updateTreeWindow = function(root) {
 
     // Compute the new tree layout.
-    let nodes = tree.nodes(root).reverse(),
-        links = tree.links(nodes);
+    let nodes = tree.nodes(root).reverse();
+    let links = tree.links(nodes);
 
     // Normalize for fixed-depth.
     nodes.forEach(function (d) { d.y = d.depth * 100; });
@@ -47,7 +48,8 @@ const updateTreeWindow = function(root) {
             return "translate(" + d.x + "," + d.y + ")";
     });
 
-    let len = width / 30;
+    const len = width / 50;
+    const pielen = width / 60
     let id=0;
 
     let defs = svg.append('defs');
@@ -69,8 +71,9 @@ const updateTreeWindow = function(root) {
 
     // Enter the links.
     link.enter().insert("path", "g")
-        .attr("class", "link")
-        .attr("d", diagonal);
+    .attr("class", "link")
+    .attr("stroke", "#666666")
+    .attr("d", diagonal);
 
     nodeEnter.append("rect") 
     .attr("class","imagerect")
@@ -214,7 +217,7 @@ const updateTreeWindow = function(root) {
             .append("path")
             .attr("class","pieplot")
             .attr("id",`pieplot${d.id}`)
-            .attr("d", d3.arc().innerRadius(0).outerRadius(40 - 5 * Math.max(0 , d.depth - 1)))
+            .attr("d", d3.arc().innerRadius(0).outerRadius(pielen - 5 * Math.max(0 , d.depth - 1)))
             .attr('fill', d => {
                 const color = d3.scaleOrdinal()
                 .domain(data.map(dat => dat.room))
@@ -228,7 +231,7 @@ const updateTreeWindow = function(root) {
                 .append("path")
                 .attr("class","pieplot")
                 .attr("id",`pieplot${d.id}-${i}`)
-                .attr("d", d3.arc().innerRadius(40 - 5 * (i+1)).outerRadius(40 - 5 * i))
+                .attr("d", d3.arc().innerRadius(pielen - 5 * (i+1)).outerRadius(pielen - 5 * i))
                 .attr('fill', d => {
                     const color = d3.scaleOrdinal()
                     .domain(data.map(dat => dat.room))

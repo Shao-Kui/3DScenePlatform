@@ -964,7 +964,6 @@
 
               .link {
                 fill: none;
-                stroke: #ccc;
                 stroke-width: 2px;
               }
 
@@ -979,7 +978,7 @@
             
             >
               <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: none; width:90vw" role="document"  >
-                <div class="modal-content" >
+                <div class="modal-content" style="background: rgba(255, 255, 255, 0.75);">
                   <div class="modal-header">
                     <h5 class="modal-title" id="operationFutureTitle">Future</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -1001,27 +1000,18 @@
                       }
                     </style>
                     <div class="">
-                      <div class="row">
+                      <div class="row" id="infinitePanel">
                         <div class="col-8 border" id="generatedTree">
                           <script src="/static/3rdparty/d3.v3.min.js"></script>
                           <!-- <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script> -->
                           <!-- <script type="text/javascript" src="41.js"></script> -->
-                  
                           <script type="text/javascript" src="/static/infiniteLayout/treeWindow.js"></script>
                           <script src="/static/infiniteLayout/d3.js"></script>
-                  
-                  
                         </div>
                         <div class="col-4 border" id="charts">
-                          
-                          <svg width="100%" height="20%" id="fig1a"></svg>
-
-                          <svg width="100%" height="20%" id="fig1b"></svg>
-                  
-                          <!-- </script> -->
-                          <svg width="100%" height="20%" id="fig2"></svg>
-                  
-                  
+                          <svg width="100%" height="35%" id="fig1a"></svg>
+                          <svg width="100%" height="25%" id="fig1b"></svg>
+                          <svg width="100%" height="35%" id="fig2"></svg>
                         </div>
                       </div>
                       <script src="/static/infiniteLayout/chart1.js"></script>
@@ -1030,7 +1020,6 @@
                   
                     </div>
                     <script src="/static/3rdparty/d3.min.js"></script>
-
                   </div>
                 </div>
               </div>
