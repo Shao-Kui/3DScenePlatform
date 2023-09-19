@@ -20,8 +20,8 @@ const updateTreeWindow = function(root) {
         links = tree.links(nodes);
 
     // Normalize for fixed-depth.
-    nodes.forEach(function (d) { d.y = d.depth * 200; });
-    nodes.forEach(function (d) { d.x = d.x * 2.5; })
+    nodes.forEach(function (d) { d.y = d.depth * 100; });
+    // nodes.forEach(function (d) { d.x = d.x * 1.25; });
 
     // Declare the nodes…
     let node = svg.selectAll("g.node")
@@ -47,7 +47,7 @@ const updateTreeWindow = function(root) {
             return "translate(" + d.x + "," + d.y + ")";
     });
 
-    let len = width / 12;
+    let len = width / 30;
     let id=0;
 
     let defs = svg.append('defs');
@@ -87,7 +87,7 @@ const updateTreeWindow = function(root) {
     //.attr('stroke', 'black').attr('stroke-width', '2px')
     .on('mouseover', function (d) {
         let file_dir = d.pics[0] + ".json";
-        let scale = 6;
+        let scale = 12;
         d.imgindex = 0;
         d3.select(this.parentNode).raise()
         d3.select(this).transition()
@@ -214,7 +214,7 @@ const updateTreeWindow = function(root) {
             .append("path")
             .attr("class","pieplot")
             .attr("id",`pieplot${d.id}`)
-            .attr("d", d3.arc().innerRadius(0).outerRadius(100 - 10 * Math.max(0 , d.depth - 1)))
+            .attr("d", d3.arc().innerRadius(0).outerRadius(40 - 5 * Math.max(0 , d.depth - 1)))
             .attr('fill', d => {
                 const color = d3.scaleOrdinal()
                 .domain(data.map(dat => dat.room))
@@ -228,7 +228,7 @@ const updateTreeWindow = function(root) {
                 .append("path")
                 .attr("class","pieplot")
                 .attr("id",`pieplot${d.id}-${i}`)
-                .attr("d", d3.arc().innerRadius(100 - 10 * (i+1)).outerRadius(100 - 10 * i))
+                .attr("d", d3.arc().innerRadius(40 - 5 * (i+1)).outerRadius(40 - 5 * i))
                 .attr('fill', d => {
                     const color = d3.scaleOrdinal()
                     .domain(data.map(dat => dat.room))

@@ -151,7 +151,7 @@ const draw1b = (data_dir , depth) => {
         if (d.evaluation == null) data = d;
         else data = d.evaluation;
         let outerrooms = [];
-        for(let i = 1; i < depth; i++)
+        for(let i = 1; i < (depth != data.length ? depth: (data.length + 1)); i++)
         {
             let mxv = -1.0, mxpos = -1;
             for(let j = 0; j < data.length; j++)
@@ -172,34 +172,35 @@ const draw1b = (data_dir , depth) => {
         const color = d3.scaleOrdinal()
             .domain(data.map(d => d.room))
             .range(d3.schemeSet2.concat(d3.schemeSet3));
-
-        chart.selectAll('path').data(arcData).join('path')
-            .attr('d', path)
-            .attr('transform', `translate(${width / 2}, ${height / 2})`)
-            .attr('fill', d => color(d.data.room))
-            .transition().duration(1000).attrTween('d', arcTween);
-
+        
         const dictOfRoom = {
             'diningroom': '餐厅',
             'livingroom' : '客厅',
             'office' :'办公室',
             'bedroom':'卧室',
         }
-
-        chart.selectAll('text').data(arcData).join('text')
-        .attr('transform', d => {
-            let pos = outerArcGenerator.centroid(d);
-            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
-            return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
-        }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
-        .text(d => {
-            if(d.data.value > 0)return dictOfRoom[d.data.room];
-            else return '';
-        })
-        .attr('opacity', 0)
-        .transition().duration(1000).attr('opacity', d => isGoodAngle(d)? 1:0);
+        if(depth != data.length)
+        {
+            chart.selectAll('path').data(arcData).join('path')
+            .attr('d', path)
+            .attr('transform', `translate(${width / 2}, ${height / 2})`)
+            .attr('fill', d => color(d.data.room))
+            .transition().duration(1000).attrTween('d', arcTween);
+            chart.selectAll('text').data(arcData).join('text')
+            .attr('transform', d => {
+                let pos = outerArcGenerator.centroid(d);
+                pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+                return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
+            }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
+            .text(d => {
+                if(d.data.value > 0)return dictOfRoom[d.data.room];
+                else return '';
+            })
+            .attr('opacity', 0)
+            .transition().duration(1000).attr('opacity', d => isGoodAngle(d)? 1:0);
+        }
         
-        for(let i = 0; i + 1 < depth; i++)
+        for(let i = 0; i + 1 < (depth != data.length ? depth: (data.length + 1)); i++)
         {
             chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
             .selectAll('path').data(pie(outerrooms[i])).join('path')
