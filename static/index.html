@@ -359,6 +359,7 @@
             </button>
             <script>
               function sendSignalToCalculate(){
+                stats.dom.style.display = 'none';
                 fetch('future/layout/{{onlineGroup}}');
               }
             </script>
@@ -980,7 +981,7 @@
               <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: none; width:90vw" role="document"  >
                 <div class="modal-content" style="background: rgba(255, 255, 255, 0.75);">
                   <div class="modal-header">
-                    <h5 class="modal-title" id="operationFutureTitle">Future</h5>
+                    <h5 class="modal-title" id="operationFutureTitle" style="font-size: 2em;font-weight: bolder;">Functional Hierarchy (Layout Structure Diagram)</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                       <span aria-hidden="true">&times;</span>
                     </button>
@@ -1001,7 +1002,7 @@
                     </style>
                     <div class="">
                       <div class="row" id="infinitePanel">
-                        <div class="col-8 border" id="generatedTree">
+                        <div class="col-8" id="generatedTree">
                           <script src="/static/3rdparty/d3.v3.min.js"></script>
                           <!-- <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script> -->
                           <!-- <script type="text/javascript" src="41.js"></script> -->

@@ -13,9 +13,37 @@ var svg = d3.select("body").select("#generatedTree").append("svg").attr('id', 'i
 .attr("height", height-margin.top-margin.bottom)
 .append("g").attr('id', 'infiniteSuperGroup').attr("transform", "translate(" + margin.left + "," + margin.top + ") scale(1.15)")
 .append("g").attr('id', 'infiniteGroup').attr('opacity', '1');
+const ziweiSchemeSet = ['#ffffff', '#ffd186', '#c8dbf5', '#ffbcc7']
+const dictOfRoom = {
+    'diningroom': 'Dinning Room',//'餐厅',
+    'livingroom' : 'Living Room',//'客厅',
+    'office' : 'Office',//'办公室',
+    'bedroom': 'Bedroom'//'卧室',
+}
+const colorOfRoom = {
+    'diningroom': '#ffffff',//'餐厅',
+    'livingroom' : '#ffbcc7',//'客厅',
+    'office' : '#c5dcf8',//'办公室',
+    'bedroom': '#ffd286'//'卧室',
+}
 
 const updateTreeWindow = function(root) {
+    const captiong = svg.append('g').attr('transform', `translate(${width / 2 - infinitePanelWidth * 0.1}, ${-150})`);
+    captiong.selectAll('.captionrect').data(Object.keys(dictOfRoom)).enter().append('rect')
+        .attr('class', 'captionsgroup')
+        .attr('y', (d, i) => i * 32)
+        .attr('width', 40)
+        .attr('height', 20)
+        .attr('fill', d => colorOfRoom[d])
 
+    captiong.selectAll('.captiontext').data(Object.keys(dictOfRoom)).enter().append('text')
+        .attr('class', 'captiontext')
+        .attr('y', (d, i) => i * 32 + 15)
+        .attr('x', 42)
+        .attr('width', 40)
+        .attr('height', 20)
+        .attr('font-size', '1.2em')
+        .text(d => dictOfRoom[d])
     // Compute the new tree layout.
     let nodes = tree.nodes(root).reverse();
     let links = tree.links(nodes);
@@ -49,7 +77,8 @@ const updateTreeWindow = function(root) {
     });
 
     const len = width / 50;
-    const pielen = width / 60
+    const pielen = width / 55
+    const pieleninner = width / 70
     let id=0;
 
     let defs = svg.append('defs');
@@ -130,6 +159,7 @@ const updateTreeWindow = function(root) {
         d.imgindex = -1;
     })
     .on('click', d => { // value d is the datum of the clicked primitive. 
+        stats.dom.style.display = 'flex';
         // require that all the animations goes from the root or to the root
         let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
         // if(!manager.renderManager.scene_json.rooms[0].currentTransMeta){
@@ -191,9 +221,9 @@ const updateTreeWindow = function(root) {
     });
 
     // add the surrounding pie graph
-    nodeEnter.each(function(d,i){
+    nodeEnter.each(function(d, i){
         d3.json(d.pics[0] + ".json").then(data => {
-            if(data.evaluation != null)data = data.evaluation;
+                        if(data.evaluation != null)data = data.evaluation;
             let outerrooms = [];
             for(let i = 1; i < d.depth; i++)
             {
@@ -217,13 +247,8 @@ const updateTreeWindow = function(root) {
             .append("path")
             .attr("class","pieplot")
             .attr("id",`pieplot${d.id}`)
-            .attr("d", d3.arc().innerRadius(0).outerRadius(pielen - 5 * Math.max(0 , d.depth - 1)))
-            .attr('fill', d => {
-                const color = d3.scaleOrdinal()
-                .domain(data.map(dat => dat.room))
-                .range(d3.schemeSet2.concat(d3.schemeSet3));
-                return color(d.data.room);
-            });
+            .attr("d", d3.arc().innerRadius(pieleninner - 5 * Math.max(0 , d.depth - 1)).outerRadius(pielen - 5 * Math.max(0 , d.depth - 1)))
+            .attr('fill', d => colorOfRoom[d.data.room]);
             for(let i = 0; i + 1 < d.depth; i++)
             {
                 d3.select(this).selectAll(`path#pieplot${d.id}-${i}`).data(pie(outerrooms[i]))
@@ -232,12 +257,7 @@ const updateTreeWindow = function(root) {
                 .attr("class","pieplot")
                 .attr("id",`pieplot${d.id}-${i}`)
                 .attr("d", d3.arc().innerRadius(pielen - 5 * (i+1)).outerRadius(pielen - 5 * i))
-                .attr('fill', d => {
-                    const color = d3.scaleOrdinal()
-                    .domain(data.map(dat => dat.room))
-                    .range(d3.schemeSet2.concat(d3.schemeSet3));
-                    return color(d.data.room);
-                });
+                .attr('fill', d => colorOfRoom[d.data.room]);
             }
             d3.selectAll(`path#pieplot${d.id}`).lower();
             for(let i = 0; i + 1 < d.depth; i++)

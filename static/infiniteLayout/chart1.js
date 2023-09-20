@@ -62,14 +62,11 @@ const draw1 = (data_dir) => {
         const pie = d3.pie().value(d => d.value);
         const arcData = pie(data);
         const path = d3.arc().innerRadius(20).outerRadius(80);
-        const color = d3.scaleOrdinal()
-            .domain(data.map(d => d.room))
-            .range(d3.schemeSet2.concat(d3.schemeSet3));
 
         chart.selectAll('path').data(arcData).join('path')
             .attr('d', path)
             .attr('transform', `translate(${width / 2}, ${height / 2})`)
-            .attr('fill', d => color(d.data.room))
+            .attr('fill', d => colorOfRoom[d.data.room])
             .transition().duration(1000).attrTween('d', arcTween);
 
         chart.selectAll('polyline').data(arcData).join('polyline').attr('class', 'upperpoly')
@@ -83,18 +80,12 @@ const draw1 = (data_dir) => {
         }).raise()
         .transition().duration(1000).attrTween("stroke-dasharray", tweenDash);
 
-        const dictOfRoom = {
-            'diningroom': '餐厅',
-            'livingroom' : '客厅',
-            'office' :'办公室',
-            'bedroom':'卧室',
-        }
-
         chart.append('g')
         .selectAll('text').data(arcData).join('text')
         .attr('transform', d => {
             let pos = outerArcGenerator.centroid(d);
-            pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+            pos[0] = 135 * (midAngle(d) < Math.PI ? 1 : -1);
+            pos[1] += 2
             return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
         }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
         .text(d => dictOfRoom[d.data.room])
@@ -169,27 +160,18 @@ const draw1b = (data_dir , depth) => {
         const pie = d3.pie().value(d => d.value);
         const arcData = pie(data);
         const path = d3.arc().innerRadius(20).outerRadius(80 - 15 * Math.max(depth-1,0));
-        const color = d3.scaleOrdinal()
-            .domain(data.map(d => d.room))
-            .range(d3.schemeSet2.concat(d3.schemeSet3));
-        
-        const dictOfRoom = {
-            'diningroom': '餐厅',
-            'livingroom' : '客厅',
-            'office' :'办公室',
-            'bedroom':'卧室',
-        }
         if(depth != data.length)
         {
             chart.selectAll('path').data(arcData).join('path')
             .attr('d', path)
             .attr('transform', `translate(${width / 2}, ${height / 2})`)
-            .attr('fill', d => color(d.data.room))
+            .attr('fill', d => colorOfRoom[d.data.room])
             .transition().duration(1000).attrTween('d', arcTween);
             chart.selectAll('text').data(arcData).join('text')
             .attr('transform', d => {
                 let pos = outerArcGenerator.centroid(d);
-                pos[0] = 130 * (midAngle(d) < Math.PI ? 1 : -1);
+                pos[0] = 135 * (midAngle(d) < Math.PI ? 1 : -1);
+                pos[1] += 2
                 return `translate(${pos[0] + width / 2}, ${pos[1] + height / 2})`
             }).attr('text-anchor', d => midAngle(d) < Math.PI ? "start":"end")
             .text(d => {
@@ -205,12 +187,7 @@ const draw1b = (data_dir , depth) => {
             chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
             .selectAll('path').data(pie(outerrooms[i])).join('path')
                 .attr("d", d3.arc().innerRadius(80 - 15 * (i + 1)).outerRadius(80 - 15 * i))
-                .attr('fill', d => {
-                    const color = d3.scaleOrdinal()
-                    .domain(data.map(dat => dat.room))
-                    .range(d3.schemeSet2.concat(d3.schemeSet3));
-                    return color(d.data.room);
-                });
+                .attr('fill', d => colorOfRoom[d.data.room]);
             const arcInner = d3.arc().innerRadius(80 - 15 * (i + 0.5)).outerRadius(80 - 15 * (i + 0.5));
             chart.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`)
                 .selectAll('text').data(pie(outerrooms[i])).join('text')

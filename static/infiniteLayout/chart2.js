@@ -24,9 +24,7 @@ const draw2 = (old_dir, new_dir) => {
     const yValue = d => d.value;
     const xScale = d3.scaleBand();
     const yScale = d3.scaleLinear();
-    const color = d3.scaleOrdinal().range(d3.schemeSet2);
-
-
+    const color = d3.scaleOrdinal().range(['#9c9c9c', '#67c2a6']);
 
     d3.json(old_dir).then(d => {
         let data;
@@ -65,7 +63,7 @@ const draw2 = (old_dir, new_dir) => {
             xAxisGroup.attr('transform', `translate(${0}, ${innerHeight})`);
             d3.selectAll('.tick text').attr('font-size', '1.0em').attr('font-weight', 'bold');
             var legend = Group.selectAll(".legend")
-                .data(Array.from(new Set(data.map(d => d.type)))).join('g')
+                .data(Array.from(new Set(data.map(d => d.type))).reverse()).join('g')
                 .attr("class", "legend")
                 .attr("transform", (d, i) => `translate(${(20)},${(i * 20)})`);
             legend.append("rect")
@@ -84,4 +82,3 @@ const draw2 = (old_dir, new_dir) => {
         })
     })
 };
-// draw2();
