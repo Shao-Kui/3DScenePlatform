@@ -102,6 +102,39 @@ def refineRoomMeta(roomMeta):
             newRoomMeta.append(roomMeta[i])
     return refineRoomMeta(np.array(newRoomMeta))
 
+occurrenceCounter = {}
+occurrenceList = []
+def occurrenceCount(level):
+    for room in level['rooms']:
+        for o in room['objList']:
+            if o['modelId'] in sk_to_ali or o['modelId'] in suncg:
+                if o['modelId'] not in occurrenceCounter:
+                    occurrenceCounter[o['modelId']] = 1
+                else:
+                    occurrenceCounter[o['modelId']] += 1
+
+def batchOccrrenceCount():
+    si = 0
+    levelnames = os.listdir('./alilevel_oriFix')[si:]
+    for levelname in levelnames:
+        if si % 1000 == 0:
+            print(f'start level {levelname}. ({si})')
+        si += 1
+        try:
+            with open(f'./alilevel_oriFix/{levelname}') as f:
+                level = json.load(f)
+                occurrenceCount(level)
+        except PermissionError:
+            continue
+    print(occurrenceCounter)
+    totalOccur = 0
+    for o in occurrenceCounter:
+        totalOccur += occurrenceCounter[o]
+        occurrenceList.append(occurrenceCounter[o])
+    print(totalOccur)
+    print(totalOccur / 9992)
+    print(np.std(occurrenceList))
+
 def areDoorsInRoom2021(level):
     level_doorfix = level.copy()
     for room in level_doorfix['rooms']:
@@ -173,4 +206,5 @@ def case1():
         json.dump(case1_fix, f)
 
 if __name__ == '__main__':
-    batch()
+    # batch()
+    batchOccrrenceCount()
