@@ -119,6 +119,8 @@
       var orthcanvas;
       var drawingCanvas;
       var catalogItems;
+      var osrCatalogItems;
+      var priorClickPlan = [];
       var paint = false;
       var drawStartPos = new THREE.Vector2();
       var searchResults;
@@ -136,7 +138,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
-      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, total: 0}
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, clicks:0, total: 0}
 
       var deltaClock;
       const animaMixers = [];
@@ -158,6 +160,7 @@
         scenecanvas = document.getElementById("scenecanvas");
         orthcanvas = document.getElementById("orthcanvas");
         catalogItems = document.getElementById("catalogItems");
+        osrCatalogItems = document.getElementById("osrCatalogItems");
         drawingCanvas = document.getElementById("drawing-canvas");
         setting_up();
       });
@@ -239,6 +242,8 @@
               <tr>
                 <th scope="row">CGS</th>
                 <td id="tab_CGS"></td>
+                <th>Clicks</th>
+                <td id="tab_Clicks"></td>
                 <th>Total</th>
                 <td id="tab_Total"></td>
               </tr>
@@ -505,11 +510,26 @@
               </div>
             </div>
 
-            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDivv" role="button" aria-expanded="false" aria-controls="drawingCanvasDiv">
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDivv" role="button" aria-expanded="false" aria-controls="drawingCanvasDivv">
               Furniture Palette
             </a>
             <div class="collapse" id="drawingCanvasDivv">
-              <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+              <div id="sketchsearchdivv" class="btn-group mx-1 my-3">
+                <button class="btn btn-outline-primary" type="submit" id="refreshperspectbtn">
+                    refresh perspective
+                </button>
+                <button class="btn btn-outline-primary" type="submit" id="priorsearchbtn">
+                  search prior
+                </button>
+                <button class="btn btn-outline-primary" type="submit" id="priorsearchfullbtn">
+                  search prior full
+                </button>
+              </div>
+              <div
+                id="osrCatalogItems"
+                class="catalogSectionContent mb-auto"
+                align="center"
+              ></div>
             </div>
             
             <div class="py-2 px-3">

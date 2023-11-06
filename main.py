@@ -11,7 +11,7 @@ import datetime
 # from rec_release import fa_reshuffle
 from layoutmethods.autolayoutv2 import sceneSynthesis
 # from layoutmethods.layout1 import fa_layout_pro
-from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
+# from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
@@ -363,7 +363,7 @@ def sklayout():
 
 @app.route("/planit", methods=['POST'])
 def planit():
-    res = roomSynthesisPlanIT(request.json)
+    res = None #roomSynthesisPlanIT(request.json)
     roomId = request.json['roomId']
     if res is None:
         res = request.json
@@ -408,7 +408,12 @@ def applyuuid():
 def getSceneJsonByID(origin):
     if os.path.exists(f'./dataset/Levels2021/{origin}.json'):
         return flask.send_file(f'./dataset/Levels2021/{origin}.json')
+    elif os.path.exists(f'./layoutmethods/anno/{origin}.json'):
+        return flask.send_file(f'./layoutmethods/anno/{origin}.json')
     else:
+        for i in range(1,13):
+            if os.path.exists(f'./layoutmethods/anno/room{i}/{origin}.json'):
+                return flask.send_file(f'./layoutmethods/anno/room{i}/{origin}.json')
         return ""
 
 def generateObjectsUUIDs(sceneJson):

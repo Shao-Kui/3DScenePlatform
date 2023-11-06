@@ -100,7 +100,9 @@ def load_AABB_glb(i, state):
     return AABBcache[i+state]
 
 def preloadAABB(obj):
-    if objectInDataset(obj['modelId']):
+    if 'startState' in obj:
+        AABB = load_AABB_glb(obj['modelId'], obj['startState'])
+    elif objectInDataset(obj['modelId']):
         AABB = load_AABB(obj['modelId'])
         if 'coarseSemantic' not in obj:
             obj['coarseSemantic'] = getobjCat(obj['modelId'])

@@ -19,6 +19,7 @@ from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget,hamiltonS
 from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
 import shutil
 import random
+from yltmp.OSRhandler import mainSearch, searchMainModelId, searchId
 
 with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
     res_ratio_dom = json.load(f)
@@ -1242,9 +1243,11 @@ def obj_WinDoor_Relation(windoorResult, iobj, windoor):
     
     if lenx > lenz:
         width = lenx
+        windoorResult[7] = 'z'
     else :
         width = lenz
         ori += 1.5708
+        windoorResult[7] = 'x'
 
     windoorResult[0] = dis
     windoorResult[1] = posx
@@ -1259,24 +1262,10 @@ def calDoor(doorResult, iobj, room):
     #print('calculating door from block')
     for obj in room['blockList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
-            windoorResult = [0,0,0,0,0,0,0]
+            windoorResult = [0,0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
             loc = 0  #print(obj['bbox']) print(windoorResult) print('\n')
-            for tmp in doorResult:
-                if tmp[0] < windoorResult[0]:
-                    loc = loc+1
-                else:
-                    break
-            doorResult.insert(loc, windoorResult)
-            
-    #print('calculating door from obj')
-    for obj in room['objList']:
-        if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
-            windoorResult = [0,0,0,0,0,0,0]
-            if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
-                continue
-            loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
             for tmp in doorResult:
                 if tmp[0] < windoorResult[0]:
                     loc = loc+1
@@ -1289,7 +1278,7 @@ def calWindow(windowResult, iobj, room):
     #print('calculating window')
     for obj in room['objList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'window' or obj['coarseSemantic'] == 'Window'):
-            windoorResult = [0,0,0,0,0,0,0]
+            windoorResult = [0,0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] +  'max0 skip\n')
                 continue
             loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
@@ -1350,7 +1339,7 @@ def usercommitOSR():
     fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'a+')
     writeString = intersect[0]
 
-    if abs(1.00 - intersect[7]) > 0.001 or abs(1.00 - intersect[8]) > 0.001 and abs(1.0 - intersect[9]) > 0.001:
+    if abs(1.00 - intersect[7]) > 0.001 or abs(1.00 - intersect[8]) > 0.001 or abs(1.0 - intersect[9]) > 0.001:
         writeString += '; scale[{%.5f, %.5f, %.5f,}:]'%(intersect[7], intersect[8], intersect[9])
 
     if changable:
@@ -1371,13 +1360,13 @@ def usercommitOSR():
     if withWindow and len(windowResult) > 0:
         writeString += '; window['
         for win in windowResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6],win[7])
         writeString += ']'
 
     if withDoor and len(doorResult) > 0:
         writeString += '; door['
         for dor in doorResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6],dor[7])
         writeString += ']'
     
     if len(rela_name):
@@ -1388,7 +1377,166 @@ def usercommitOSR():
     fd.write(writeString + "\n")
     fd.close()
 
-    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}'     
+    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}' 
+
+@app_autoView.route("/queryAABB/<model>/<state>")
+def queryAABB(model, state):
+    if os.path.exists(f'./static/dataset/object/{model}/{state}-AABB.json'):
+        try:
+            AABBcache = {}
+            with open(f'./static/dataset/object/{model}/{state}-AABB.json') as f:
+                AABBcache = json.load(f)
+            return json.dumps({"max":AABBcache["max"], "min":AABBcache["min"]})
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+
+@app_autoView.route("/usersearchOSR",methods=['POST'])
+def usersearchOSR():
+    if flask.request.method == 'POST':
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        data = flask.request.json
+        scene_json = data['json']
+        interjson = data['interjson']
+        
+    else:
+        return 'sorry you\'re not using POST method'
+
+    #collect and organize
+    wallResult = [-1,-1,-1]
+    windowResult = []
+    doorResult = []
+    room = scene_json['rooms'][interjson['roomId']]
+    for obj in room['objList']:
+        if 'modelId' in obj and obj['modelId'] == interjson['modelId']:
+            if abs(obj['translate'][0] - interjson['translate'][0]) < 0.001 and abs(obj['translate'][1] - interjson['translate'][1]) < 0.001 and abs(obj['translate'][2] - interjson['translate'][2]) < 0.001:
+                flag = True #print(obj)
+                flag = (calWall(wallResult, obj, room) > 0)
+                flag = (calWindow(windowResult, obj, room) > 0)
+                flag = (calDoor(doorResult, obj, room) > 0)
+                if not flag:
+                    print('geometry error in the room')
+                    return ""
+
+    #retrieve
+    selected = mainSearch(interjson, wallHint = wallResult, windowHint = windowResult, doorHint = doorResult)[0:8];#searchMainModelId(interjson['modelId'])[0:8];#
+
+    for origin in selected:
+        print(origin['priorId'], origin['score'])
+        t = {}
+        t['img'] = origin['priorId'] + '.png'
+        t['identifier'] = origin['priorId']
+        origin['priorMeta'] = t
+
+    return json.dumps(selected)
+
+@app_autoView.route("/ylimgs/<identifier>")
+def ylimgs(identifier):
+    if os.path.exists(f'./yltmp/OSRfigures/{identifier}.png'):
+        return flask.send_file(f'./yltmp/OSRfigures/{identifier}.png')
+    
+@app_autoView.route("/catimgs/<identifier>")
+def catimgs(identifier):
+    if os.path.exists(f'./yltmp/OSRfigures/{identifier}.png'):
+        return flask.send_file(f'./yltmp/OSRfigures/{identifier}.png')
+
+def loadClist(name):
+    c_List = {}
+    loadF = open(name,"r")
+    lines = loadF.readlines()
+    for line in lines:
+        a = line.split("\t")
+        k = int(a[0][:-1])
+        lst = a[1].split(',')
+        c_List[k] = []
+        for num in lst[:-1]:
+            c_List[k].append(int(num))
+    return c_List
+
+coarseTypes = "0808_0_0.8_300"
+fineTypes = "0827_0_0.5_50"
+
+@app_autoView.route("/prior_catagory",methods=['POST'])
+def prior_catagory():
+    c_list = loadClist("./yltmp/class_" + coarseTypes + ".txt")
+    ret = []
+    cnt = 0
+
+    mainObjFile = open("./yltmp/statistic.txt","r")
+    mainObj_list = {}
+    for line in mainObjFile.readlines():
+        a = line.split("\t")
+        mainObj_list[a[0][:-1]] = a[2][:-3]
+
+    for i in c_list:
+        t = {}
+        t['img'] = str(i) + '.png'
+        t['identifier'] = i
+        t['mainObjects'] = mainObj_list[str(i)].split(",") #"Multi-seat Sofa:72%"
+        t['leng'] = len(c_list[i])
+        c = loadClist("./yltmp/classes/" + str(i) + "/class_" + fineTypes + ".txt")
+        t['le'] = len(c)
+        ret.append(t)
+        #print(c_list[i])
+    ret.sort(key=lambda t:len(c_list[t['identifier']]))
+    return json.dumps(ret[-1:0:-1])#print(ret[-1:0:-1])
+
+manList = [
+    [206,140,35,201,208,171,198], #living room
+    [10,11,46,130,184,151,167], #shelves
+    [127,0,48,189,90,306,332], #beds
+    [7,9,43,91,215,221,235], #studies
+    [230,82,66,124,107,335,71], #dining
+    [53, 58, 88, 192, 148, 139, 72] #utils
+]
+
+@app_autoView.route("/catagory_prior_middle/<identifier>",methods=['POST'])
+def catagory_prior_middle(identifier):
+    c_list = loadClist("./yltmp/classes/" + identifier + "/class_" + fineTypes + ".txt")
+    ret = []
+    for i in c_list:
+        t = {}
+        t['img'] = str(i) + '.png'
+        t['identifier'] = i
+        t['mother'] = identifier
+        t['leng'] = len(c_list[i])
+        ret.append(t)
+    ret.sort(key=lambda t:len(c_list[t['identifier']]))
+    return json.dumps(ret[-1:-14:-1])#print(ret[-1:-10:-1])
+
+@app_autoView.route("/catagory_prior/<identifier>/<identi>",methods=['POST'])
+def catagory_prior(identifier, identi):
+    c_list = loadClist("./yltmp/classes/" + identifier + "/class_" + fineTypes + ".txt")
+    selected = searchId(c_list[int(identi)])
+    orderCnt = 1
+    for origin in selected:
+        #print(origin['priorId'], origin['score'])
+        t = {}
+        t['img'] = origin['priorId'] + '.png'
+        t['identifier'] = origin['priorId']
+        subsets = []
+        strid = str(origin['priorId'])
+        for filename in os.listdir('./yltmp/OSRfigures'):
+            if filename[:(len(strid)+4)] == strid + '____' and filename[-4:].lower() == '.png':
+                subsets.append(filename[(len(strid)+4):-4])
+        t['subsets'] = subsets
+        t['order'] = orderCnt
+        origin['priorMeta'] = t
+        origin['identifier'] = origin['priorId']
+        orderCnt += 1
+    return json.dumps(selected[:13])#print(selected[:13])
+
+methods = ["Inds", "MgAdd", "CLPT", "CGS", "FFG"]
+@app_autoView.route("/clickTimer",methods=['POST'])
+def clickTimer():
+    data = flask.request.json
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
+    f.write(json.dumps(data['timeC']))
+    f.close()
+    f = open("./yltmp/experiment/%s-%s-%s-%s-result.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
+    f.write(json.dumps(data['json']))
+    f.close()
+    return "%s-%s-%s-%s OK"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr)
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):

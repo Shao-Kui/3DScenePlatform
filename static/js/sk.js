@@ -171,6 +171,7 @@ const updateTimerTab = function(){
     $('#tab_Rotate').text(timeCounter.rotate.toFixed(3));
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
+    $('#tab_Clicks').text(timeCounter.clicks);
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
 
@@ -1341,6 +1342,16 @@ const setting_up = function () {
         timeCounter.cgs - ${timeCounter.cgs}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/clickTimer`,
+            async: false,
+            data: JSON.stringify({methodName: $("#nameOSR").val(), usern: $("#userOSR").val(), homeType:$("#searchinput").val(), timeC: timeCounter, json: getDownloadSceneJson()}),
+            success: function (msg) {
+                alert(msg);
+            }
+        });
         timeCounter.navigate = 0;
         timeCounter.move = 0;
         timeCounter.rotate = 0;
@@ -1349,8 +1360,10 @@ const setting_up = function () {
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;
+        timeCounter.clicks = 0;
         timeCounter.totalStart = moment();
     });
+    document.addEventListener('click', function(){timeCounter.clicks+=1;});
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
         fpCtrlMode = !fpCtrlMode;
@@ -1484,11 +1497,1390 @@ const setting_up = function () {
         }
     });
 
+    const tmpPriorClick = function(){
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/prior_catagory`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                floorPlanMapping.clear();
+                while (osrCatalogItems.firstChild) {
+                    osrCatalogItems.firstChild.remove();
+                }
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let ip = document.createElement('p'); ip.style.color = 'black'; ip.style.fontSize = '15px'; ip.innerHTML = "(" + item.le + "-" + item.leng + ") " + item.mainObjects[0] + "%";
+                    let up = document.createElement('p');
+                    if(item.mainObjects.length == 2){
+                        up.style.position = 'absolute'; up.style.bottom = '0px'; up.style.color = 'black'; up.style.fontSize = '15px'; up.innerHTML = item.mainObjects[1] + "%";
+                    }
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/catimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/catimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('click', priorcatagoryClickMiddle);
+                    iDiv.classList.add('tiler'); iDiv.appendChild(ip); if(item.mainObjects.length == 2){ iDiv.appendChild(up); }
+                    osrCatalogItems.appendChild(iDiv);
+                    $(iDiv).data('meta', item);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                });
+            }
+        });
+    };
+
+    $("#priorsearchfullbtn").click(() => {
+        tmpPriorClick();
+    });
+
+    let priorcatagoryClickMiddle = function(e){
+        floorPlanMapping.clear();
+        while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/catimgs/back`;//`/catimgs/${$(e.target).data("meta").identifier}`;//
+        iDiv.className = "mapping catalogItem";
+        iDiv.style.backgroundImage = `url(/catimgs/back)`;//`url(/catimgs/${$(e.target).data("meta").identifier})`;//
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        osrCatalogItems.appendChild(iDiv);
+        iDiv.addEventListener('click', tmpPriorClick);
+        $(iDiv).data('meta', $(e.target).data("meta"));
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/catagory_prior_middle/${$(e.target).data("meta").identifier}`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let ip = document.createElement('p'); ip.style.color = 'black'; ip.style.fontSize = '15px'; ip.innerHTML = item.leng + ' imgs';
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    $(iDiv).data('meta', item);
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('click', priorcatagoryClick);
+                    iDiv.classList.add('tiler'); iDiv.appendChild(ip);
+                    osrCatalogItems.appendChild(iDiv);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                })
+            }
+        });
+    };
+
+    let priorcatagoryClick = function(e){
+        floorPlanMapping.clear();
+        while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/catimgs/back`;//`/ylimgs/${$(e.target).data("meta").identifier}`;//
+        iDiv.className = "mapping catalogItem";
+        iDiv.id = `grid order 0`;
+        iDiv.style.backgroundImage = `url(/catimgs/back)`;//`url(/ylimgs/${$(e.target).data("meta").identifier})`;//
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        osrCatalogItems.appendChild(iDiv);
+        let newMeta = {};
+        newMeta.identifier = $(e.target).data("meta").mother;
+        newMeta.img = $(e.target).data("meta").mother + ".png";
+        $(iDiv).data('meta', newMeta);
+        iDiv.addEventListener('click', priorcatagoryClickMiddle);
+        
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/catagory_prior/${$(e.target).data("meta").mother}/${$(e.target).data("meta").identifier}`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.id = `grid order ${item.priorMeta.order}`;
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    $(iDiv).data('meta', item);
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('mouseenter', priorHover);
+                    iDiv.addEventListener('click', priorClick);
+                    iDiv.classList.add('tiler');
+                    osrCatalogItems.appendChild(iDiv);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                })
+            }
+        });
+    };
+
+    $("#priorsearchbtn").click(() => {
+        if(INTERSECT_OBJ == null){
+            alert("blankly recommendation is not allowed. Please select an object then search the prior about it.");
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/usersearchOSR`,
+            data: JSON.stringify({
+                interjson: INTERSECT_OBJ.userData.json,
+                json: getDownloadSceneJson()}),
+            success: function (data) {
+                aaa = JSON.parse(data);
+                while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+                aaa.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.priorMeta.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.priorMeta.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    iDiv.addEventListener('click', priorClick);
+                    osrCatalogItems.appendChild(iDiv);
+                    $(iDiv).data('meta', item);
+                    //alert(item.priorMeta.identifier);
+                });
+                //alert(data);
+            }
+        });
+        
+    });
+
+    let queryAABB = function(attachedObjId, currentState){
+        var bbb = 0;
+        $.ajax({
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            url: `queryAABB/${attachedObjId}/${currentState}`,
+            async: false,
+            success: function (data) {
+                var aaa = JSON.parse(data);
+                bbb = {"max":{"x":aaa.max[0], "y":aaa.max[0], "z":aaa.max[2] }, "min":{ "x":aaa.min[0], "y":aaa.min[0], "z":aaa.min[2] }};
+            }
+        });
+        //console.log(bbb);
+        return bbb;
+    }
+
+    let singleObjectBounding = function(itm){
+        var realx = itm.objPosX;
+        var realz = itm.objPosZ;
+        //console.log(realx);
+        //console.log(realz);
+        //console.log(objectCache[itm.attachedObjId].boundingBox);
+        var objBbox = objectCache[itm.attachedObjId].boundingBox;
+        if(itm.currentState && isNaN(parseInt(itm.attachedObjId))) objBbox = queryAABB(itm.attachedObjId, itm.currentState);
+        if(itm.attachedObjId == "desk2shelf") console.log(objBbox);
+        var scaledBbox = {"max":{"x":itm.objScaleX * objBbox.max.x, "y":itm.objScaleY * objBbox.max.y, "z":itm.objScaleZ * objBbox.max.z}, "min":{"x":itm.objScaleX * objBbox.min.x, "y":itm.objScaleY * objBbox.min.y, "z":itm.objScaleZ * objBbox.min.z}}
+        objBbox = scaledBbox;
+        if(itm.attachedObjId == "desk2shelf") console.log(objBbox);
+        var phi = itm.objOriY;
+        var maxX = objBbox.max.x;
+        var minX = objBbox.min.x;
+        var maxZ = objBbox.max.z;
+        var minZ = objBbox.min.z;
+        while(phi < 0.00) phi += 6.2832
+        while(phi >= 1.5708){
+            phi -= 1.5708
+            var aX = maxZ;
+            var iZ =-maxX;
+            var iX = minZ;
+            var aZ =-minX;
+            maxX = aX;
+            maxZ = aZ;
+            minX = iX;
+            minZ = iZ;
+        }
+
+        //console.log(phi);
+        var cosphi = Math.cos(phi);
+        var sinphi = Math.sin(phi);
+        var realMaxX = maxX * cosphi + maxZ * sinphi + realx;
+        var realMinZ =-maxX * sinphi + minZ * cosphi + realz;
+        var realMaxZ = maxZ * cosphi - minX * sinphi + realz;
+        var realMinX = minZ * sinphi + minX * cosphi + realx;
+        return {"max":{"x":realMaxX, "z":realMaxZ}, "min":{"x":realMinX, "z":realMinZ}};
+    }
+
+    let moveSinglePriorBbox = function(itm, currentLocation){
+        if(itm.attachedObjId == "desk2shelf") console.log("desk2shelf");
+        var priorBbox = singleObjectBounding(itm);
+        console.log(priorBbox);
+        if(itm.attachedObjId == "desk2shelf") console.log([itm.objPosX, itm.objPosZ, itm.objOriY]);
+        var rbox = rotatePriorBbox(priorBbox, currentLocation[1]);
+        console.log(rbox);
+        var tbox = {"max":{"x":rbox.max.x + currentLocation[0][0], "z":rbox.max.z + currentLocation[0][2]}, "min":{"x":rbox.min.x + currentLocation[0][0], "z":rbox.min.z + currentLocation[0][2]}};
+        console.log(tbox);
+        return tbox;//currentLocation[0][0];  //currentLocation[0][2]
+    }
+
+    let singleObjectRelativeLocation = function(itm, mainTrans){
+        var theta = mainTrans[1];//INTERSECT_OBJ.rotation.y;
+        var costheta = Math.cos(theta);
+        var sintheta = Math.sin(theta);
+
+        var realx = itm.objPosX * costheta + itm.objPosZ * sintheta;
+        var realz =-itm.objPosX * sintheta + itm.objPosZ * costheta;
+            
+        return [realx, realz];
+    };
+
+    let singleObjectInformation = function(itm){
+        var theta = INTERSECT_OBJ.rotation.y;
+        var costheta = Math.cos(theta);
+        var sintheta = Math.sin(theta);
+
+        var realx = itm.objPosX * costheta + itm.objPosZ * sintheta;
+        var realz =-itm.objPosX * sintheta + itm.objPosZ * costheta;
+            
+        //console.log(objectCache[itm.attachedObjId].boundingBox);
+        var objBbox = objectCache[itm.attachedObjId].boundingBox;
+        if(itm.currentState && isNaN(parseInt(itm.attachedObjId))) objBbox = queryAABB(itm.attachedObjId, itm.currentState);
+        //console.log(manager.renderManager.scene_json['rooms'][INTERSECT_OBJ.userData.json.roomId]);
+        var roomBbox = manager.renderManager.scene_json['rooms'][INTERSECT_OBJ.userData.json.roomId].roomShapeBBox;
+
+        var phi = INTERSECT_OBJ.rotation.y + itm.objOriY;
+        var maxX = objBbox.max.x;
+        var minX = objBbox.min.x;
+        var maxZ = objBbox.max.z;
+        var minZ = objBbox.min.z;
+        while(phi < 0.00) phi += 6.2832
+        while(phi >= 1.5708){
+            phi -= 1.5708
+            var aX = maxZ;
+            var iZ =-maxX;
+            var iX = minZ;
+            var aZ =-minX;
+            maxX = aX;
+            maxZ = aZ;
+            minX = iX;
+            minZ = iZ;
+        }
+
+        //console.log(phi);
+        var cosphi = Math.cos(phi);
+        var sinphi = Math.sin(phi);
+        var realMaxX = maxX * cosphi + maxZ * sinphi + INTERSECT_OBJ.position.x + realx;
+        var realMinZ =-maxX * sinphi + minZ * cosphi + INTERSECT_OBJ.position.z + realz;
+        var realMaxZ = maxZ * cosphi - minX * sinphi + INTERSECT_OBJ.position.z + realz;
+        var realMinX = minZ * sinphi + minX * cosphi + INTERSECT_OBJ.position.x + realx;
+
+        var overMaxX = Math.max(realMaxX - roomBbox.max[0], 0.0);
+        var overMaxZ = Math.max(realMaxZ - roomBbox.max[1], 0.0);
+        var overMinX = Math.min(realMinX - roomBbox.min[0], 0.0);
+        var overMinZ = Math.min(realMinZ - roomBbox.min[1], 0.0);
+
+        //console.log(overMaxX, overMaxZ, overMinX, overMinZ);
+        return [realx, realz, overMaxX, overMaxZ, overMinX, overMinZ];
+
+    };
+
+    let clearSubsets = function(){
+        var child = osrCatalogItems.firstChild;
+        var last = osrCatalogItems.lastChild;
+        while(child != last) {
+            var delChild = child;
+            child = child.nextSibling;
+            if(delChild.id.match('__subsets')) delChild.remove();
+        }
+        if(child.id.match('__subsets')) child.remove();
+    }
+
+    const priorHover = function(e){
+        clearSubsets();
+        let iDiv = document.createElement('div');
+        let meta = $(e.target).data("meta");
+        thisId = meta.priorMeta.identifier + '__subsets';
+        if(document.getElementById(thisId)) return;
+        iDiv.id = thisId;
+        let subsets = meta.priorMeta.subsets;
+        //console.log(subsets);
+        let subsetLen = subsets.length;
+        if(subsetLen == 0) return;
+        subsets.forEach(function(item){
+            let jDiv = document.createElement('div');
+            let image = new Image();
+            image.onload = function(){
+                jDiv.style.width = `${$(window).width() * 0.10}px`;
+                jDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+            };
+            image.src = `/ylimgs/${meta.priorMeta.identifier}____${item}`;
+            jDiv.className = "mapping catalogItem";
+            jDiv.style.backgroundImage = `url(/ylimgs/${meta.priorMeta.identifier}____${item})`;
+            jDiv.style.backgroundSize = '100% 100%';
+            jDiv.style.visibility = 'visible';
+            jDiv.addEventListener('click', priorClick);
+            thisMeta = JSON.parse(JSON.stringify(meta)); //deep copy
+            thisGtrans = [];
+            thisMeta.gtrans.forEach(function(itm){
+                if(itm.attachedObjId != item) thisGtrans = thisGtrans.concat([itm]);
+            });
+            thisMeta.gtrans = thisGtrans;
+            thisMeta.identifier = `${meta.priorMeta.identifier}____${item}`;
+            thisMeta.priorMeta.identifier = `${meta.priorMeta.identifier}____${item}`;
+            thisMeta.priorMeta.img = `${meta.priorMeta.identifier}____${item}.png`;
+            jDiv.addEventListener('mouseover', mappingHover);
+            jDiv.addEventListener('mouseout', mappingLeave);
+            jDiv.classList.add('tiler');
+            iDiv.appendChild(jDiv);
+            $(jDiv).data('meta', thisMeta);
+            floorPlanMapping.set(thisMeta.identifier, image);
+        });
+
+        iDiv.style.position = 'absolute';
+        let order = meta.priorMeta.order;
+        let startOrder = 0;
+        if(order < 4){//?????????
+            if(subsetLen == 1) startOrder = order + 2;
+            else{
+                startOrder = order + 2 - (order % 2);
+            }
+        }
+        else{
+            if(subsetLen == 1) startOrder = order - 2;
+            else{
+                startOrder = order - 2 - (order%2);
+                if(subsetLen > 2) startOrder -= 2;
+                if(subsetLen > 4) startOrder -= 2;
+            }
+        }
+        startDiv = document.getElementById(`grid order ${startOrder}`);
+        if(order < 4) iDiv.style.top = startDiv.offsetTop - 8;//
+        else iDiv.style.top = startDiv.offsetTop + 8;//
+        iDiv.style.left = startDiv.offsetLeft;
+        iDiv.style.visibility = 'visible';
+        iDiv.style.backgroundColor = 'skyblue';
+        iDiv.addEventListener('mouseleave', priorLeave);
+        osrCatalogItems.appendChild(iDiv);
+
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(index){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta.identifier}`);
+            $(this).attr('id', `grid-${meta.identifier}`);
+        });
+    }
+
+    const priorLeave = function(e){
+        while (e.target.firstChild) e.target.firstChild.remove();
+        e.target.style.visibility = 'invisible';
+        e.target.remove();//
+    }
+
+    let directionofWindoor = function(room, bbox){
+        let center = [(bbox.max[0] + bbox.min[0])/2.0, 0.0, (bbox.max[2] + bbox.min[2])/2.0];
+        let result = [0, 0];
+        if( (bbox.max[0] - bbox.min[0]) > (bbox.max[2] - bbox.min[2]) ){
+            for(var i = 0; i < room.roomShape.length; ++i){
+                if(Math.abs(room.roomShape[i][1] - center[2]) < 0.15){
+                    if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][1] - center[2]) < 0.15) ) i = room.roomShape.length-1;
+                    if(Math.abs(room.roomOrient[i]) < 0.2) result = [[0,1],i];
+                    else result = [[0,-1],i];
+                    break;
+                }
+            }
+        }
+        else{
+            for(var i = 0; i < room.roomShape.length; ++i){
+                if(Math.abs(room.roomShape[i][0] - center[0]) < 0.15){
+                    if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][0] - center[0]) < 0.15) ) i = room.roomShape.length-1;
+                    if(room.roomOrient[i] > 0.0) result = [[1, 0],i];
+                    else result = [[-1, 0],i];
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    let windoorofRoom = function(room){
+        result = {"window":[], "door":[]};
+        //console.log(room);
+        for(var i = 0; i < room.objList.length; ++i){
+            let obj = room.objList[i];
+            let bbox = obj.bbox;
+            if(obj.coarseSemantic == "door" || obj.coarseSemantic == "Door"){
+                if (bbox.max[1] > 0.1){
+                    if(!(bbox in result.door)){
+                        let t = directionofWindoor(room,bbox);
+                        result.door = result.door.concat([[bbox, t[0], t[1]]]);
+                    }
+                }
+            }
+            else if(obj.coarseSemantic ==  "window" || obj.coarseSemantic == "Window"){
+                if(!(bbox in result.window)){
+                    let t = directionofWindoor(room,bbox);
+                    result.window = result.window.concat([[bbox, t[0], t[1]]]);
+                }
+            }
+        }
+        for(var i = 0; i < room.blockList.length; ++i){
+            let block = room.blockList[i];
+            let bbox = block.bbox;
+            if(block.coarseSemantic == "door" || block.coarseSemantic == "Door"){
+                if (bbox.max[1] > 0.1){
+                    if(!(bbox in result.door)){
+                        let t = directionofWindoor(room,bbox);
+                        result.door = result.door.concat([[bbox, t[0], t[1]]]);
+                    }
+                }
+            }
+            else if(block.coarseSemantic == "window" || block.coarseSemantic == "Window"){
+                if(!(bbox in result.window)){
+                    let t = directionofWindoor(room,bbox);
+                    result.window = result.window.concat([[bbox, t[0], t[1]]]);
+                }
+            }
+        }
+        //console.log(result);
+        return result;
+    }
+
+    let dirOfMetaWindoor = function(windoor){
+        thisDirection = [0, 0];
+        if(windoor.direction == "z"){
+            if(windoor.objPosZ > 0) thisDirection = [0,-1];
+            else thisDirection = [0,1];
+        }
+        else{
+            if(windoor.objPosX > 0) thisDirection = [-1,0];
+            else thisDirection = [1,0];
+        }
+        return thisDirection;
+    }
+
+    let rotateFromWindoor = function(metaWindoor, realWindoor){
+        var dir1 = dirOfMetaWindoor(metaWindoor);
+        //console.log(dir1);
+        var OriginalOrient = -metaWindoor.objOriY;
+        if(metaWindoor.direction == 'x') OriginalOrient += 1.57;
+        var locX = - metaWindoor.objPosX;
+        var locZ = - metaWindoor.objPosZ;
+        var dir2 = realWindoor[1];
+        var realCenter = [(realWindoor[0].max[0] + realWindoor[0].min[0])/2.0, 0.0, (realWindoor[0].max[2] + realWindoor[0].min[2])/2.0];
+        //console.log(realCenter);console.log(dir1);console.log(dir2);console.log(locX);console.log(locZ);
+        var translate = [0, 0, 0];
+        var lst = [[0, 1], [1, 0], [0,-1], [-1,0]];
+        var i = 0; for(; i < 4; ++i) if(lst[i][0] == dir1[0] && lst[i][1] == dir1[1]) break;
+        var j = 0; for(; j < 4; ++j) if(lst[j][0] == dir2[0] && lst[j][1] == dir2[1]) break;
+        var k = (j-i+4)%4;
+        if(k == 1){
+            translate = [realCenter[0] + locZ, 0.0, realCenter[2] - locX];
+            OriginalOrient += Math.PI / 2.0;
+        }else if(k == 2){
+            translate = [realCenter[0] - locX, 0.0, realCenter[2] - locZ];
+            OriginalOrient += Math.PI;
+        }else if(k == 3){
+            translate = [realCenter[0] - locZ, 0.0, realCenter[2] + locX];
+            OriginalOrient -= Math.PI / 2.0;
+        }else{
+            translate = [realCenter[0] + locX, 0.0, realCenter[2] + locZ];
+        }
+        console.log(translate);
+        return [translate, OriginalOrient, realWindoor[2]];//, thetaToDir(OriginalOrient, 0.2)];
+    }
+
+    let thetaToDir = function(theta, bound = 0.001){
+        while(theta > Math.PI) theta -= 2*Math.PI;
+        while(theta <-Math.PI) theta += 2*Math.PI;
+        if(Math.abs(theta) < bound) return [0,1];
+        else if(Math.abs(Math.abs(theta) - Math.PI) < bound) return [0,-1];
+        else if(Math.abs(theta - Math.PI / 2.0) < bound) return [ 1,0];
+        else if(Math.abs(theta + Math.PI / 2.0) < bound) return [-1,0];
+        else console.log("error theta");
+    }
+
+    let wallInformDict = function(room, idx){
+        let endIdx = (idx+1)%(room.roomShape.length);
+        let dir = thetaToDir(room.roomOrient[idx]);
+        let maxX = Math.max(room.roomShape[idx][0], room.roomShape[endIdx][0]);
+        let minX = Math.min(room.roomShape[idx][0], room.roomShape[endIdx][0]);
+        let maxZ = Math.max(room.roomShape[idx][1], room.roomShape[endIdx][1]);
+        let minZ = Math.min(room.roomShape[idx][1], room.roomShape[endIdx][1]);
+        let centerX = (room.roomShape[idx][0] + room.roomShape[endIdx][0]) / 2.0;
+        let centerZ = (room.roomShape[idx][1] + room.roomShape[endIdx][1]) / 2.0;
+        return {"dir": dir, "maxX": maxX, "maxZ": maxZ, "minX": minX, "minZ":minZ, "centerX":centerX, "centerZ":centerZ};
+    }
+
+    let rotatePriorBbox = function(priorBbox, spin){
+        var t = spin;
+        var result = priorBbox;
+        while(t <-Math.PI) t += 2*Math.PI;
+        while(t > Math.PI) t -= 2*Math.PI;
+        if(Math.abs(t - Math.PI / 2.0) < 0.1){
+            result = {"min":{"x":priorBbox.min.z, "z": -priorBbox.max.x},"max":{"x":priorBbox.max.z, "z":-priorBbox.min.x}};
+        }
+        else if(Math.abs(Math.abs(t) - Math.PI) < 0.1){
+            result = {"min":{"x":-priorBbox.max.x, "z": -priorBbox.max.z},"max":{"x":-priorBbox.min.x, "z":-priorBbox.min.z}};
+        }
+        else if(Math.abs(t + Math.PI / 2.0) < 0.1){
+            result = {"min":{"x":-priorBbox.max.z, "z": priorBbox.min.x},"max":{"x":-priorBbox.min.z, "z":priorBbox.max.x}};
+        }
+        else if(Math.abs(t) > 0.1){
+            console.log(`error spin ${spin}`)
+        }
+        return result;
+    }
+
+    let compareCurrentLocation = function(currentLocation, currentLocationTmp, xscan, zscan, priorBbox){ 
+        var tmpX = currentLocationTmp[0][0]; var spanZ = [];
+        var tmpZ = currentLocationTmp[0][2]; var spanX = [];
+        for(var tX in xscan){
+            if(tX < tmpX) spanZ = xscan[tX];
+            else break;
+        }
+        for(var tZ in zscan){
+            if(tZ < tmpZ) spanX = zscan[tZ];
+            else break;
+        }
+
+        var realPriorBbox = rotatePriorBbox(priorBbox,currentLocationTmp[1]);
+        var ratioZ = (Math.max(0.0, spanZ[0] - (realPriorBbox.min.z + tmpZ)) + Math.max(0.0, (realPriorBbox.max.z + tmpZ) - spanZ[1])) / (realPriorBbox.max.z - realPriorBbox.min.z);
+        var ratioX = (Math.max(0.0, spanX[0] - (realPriorBbox.min.x + tmpX)) + Math.max(0.0, (realPriorBbox.max.x + tmpX) - spanX[1])) / (realPriorBbox.max.x - realPriorBbox.min.x);
+        var ratio = Math.max(ratioX, ratioZ);
+
+        if(currentLocation.length == 0){
+            if (ratio < 0.5) return ratio;
+            else return -1;
+        }
+        else {
+            if(ratio < currentLocation[3]) return ratio;
+            else return -1;
+        }
+    }
+
+    let scanRoom = function(room){  //console.log("here");
+        //从xmin往xmax扫一下房间
+        var xscan = {};
+        let xmin = room.roomShapeBBox.min[0];
+        let xmax = room.roomShapeBBox.max[0];
+        //找到xmin的那面墙，
+        var i = 0;
+        for(; i < room.roomShape.length; ++i){
+            if(Math.abs(room.roomShape[i][0] - xmin) < 0.1){
+                if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][0] - xmin) < 0.1) ) i = room.roomShape.length-1;
+                break;
+            }
+        }
+        var wallAIdx = (i+1)%(room.roomShape.length);
+        var wallAInfoDict = wallInformDict(room, wallAIdx);
+        var wallBIdx = (i-1+room.roomShape.length)%(room.roomShape.length)
+        var wallBInfoDict = wallInformDict(room, wallBIdx);
+        //当前x为xmin
+        var currX = xmin;
+        while(true){
+            //对于向前方向：
+            while(wallAInfoDict.dir[0] != 0 || wallAInfoDict.maxX < currX + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallAIdx = (wallAIdx+1)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallAInfoDict = wallInformDict(room, wallAIdx);
+            }
+            //对于向后方向：
+            while(wallBInfoDict.dir[0] != 0 || wallBInfoDict.maxX < currX + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallBInfoDict = wallInformDict(room, wallBIdx);
+            }
+
+            xscan[currX] = [Math.min(wallAInfoDict.maxZ,wallBInfoDict.maxZ),Math.max(wallAInfoDict.minZ,wallBInfoDict.minZ)];
+            currX = Math.min(wallAInfoDict.maxX, wallBInfoDict.maxX);
+            if(Math.abs(currX - xmax) < 0.0001) {xscan[xmax] = []; break;}
+        }
+
+
+        //从zmin往zmax扫一下房间
+        var zscan = {};
+        let zmin = room.roomShapeBBox.min[1];
+        let zmax = room.roomShapeBBox.max[1];
+        //找到zmin的那面墙，
+        var i = 0;
+        for(; i < room.roomShape.length; ++i){
+            if(Math.abs(room.roomShape[i][1] - zmin) < 0.1){
+                if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][1] - zmin) < 0.1) ) i = room.roomShape.length-1;
+                break;
+            }
+        }
+        var wallAIdx = (i+1)%(room.roomShape.length);
+        var wallAInfoDict = wallInformDict(room, wallAIdx);
+        var wallBIdx = (i-1+room.roomShape.length)%(room.roomShape.length)
+        var wallBInfoDict = wallInformDict(room, wallBIdx);
+        //当前x为xmin
+        var currZ = zmin;
+        while(true){
+            //对于向前方向：
+            while(wallAInfoDict.dir[1] != 0 || wallAInfoDict.maxZ < currZ + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallAIdx = (wallAIdx+1)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallAInfoDict = wallInformDict(room, wallAIdx);
+            }
+            //对于向后方向：
+            while(wallBInfoDict.dir[1] != 0 || wallBInfoDict.maxZ < currZ + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallBInfoDict = wallInformDict(room, wallBIdx);
+            }
+
+            zscan[currZ] = [Math.min(wallAInfoDict.maxX,wallBInfoDict.maxX),Math.max(wallAInfoDict.minX,wallBInfoDict.minX)];
+            currZ = Math.min(wallAInfoDict.maxZ, wallBInfoDict.maxZ);
+            if(Math.abs(currZ - zmax) < 0.0001) {zscan[zmax] = []; break;}
+        }
+
+        return [xscan, zscan];
+    }
+
+    let calcPriorBbox = function(meta){
+        var priorBbox = {"max":{"x":-100.0, "z":-100.0}, "min":{"x":100.0, "z":100.0}};
+        var objBbox = objectCache[meta.mainObjId].boundingBox;
+        if(meta.state && isNaN(parseInt(meta.mainObjId))) objBbox = queryAABB(meta.mainObjId, meta.state[0].currentState);
+        var scl = [1.0, 1.0, 1.0]
+        if("scale" in meta){
+            scl = [meta.scale[0].objScaleX, meta.scale[0].objScaleY, meta.scale[0].objScaleZ];
+        }
+
+        priorBbox.max.x = Math.max(priorBbox.max.x, objBbox.max.x * scl[0]);
+        priorBbox.max.z = Math.max(priorBbox.max.z, objBbox.max.z * scl[2]);
+        priorBbox.min.x = Math.min(priorBbox.min.x, objBbox.min.x * scl[0]);
+        priorBbox.min.z = Math.min(priorBbox.min.z, objBbox.min.z * scl[2]);
+        if('gtrans' in meta){
+            for(var i = 0; i < meta.gtrans.length; ++i){
+                var itm = meta.gtrans[i];
+                objBbox = singleObjectBounding(itm);
+                //console.log(objBbox);
+                priorBbox.max.x = Math.max(priorBbox.max.x, objBbox.max.x);
+                priorBbox.max.z = Math.max(priorBbox.max.z, objBbox.max.z);
+                priorBbox.min.x = Math.min(priorBbox.min.x, objBbox.min.x);
+                priorBbox.min.z = Math.min(priorBbox.min.z, objBbox.min.z);
+            }
+        }
+        return priorBbox;
+    }
+
+    let movePriorBbox = function(meta, currentLocation){
+        var priorBbox = calcPriorBbox(meta);
+        var rbox = rotatePriorBbox(priorBbox, currentLocation[1]);
+        var tbox = {"max":{"x":rbox.max.x + currentLocation[0][0], "z":rbox.max.z + currentLocation[0][2]}, "min":{"x":rbox.min.x + currentLocation[0][0], "z":rbox.min.z + currentLocation[0][2]}};
+        return tbox;//currentLocation[0][0];  //currentLocation[0][2]
+    }
+
+    let mainObjLocation = function(room, meta, xscan, zscan){
+        
+        var schemes = [];
+        var priorBbox = calcPriorBbox(meta);
+
+        var currentLocation = [];
+        var roomLengthX = room.roomShapeBBox.max[0] - room.roomShapeBBox.min[0];
+        var roomLengthZ = room.roomShapeBBox.max[1] - room.roomShapeBBox.min[1];
+
+        //1, get a prior orientation            2, roughly locate the main object
+        //consider window and door; which window? which door?
+        console.log(room);
+        var WindoorOfRoom = windoorofRoom(room);
+        console.log(WindoorOfRoom);
+        console.log(meta.priorId);
+        console.log(priorBbox);
+        console.log(meta.window);
+        console.log(meta.door);
+
+        if( ('window' in meta) || ('door' in meta) ){
+            if('window' in meta){
+                //thisDirection = dirOfMetaWindoor(meta.window[0]);
+                //console.log(meta.window[0].direction);
+                for(var t = 0; t < WindoorOfRoom.window.length; ++t){
+                    //console.log(WindoorOfRoom.window[t]);
+                    var currentLocationTmp = rotateFromWindoor(meta.window[0], WindoorOfRoom.window[t]);
+                    var res = compareCurrentLocation(currentLocation, currentLocationTmp, xscan, zscan, priorBbox); 
+                    if(res > -0.001) currentLocation = currentLocationTmp.concat([res]);
+                }
+                if(currentLocation.length) schemes = schemes.concat([JSON.parse(JSON.stringify(currentLocation))]);
+            } currentLocation = [];
+            if(('door' in meta)){//&& (currentLocation.length == 0)){
+                //thisDirection = dirOfMetaWindoor(meta.door[0]);
+                //console.log(meta.door[0].direction);
+                for(var t = 0; t < WindoorOfRoom.door.length; ++t){
+                    //console.log(WindoorOfRoom.door[0][1]);
+                    var currentLocationTmp = rotateFromWindoor(meta.door[0], WindoorOfRoom.door[t]);
+                    var res = compareCurrentLocation(currentLocation, currentLocationTmp, xscan, zscan, priorBbox);
+                    if(res > -0.001) currentLocation = currentLocationTmp.concat([res]);
+                }
+                if(currentLocation.length) schemes = schemes.concat([JSON.parse(JSON.stringify(currentLocation))]);
+            }
+        }
+        console.log(schemes);
+        
+        //关键就在于找两个侧（房间的某一侧墙，关联关系包围盒的某一侧边界），将他们match
+        
+        //首先找到包围盒最窄的一侧，我们利用它来决定靠哪一面墙？
+        var boundingSign = 0;
+        var boundingNearest = priorBbox.max.x;
+        var boundingLength  = priorBbox.max.z - priorBbox.min.z;
+        if( priorBbox.max.z< boundingNearest) { boundingNearest = priorBbox.max.z; boundingSign = 3; boundingLength = priorBbox.max.x - priorBbox.min.x;}
+        if(-priorBbox.min.x< boundingNearest) { boundingNearest =-priorBbox.min.x; boundingSign = 2; boundingLength = priorBbox.max.z - priorBbox.min.z;}
+        if(-priorBbox.min.z< boundingNearest) { boundingNearest =-priorBbox.min.z; boundingSign = 1; boundingLength = priorBbox.max.x - priorBbox.min.x;}
+        if('wall' in meta){
+            //console.log("here"); console.log(meta.priorId); console.log(meta.wall[0].nearestOrient0);
+            let t = thetaToDir(meta.wall[0].nearestOrient0, bound = 0.02); console.log(t);
+            if((t[0] == 0) && (t[1] == 1)){
+                boundingNearest =-priorBbox.min.z; boundingSign = 3; boundingLength = priorBbox.max.x - priorBbox.min.x;
+            }else if((t[0] ==-1) && (t[1] == 0)) {
+                boundingNearest =-priorBbox.min.x; boundingSign = 2; boundingLength = priorBbox.max.z - priorBbox.min.z;
+            }else if((t[0] == 0) && (t[1] ==-1)){
+                boundingNearest = priorBbox.max.z; boundingSign = 1; boundingLength = priorBbox.max.x - priorBbox.min.x;
+            }else if((t[0] == 1) && (t[1] == 0)){
+                boundingNearest = priorBbox.max.x; boundingSign = 0; boundingLength = priorBbox.max.z - priorBbox.min.z;
+            }
+        }
+        
+        //从较短一侧的墙开始试一试。首先计算包围盒靠该墙时主物体位置上另一个维度的跨度是多大；移开门范围，看看包围盒在该维度上能否保持在房间的维度跨度以内。如果可以就保留，
+            //对墙的长度依次排序
+        var wallSigns = [];
+        var dirSign = 0, wallLen = 0;
+        var currentActualLength = boundingLength;
+        //if(Math.abs(room.roomShape[0][1] - room.roomShape[1][1]) < 0.001){ dir = 1; wallLen = Math.abs(room.roomShape[0][0] - room.roomShape[1][0]);}
+        //else { dir = 0; wallLen = Math.abs(room.roomShape[0][1] - room.roomShape[1][1]);}
+        //wallSigns = [[0, dir, wallLen]];
+        for(var i = 0; i < room.roomShape.length; ++i){
+            var dir = thetaToDir(room.roomOrient[i]);
+            dirSign = dir[1]*dir[1];//????????????????????????????????????????????????????????
+            var j = (i+1)%(room.roomShape.length);
+            wallLen = Math.abs(room.roomShape[i][1 - dirSign] - room.roomShape[j][1 - dirSign]);  //on the 'dirSign' dimension, the wall's location do not change
+            var center = [(room.roomShape[i][0] + room.roomShape[j][0]) / 2.0, (room.roomShape[i][1] + room.roomShape[j][1]) / 2.0];
+            var k = 0;
+            for(; k < wallSigns.length; ++k){ if(wallSigns[k].wallLength > wallLen) break; }
+            var wallInfoDict = {"idx":i, "dirSign":dirSign, "dir":dir, "wallLength":wallLen, "center":center};
+            wallSigns.splice(k,0,wallInfoDict); 
+        }
+        console.log(wallSigns);
+
+            //依次遍历这些墙，
+        for(var i = wallSigns.length-1; i >= 0; --i){ console.log(i); console.log(boundingNearest);
+            let wallIdx = wallSigns[i].idx;
+            let spanDirSign = 1 - wallSigns[i].dirSign; let notSpanDirSign = 1 - spanDirSign;
+            let dirSign = wallSigns[i].dir; 
+            let center = wallSigns[i].center;
+            let wallLen = wallSigns[i].wallLength;
+            var span = [center[spanDirSign] - wallLen / 2.0, center[spanDirSign] + wallLen / 2.0];
+            if(dirSign[0] == 1 && dirSign[1] == 0){
+                let currentX = center[0] + boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 < center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.max(room.roomShape[j][0], room.roomShape[k][0]) > currentX) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 < center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.max(room.roomShape[j][0], room.roomShape[k][0]) > currentX) break;
+                }
+            }
+            else if(dirSign[0] == 0 && dirSign[1] == -1){
+                let currentZ = center[1] - boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 > center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.min(room.roomShape[j][1], room.roomShape[k][1]) < currentZ) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 > center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.min(room.roomShape[j][1], room.roomShape[k][1]) < currentZ) break;
+                }
+            }
+            else if(dirSign[0] ==-1 && dirSign[1] == 0){
+                let currentX = center[0] - boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 > center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.min(room.roomShape[j][0], room.roomShape[k][0]) < currentX) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 > center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.min(room.roomShape[j][0], room.roomShape[k][0]) < currentX) break;
+                }
+
+            }
+            else if(dirSign[0] == 0 && dirSign[1] == 1){
+                let currentZ = center[1] + boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 < center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.max(room.roomShape[j][1], room.roomShape[k][1]) > currentZ) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 < center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.max(room.roomShape[j][1], room.roomShape[k][1]) > currentZ) break;
+                }
+            }
+        
+            let doorSpan = [];
+            for(var j = 0; j < WindoorOfRoom.door.length; ++j){
+                if(WindoorOfRoom.door[j][2] == wallIdx){
+                    if(spanDirSign == 0){
+                        let p = [WindoorOfRoom.door[j][0].min[0],WindoorOfRoom.door[j][0].max[0]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                    else{
+                        let p = [WindoorOfRoom.door[j][0].min[2],WindoorOfRoom.door[j][0].max[2]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                }
+            }
+            for(var j = 0; j < WindoorOfRoom.window.length; ++j){
+                if(WindoorOfRoom.window[j][2] == wallIdx){
+                    if(spanDirSign == 0){
+                        let p = [WindoorOfRoom.window[j][0].min[0],WindoorOfRoom.window[j][0].max[0]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                    else{
+                        let p = [WindoorOfRoom.window[j][0].min[2],WindoorOfRoom.window[j][0].max[2]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                }
+            }
+            let actualLength = 0;
+            if(doorSpan.length > 0){
+                if(span[1] - doorSpan[0][1] >  doorSpan[0][0] - span[0]) span[0] = doorSpan[0][1];
+                else span[1] = doorSpan[0][0];
+            }
+            actualLength = span[1] - span[0]; console.log(i);
+
+            //首先，需要检查一下能不能往这面墙上靠，actualLength 和 boundingLength
+            if(actualLength > currentActualLength * 0.8){
+                //如果按照boundingNearest靠到这面墙上需要做些什么呢？
+
+                //首先，需要转成什么样子？需要nearest那一面和这面墙的方向对齐
+                //from boundingSign to dirSign
+                    // [1, 0] -> 2    min.x -> 2
+                    // [0,-1] -> 3    max.z -> 3
+                    //[-1, 0] -> 0    max.x -> 0
+                    //[ 0, 1] -> 1    min.z -> 1    前面减后面乘以Math.PI / 2.0
+                let wallSign = 0;
+                if((dirSign[0] == 0) && (dirSign[1] == 1)) wallSign = 1;
+                else if((dirSign[0] == 1) && (dirSign[1] == 0)) wallSign = 2;
+                else if((dirSign[0] == 0) && (dirSign[1] ==-1)) wallSign = 3;
+
+                var originalOrient = (boundingSign - wallSign) * Math.PI / 2.0;
+                var originalLocation = [0.0, 0.0, 0.0];
+                //其次，它的位置在哪里，
+                if((dirSign[0] == 0) && (dirSign[1] == 1)){
+                    originalLocation[0] = (span[1] + span[0])/2.0; originalLocation[2] = center[1] + boundingNearest;
+                }else if((dirSign[0] == 1) && (dirSign[1] == 0)) {
+                    originalLocation[2] = (span[1] + span[0])/2.0; originalLocation[0] = center[0] + boundingNearest;
+                }else if((dirSign[0] == 0) && (dirSign[1] ==-1)){
+                    originalLocation[0] = (span[1] + span[0])/2.0; originalLocation[2] = center[1] - boundingNearest;
+                }else if((dirSign[0] ==-1) && (dirSign[1] == 0)){
+                    originalLocation[2] = (span[1] + span[0])/2.0; originalLocation[0] = center[0] - boundingNearest;
+                }
+                //最后，这一面墙是谁是需要被记录下来的，
+                var res = compareCurrentLocation([], [originalLocation, originalOrient, wallIdx], xscan, zscan, priorBbox); console.log(res);//1.0;//
+                if(res > -0.001) schemes = schemes.concat([ [originalLocation, originalOrient, wallIdx] ] );
+                if(schemes.length > 3) break;
+            }
+        }
+        
+        //----------------------------------------------------------------------------waist--------------------------------------------------------------------------------------------//
+        console.log(schemes);
+
+        for(let j = 0; j < schemes.length ;++j){console.log(j);
+
+            //3， adjust the main object location with the information of wall
+            if('wall' in meta){ //}else{
+                //需要根据当前关联关系包围盒的朝向确定目标墙面的朝向
+                let wallOrient = schemes[j][1] - meta.wall[0].nearestOrient0; //???????????????????????????????????????????????????????????????????????
+                //nearestOrient0 = -1.57, schemes[j][1] = 0.0, wallDirSign = [1,0], wallOrient = 1.57
+                //objectY = nearestOrient0 + wallOrient
+
+                
+                //需要依据之间记录的那面墙（如果是门窗那就是门窗所在墙，如果是主动找墙那就是找的那面墙）周围的墙壁来寻找到底是哪一面墙
+                let wallDirSign = thetaToDir(wallOrient, 0.2);
+                let currentWallIdx = schemes[j][2];
+                let actualWallIdx = currentWallIdx;
+                let currentWallInfo = wallInformDict(room, currentWallIdx);
+                if(currentWallInfo.dir[0] == wallDirSign[0] && currentWallInfo.dir[1] == wallDirSign[1]) actualWallIdx = currentWallIdx;
+                else{
+                    let wallAIdx = currentWallIdx;//(currentWallIdx+1)%(room.roomShape.length);
+                    let wallBIdx = currentWallIdx;//(currentWallIdx-1+room.roomShape.length)%(room.roomShape.length)
+                    while(true){
+                        wallAIdx = (wallAIdx+1)%(room.roomShape.length);//要求这面墙的终点晚于currX
+                        wallAInfoDict = wallInformDict(room, wallAIdx);
+                        if(wallAInfoDict.dir[0] == wallDirSign[0] && wallAInfoDict.dir[1] == wallDirSign[1]) { actualWallIdx = wallAIdx; break; }
+
+                        wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                        wallBInfoDict = wallInformDict(room, wallBIdx);
+                        if(wallBInfoDict.dir[0] == wallDirSign[0] && wallBInfoDict.dir[1] == wallDirSign[1]) { actualWallIdx = wallBIdx; break; }
+                        
+                    }
+                }
+
+                //把主物体在那个维度挪一下，
+                let wallDistance = meta.wall[0].nearestDistance;
+                let actualWallInfo = wallInformDict(room, actualWallIdx);
+                if((wallDirSign[0] == 0) && (wallDirSign[1] == 1)){
+                    schemes[j][0][2] = actualWallInfo.centerZ + wallDistance; 
+                }else if((wallDirSign[0] == 1) && (wallDirSign[1] == 0)) {
+                    schemes[j][0][0] = actualWallInfo.centerX + wallDistance; 
+                }else if((wallDirSign[0] == 0) && (wallDirSign[1] ==-1)){
+                    schemes[j][0][2] = actualWallInfo.centerZ - wallDistance; 
+                }else if((wallDirSign[0] ==-1) && (wallDirSign[1] == 0)){
+                    schemes[j][0][0] = actualWallInfo.centerX - wallDistance; 
+                }
+                //这边其实也是有可能出问题的，有可能墙的方向蹩过去了......结果就不对了
+            }
+
+            /*/4, move the prior bounding box inside the room
+            var tmpX = schemes[j][0][0]; var spanZ = [];
+            var tmpZ = schemes[j][0][2]; var spanX = [];
+            for(var tX in xscan){
+                if(tX < tmpX) spanZ = xscan[tX];
+                else break;
+            }
+            for(var tZ in zscan){
+                if(tZ < tmpZ) spanX = zscan[tZ];
+                else break;
+            }
+            var realPriorBbox = rotatePriorBbox(priorBbox,schemes[j][1]);
+            var moveZ = Math.max(spanZ[0] - realPriorBbox.min.z - tmpZ, 0.0) - Math.max(realPriorBbox.max.z - spanZ[1] + tmpZ, 0.0);
+            var moveX = Math.max(spanX[0] - realPriorBbox.min.x - tmpX, 0.0) - Math.max(realPriorBbox.max.x - spanX[1] + tmpX, 0.0);
+            schemes[j][0][0] += moveX;
+            schemes[j][0][2] += moveZ;*/
+        }
+
+        return schemes;//[ [ translate, orient, wallIdx, ,], [, , , ,], ...    ]
+    }
+
+    let outOfRoom = function(xscan, zscan, bbox){
+        console.log(bbox);
+        let xmin = bbox.min.x;
+        let xmax = bbox.max.x;
+        let zmin = bbox.min.z;
+        let zmax = bbox.max.z;
+        let xminout = -1000.0;
+        let xmaxout = -1000.0;
+        let zminout = -1000.0;
+        let zmaxout = -1000.0;
+
+        let lastX = 0.0;
+        let inSign = false;
+        for(var tX in xscan){console.log(tX);
+            if(inSign){
+                if( (xmin < tX) && (lastX < xmax) ){
+                    zminout = Math.max(zminout, xscan[lastX][0] - zmin);
+                    zmaxout = Math.max(zmaxout, zmax - xscan[lastX][1]);
+                }
+            }else inSign = true;
+            lastX = tX;
+        }
+        let lastZ = 0.0; inSign = false;
+        for(var tZ in zscan){console.log(tZ);
+            if(inSign){
+                if( (zmin < tZ) && (lastZ < zmax) ){
+                    xminout = Math.max(xminout, zscan[lastZ][0] - xmin);
+                    xmaxout = Math.max(xmaxout, xmax - zscan[lastZ][1]);
+                }
+            }
+            else inSign = true;
+            lastZ = tZ;
+        }
+        let ret = {"sign":"none", "val":10000.0, "xmin":xminout, "xmax":xmaxout, "zmin":zminout, "zmax":zmaxout};
+        if(xminout > 0.0 && xminout < ret.val){ ret.sign = "xmin"; ret.val = xminout; }
+        if(xmaxout > 0.0 && xmaxout < ret.val){ ret.sign = "xmax"; ret.val = xmaxout; }
+        if(zminout > 0.0 && zminout < ret.val){ ret.sign = "zmin"; ret.val = zminout; }
+        if(zmaxout > 0.0 && zmaxout < ret.val){ ret.sign = "zmax"; ret.val = zmaxout; }
+        return ret;
+    }
+
+    const objectConflict = function(gtransObjectBboxes, f){
+        console.log(gtransObjectBboxes[0]);
+        console.log(f);
+        for(let i = 0; i < gtransObjectBboxes.length; ++i){
+            let e = gtransObjectBboxes[i];
+            let xcross = false;
+            if((e.max.x > f.min.x) && (f.max.x > e.min.x)){
+                xcross = true;
+                console.log("wtfx");
+            }
+            let zcross = false;
+            if((e.max.z > f.min.z) && (f.max.z > e.min.z)){
+                zcross = true;
+                console.log("wtfz");
+            }
+            if(xcross && zcross){
+                return {
+                    "id":i,
+                    "min":{"x":f.max.x - e.min.x,    "z":f.max.z - e.min.z},
+                    "max":{"x":e.max.x - f.min.x,    "z":e.max.z - f.min.z}
+                };
+            }
+        };
+        return false;
+    }
+
+    var deleteLastPlanObject = function(plan){
+        for(let i = 0; i < plan.length; ++i){
+            for(let k = 0; k < manager.renderManager.scene_json['rooms'].length; ++k){
+                let objList = manager.renderManager.scene_json['rooms'][k].objList;
+                for(let j = 0; j < objList.length; ++j){
+                    if(objList[j].key == plan[i].key){ removeObjectByUUID(objList[j].key); break; }
+                }
+            }
+        }
+    }
+
+    let priorClickScheme = function(e){//deleteLastPlanObject();
+        //clear GTrans
+        releaseGTRANSChildrens(); INTERSECT_OBJ = null;
+        let meta = $(e.target).data("meta"); //console.log(priorClickPlan);
+        for(let i = 0; i < priorClickPlan.length; ++i){ //console.log("here");
+            let t = priorClickPlan[i];
+            if(t.roomId == currentRoomId && t.priorId == meta.priorId) { //return t.plans[0];   别忘了删掉GTRANS里的东西
+                deleteLastPlanObject(t.plans[t.currentPlan]); console.log(t);
+                t.currentPlan = (t.currentPlan + 1) % t.plans.length ;
+                return t.plans[t.currentPlan];
+            }
+        }
+        clickPlan = {"roomId":currentRoomId, "priorId":meta.priorId, "currentPlan":0, "plans":[]}; console.log("here");
+
+        var scans = scanRoom(manager.renderManager.scene_json['rooms'][currentRoomId]);
+        var xscan = scans[0];
+        var zscan = scans[1];
+        var transes = [[]];
+        var scl = [1.0, 1.0, 1.0];
+        var f = 'obj';
+        var stt = 'origin'; console.log("here");
+
+        //check if main object exist or add it in
+        if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId){
+            if(currentRoomId === undefined) { alert('no room being selected'); return; }
+            var roomBbox = manager.renderManager.scene_json['rooms'][currentRoomId].roomShapeBBox; console.log(roomBbox);
+            //console.log(currentRoomId);console.log(manager.renderManager.scene_json['rooms'][currentRoomId]); console.log(meta.mainObjId);
+            if(meta.state && isNaN(parseInt(meta.mainObjId))){
+                f = 'glb';
+                stt = meta.state[0].currentState;
+            }
+            if('scale' in meta){
+                scl = [meta.scale[0].objScaleX, meta.scale[0].objScaleY, meta.scale[0].objScaleZ];
+            } //console.log("here");
+            transes = mainObjLocation(manager.renderManager.scene_json['rooms'][currentRoomId], meta, xscan, zscan);
+        }
+        else{
+            transes[0] = [INTERSECT_OBJ.userData.json.translate, INTERSECT_OBJ.userData.json.orient];
+            scl = [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z];
+            f = INTERSECT_OBJ.userData.json.format;
+            stt = INTERSECT_OBJ.userData.json.startState;
+        }
+        console.log(transes);
+        //var currentRoom = manager.renderManager.scene_json['rooms'][currentRoomId];
+        //if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId) alert("wtf");
+
+        for(let j = 0; j < transes.length; ++j){
+            let furniture = {"modelId":meta.mainObjId, "translate":transes[j][0], "orient":transes[j][1], "scale":scl, "format":f, "startState":stt};
+            clickPlan.plans = clickPlan.plans.concat([[furniture]]);
+
+            var priorBbox = rotatePriorBbox(calcPriorBbox(meta), transes[j][1]);//INTERSECT_OBJ.userData.json.orient);
+            //console.log(priorBbox);
+            var movedRoom = {
+                "max":{"x":roomBbox.max[0] - transes[j][0][0],    "z":roomBbox.max[1] - transes[j][0][2]},
+                "min":{"x":roomBbox.min[0] - transes[j][0][0],    "z":roomBbox.min[1] - transes[j][0][2]}
+            };
+            //console.log(movedRoom);
+            var lambdas = {
+                "max":{"x":Math.min(1.0, movedRoom.max.x / priorBbox.max.x),    "z":Math.min(1.0, movedRoom.max.z / priorBbox.max.z)},
+                "min":{"x":Math.min(1.0, movedRoom.min.x / priorBbox.min.x),    "z":Math.min(1.0, movedRoom.min.z / priorBbox.min.z)}
+            };
+            //console.log(lambdas); console.log(xscan); console.log(zscan);
+
+            let mainItm = {"attachedObjId": meta.mainObjId, "objPosX":0.0, "objPosY":0.0, "objPosZ":0.0, "objOriY":0.0, "objScaleX":scl[0],"objScaleY":scl[1],"objScaleZ":scl[2]};
+            if("state" in meta) mainItm["currentState"] = meta.state[0].currentState;
+            let mainBbox = moveSinglePriorBbox(mainItm,transes[j]);//[INTERSECT_OBJ.userData.json.translate,INTERSECT_OBJ.userData.json.orient]);
+            let gtransObjectBboxes = [mainBbox];
+            //console.log(gtransObjectBboxes); console.log(transes[j]);
+
+            //setNewIntersectObj();
+            //console.log([INTERSECT_OBJ.userData.json.translate,INTERSECT_OBJ.userData.json.orient]);
+            if('gtrans' in meta){
+                for(var i = 0; i < meta.gtrans.length; ++i){
+                    var ret = singleObjectRelativeLocation(meta.gtrans[i], transes[j]);
+
+                    //（1）prior总体进入房间
+                    var realx = (ret[0] > 0 ? ret[0] * lambdas.max.x : ret[0] * lambdas.min.x);// + INTERSECT_OBJ.position.x;
+                    var realz = (ret[1] > 0 ? ret[1] * lambdas.max.z : ret[1] * lambdas.min.z);// + INTERSECT_OBJ.position.z;
+
+                    let adjustedItm = JSON.parse(JSON.stringify(meta.gtrans[i]));
+                    //adjustedItm.objOriY = meta.gtrans[i].objOriY;
+                    adjustedItm.objPosX = realx;
+                    adjustedItm.objPosZ = realz;
+                    adjustedItm.objOriY += transes[j][1];//INTERSECT_OBJ.userData.json.orient;
+                    //（2）各个家具进入房间的具体结构之中、各个家具之间不重叠
+
+                    //console.log(meta.gtrans[i]);
+                    let movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                    let outRet = outOfRoom(xscan, zscan, movedBbox);
+                    //console.log(outRet);
+                    let cnt = 0;
+
+                    while(outRet.sign != "none" && cnt < 2){
+                        if(outRet.sign == "xmin") realx += outRet.val;
+                        if(outRet.sign == "xmax") realx -= outRet.val;
+                        if(outRet.sign == "zmin") realz += outRet.val;
+                        if(outRet.sign == "zmax") realz -= outRet.val;
+                        adjustedItm.objPosX = realx;
+                        adjustedItm.objPosZ = realz;
+                        movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                        outRet = outOfRoom(xscan, zscan, movedBbox);
+                        //console.log(outRet);
+                        cnt += 1;
+                    }
+
+                    //真的要留的话还是应该留各个方向的最大误差，也就是四个数。如果留各个区域的话很不方便做的。
+                    //关键问题还是在于如何构建误差：在这个物体的两个方向上分别扫一遍，各个方向上取最大值；完全冲出去的部分不计
+                    //各个方向有最大误差，误差最小的方向，应该就是我们要挪的方向。（所谓误差，指的是该方向上的包围盒溢出该方向上墙面的多少，）
+                    //往那个方向上走这个误差距离。
+                    //跑三轮，跑不对就不跑了。
+
+                    //如果上面这步跑对了，那就看看下面这步；
+                    //（3）各个家具之间不重叠
+                    //其次告诉它这个家具现在可以怎么挪是合法的：四个方向各一个最大距离：扫一下，扫出来能走的最大距离
+
+                    //再次，把家具挪出其他家具的范围中：形式应该是（x小于多少多少 或 x大于多少多少 或 z小于多少多少 或 z大于多少多少） 且 （x小于多少多少 或 x大于多少多少 或 z小于多少多少 或 z大于多少多少）
+                    //挪三次，挪不出去就算了
+                    let objConflict = objectConflict(gtransObjectBboxes, movedBbox);
+                    cnt = 0;
+                    while(objConflict != false && cnt < 2){
+                        //console.log("here"); console.log(outRet); console.log(objConflict);
+                        let trySign = {sign:"none", val:10000}; let minimumError = Math.min(objConflict.min.x, objConflict.max.x, objConflict.min.z, objConflict.max.z); console.log(minimumError);
+                        if(objConflict.min.x < -outRet.xmin){ if(objConflict.min.x < trySign.val) trySign = {sign:"xmin", val:objConflict.min.x}; }
+                        if(objConflict.max.x < -outRet.xmax){ if(objConflict.max.x < trySign.val) trySign = {sign:"xmax", val:objConflict.max.x}; }
+                        if(objConflict.min.z < -outRet.zmin){ if(objConflict.min.z < trySign.val) trySign = {sign:"zmin", val:objConflict.min.z}; }
+                        if(objConflict.max.z < -outRet.zmax){ if(objConflict.max.z < trySign.val) trySign = {sign:"zmax", val:objConflict.max.z}; }
+                        if(trySign.sign == "xmin" || minimumError < 0.1 || trySign.val > 0.8) break;
+
+                        if(trySign.sign == "xmin") realx -= trySign.val;
+                        if(trySign.sign == "xmax") realx += trySign.val;
+                        if(trySign.sign == "zmin") realz -= trySign.val;
+                        if(trySign.sign == "zmax") realz += trySign.val;
+                        adjustedItm.objPosX = realx;
+                        adjustedItm.objPosZ = realz;
+                        movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                        outRet = outOfRoom(xscan, zscan, movedBbox);
+                        objConflict = objectConflict(gtransObjectBboxes, movedBbox);
+
+                        //走哪条路，在允许的位置上（objConflict.min.x < -outRet.xmin），绝对值最小的objConflict.min.x，
+                        //走过之后，outRet需要重新更新outOfRoom，objectConflict也需要重算。
+                        cnt += 1;
+                    }
+
+                    gtransObjectBboxes = gtransObjectBboxes.concat([movedBbox]);
+                    //console.log(meta.gtrans[i].objOriY); console.log(adjustedItm.objOriY);
+                    adjustedItm.objOriY -= transes[j][1];//INTERSECT_OBJ.userData.json.orient;
+                    //console.log(meta.gtrans[i].objOriY); console.log(adjustedItm.objOriY);
+
+                    //singlePriorClickAdd(meta.gtrans[i], realx, realz, transes[0]);
+
+                    furniture = {"modelId": meta.gtrans[i].attachedObjId, 
+                                "translate":[transes[j][0][0] + realx, transes[j][0][1] + meta.gtrans[i].objPosY, transes[j][0][2] + realz],
+                                "orient":transes[j][1] + meta.gtrans[i].objOriY,
+                                "scale":[meta.gtrans[i].objScaleX,meta.gtrans[i].objScaleY,meta.gtrans[i].objScaleZ],
+                                "format": ( meta.gtrans[i].currentState && isNaN(parseInt(meta.gtrans[i].attachedObjId)) ) ? "glb" : "obj" ,
+                                "startState": ( meta.gtrans[i].currentState && isNaN(parseInt(meta.gtrans[i].attachedObjId)) ) ? meta.gtrans[i].currentState : "origin"};
+                    clickPlan.plans[j] = clickPlan.plans[j].concat([furniture]);
+                }
+            }
+        }
+        priorClickPlan = priorClickPlan.concat([clickPlan]);
+        //console.log(clickPlan);
+        return clickPlan.plans[0];
+    }
+
+    const priorClick = function(e){
+        let meta = $(e.target).data("meta");
+        $(`#grids-${meta.identifier}`).css('height', '0px');
+        $(`#grids-${meta.identifier}`).css('width', '0px');
+        $(`#grids-${meta.identifier}`).css('opacity', '0');
+
+        //load all the models into the cache before doing anything else
+        if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId){
+            var f = 'obj';
+            var stt = 'origin';
+            if(meta.state && isNaN(parseInt(meta.mainObjId))){
+                f = 'glb';
+                stt = meta.state[0].currentState;
+            }
+            if(!(meta.mainObjId in objectCache)) {
+                loadObjectToCache(meta.mainObjId, anchor = priorClick, anchorArgs = [e], format = f);
+                return;
+            }
+        }
+        if('gtrans' in meta){
+            for(var i = 0; i < meta.gtrans.length; ++i){
+                var itm = meta.gtrans[i];
+                var f = 'obj';
+                var stt = 'origin';
+                if('currentState' in itm  && isNaN(parseInt(itm.attachedObjId))){
+                    f = 'glb';
+                    stt = itm.currentState;
+                }
+                if(!(itm.attachedObjId in objectCache)) {
+                    loadObjectToCache(itm.attachedObjId, anchor = priorClick, anchorArgs = [e], format = f);
+                    return;
+                }
+            }
+        }
+
+        let clickPlan = priorClickScheme(e);
+        if(clickPlan){
+            for(let i = 0; i < clickPlan.length; ++i){
+                let clp = JSON.parse(JSON.stringify(clickPlan[i]));   console.log(clp);
+                while(clp["orient"] > Math.PI) clp["orient"] -= 2*Math.PI;
+                while(clp["orient"] <-Math.PI) clp["orient"] += 2*Math.PI;
+                let p = addObjectFromCache(
+                    modelId=clp["modelId"],
+                    transform={
+                        'translate': clp["translate"],//transes[0][0],//[(roomBbox.max[0] + roomBbox.min[0])/2.0, 0.0, (roomBbox.max[1] + roomBbox.min[1])/2.0], 
+                        'rotate': [0, clp["orient"], 0],//transes[0][1]
+                        'scale': clp["scale"],//scl,
+                        'format': clp["format"],//f,
+                        'startState': clp["startState"]//stt
+                    }
+                ); clickPlan[i].key = p.userData.key; //console.log(p);
+                if(i == 0){ INTERSECT_OBJ = p; timeCounter.maniStart = moment(); setNewIntersectObj(); }
+                else addToGTRANS(p);
+            } 
+        }
+        else{
+            alert("no available layout solution");
+        }
+    }
+
     $("#usercommitOSR").click(() => {
         userOSR = $("#userOSR").val();
-        nameOSR = $("#nameOSR").val();
+        nameOSR = $("#searchinput").val() + "_" + $("#nameOSR").val();
         if (userOSR == "") {
             alert("请填写您的用户名");
+            return;
         }
 
         var interInfo = new Array(10);

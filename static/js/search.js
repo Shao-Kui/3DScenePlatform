@@ -1,12 +1,19 @@
 const clickCatalogItem = function (e, d=undefined) {
     e.preventDefault();
-    if(d3.select(e.path[0].parentElement).attr('id') === 'scenePaletteGroup'){
+    if(e.path && d3.select(e.path[0].parentElement).attr('id') === 'scenePaletteGroup'){
         INSERT_OBJ = {
             "modelId": d.modelId,
             "coarseSemantic": d.coarseSemantic, 
             "translate": [0.0, 0.0, 0.0],"scale": [1.0, 1.0, 1.0],"rotate": [0.0, 0.0, 0.0]
         };
     }else{
+        if($(e.target).attr('status') === 'clutterpaletteCategory'){
+            while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
+            searchResults = JSON.parse($(e.target).attr('secondaryCatalogItems'));
+            searchResults.forEach(function (item) {
+                newSecondaryCatalogItem(item);
+            });
+        }
         INSERT_OBJ = {
             "modelId": $(e.target).attr("objectName"),
             "coarseSemantic": $(e.target).attr("coarseSemantic"), 
@@ -67,8 +74,16 @@ const applyLayoutViewAdjust = function(){
 
 const newCatalogItem = function(item){
     let iDiv = document.createElement('div');
-    iDiv.className = "catalogItem";
+    let image = new Image();
+    image.onload = function(){
+        iDiv.style.width = `${$(window).width() * 0.10}px`;
+        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+    };
+    image.src = item.thumbnail;
+    iDiv.className = "mapping catalogItem";
     iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+    iDiv.style.backgroundSize = '100% 100%';
+    iDiv.style.visibility = 'visible'; item.identifier = item.name;
     iDiv.setAttribute('objectID', item.id);
     iDiv.setAttribute('objectName', item.name);
     iDiv.setAttribute('modelId', item.name);
@@ -82,7 +97,12 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('format', item.format);
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
+    iDiv.addEventListener('mouseover', mappingHover);
+    iDiv.addEventListener('mouseout', mappingLeave);
+    iDiv.classList.add('tiler');
     catalogItems.appendChild(iDiv);
+    $(iDiv).data('meta', item);
+    floorPlanMapping.set(item.identifier, image);
 };
 
 const clickSketchSearchButton = function () {
@@ -109,6 +129,7 @@ const clickSketchSearchButton = function () {
 };
 
 const clickTextSearchButton = function () {
+    floorPlanMapping.clear();
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
@@ -119,6 +140,18 @@ const clickTextSearchButton = function () {
         searchResults.forEach(function (item) {
             newCatalogItem(item);
         });
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(index){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta.identifier}`);
+            $(this).attr('id', `grid-${meta.identifier}`);
+        })
     });
 };
 
@@ -320,6 +353,7 @@ const clickAutoViewPath = function(){
 }
 
 const mappingHover = function(e){
+    e.preventDefault();
     let meta = $(e.target).data("meta");
     let image = floorPlanMapping.get(meta.identifier);
     let wh = getMappingWidthHeight(image);
@@ -362,7 +396,7 @@ const addImageProcess = function(src){
 }
 
 const getMappingWidthHeight = function(image){
-    const F = 0.75;
+    const F = 0.6;
     let w, h;
     // make the image being displayed inside the window.
     if($(window).height() >= $(window).width()){

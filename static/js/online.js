@@ -31,7 +31,7 @@ const loadMoreServerUUIDs = function(num=5){
 const socketInit = function(){
     // client-side
     socket.on("sceneRefresh", sceneJson => {
-        manager.load_scene(sceneJson);
+        manager.load_scene(sceneJson); priorClickPlan = []; console.log(priorClickPlan);
     });
     socket.on("functionCall", (fname, arguments) => {
         let args = [], i = 0;
@@ -156,7 +156,7 @@ const removeObjectByUUID = function(uuid, origin=true){
 
 const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}){
     if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform]);
+        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform], format = transform['format']);
         return; 
     }
     // check room ID: 
@@ -176,7 +176,7 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "mageAddDerive": objectCache[modelId].userData.mageAddDerive
     };
     let object3d = objectCache[modelId].clone();
-    object3d.name = undefined;
+    object3d.name = uuid;//undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
     object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);

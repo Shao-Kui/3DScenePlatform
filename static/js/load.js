@@ -193,7 +193,7 @@ let addObjectFromCache = function(modelId, transform={'translate': [0,0,0], 'rot
     }
     let roomID = calculateRoomID(transform.translate)
     let object3d = addObjectByUUID(uuid, modelId, roomID, transform);
-    object3d.name = uuid;
+    //object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomID, transform]);
     return object3d; 
 };
