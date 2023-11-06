@@ -1456,7 +1456,7 @@ def usercommitOSR():
 
     return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}' 
 
-@app_autoView.route("/queryAABB/<model>/<state>")
+@app_autoView.route("/online/queryAABB/<model>/<state>")
 def queryAABB(model, state):
     if os.path.exists(f'./static/dataset/object/{model}/{state}-AABB.json'):
         try:

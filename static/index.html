@@ -481,7 +481,7 @@
                 <option value="shelfInfoDiv">Shelf Info</option>
                 <option value="attributeSliderDiv">Attribute Slider</option>
                 <option value="drawingCanvasDiv">Drawing Canvas</option>
-                <option value="drawingCanvasDivv">Furniture Palette</option>
+                <option value="drawingCanvasDis">Furniture Palette</option>
                 <option value="cgsAnnoDiv">CGS标注</option>
                 <option value="OSRAnnoDiv">物体空间关联规则标记</option>
                 <option value="AnimationRecordDiv">Animation Record</option>
@@ -694,8 +694,23 @@
                 </div>
               </div>
   
-              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDivv">
-                <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+              <div class="collapse" id="drawingCanvasDis">
+                <div id="sketchsearchdivv" class="btn-group mx-1 my-3">
+                  <button class="btn btn-outline-primary" type="submit" id="refreshperspectbtn">
+                      refresh perspective
+                  </button>
+                  <button class="btn btn-outline-primary" type="submit" id="priorsearchbtn">
+                    search prior
+                  </button>
+                  <button class="btn btn-outline-primary" type="submit" id="priorsearchfullbtn">
+                    search prior full
+                  </button>
+                </div>
+                <div
+                  id="osrCatalogItems"
+                  class="catalogSectionContent mb-auto"
+                  align="center"
+                ></div>
               </div>
   
               <div class="collapse container sidebarSelect_collapse" id="cgsAnnoDiv">
@@ -916,31 +931,14 @@
                       Sketch Clear
                   </button>
               </div>
-            </div-->
+            </div>
 
             <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDis" role="button" aria-expanded="false" aria-controls="drawingCanvasDis">
               Furniture Palette
             </a>
-            <div class="collapse" id="drawingCanvasDis">
-              <div id="sketchsearchdivv" class="btn-group mx-1 my-3">
-                <button class="btn btn-outline-primary" type="submit" id="refreshperspectbtn">
-                    refresh perspective
-                </button>
-                <button class="btn btn-outline-primary" type="submit" id="priorsearchbtn">
-                  search prior
-                </button>
-                <button class="btn btn-outline-primary" type="submit" id="priorsearchfullbtn">
-                  search prior full
-                </button>
-              </div>
-              <div
-                id="osrCatalogItems"
-                class="catalogSectionContent mb-auto"
-                align="center"
-              ></div>
-            </div>
 
-            <!-- div>
+
+            < div>
               <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#cgsAnnoDiv" role="button"
                 aria-expanded="false" aria-controls="cgsAnnoDiv">
                 CGS标注
