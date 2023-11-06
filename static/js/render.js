@@ -22,16 +22,10 @@ var skyMaterialsCloudtop = [
     new THREE.MeshBasicMaterial({map: tgaLoader.load("/static/skybox/ely_cloudtop/cloudtop_lf.tga"), side: THREE.DoubleSide})
 ];
 
-const getMaterial = function(imgPath){
-    let texture = new THREE.TextureLoader().load(imgPath);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(1, 1);
-    return new THREE.MeshPhongMaterial( { map: texture } );
-}
-
-var spotLight = new THREE.SpotLight(0xFFFFFF, 6);
-var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 8.3);
+const spotLight = new THREE.SpotLight(0xFFFFFF, 6);
+const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 8.3);
+const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.0);
+const hlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 2.4 );
 
 var render_initialization = function () {
     //enabling shadow casting
@@ -40,11 +34,11 @@ var render_initialization = function () {
 
     //lighting and shadowing
     //0.9 is the stable lightness of ambient light after mid-term; 
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.0);
+    
     scene.add(ambientLight);
 
     //0.3 is the stable lightness of directional light after mid-term; 
-    directionalLight.castShadow = true;
+    directionalLight.castShadow = false;
     directionalLight.position.set(0, 10, 0);
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
@@ -71,7 +65,6 @@ var render_initialization = function () {
     // scene.add( spotLight.target );
 
     // add HemisphereLight
-    let hlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 2.4 );
     scene.add( hlight );
 
     //adding skybox

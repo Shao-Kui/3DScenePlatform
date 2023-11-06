@@ -1,3 +1,4 @@
+yltmp/*
 /Unity
 /static/*.ico
 /latentspace
@@ -7,6 +8,9 @@
 /layoutmethods/ltp_data_v3.4.0
 /layoutmethods/cgAnnotation
 /layoutmethods/cgseries
+/layoutmethods/cgseriesFull
+/layoutmethods/cgseriesSim
+/layoutmethods/shelfplanner/*
 /deprecated
 /examples
 /rooms

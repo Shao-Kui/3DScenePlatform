@@ -56,6 +56,7 @@ const transformControlsConfig = function(){
                 let a = currentSeqs[index][0].at(-1);
                 a.p2 = [INTERSECT_OBJ.position.x, INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z];
                 a.t[1] = a.t[0] + Math.sqrt(Math.pow(a.p1[0]-a.p2[0], 2) + Math.pow(a.p1[1]-a.p2[1], 2) + Math.pow(a.p1[2]-a.p2[2], 2)) / 4;
+                updateAnimationSlider(index)
             }
         }
     });
@@ -106,10 +107,29 @@ const actionAddTime = function(duration=1){
         "action": "pause",
         "t": [startTime, startTime+duration]
     });
+    updateAnimationSlider(index)
 }
 
-const topdownview = function(){
-    let bbox = manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
+const topdownAreaview = function(){
+    let bbox = manager.renderManager.scene_json.bbox; 
+    let lx = (bbox.max[0] + bbox.min[0]) / 2;
+    let lz = (bbox.max[2] + bbox.min[2]) / 2;
+    let lx_length = bbox.max[0] - bbox.min[0];
+    let lz_length = bbox.max[2] - bbox.min[2];
+    camfovratio = Math.tan((camera.fov/2) * Math.PI / 180) 
+    if(lz_length > lx_length){
+        orbitControls.sphericalDelta.theta = Math.PI / 2;
+        camHeight = 0 + (bbox.max[0]/2 - bbox.min[0]/2) / camfovratio;
+    }else{
+        camHeight = 0 + (bbox.max[2]/2 - bbox.min[2]/2) / camfovratio;
+    }
+    camera.position.set(lx, camHeight, lz);
+    camera.lookAt(lx, 0, lz);
+    orbitControls.target.set(lx, 0, lz);
+}
+
+const topdownview = function(bbox = undefined){
+    bbox = bbox ?? manager.renderManager.scene_json.rooms[currentRoomId].bbox; 
     let lx = (bbox.max[0] + bbox.min[0]) / 2;
     let ymax = bbox.max[1];
     let lz = (bbox.max[2] + bbox.min[2]) / 2;
@@ -121,54 +141,19 @@ const topdownview = function(){
         // prevent if there is NaN in datasets; 
         camHeight = 6;
     }
-
     camera.position.set(lx, camHeight, lz);
     camera.lookAt(lx, 0, lz);
     orbitControls.target.set(lx, 0, lz);
-
     let lx_length = bbox.max[0] - bbox.min[0];
     let lz_length = bbox.max[2] - bbox.min[2];
     let tCamUp;
     if(lz_length > lx_length){
         // let thetaTar = orbitControls.sphericalDelta.theta + Math.PI / 2;
-        orbitControls.sphericalDelta.theta += 3.14/2;
-        orbitControls.update();
-        // gsap.to(orbitControls.sphericalDelta, {
-        //     duration: 1,
-        //     theta: thetaTar,
-        // });
-        // tCamUp = gsap.to(camera.up, {
-        //     duration: 1,
-        //     x: 1,
-        //     y: 0,
-        //     z: 0
-        // });
+        orbitControls.sphericalDelta.theta += Math.PI / 2;
     }else{
-        // tCamUp = gsap.to(camera.up, {
-        //     duration: 1,
-        //     x: 0,
-        //     y: 0,
-        //     z: 1
-        // });
+
     }
-    // gsap.to(camera.position, {
-    //     duration: 1,
-    //     x: lx,
-    //     y: camHeight,
-    //     z: lz
-    // });
-    // gsap.to(orbitControls.target, {
-    //     duration: 1,
-    //     x: lx,
-    //     y: 0,
-    //     z: lz
-    // });
-    // gsap.to(camera.up, {
-    //     duration: 1,
-    //     x: 0,
-    //     y: 1,
-    //     z: 0
-    // });
+    orbitControls.sphericalDelta.theta += Math.PI;
 };
 
 var ctrlPressing = false;
@@ -177,8 +162,23 @@ const onKeyDown = function(event){
     if(event.target.matches("input")) return;
     pressedKeys[event.keyCode] = true;
     switch ( event.keyCode ) {
+        case 39: // →
+            let functionalNode = d3.selectAll('rect').filter(d => d.imgindex >= 0);
+            if(functionalNode.size() === 1){
+                let datum = functionalNode.datum();
+                datum.imgindex  = (datum.imgindex + 1) % datum.pics.length;
+                d3.select(`#image${datum.id}`).attr("href", datum.pics[datum.imgindex] + ".png");
+                let file_dir = datum.pics[datum.imgindex] + ".json";
+                draw1(file_dir);
+                draw2('/static/dataset/infiniteLayout/'+onlineGroup+'_origin_values.json',file_dir);
+            }
+            break;
         case 81: // Q
             Q_DOWN = true;
+            break;
+        case 65: // A
+            if (shelfstocking_Mode && !$('#shelfSelectAllBtn').prop('disabled'))
+                $('#shelfSelectAllBtn').click();
             break;
         case 67: // C
             orbitControls.enabled = !orbitControls.enabled;
@@ -189,6 +189,17 @@ const onKeyDown = function(event){
             break;
         case 32: // white space
             topdownview();
+            break;
+        case 71: // G
+            if (shelfstocking_Mode && !$('#selectShelfGroupBtn').prop('disabled'))
+                $('#selectShelfGroupBtn').click();
+            break;
+        case 78: // N
+            if (shelfstocking_Mode && !$('#nextShelfBtn').prop('disabled'))
+                $('#nextShelfBtn').click();
+            break;
+        case 220: // backslash
+            topdownAreaview();
             break;
         case 85: // U
             // start to record audio; 
@@ -201,15 +212,56 @@ const onKeyDown = function(event){
         //     downloadSceneJson();
         //     break;
         case 49: // 1
-            auxiliary_catlist(-1)
+        case 97: // 1
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow0Btn').prop('disabled')) $('#shelfSelectRow0Btn').click();
+            } else {
+                auxiliary_catlist(-1)
+            }
             break;
         case 50: // 2
-            auxiliary_catlist(1)
+        case 98: // 2
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow1Btn').prop('disabled')) $('#shelfSelectRow1Btn').click();
+            } else {
+                auxiliary_catlist(1)
+            }
+            break;
+        case 51: // 3
+        case 99: // 3
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow2Btn').prop('disabled')) $('#shelfSelectRow2Btn').click();
+            }
+            break;
+        case 52:  // 4
+        case 100: // 4
+            if (shelfstocking_Mode) {
+                if (!$('#shelfSelectRow3Btn').prop('disabled')) $('#shelfSelectRow3Btn').click();
+            }
             break;
         case 192: // `
             auxiliary_catlist(0)
             break;
-
+        case 107: // +
+        case 187: // + 
+            if (animaRecord_Mode) {
+                updateAnimationRecordDiv(AnimationSlider.max + 4);
+            }
+            break;
+        case 109: // -
+        case 189: // -
+            if (animaRecord_Mode) {
+                let animaMax = 4;
+                for (let i = 0; i < currentSeqs.length; i++) {
+                    let anim = currentSeqs[i][0];
+                    for (let j = 0; j < anim.length; j++) {
+                        animaMax = Math.max(animaMax, anim[j].t[1]);
+                    }
+                }
+                animaMax = Math.ceil(animaMax / 4) * 4;
+                updateAnimationRecordDiv(Math.max(AnimationSlider.max - 4, animaMax));
+            }
+            break;
         case 188: // ,
             transformControls.setMode('translate');
             break;
@@ -240,6 +292,7 @@ const onKeyDown = function(event){
                     'translate': [INTERSECT_OBJ.position.x+_x*Math.sin(orient), INTERSECT_OBJ.position.y, INTERSECT_OBJ.position.z+_x*Math.cos(orient)], 
                     'rotate': [INTERSECT_OBJ.rotation.x, INTERSECT_OBJ.rotation.y, INTERSECT_OBJ.rotation.z],
                     'scale': [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z],
+                    'startState': INTERSECT_OBJ.userData.json.startState,
                     'format': INTERSECT_OBJ.userData.format
                 }
             );

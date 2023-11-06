@@ -3,6 +3,7 @@ const decideTransparencyByTexture = function(m, g, offset=0){
     if(m.transparent){return true;}
     if(!g.attributes.uv){return false;}
     if(!m.map){return false;}
+    if(!m.map.image){return false;}
     canvasForImage.width = m.map.image.width;
     canvasForImage.height = m.map.image.height;
     canvasForImage.getContext('2d').drawImage(m.map.image, 0, 0, m.map.image.width, m.map.image.height);
@@ -87,12 +88,14 @@ const traverseObjSetting = function (object) {
         checkTextureOpacity(object.material, object.geometry);
         if(Array.isArray(object.material)){
             for(let i = 0; i < object.material.length; i++){
+                object.material[i].reflectivity = 0;
                 if(object.material[i].transparent){
                     object.castShadow = false;
                 }
             }
         }else{
             if(object.material.transparent){
+                object.material.reflectivity = 0;
                 object.castShadow = false;
             }
         }
@@ -186,16 +189,8 @@ class SceneManager {
     };
 
     refresh_scene = (scene_json, refresh_camera = false) => {
-        console.log('called refresh scene! ');
-        outlinePass.selectedObjects = [];
-        outlinePass2.selectedObjects = [];
-        if(scene_json.islod){
-            this.islod = true;
-            $("#lodCheckBox").prop('checked', true);
-        }else{
-            this.islod = false;
-            $("#lodCheckBox").prop('checked', false);
-        }
+        // this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
+        this.scene_remove( (userData) => (userData.type === "object" && this.instanceKeyCache[userData.key]) );
         this.scene_remove(function (userData) {
             if (userData.type === 'w' ||
                 userData.type === 'f' ||
@@ -205,6 +200,17 @@ class SceneManager {
                 return true;
             }
         });
+        this.instanceKeyCache = {};
+        traverseSceneJson(scene_json);
+        outlinePass.selectedObjects = [];
+        outlinePass2.selectedObjects = [];
+        if(scene_json.islod){
+            this.islod = true;
+            $("#lodCheckBox").prop('checked', true);
+        }else{
+            this.islod = false;
+            $("#lodCheckBox").prop('checked', false);
+        }
         this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg');
         this.scene_json = scene_json;
         this.refresh_wall_and_floor();
@@ -214,6 +220,16 @@ class SceneManager {
             this.refresh_camera();
         }
         ALL_SCENE_READY = true;
+        refreshArea(this.scene_json);
+        if(this.scene_json.rooms[0].totalAnimaID){
+            let taID = this.scene_json.rooms[0].totalAnimaID;
+            $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+                currentAnimation = data;
+                $.getJSON(`/static/dataset/infiniteLayout/${this.scene_json.rooms[0].totalAnimaID}img/layoutTree.json`, function (nextdata) {
+                    updateTreeWindow(nextdata); // This code initialize the Tree for InfiniteLayout. 
+                });
+            });
+        }
     };
 
     refresh_light(){
@@ -345,12 +361,18 @@ class SceneManager {
 
     refresh_instances(){
 	    // var self=this;
-		this.scene_remove((userData)=>(userData.type=="object" && this.instanceKeyCache[userData.key]));
-		this.instanceKeyCache = {};
+        let loadingCounter = 0;
         this.scene_json.rooms.forEach(function(room){
             room.objList.forEach(async function(inst){ //an obj is a instance
                 if(inst === null || inst == undefined){
                     return;
+                }
+                if(inst.format === 'Door' || inst.format === 'Window'){
+                    if(inst.format === 'Door') inst.modelId = '214';
+                    if(inst.format === 'Window') inst.modelId = '126';
+                    loadObjectToCache(inst.modelId, function(){
+                        refreshObjectFromCache(inst);
+                    }, [], inst.format);
                 }
                 if('inDatabase' in inst)
                     if(!inst.inDatabase)
@@ -362,9 +384,13 @@ class SceneManager {
                 if(!('format' in inst)){
                     inst.format = 'obj';
                 }
-                loadObjectToCache(inst.modelId, function(){
+                setTimeout(loadObjectToCache, loadingCounter*100, inst.modelId, function(){
                     refreshObjectFromCache(inst);
                 }, [], inst.format);
+                loadingCounter++;
+                // loadObjectToCache(inst.modelId, function(){
+                //     refreshObjectFromCache(inst);
+                // }, [], inst.format);
             });
         });
         if('sceneFutureCache' in this.scene_json){
@@ -384,8 +410,8 @@ class SceneManager {
         this.camera.lookAt(lx, 0, lz);
         orbitControls.target.set(lx, 0, lz);
         //Start to set orthogonal camera.
-        var width = bbox.max[0] - bbox.min[0];
-        var height = bbox.max[2] - bbox.min[2];
+        var width = (bbox.max[0] - bbox.min[0]) + 1;
+        var height = (bbox.max[2] - bbox.min[2]) + 1;
         this.orthcamera.left = width / -2;
         this.orthcamera.right = width / 2;
         this.orthcamera.top = height / 2;

@@ -1,0 +1,85 @@
+apple
+artichoke
+avocado
+baked rice
+banana
+beef
+beer
+bleach
+burger
+butter
+cake
+can
+candy
+carrot
+cereal
+champagne
+cheese
+chicken wings
+chicken
+chip
+chocolate
+cleaner
+coffee drink
+coffee
+cola
+container
+cream
+croissant
+cup
+donut
+egg
+flour
+french fries
+garlic
+glass
+grapefruit
+ham
+hotdog
+jam
+juice
+ketchup
+kiwi fruit
+laundry detergent
+lemon water
+lemon
+mango
+milk
+muffin
+mushroom
+oil
+onion
+pancake
+papaya
+pasta
+pepper
+perry
+pie
+pineapple
+pizza
+plant
+pork
+potato
+pretzel
+pumpkin
+red wine
+rice
+salt
+sandwich
+sausage
+seed
+shampoo
+soda
+steak
+sugar
+sushi
+tea drink
+tea
+toast
+toilet paper
+tomato
+toothpaste
+water
+watermelon
+yogurt
+zucchini

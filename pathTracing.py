@@ -27,34 +27,52 @@ template = env.get_template('./assets/pathTracingTemplate.xml')
 cameraType="perspective" # spherical
 emitter="sky"
 num_samples = 64
-r_dir = 'batch'
+r_dir = 'batch1'
 wallMaterial = True
 REMOVELAMP = False
 SAVECONFIG = False
 NOWALL = False
 USENEWWALL = False
+CAMGEN = False
+TRAV = False
+AREACAM = False
+WALLHEIGHT = 2.6
 
 def autoPerspectiveCamera(scenejson):
-    bbox = scenejson['rooms'][0]['bbox']
-    lx = (bbox['max'][0] + bbox['min'][0]) / 2
-    lz = (bbox['max'][2] + bbox['min'][2]) / 2
-    ymax = bbox['max'][1]
-    camfovratio = np.tan((75/2) * np.pi / 180) 
-    height_x = (bbox['max'][0]/2 - bbox['min'][0]/2) / camfovratio
-    height_z = (bbox['max'][2]/2 - bbox['min'][2]/2) / camfovratio
-    camHeight = ymax + np.max([height_x, height_z])
-    if camHeight > 36 or camHeight < 0 or camHeight == np.NaN:
-        camHeight = 6
     PerspectiveCamera = {}
-    PerspectiveCamera['origin'] = [lx, camHeight, lz]
-    PerspectiveCamera['target'] = [lx, 0, lz]
-    PerspectiveCamera['up'] = [0,0,1]
-    PerspectiveCamera['rotate'] = [0,0,0]
-    lx_length = bbox['max'][0] - bbox['min'][0]
-    lz_length = bbox['max'][2] - bbox['min'][2]
+    roomShape = []
+    if AREACAM:
+        for room in scenejson['rooms']:
+            if 'areaShape' in room:
+                roomShape += room['areaShape']
+        roomShape = np.array(roomShape)
+        wh = 0
+    else:
+        roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+        wh = WALLHEIGHT
+    lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
+    lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
+    camfovratio = np.tan((sk.DEFAULT_FOV/2) * np.pi / 180) 
+    lx_length = (np.max(roomShape[:, 0]) - np.min(roomShape[:, 0]))
+    lz_length = (np.max(roomShape[:, 1]) - np.min(roomShape[:, 1]))
     if lz_length > lx_length:
         PerspectiveCamera['up'] = [1,0,0]
+        camHeight = wh + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+        imgwidthratio = lz_length / lx_length
+    else:
+        PerspectiveCamera['up'] = [0,0,1]
+        camHeight = wh + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
+        imgwidthratio = lx_length / lz_length
+    PerspectiveCamera['origin'] = [lx, camHeight, lz]
+    PerspectiveCamera['target'] = [lx, 0, lz]
+    PerspectiveCamera['rotate'] = [0,0,0]
+    PerspectiveCamera['fov'] = sk.DEFAULT_FOV
+    PerspectiveCamera['focalLength'] = 35
     scenejson['PerspectiveCamera'] = PerspectiveCamera
+    scenejson['canvas'] = {
+        'height': 1080,
+        'width': int(1080 * imgwidthratio)
+    }
     return PerspectiveCamera
 
 # @app.task
@@ -163,7 +181,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     casename = ROOT + f'/{scenejson["origin"]}-{dt_string}-{uuid.uuid1()}'
-    if 'PerspectiveCamera' not in scenejson:
+    if 'PerspectiveCamera' not in scenejson or CAMGEN:
         autoPerspectiveCamera(scenejson)
     # if cameraType == 'orthographic':
     #     points = []
@@ -195,8 +213,21 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson['renderobjlist'] = []
     scenejson['renderroomobjlist'] = []
     scenejson['newroomobjlist'] = []
+    scenejson['rendercubeobjlist'] = []
     blocks = []
     for room in scenejson['rooms']:
+        if 'objList' not in room:
+            room['objList'] = []
+        if 'areaType' not in room:
+            room['areaType'] = 'unknown'
+        if os.path.exists(f'./dataset/area/{scenejson["id"]}/{room["modelId"]}.obj'):
+            scenejson['renderroomobjlist'].append({
+                'modelPath': f'../../area/{scenejson["id"]}/{room["modelId"]}.obj',
+                'translate': [0,0,0],
+                'rotate': [0,0,0],
+                'scale': [1,1,1],
+                'areaType': room['areaType']
+            })
         for obj in room['objList']:
             if 'coarseSemantic' in obj:
                 if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
@@ -215,17 +246,19 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             #         'scale': [xScale,yScale,1]
             #     })
             initialWallPlanes = []
+            if 'roomOrient' not in room:
+                room['roomOrient'] = np.arctan2(np.array(room['roomNorm'])[:, 0], np.array(room['roomNorm'])[:, 1]).tolist()
             for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
                 next = room['roomShape'][(index+1)%len(room['roomShape'])]
                 initialWallPlanes.append({
                     'pre': np.array(pre), 
                     'next': np.array(next),
-                    'tl': np.array([pre[0], 2.6, pre[1]]), # top-left
-                    'tr': np.array([next[0], 2.6, next[1]]), # top-right
+                    'tl': np.array([pre[0], WALLHEIGHT, pre[1]]), # top-left
+                    'tr': np.array([next[0], WALLHEIGHT, next[1]]), # top-right
                     'bl': np.array([pre[0], 0., pre[1]]), # bottom-left
                     'br': np.array([next[0], 0., next[1]]), # bottom-right
                     'bbox': {
-                        'max': np.array([np.max([pre[0], next[0]]), 2.6, np.max([pre[1], next[1]])]),
+                        'max': np.array([np.max([pre[0], next[0]]), WALLHEIGHT, np.max([pre[1], next[1]])]),
                         'min': np.array([np.min([pre[0], next[0]]), 0.0, np.min([pre[1], next[1]])])
                     },
                     'norm': np.array([room['roomNorm'][index][0], 0., room['roomNorm'][index][1]]),
@@ -383,9 +416,11 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                         'scale': [1,1,1]
                     })
         for obj in room['objList']:
-            if 'inDatabase' in obj:
-                if not obj['inDatabase']:
-                    continue
+            if obj['modelId'] == 'noUse':
+                continue
+            # if 'inDatabase' in obj:
+            #     if not obj['inDatabase']:
+            #         continue
             if sk.getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
                 print('A lamp is removed. ')
                 continue
@@ -394,8 +429,25 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 obj['format'] = 'obj'
             if obj['format'] == 'glb':
                 obj['modelPath'] = '../../../static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])
-            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])) or os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+            if obj['format'] == 'sfy':
+                obj['cubescale'] = [
+                    (obj['bbox']['max'][0] - obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] - obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] - obj['bbox']['min'][2])/2
+                ]
+                obj['cubetranslate'] = [
+                    (obj['bbox']['max'][0] + obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] + obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] + obj['bbox']['min'][2])/2
+                ]
+                scenejson['rendercubeobjlist'].append(obj)
+                continue
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
                 scenejson['renderobjlist'].append(obj)
+                continue
+            if 'startState' in obj and os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+                scenejson['renderobjlist'].append(obj)
+                continue
     output = template.render(
         scenejson=scenejson, 
         PI=np.pi, 
@@ -418,10 +470,30 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
         shutil.rmtree(casename)
     return casename
 
+def batchTravDir(new_dir):
+    filenames = os.listdir(f'./dataset/PathTracing/{new_dir}')
+    for filename in filenames:
+        pngfilename = filename.replace('.json', '.png')
+        if os.path.isdir(f'./dataset/PathTracing/{new_dir}/{filename}'):
+            batchTravDir(f'{new_dir}/{filename}')
+        if '.json' not in filename:
+            continue
+        if os.path.exists(f'./dataset/PathTracing/{new_dir}/{pngfilename}'):
+            continue
+        print('start do :' + f'{new_dir}/{filename}')
+        with open(f'./dataset/PathTracing/{new_dir}/{filename}') as f:
+            try:
+                casename = pathTracing(json.load(f), sampleCount=num_samples, dst=f'./dataset/PathTracing/{new_dir}/{pngfilename}')
+            except Exception as e:
+                print(e)
+                continue
+
 def batch():
     filenames = os.listdir(f'./dataset/PathTracing/{r_dir}')
     for filename in filenames:
         pngfilename = filename.replace('.json', '.png')
+        if os.path.isdir(f'./dataset/PathTracing/{r_dir}/{filename}') and TRAV:
+            batchTravDir(f'{r_dir}/{filename}')
         if '.json' not in filename:
             continue
         print('start do :' + filename)
@@ -500,7 +572,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav=", "areacam="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -515,13 +587,18 @@ if __name__ == "__main__":
             cameraType = arg
         elif opt in ("--wm"):
             wallMaterial = bool(int(arg))
-            print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
+        elif opt in ("--camgen"):
+            CAMGEN = bool(int(arg))
+        elif opt in ("--trav"):
+            TRAV = bool(int(arg))
         elif opt in ("--nowall"):
             NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
             emitter = arg
+        elif opt in ("--areacam"):
+            AREACAM = bool(int(arg))
         elif opt in ("--task"):
             # defaultTast = getattr(__name__, arg)
             defaultTast = globals()[arg]

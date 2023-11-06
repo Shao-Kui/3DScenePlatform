@@ -81,6 +81,7 @@ socket.on("claimControlObject3D", (objKey, isRelease, userID) => {
     }
     else{
         manager.renderManager.instanceKeyCache[objKey].userData.controlledByID = userID;
+        if (!(shelfstocking_Mode && userID === onlineUserID && INTERSECT_OBJ.userData.key !== objKey))
         outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[objKey]);
     };  
 });
@@ -154,9 +155,13 @@ const removeObjectByUUID = function(uuid, origin=true){
     }
 }
 
-const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}){
+const refreshSceneByJson = function(thejson){
+    socket.emit('sceneRefresh', thejson, onlineGroup);
+}
+
+const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': [0,0,0], 'rotate': [0,0,0], 'scale': [1.0,1.0,1.0], 'format': 'obj'}, otherInfo={}){
     if(!(modelId in objectCache)){
-        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform], format = transform['format']);
+        loadObjectToCache(modelId, anchor=addObjectByUUID, anchorArgs=[uuid, modelId, roomID, transform, otherInfo], transform.format);
         return; 
     }
     // check room ID: 
@@ -173,10 +178,32 @@ const addObjectByUUID = function(uuid, modelId, roomID, transform={'translate': 
         "format": transform.format,
         "startState": transform.startState,
         "isSceneObj": true,
-        "mageAddDerive": objectCache[modelId].userData.mageAddDerive
+        "mageAddDerive": objectCache[modelId].userData.mageAddDerive,
+        "inDatabase": true
     };
+    for (const property in otherInfo) {
+        objToInsert[property] = otherInfo[property];
+    }
     let object3d = objectCache[modelId].clone();
     object3d.name = uuid;//undefined;
+    if (objToInsert.format ==="THInstancedObject") {
+        // assert instancedTransforms is given in otherInfo
+        let instancedTransforms = objToInsert.instancedTransforms;
+        object3d = new THREE.Group();
+        objectCache[modelId].children.forEach(c => {
+            let mesh = new THREE.InstancedMesh(c.geometry, c.material, instancedTransforms.length);
+            for (let i = 0; i < instancedTransforms.length; ++i) {
+                const temp = new THREE.Object3D();
+                temp.position.set(instancedTransforms[i].translate[0], instancedTransforms[i].translate[1], instancedTransforms[i].translate[2]);
+                temp.rotation.set(instancedTransforms[i].rotate[0], instancedTransforms[i].rotate[1], instancedTransforms[i].rotate[2]);
+                temp.scale.set(instancedTransforms[i].scale[0], instancedTransforms[i].scale[1], instancedTransforms[i].scale[2]);
+                temp.updateMatrix();
+                mesh.setMatrixAt(i, temp.matrix);
+            }
+            object3d.add(mesh);
+        });
+    }
+    object3d.name = undefined;
     object3d.scale.set(objToInsert.scale[0],objToInsert.scale[1],objToInsert.scale[2]);
     object3d.rotation.set(objToInsert.rotate[0],objToInsert.rotate[1],objToInsert.rotate[2]);
     object3d.position.set(objToInsert.translate[0],objToInsert.translate[1],objToInsert.translate[2]);
@@ -236,7 +263,9 @@ const onlineInitialization = function(){
     onlineFuncList['animateObject3DOnly'] = animateObject3DOnly; 
     onlineFuncList['refreshRoomByID'] = refreshRoomByID;
     onlineFuncList['transformRoomShape'] = transformRoomShape;
-    onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID
+    onlineFuncList['removeObjectsByUUID'] = removeObjectsByUUID;
+    onlineFuncList['refreshSceneByJson'] = refreshSceneByJson;
+    onlineFuncList['updateObjectProperties'] = updateObjectProperties;
     const timelyEmitAnimationObject3DOnly = setInterval(emitAnimationObject3DOnly, 100);
 
     function closingCode(){
@@ -244,4 +273,10 @@ const onlineInitialization = function(){
         return null;
     }
     window.onbeforeunload = closingCode;
+}
+
+let updateObjectProperties = function (objectProperties) {
+    for (let objKey in objectProperties)
+        for (let property in objectProperties[objKey])
+            manager.renderManager.instanceKeyCache[objKey].userData.json[property] = objectProperties[objKey][property];
 }

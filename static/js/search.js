@@ -35,11 +35,52 @@ const clickCatalogItem = function (e, d=undefined) {
     }
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId, ()=>{
+        if (shelfstocking_Mode && INSERT_OBJ.modelId.startsWith('yulin') && Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length !== 0) {
+            let order = $(e.target).data("order");
+            if (catalogItems.firstChild.getAttribute('objectname') == 'yulin-empty') order -= 1;
+            stockShelves(order);
+            return;
+        }
         INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
         if(INSERT_OBJ.status !== undefined){
             playAnimation(INSERT_OBJ.object3d);
         }
+        if (clutterpalette_Mode) {
+            INSERT_OBJ.object3d.name = INSERT_NAME;
+            INSERT_OBJ.object3d.position.set(clutterpalettePos.x, clutterpalettePos.y, clutterpalettePos.z);
+            INSERT_OBJ.object3d.rotation.set(0, 0, 0, 'XYZ');
+            INSERT_OBJ.object3d.scale.set(1, 1, 1);
+            scene.add(INSERT_OBJ.object3d)
+        }
     }, [], INSERT_OBJ.format); 
+}
+
+const stockShelves = (order) => {
+    On_ADD = false;
+    scenecanvas.style.cursor = "auto";
+    if (order != -1) {
+        console.log('selectCommodity', order);
+        socket.emit('selectCommodity', onlineUserID, order, onlineGroup);
+    }
+    let modelId = INSERT_OBJ.modelId;
+    for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
+        let shelf = manager.renderManager.instanceKeyCache[shelfKey];
+        let commodities = shelf.userData.json.commodities;
+        for (const phKey of INTERSECT_SHELF_PLACEHOLDERS[shelfKey]) {
+            let ph = manager.renderManager.instanceKeyCache[phKey];
+            let r = ph.userData.shelfRow;
+            let c = ph.userData.shelfCol;
+            let l = commodities[r].length;
+            if (commodities[r][c].uuid) {
+                removeObjectByUUID(commodities[r][c].uuid)
+                commodities[r][c] = { modelId: '', uuid: '' };
+            }
+            if (modelId !== 'yulin-empty') {
+                addCommodityToShelf(shelfKey, modelId, r, c, l, order);
+            }
+        }
+    }
+    cancelClickingShelfPlaceholders();
 }
 
 const clickTextureItem = function(e){
@@ -90,6 +131,10 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('coarseSemantic', item.semantic);
     iDiv.setAttribute('semantic', item.semantic);
     if(!item.status){item.status = 'origin';}
+    if(item.status === "clutterpaletteCategory"){
+        iDiv.setAttribute('secondaryCatalogItems', item.secondaryCatalogItems);
+        iDiv.innerHTML = item.semantic;
+    }
     iDiv.setAttribute('status', item.status);
     if(!item.format){
         item.format = 'obj'
@@ -100,9 +145,32 @@ const newCatalogItem = function(item){
     iDiv.addEventListener('mouseover', mappingHover);
     iDiv.addEventListener('mouseout', mappingLeave);
     iDiv.classList.add('tiler');
+    iDiv.dataset.order = catalogItems.childElementCount;
+    if (shelfstocking_Mode) iDiv.innerHTML = `<span class="catalogItemChineseName">${yulinModelChineseName[item.name]}</span><span class="catalogItemEnglishName">${item.name.split('-')[1]}</span>`;
     catalogItems.appendChild(iDiv);
     $(iDiv).data('meta', item);
     floorPlanMapping.set(item.identifier, image);
+};
+
+const newSecondaryCatalogItem = function(item){
+    let iDiv = document.createElement('div');
+    iDiv.className = "catalogItem";
+    iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+    iDiv.setAttribute('objectID', item.id);
+    iDiv.setAttribute('objectName', item.name);
+    iDiv.setAttribute('modelId', item.name);
+    iDiv.setAttribute('coarseSemantic', item.semantic);
+    iDiv.setAttribute('semantic', item.semantic);
+    if(!item.status){item.status = 'origin';}
+    iDiv.setAttribute('status', item.status);
+    if(!item.format){
+        item.format = 'obj'
+    }
+    iDiv.setAttribute('format', item.format);
+    iDiv.addEventListener('click', clickCatalogItem);
+    iDiv.addEventListener('contextmenu', clickCatalogItem);
+    gatheringObjCat[item.name] = item.semantic;
+    secondaryCatalogItems.appendChild(iDiv);
 };
 
 const clickSketchSearchButton = function () {
@@ -155,6 +223,17 @@ const clickTextSearchButton = function () {
     });
 };
 
+const clickModuleSearchButton = function () {
+    while (catalogItems.firstChild) {catalogItems.firstChild.remove();}
+    var search_url = "/queryModule?kw=" + document.getElementById("searchinput").value;
+    $.getJSON(search_url, function (data) {
+        searchResults = data;
+        searchResults.forEach(function (item) {
+            newCatalogItem(item);
+        });
+    });
+};
+
 const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     let mid = {
         x: (lastPos.x + pcam.origin[0]) / 2,
@@ -180,8 +259,8 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     return [mid, midLookat]
 }
 
-const viewTransform = function(pcam){
-    cancelClickingObject3D();
+const viewTransform = function(pcam, cancelClickingObject = true){
+    if (cancelClickingObject) cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
     let direction = new THREE.Vector3(
         orbitControls.target.x - camera.position.x,
@@ -383,6 +462,25 @@ const mappingClick = function(e){
     autoViewPathTar.kill();
     let meta = $(e.target).data("meta");
     $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
+        refreshSceneCall(result);
+    });
+}
+
+const mappingRightClick = function(e){
+    e.preventDefault();
+    autoViewPathPos.kill();
+    autoViewPathTar.kill();
+    let meta = $(e.target).data("meta");
+    $.getJSON(`/getSceneJsonByID/${meta.identifier}`, function(result){
+        result.rooms.forEach(r => {
+            let newObjList = [];
+            r.objList.forEach(o => {
+                if(!o.inDatabase){
+                    newObjList.push(o);
+                }
+            });
+            r.objList = newObjList;
+        });
         socket.emit('sceneRefresh', result, onlineGroup);
     });
 }
@@ -455,6 +553,7 @@ const clickAutoViewMapping = function(){
             iDiv.addEventListener('mouseover', mappingHover);
             iDiv.addEventListener('mouseout', mappingLeave);
             iDiv.addEventListener('click', mappingClick);
+            iDiv.addEventListener('contextmenu', mappingRightClick);
             iDiv.classList.add('tiler');
             catalogItems.appendChild(iDiv);
             $(iDiv).data('meta', item);
@@ -481,6 +580,53 @@ const clickAutoViewMapping = function(){
         })
     });
 };
+
+const jiahong1115 = ['4.0_3.0_2', '4.0_3.0_64', '4.0_4.0_2', '4.0_4.0_64', '5.0_3.0_2', '5.0_3.0_47', 
+'5.0_4.0_47', '5.5_4.0_23', '6.0_3.0_47', '6.0_3.0_61', '6.5_4.5_64', '6.5_4.5_78'];
+const clickSelectRoomShape = function(){
+    floorPlanMapping.clear();
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    jiahong1115.forEach(item => {
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/static/dataset/jiahong1115/${item}.png`;
+        iDiv.className = "mapping catalogItem";
+        iDiv.style.backgroundImage = `url(/static/dataset/jiahong1115/${item}.png)`;
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        iDiv.addEventListener('mouseover', mappingHover);
+        iDiv.addEventListener('mouseout', mappingLeave);
+        iDiv.addEventListener('click', (e) => {
+            $.getJSON(`/static/dataset/jiahong1115/${item}.json`, function(result){
+                result.origin = item;
+                refreshSceneCall(result);
+            });
+            mappingLeave(e);
+        });
+        iDiv.classList.add('tiler');
+        catalogItems.appendChild(iDiv);
+        $(iDiv).data('meta', {'identifier': item.replaceAll('.', '-')});
+        floorPlanMapping.set(item.replaceAll('.', '-'), image);
+    });
+    Splitting({
+        target: '.tiler',
+        by: 'cells',
+        rows: nrs,
+        columns: ncs,
+        image: true
+    });
+    $('.tiler .cell-grid .cell').each(function(index){
+        let meta = $(this).parent().parent().data("meta");
+        $(this).parent().attr('id', `grids-${meta.identifier}`);
+        $(this).attr('id', `grid-${meta.identifier}`);
+    })
+}
 
 const showLargerCGSPreview = function(e){
     e.preventDefault();
@@ -621,12 +767,14 @@ const searchPanelInitialization = function(){
     // $("#autoView").click(() => { socket.emit('autoView', getDownloadSceneJson(), onlineGroup); });
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
+    $("#selectRoomShapebtn").click(clickSelectRoomShape);
     $("#floorPlanbtn").click(() => {
         let origin = document.getElementById("searchinput").value;
         $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
             socket.emit('sceneRefresh', result, onlineGroup);
         });
     })
+    $("#modulebtn").click(clickModuleSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#manyTextures").click(() => {

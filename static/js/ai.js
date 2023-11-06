@@ -151,6 +151,8 @@ const getUUID = function(){
     return uuid;
 }
 
+const atsc = (theta) => Math.atan2(Math.sin(theta), Math.cos(theta));
+
 const standardizeRotate = function(rotate, refRotate){
     if(rotate[0] === 0 && rotate[2] === 0){
         rotate[1] = Math.atan2(Math.sin(rotate[1]), Math.cos(rotate[1]));
@@ -300,6 +302,81 @@ const clickSceneFutureIterms = function (e) {
     refreshSceneFutureRoomTypes();
 }
 
+const getDerivationByID = function(totalAnimaID, derivationID){
+    $.getJSON(`/static/dataset/infiniteLayout/${totalAnimaID}/${derivationID}.json`, function (data) {
+        console.log(data);
+    });
+}
+
+const getCurrentIndexing = function(){
+    // Note that for InfiniteLayout, we only consider a single room, so every floorplan starts from the first room. 
+    let index = [];
+    manager.renderManager.scene_json.rooms[0].objList.forEach(o => {if('sforder' in o){index.push(0);}});
+    manager.renderManager.scene_json.rooms[0].objList.forEach(o => {if('sforder' in o){index[o.sforder] = currentAnimation.state_encoding[o.sforder].indexOf(o.startState);}});
+    return index.join("") + "_0" // `_${manager.renderManager.scene_json.rooms[0].sflayoutid}`;
+}
+
+const operationFuture = function(){
+    let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    floorPlanMapping.clear();
+    if(manager.renderManager.scene_json.rooms[0].sflayoutid === undefined){
+        manager.renderManager.scene_json.rooms[0].sflayoutid = getCurrentIndexing();
+    }
+    let index = manager.renderManager.scene_json.rooms[0].sflayoutid // getCurrentIndexing();
+    while (catalogItems.firstChild) {
+        catalogItems.firstChild.remove();
+    }
+    let sub = currentAnimation.index[index];
+    if(currentAnimation.index[index].length >= 20){
+        sub = currentAnimation.index[index].slice(0, 20);
+    }
+    sub.forEach(item => {
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        let imgdir = `/static/dataset/infiniteLayout/${taID}img/${item.target_node}.png`;
+        image.src = imgdir;
+        iDiv.className = "mapping catalogItem";
+        iDiv.style.backgroundImage = `url(${imgdir})`;
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        iDiv.addEventListener('contextmenu', e => {e.preventDefault();mappingHover(e);});
+        iDiv.addEventListener('mouseout', mappingLeave);
+        iDiv.addEventListener('click', (e) => {
+            $.getJSON(`/static/dataset/infiniteLayout/${taID}/${item.anim_id}.json`, function(result){
+                let meta = $(e.target).data("meta");
+                if(meta.anim_forward){
+                    sceneTransformTo(result.actions);
+                }else{
+                    sceneTransformBack(result.actions);
+                }
+                manager.renderManager.scene_json.rooms[0].sflayoutid = item.target_node
+            });
+            mappingLeave(e);
+        });
+        iDiv.classList.add('tiler');
+        catalogItems.appendChild(iDiv);
+        item.identifier = item.anim_id;
+        $(iDiv).data('meta', item);
+        floorPlanMapping.set(item.anim_id, image);
+    });
+    Splitting({
+        target: '.tiler',
+        by: 'cells',
+        rows: nrs,
+        columns: ncs,
+        image: true
+    });
+    $('.tiler .cell-grid .cell').each(function(){
+        let meta = $(this).parent().parent().data("meta");
+        $(this).parent().attr('id', `grids-${meta.identifier}`);
+        $(this).attr('id', `grid-${meta.identifier}`);
+    })
+}
+
 const sceneTransformFirst = function(derivation, name){
     for(let j = 0; j < derivation.length; j++){
         for(let k = 0; k < derivation[j].length; k++){
@@ -309,60 +386,119 @@ const sceneTransformFirst = function(derivation, name){
             if(derivation[j][k].action === 'rotate' && name === 'rotate'){
                 return derivation[j][k].r1;
             }
+            if(derivation[j][k].action === 'transform' && name === 'transform'){
+                return derivation[j][k].s1;
+            }
+        }
+    }
+}
+
+const sceneTransformLast = function(derivation, name){
+    for(let j = derivation.length-1; j >= 0; j--){
+        for(let k = derivation[j].length-1; k >= 0; k--){
+            if(derivation[j][k].action === 'move' && name === 'move'){
+                return derivation[j][k].p2;
+            }
+            if(derivation[j][k].action === 'rotate' && name === 'rotate'){
+                return derivation[j][k].r2;
+            }
+            if(derivation[j][k].action === 'transform' && name === 'transform'){
+                return derivation[j][k].s2;
+            }
         }
     }
 }
 
 const sceneTransformTo = function(derivations){
+    currentSeqs = derivations;
+    updateAnimationRecordDiv();
+    AnimationSlider.showPreviewAnim = false;
+    const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
     for(let i = 0; i < derivations.length; i++){
-        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
-        if(!('key' in object)){
-            continue
+        let object = undefined;
+        for(let finder = 0; finder < manager.renderManager.scene_json.rooms[0].objList.length; finder++){
+            if(manager.renderManager.scene_json.rooms[0].objList[finder].sforder === i){
+                object = manager.renderManager.scene_json.rooms[0].objList[finder];
+                break;
+            }
         }
+        if(object === undefined){
+            console.log('error! sceneTransformTo finds a undefined object? ');
+            continue;
+        }
+        // let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
+        // if(!('key' in object)){
+        //     continue
+        // }
         let object3d = manager.renderManager.instanceKeyCache[object.key];
         let initp = sceneTransformFirst(derivations[i], 'move');
         if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
         let initr = sceneTransformFirst(derivations[i], 'rotate');
         if(initr){object3d.rotation.set(0, initr, 0);}
+        let inits = sceneTransformFirst(derivations[i], 'transform');
+        if(inits){objectToAction(object3d, inits, 0.1);}
+        // console.log(object3d.userData.json.modelId, initp, initr, inits)
         derivations[i].forEach(seq => {
             seq.forEach(a => {
                 if(a.action === 'move'){
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000 + 500, object.key, [a.p2[0], a.p2[1], a.p2[2]], 'position', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'rotate'){
-                    let r = [0, a.r2, 0]
-                    standardizeRotate(r, [0, a.r1, 0]);
-                    object3d.rotation.set(0, a.r1, 0);
-                    setTimeout(transformObject3DOnly, a.t[0] * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
+                    let r = [0, atsc(a.r2), 0];
+                    standardizeRotate(r, [0, atsc(a.r1), 0]);
+                    object3d.rotation.set(0, atsc(a.r1), 0);
+                    setTimeout(transformObject3DOnly, a.t[0] * 1000 + 500, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'transform'){
-                    setTimeout(objectToAction, a.t[0] * 1000, object3d, a.s2, a.t[1] - a.t[0], 'none');
+                    setTimeout(objectToAction, a.t[0] * 1000 + 500, object3d, a.s2, a.t[1] - a.t[0], 'none');
                 }
             })
-        })
+        });
+        setTimeout(synchronize_json_object, T * 1000 + 500, object3d);
     }
+    setTimeout(() => { AnimationSlider.showPreviewAnim = true; }, T * 1000 + 500);
+    // setTimeout(operationFuture, T * 1000 + 200);
 }
 
 const sceneTransformBack = function(derivations){
     const T = Math.max(...derivations.map(d => Math.max(...d.map(dd => Math.max(...dd.map(ddd => ddd.t[1]))))));
     for(let i = derivations.length-1; i >= 0; i--){
-        let object = manager.renderManager.scene_json.rooms[currentRoomId].objList[i];
+        let object = undefined;
+        for(let finder = 0; finder < manager.renderManager.scene_json.rooms[0].objList.length; finder++){
+            if(manager.renderManager.scene_json.rooms[0].objList[finder].sforder === i){
+                object = manager.renderManager.scene_json.rooms[0].objList[finder];
+                break;
+            }
+        }
+        if(object === undefined){
+            console.log('error! sceneTransformBack finds a undefined object? ');
+            continue;
+        }
         let object3d = manager.renderManager.instanceKeyCache[object.key];
+        let initp = sceneTransformLast(derivations[i], 'move');
+        if(initp){object3d.position.set(initp[0], object3d.position.y, initp[2]);}
+        let initr = sceneTransformLast(derivations[i], 'rotate');
+        if(initr){object3d.rotation.set(0, initr, 0);}
+        let inits = sceneTransformLast(derivations[i], 'transform');
+        if(inits){objectToAction(object3d, inits, 0.1);}
+        // console.log(object3d.userData.json.modelId, initp, initr, inits)
         derivations[i].slice().reverse().forEach(seq => {
             seq.slice().reverse().forEach(a => {
                 if(a.action === 'move'){
                     setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, [a.p1[0], a.p1[1], a.p1[2]], 'position', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'rotate'){
-                    let r = [0, a.r1, 0];
-                    standardizeRotate(r, [0, a.r2, 0]);
-                    object3d.rotation.set(0, a.r2, 0);
+                    let r = [0, atsc(a.r1), 0];
+                    standardizeRotate(r, [0, atsc(a.r2), 0]);
+                    object3d.rotation.set(0, atsc(a.r2), 0);
                     setTimeout(transformObject3DOnly, (T - a.t[1]) * 1000, object.key, r, 'rotation', true, a.t[1] - a.t[0], 'none');
                 }
                 if(a.action === 'transform'){
                     setTimeout(objectToAction, (T - a.t[1]) * 1000, object3d, a.s1, a.t[1] - a.t[0], 'none');
                 }
-            })
+            });
+            setTimeout(synchronize_json_object, T * 1000, object3d);
         })
     }
+    // setTimeout(operationFuture, T * 1000 + 200);
 }

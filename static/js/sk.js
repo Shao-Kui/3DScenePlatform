@@ -1,8 +1,11 @@
 const roomIDCaster = new THREE.Raycaster();
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
-    let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache, true);
-    if (manager.renderManager.cwfCache.length > 0 && intersects.length > 0) { 
+    let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache.concat(areaList), true);
+    if (manager.renderManager.cwfCache.length + areaList.length > 0 && intersects.length > 0) { 
+        if(intersects[0].object.userData && intersects[0].object.userData.roomId){
+            return intersects[0].object.userData.roomId;
+        }
         if(intersects[0].object.parent.userData.roomId === undefined){
             return 0;
         }else{
@@ -171,6 +174,7 @@ const updateTimerTab = function(){
     $('#tab_Rotate').text(timeCounter.rotate.toFixed(3));
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
+    $('#tab_CLTP').text(timeCounter.cltp.toFixed(3));
     $('#tab_Clicks').text(timeCounter.clicks);
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
@@ -430,6 +434,7 @@ const onTouchObj = function (event) {
     if(On_ADD){
         On_ADD = false;
         let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -440,7 +445,12 @@ const onTouchObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {
@@ -520,7 +530,7 @@ const objectToAction = function(object3d, actionName, duration=1){
         actionForthToTarget(object3d.actions[actionName], duration);
     }
     if(actionName != 'origin'){
-        console.log(actionName, 'origin')
+        // console.log(object3d.userData.modelId, actionName)
         object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
     }
 }
@@ -572,6 +582,7 @@ const setNewIntersectObj = function(event = undefined){
                         "s2": $(e.target).attr("actionName"),
                         "t": [startTime, startTime+1]
                     });
+                    updateAnimationSlider(index);
                 }
                 objectToAction(object3d, $(e.target).attr("actionName"), 1);
                 synchronize_json_object(object3d);
@@ -640,23 +651,77 @@ const toSceneObj = function(object3d){
     return object3d;
 }
 
+const onClutterpaletteClick = function() {
+    timeCounter.cltpStart = moment();
+    let intersects = raycaster.intersectObjects(manager.renderManager.wfCache, true);
+    if (intersects.length > 0) {
+        clutterpalettePos = { x: intersects[0].point.x, y: 0, z: intersects[0].point.z };
+        $("#catalogItems").empty();
+        $("#secondaryCatalogItems").empty();
+        let roomId = intersects[0].object.parent.userData.roomId;
+        let room = manager.renderManager.scene_json.rooms[roomId];
+        let aabb = new THREE.Box3();
+        for (let obj of room.objList) {
+            if (obj.key in manager.renderManager.instanceKeyCache) {
+                aabb.setFromObject(manager.renderManager.instanceKeyCache[obj.key]);
+                obj.bbox = {
+                    min: [aabb.min.x, aabb.min.y, aabb.min.z],
+                    max: [aabb.max.x, aabb.max.y, aabb.max.z]
+                };
+            }
+        }
+        $.ajax({
+            type: "POST",
+            url: "/clutterpalette",
+            data: {
+                room: JSON.stringify(room),
+                pos: JSON.stringify(clutterpalettePos)
+            }
+        }).done(function (o) {
+            $('#searchinput').val('');
+            searchResults = JSON.parse(o);
+            searchResults.forEach(function (item) {
+                newCatalogItem(item);
+            });
+        });
+    }
+}
+
 const onClickIntersectObject = function(event){
     duplicateTimes = 1;
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache);
     intersects = raycaster.intersectObjects(instanceKeyCache, true);
     if (instanceKeyCache.length > 0 && intersects.length > 0) {
+        if(['Door', 'Window'].includes(intersects[0].object.parent.userData.format)){
+            return;
+        }
         // start to count time consumed. 
         timeCounter.maniStart = moment();
         if(INTERSECT_OBJ){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
-                if(pressedKeys[16]){// entering group transformation mode: 
+                if (shelfstocking_Mode) {
+                    if(INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                        if (pressedKeys[16] && intersects[0].object.parent?.userData.modelId === 'shelf01') {
+                            addToGroupShelf(toSceneObj(intersects[0].object));
+                            return;
+                        } else {
+                            releaseGroupShelf();
+                            clearShelfInfo();
+                        }
+                    }
+                }else if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
                     return; 
                 }else{
                     releaseGTRANSChildrens();
                     claimControlObject3D(INTERSECT_OBJ.userData.key, true);
                     synchronize_json_object(INTERSECT_OBJ);
+                }
+            }else{
+                // user keeps clicking the same object
+                if (shelfstocking_Mode && INTERSECT_OBJ.userData.modelId === 'shelf01') {
+                    return;
                 }
             }
         }
@@ -670,6 +735,25 @@ const onClickIntersectObject = function(event){
         }
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
+        if (shelfstocking_Mode) {
+            if (pressedKeys[16]) {
+                return;
+            }else if(isShelfPlaceholder(INTERSECT_OBJ)){
+                shelfPlaceholderHandler();
+                return;
+            }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
+                setIntersectShelf();
+                return;
+            }else{
+                cancelClickingShelfPlaceholders();
+            }
+        }
+        if (animaRecord_Mode) {
+            $("#AnimationRecordDiv label").removeClass("fw-bold text-danger");
+            let sforder = INTERSECT_OBJ.userData.json.sforder;
+            if (sforder !== undefined)
+                $(`#AnimationRecordDiv > label:eq(${sforder})`).addClass("fw-bold text-danger");
+        }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
         menu.style.top = (event.clientY - 63) + "px";
@@ -678,8 +762,13 @@ const onClickIntersectObject = function(event){
         return;
     }else{
         cancelClickingObject3D();
+        if (clutterpalette_Mode) { onClutterpaletteClick(); }
+        if (shelfstocking_Mode) {
+            cancelClickingShelfPlaceholders();
+            clearShelfInfo();
+        }
         // return; // if you want to disable movable wall, just uncomment this line. 
-        if (INTERSECT_WALL == undefined) {
+        /*if (INTERSECT_WALL == undefined) {
             var newWallCache = manager.renderManager.newWallCache;
             intersects = raycaster.intersectObjects(newWallCache, true);
             if (intersects.length > 0) {
@@ -691,7 +780,7 @@ const onClickIntersectObject = function(event){
         } else {
             if (INTERSECT_WALL != undefined)
                 unselectWall();
-        }
+        }*/
     }
 }
 
@@ -728,7 +817,8 @@ var onClickObj = function (event) {
     }
     if (On_ADD) {
         On_ADD = false;
-        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache)), true)[0].point;
+        let p = raycaster.intersectObjects(Object.values(manager.renderManager.instanceKeyCache).concat(Object.values(manager.renderManager.wfCache).concat(areaList)), true)[0].point;
+        if (clutterpalette_Mode) { p = clutterpalettePos; }
         addObjectFromCache(
             modelId=INSERT_OBJ.modelId,
             transform={
@@ -741,7 +831,12 @@ var onClickObj = function (event) {
         );
         scene.remove(scene.getObjectByName(INSERT_NAME));
         applyLayoutViewAdjust();
-        timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        if (clutterpalette_Mode) {
+            timeCounter.cltp += moment.duration(moment().diff(timeCounter.cltpStart)).asSeconds();
+        }else{
+            timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+        }
+        updateTimerTab();
         return;
     }
     if (On_MOVE) {
@@ -785,7 +880,11 @@ var onClickObj = function (event) {
             let index = INTERSECT_OBJ.userData.json.sforder;
             let a = currentSeqs[index][0].at(-1);
             a.r2 = INTERSECT_OBJ.rotation.y;
-            a.t[1] = a.t[0]+1;
+            let dr = Math.abs(a.r1 - a.r2);
+            dr = Math.min(dr, Math.PI * 2 - dr);
+            let duration = dr / Math.PI;
+            a.t[1] = a.t[0] + duration;
+            updateAnimationSlider(index);
         }
         return;
     }
@@ -853,12 +952,14 @@ function onDocumentMouseMove(event) {
     }
     else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(toSceneObj(intersects[0].object.parent))) {
         outlinePass.selectedObjects = [toSceneObj(intersects[0].object.parent), GTRANS_GROUP];
+    }else if(shelfstocking_Mode && instanceKeyCache.length > 0 && intersects.length > 0 && intersects[0].object.name.startsWith('shelf-placeholder-')){
+        outlinePass.selectedObjects = [intersects[0].object]
     }else{
         outlinePass.selectedObjects = [GTRANS_GROUP]
     }  
     // currentMovedTimeStamp = moment();
     tf.engine().startScope();
-    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined){
+    if(On_ADD && INSERT_OBJ.modelId in objectCache && INSERT_OBJ.object3d !== undefined && !clutterpalette_Mode){
         scene.remove(scene.getObjectByName(INSERT_NAME)); 
         if(intersects.length > 0){
             let ip = intersects[0].point
@@ -1223,12 +1324,24 @@ const downloadSceneJson =  function(){
     dlAnchorElem.click();
 }
 
+const numberOfObjectsInTheScene = function(){
+    let count = 0;
+    manager.renderManager.scene_json.rooms.forEach(r => {
+        r.objList.forEach(o => {
+            if(o.inDatabase){
+                count += 1;
+            }
+        });
+    });
+    console.log(count);
+}
+
 var temp;
 const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
     render_initialization();
-    orth_initialization();
+    // orth_initialization();
     searchPanelInitialization();
     radial_initialization();
     onlineInitialization();
@@ -1328,7 +1441,23 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
-    $("#operationFuture").click(refreshSceneFutureRoomTypes);
+    // $("#operationFuture").click(function(){
+    //     let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    //     $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+    //         currentAnimation = data;
+    //     });
+    // });
+    // $("#operationFuture").click(function(){
+    //     let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    //     $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+    //         console.log(data);
+    //         currentAnimation = data;
+    //         $.getJSON(`/static/dataset/infiniteLayout/${taID}img/layoutTree.json`, function (data) {
+    //             console.log(data);
+    //             updateTreeWindow(data); // This code initialize the Tree for InfiniteLayout. 
+    //         });
+    //     });
+    // });
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1340,6 +1469,7 @@ const setting_up = function () {
         timeCounter.rotate - ${timeCounter.rotate}\r\n
         timeCounter.scale - ${timeCounter.scale}\r\n
         timeCounter.cgs - ${timeCounter.cgs}\r\n
+        timeCounter.cltp - ${timeCounter.cltp}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
         $.ajax({
@@ -1357,6 +1487,7 @@ const setting_up = function () {
         timeCounter.rotate = 0;
         timeCounter.scale = 0;
         timeCounter.cgs = 0;
+        timeCounter.cltp = 0;
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;
@@ -1364,6 +1495,30 @@ const setting_up = function () {
         timeCounter.totalStart = moment();
     });
     document.addEventListener('click', function(){timeCounter.clicks+=1;});
+    $("#clutterpalette_button").click(function() {
+        let button = document.getElementById("clutterpalette_button");
+        clutterpalette_Mode = !clutterpalette_Mode;
+        if(clutterpalette_Mode){
+            button.style.backgroundColor = '#9400D3';
+            $("#secondaryCatalogItems").show();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            $("#secondaryCatalogItems").hide();
+            // while (catalogItems.firstChild) {catalogItems.firstChild.remove();}
+            // while (secondaryCatalogItems.firstChild) {secondaryCatalogItems.firstChild.remove();}
+        }
+    });
+    $("#stockshelf_button").click(function() {
+        let button = document.getElementById("stockshelf_button");
+        shelfstocking_Mode = !shelfstocking_Mode;
+        if(shelfstocking_Mode){
+            button.style.backgroundColor = '#9400D3';
+            enterShelfStockingMode();
+        }else{
+            button.style.backgroundColor = 'transparent';
+            exitShelfStockingMode();
+        }
+    });
     $("#firstperson_button").click(function(){
         let button = document.getElementById("firstperson_button");
         fpCtrlMode = !fpCtrlMode;
@@ -1407,13 +1562,18 @@ const setting_up = function () {
         let button = document.getElementById("animaRecord_button");
         animaRecord_Mode = !animaRecord_Mode;
         if(animaRecord_Mode){
-            currentSeqs = [...Array(manager.renderManager.scene_json.rooms[currentRoomId].objList.length)].map(e => [[]]);
-            for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
-                manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
-            }
+            let numofglbs = 0;
+            manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
+            currentSeqs = [...Array(numofglbs)].map(e => [[]]);
+            // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
+            //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
+            // }
             button.style.backgroundColor = '#9400D3';
+            AnimationSlider.setInitStates();
+            updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
+            $("#AnimationRecordDiv").empty();
         }
     });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
@@ -2933,6 +3093,24 @@ const setting_up = function () {
         
     });
 
+    $("#sidebarSelect").change(()=>{
+        $('.sidebarSelect_collapse').collapse("hide");
+        if ($("#sidebarSelect").val() !== "") {
+            let selector = "#" + $("#sidebarSelect").val();
+            $(selector).collapse("show");
+        }
+    });
+
+    $('input[type=radio][name=shelfModeRadio]').change(function() {
+        startShelfPlannerExperiment();
+        if (this.value == '3') {
+            $('#nextShelfBtn').show();
+        }
+        else {
+            $('#nextShelfBtn').hide();
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -2946,15 +3124,15 @@ const setting_up = function () {
     scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-    orthcanvas.addEventListener('mousedown', orth_mousedown);
-    orthcanvas.addEventListener('mouseup', orth_mouseup);
-    orthcanvas.addEventListener('mousemove', orth_mousemove);
-    orthcanvas.addEventListener('click', orth_mouseclick);
+    // orthcanvas.addEventListener('mousedown', orth_mousedown);
+    // orthcanvas.addEventListener('mouseup', orth_mouseup);
+    // orthcanvas.addEventListener('mousemove', orth_mousemove);
+    // orthcanvas.addEventListener('click', orth_mouseclick);
 
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#searchbtn').click();
+        $('#modulebtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){
@@ -2970,24 +3148,6 @@ const setting_up = function () {
     onWindowResize();
     deltaClock = new THREE.Clock();
     gameLoop();
-    const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
-    const params = {
-        color: '#ffffff',
-        scale: 4,
-        flowX: 1,
-        flowY: 1
-    };
-    water = new THREE.Water( waterGeometry, {
-        color: params.color,
-        scale: params.scale,
-        flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
-        textureWidth: 1024,
-        textureHeight: 1024
-    } );
-
-    water.position.y = 1;
-    water.rotation.x = Math.PI * - 0.5;
-    // scene.add( water );
 };
 
 var autocollapse = function (menu, maxHeight) {

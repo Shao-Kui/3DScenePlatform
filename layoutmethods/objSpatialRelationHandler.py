@@ -330,11 +330,38 @@ def uploadDataFromMethods():
         localDatafd.write("%s; %d\n"%(hotLines[i], i))
         
 
+def loadData(DATA, lines):
+    for line in lines:
+        elements = line.split(';')
+        eleDict = {'mainObjId' :  elements[0], 'userName' : elements[-1][:-1]}
+
+        for element in elements[1:-1]:
+            if elementHandler(eleDict, element) < 0 :
+                break
+    
+        DATA.append(eleDict)
+
+def searchMainModelId(mainModelId, lines):
+    for line in lines:
+        elements = line.split(';')
+        if elements[0] == mainModelId:
+            eleDict = {'mainObjId' :  elements[0], 'userName' : elements[-1][:-1]}
+
+            for element in elements[1:-1]:
+                if elementHandler(eleDict, element) < 0 :
+                    break
+            
+            return eleDict
+
 if __name__ == '__main__':
-    #OSRfd
-    loadData()
-    #for i in OSRDATA:
-        #for j in i:
-            #print(j, i[j])
-        #print('\n')
-    OSRfd.close()
+    fd = open("object-spatial-relation-dataset.txt", 'r')
+    LINES = fd.readlines()
+
+    data = []
+    loadData(data, LINES)
+    for i in data:
+        for j in i:
+            print(j, i[j])
+        print('\n')
+
+    fd.close()

@@ -149,7 +149,7 @@
 
 				renderer.setRenderTarget( renderTarget );
 				if ( renderer.autoClear === false ) renderer.clear();
-				renderer.render( scene, virtualCamera );
+				//renderer.render( scene, virtualCamera );
 				renderer.xr.enabled = currentXrEnabled;
 				renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
 				renderer.setRenderTarget( currentRenderTarget ); // restore viewport

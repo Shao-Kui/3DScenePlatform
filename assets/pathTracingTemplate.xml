@@ -81,7 +81,24 @@
         <bsdf type="roughdiffuse"></bsdf>
     </bsdf>
     {%- endif %}
+    {%- if obj.areaType == 'water' %}
+    <bsdf type="dielectric">
+        <string name="intIOR" value="water"/>
+        <string name="extIOR" value="air"/>
+    </bsdf>
+    {%- endif %}
 </shape>    
+{% endfor %}
+{% for obj in scenejson.rendercubeobjlist %}
+<shape type="cube">
+    <transform name="toWorld">
+        <scale x="{{obj.cubescale[0]}}" y="{{obj.cubescale[1]}}" z="{{obj.cubescale[2]}}"/>
+        <translate x="{{obj.cubetranslate[0]}}" y="{{obj.cubetranslate[1]}}" z="{{obj.cubetranslate[2]}}"/>
+    </transform>
+    <bsdf type="twosided">
+        <bsdf type="roughdiffuse"></bsdf>
+    </bsdf>
+</shape>  
 {% endfor %}
 {% for obj in scenejson.newroomobjlist %}
 <shape type="rectangle">

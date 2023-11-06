@@ -160,6 +160,12 @@ def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=Fa
         print('Checking: ', obj['modelId'])
     if obj['coarseSemantic'] in ['window', 'Window', 'door', 'Door']:
         t = np.array(obj['translate_frombb'])
+    elif obj['format'] == 'sfy':
+        t = np.array([
+            (obj['bbox']['max'][0] + obj['bbox']['min'][0])/2,
+            (obj['bbox']['max'][1] + obj['bbox']['min'][1])/2,
+            (obj['bbox']['max'][2] + obj['bbox']['min'][2])/2
+        ])
     else:
         if not sk.objectInDataset(obj['modelId']):
             return False
@@ -218,7 +224,7 @@ def isObjectInSight(obj, probe, direction, floorMeta, theta, objList, isDebug=Fa
             print(seenVList)
         if len(seenVList) == 0:
             return False
-    if len(seenVList) <= 3:
+    if len(seenVList) <= 1:
         return False
     return True
 
@@ -234,7 +240,7 @@ def twoInfLineIntersection(p1, p2, p3, p4, isDebug=False):
     D = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
     if isDebug:
         print(D)
-    if np.abs(D) < 0.0001:
+    if np.abs(D) < 0.1:
         return None
     px = ( (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4) ) / D
     py = ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / D
