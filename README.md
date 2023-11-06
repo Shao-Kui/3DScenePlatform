@@ -224,7 +224,7 @@ The "cgs" function in sk.py is the entrance for preprocessing each coherent grou
 # CommercialScene
 ![CommercialScene](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teasermm23.png "MM 2023")
 
-[\[Paper\]] [\[Video\]][trafficflow] [\[Supp\]] 
+[\[Paper\]][traffic] [\[Video\]][trafficflow] [\[Supp\]][trafficsupp] 
 
 This project includes our algorithm for generating commercial scenes. The related source code is all in the following directory:
 ```
@@ -232,6 +232,7 @@ root/
 --layoutmethods/
 ----trafficflow/
 ```
+Note that the code generates scene jsons which should be loaded in this platform for visualization. 
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
@@ -301,3 +302,5 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [trafficflow]:https://www.bilibili.com/video/BV1gV4y1i7VN
 [hongbopage]:https://www.scm.cityu.edu.hk/people/fu-hongbo
 [taijiangpage]:https://cg.cs.tsinghua.edu.cn/people/~mtj/
+[traffic]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/cmmercialscene.pdf
+[trafficsupp]:https://dl.acm.org/doi/abs/10.1145/3581783.3613456
