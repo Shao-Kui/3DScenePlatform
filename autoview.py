@@ -1615,19 +1615,6 @@ def clickTimer():
     f.close()
     return "%s-%s-%s-%s OK"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr)
 
-methods = ["Inds", "MgAdd", "CLPT", "CGS", "FFG"]
-@app_autoView.route("/clickTimer",methods=['POST'])
-def clickTimer():
-    data = flask.request.json
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
-    f.write(json.dumps(data['timeC']))
-    f.close()
-    f = open("./yltmp/experiment/%s-%s-%s-%s-result.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
-    f.write(json.dumps(data['json']))
-    f.close()
-    return "%s-%s-%s-%s OK"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr)
-
 @app_autoView.route("/autoviewfp2023", methods=['POST'])
 def autoviewfp2023():
     if flask.request.method == 'POST':
