@@ -1,5 +1,7 @@
 import numpy as np
+from scipy import stats
 import math
+import json
 import csv
 
 kindlist = []
@@ -28,6 +30,11 @@ whereMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/whereMatrix.tx
 
 similarityMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/similarityMatrix.txt")
 similarityMatrixforKind = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/similarityMatrixforKind.txt")
+
+with open(f'./layoutmethods/shelfarrangement/Matrix/price.json') as f:
+    modelPrices = json.load(f)
+
+priceMatrix = np.loadtxt("./layoutmethods/shelfarrangement/Matrix/price2.txt")
 
 model_kind_dict = {}
 kind_model_dict = {}
@@ -116,6 +123,7 @@ def noRecommandItem(room,placeholders):
                 kind = str(obj["shelfType"])
             except:
                 print("please select kind first!") ## todo:need to alert in frontend
+                return []
     recommond_list = []
     for i in range(len(modellist)):
         if model_kind_dict[new_modle_list[i]] == kind:
@@ -473,7 +481,25 @@ def kindRecommand(room,shelfkey):
     return recommond_list
 
 
+def heightfunction(height):
+    height_adult = 1.697        #成人身高
+    height_child = 1.12         #小孩身高
+    C_ad = 0.7                  #系数
+    C_ch = 0.3                  #系数
+    if height > height_child:
+        return 1
+    else:
+        return height / height_child
+    # P(h1 < h < h2) = stats.norm.cdf(h2, 1.7) - stats.norm.cdf(h1, 1.7)
+    return C_ad*stats.norm.pdf(height,height_adult) + C_ch*stats.norm.pdf(height,height_child)
+
 def ModelRecommand(room,placeholders):
+    # np.set_printoptions(suppress=True)
+    # with open("./layoutmethods/shelfarrangement/Matrix/room.json", "w") as f:
+    #     json.dump(room, f)
+    # with open("./layoutmethods/shelfarrangement/Matrix/placeholders.json", "w") as f:
+    #     json.dump(placeholders, f)
+    # print(placeholders)
     shelf_list = []
     for obj in room['objList']:
         if obj["key"] == list(placeholders.keys())[0]:
@@ -512,10 +538,26 @@ def ModelRecommand(room,placeholders):
     p_sim_list = []
     p_prior_list = []
     idx_list = []
+
+    average_vis = 0
+    average_POI = 0
+    average_height = 0
+    placeholderCount = 0
+    for shelfKey in placeholders:
+        for placeholderKey in placeholders[shelfKey]:
+            average_vis += placeholders[shelfKey][placeholderKey][0]
+            average_POI += placeholders[shelfKey][placeholderKey][1]
+            average_height += placeholders[shelfKey][placeholderKey][2]
+            placeholderCount += 1
+    average_vis /= placeholderCount
+    average_POI /= placeholderCount
+    average_height /= placeholderCount
+    vis = 0.5 * average_vis + 0.5 * average_POI + 0.5 * heightfunction(average_height)
+
     for idx in range(0,len(modellist)):
         co_model = []
         p_prior = priorMatrix[idx] * 0.1
-        p_where = 1
+        p_where = priceMatrix[idx]
         p_co = 1
         p_sim = 1
 
@@ -583,7 +625,7 @@ def ModelRecommand(room,placeholders):
     if average_p_sim!=0:
         p_sim_list = p_sim_list/average_p_sim
     if average_p_where!= 0:
-        p_where_list = p_where_list/average_p_where
+        p_where_list = vis*p_where_list/average_p_where
     if average_p_prior != 0:
         p_prior_list = p_prior_list/average_p_prior
     p_list = p_co_list * p_sim_list * p_where_list * p_prior_list
@@ -602,8 +644,10 @@ def ModelRecommand(room,placeholders):
     for i in range(len(modellist)):
         kind_name = modellist[idx_list[i]]
         if model_kind_dict[kind_name] == this_shelf.decided_kind:
+            # print(kind_name, p_co_list[idx_list[i]], p_sim_list[idx_list[i]], p_where_list[idx_list[i]], priceMatrix[idx_list[i]], vis, average_p_where)
             for j in range(len(kind_model_dict[kind_name])):
                 recommond_list.append(kind_model_dict[kind_name][j])
+    # print()
     
     for i in range(len(modellist)):
         kind_name = modellist[idx_list[i]]

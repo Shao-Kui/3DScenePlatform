@@ -488,7 +488,7 @@
                 <div class="h4 py-1 px-2">
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode1" value="1">
-                    <label class="form-check-label" for="shelfMode1" id="shelfModeLabel1">Alphabetical</label>
+                    <label class="form-check-label" for="shelfMode1" id="shelfModeLabel1">Hierachical</label>
                   </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode2" value="2">
@@ -501,8 +501,8 @@
                 </div>
 
                 <div class="h4 py-1 px-2">
-                  <button id="startShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap" onclick="startShelfPlannerExperiment()">Start Experiment</button>
-                  <button id="endShelfPlannerExperimentBtn" class="btn btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">End Experiment</button>
+                  <button id="startShelfPlannerExperimentBtn" class="btn btn-lg btn-danger text-nowrap" onclick="startShelfPlannerExperiment(true)">Start Experiment</button>
+                  <button id="endShelfPlannerExperimentBtn" class="btn btn-lg btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">End Experiment</button>
                 </div>
                 
                 <div class="h4 py-1 px-2">
@@ -598,7 +598,7 @@
                   <button id="shelfClearAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0,1,2,3])"
                     disabled>Clear</button>
                   <button id="selectShelfGroupBtn" class="btn btn-primary text-nowrap ml-4" onclick="selectShelfGroup()"
-                    disabled>Select Shelf Group</button>
+                    disabled>整排货架全选</button>
                   <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()" disabled>Next Shelf</button>
                 </div>
               </div>

@@ -151,7 +151,7 @@ html, body{
 }
 
 .catalogItem {
-  display: inline-block;
+  display: inline-grid;
   width: 120px;
   height: 120px;
   border-bottom: 1px solid #96a2ad;
@@ -163,6 +163,23 @@ html, body{
   margin-right: 5px;
   margin-top: 5px;
   margin-bottom: 5px;
+  color: #000000aa;
+}
+
+.catalogItemChineseName {
+  padding-top: 2px;
+  height: 60px;
+  font-size: medium;
+  pointer-events: none;
+}
+
+.catalogItemEnglishName {
+  padding-bottom: 8px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none;
 }
 
 #drawing-canvas {

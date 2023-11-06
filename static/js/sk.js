@@ -1723,6 +1723,7 @@ const setting_up = function () {
     });
 
     $('input[type=radio][name=shelfModeRadio]').change(function() {
+        startShelfPlannerExperiment();
         if (this.value == '3') {
             $('#nextShelfBtn').show();
         }

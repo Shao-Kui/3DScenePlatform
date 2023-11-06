@@ -34,14 +34,11 @@ const clickCatalogItem = function (e, d=undefined) {
         timeCounter.addStart = moment();
     }
     scenecanvas.style.cursor = "crosshair";
-    if (shelfstocking_Mode) {
-        let order = $(e.target).data("order");
-        if (catalogItems.firstChild.getAttribute('objectname') == 'yulin-empty') order -= 1;
-        if (order != -1) socket.emit('selectCommodity', onlineUserID, order, onlineGroup);
-    }
     loadObjectToCache(INSERT_OBJ.modelId, ()=>{
         if (shelfstocking_Mode && INSERT_OBJ.modelId.startsWith('yulin') && Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length !== 0) {
-            stockShelves();
+            let order = $(e.target).data("order");
+            if (catalogItems.firstChild.getAttribute('objectname') == 'yulin-empty') order -= 1;
+            stockShelves(order);
             return;
         }
         INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
@@ -58,9 +55,13 @@ const clickCatalogItem = function (e, d=undefined) {
     }, [], INSERT_OBJ.format); 
 }
 
-const stockShelves = () => {
+const stockShelves = (order) => {
     On_ADD = false;
     scenecanvas.style.cursor = "auto";
+    if (order != -1) {
+        console.log('selectCommodity', order);
+        socket.emit('selectCommodity', onlineUserID, order, onlineGroup);
+    }
     let modelId = INSERT_OBJ.modelId;
     for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
         let shelf = manager.renderManager.instanceKeyCache[shelfKey];
@@ -75,7 +76,7 @@ const stockShelves = () => {
                 commodities[r][c] = { modelId: '', uuid: '' };
             }
             if (modelId !== 'yulin-empty') {
-                addCommodityToShelf(shelfKey, modelId, r, c, l);
+                addCommodityToShelf(shelfKey, modelId, r, c, l, order);
             }
         }
     }
@@ -134,7 +135,7 @@ const newCatalogItem = function(item){
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
     iDiv.dataset.order = catalogItems.childElementCount;
-    if (shelfstocking_Mode) iDiv.innerHTML = item.name.replace('yulin-', '');
+    if (shelfstocking_Mode) iDiv.innerHTML = `<span class="catalogItemChineseName">${yulinModelChineseName[item.name]}</span><span class="catalogItemEnglishName">${item.name.split('-')[1]}</span>`;
     catalogItems.appendChild(iDiv);
 };
 

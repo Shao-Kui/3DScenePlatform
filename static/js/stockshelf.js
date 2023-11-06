@@ -63,6 +63,7 @@ let enterShelfStockingMode = () => {
         $("#sidebarSelect").val("shelfInfoDiv").change();
     }
     $('#nextShelfBtn').removeAttr('disabled');
+    startShelfPlannerExperiment();
 }
 
 let getCube = (width, height, depth, opacity, color = "#ffffff") => {
@@ -120,7 +121,7 @@ let getNewUUID = () => {
     return uuid;
 }
 
-let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
+let addCommodityToShelf = function (shelfKey, modelId, r, c, l, order) {
     let shelf = manager.renderManager.instanceKeyCache[shelfKey];
     let commodities = shelf.userData.json.commodities;
     let roomId = shelf.userData.roomId;
@@ -161,17 +162,24 @@ let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
         'scale': [1.0, 1.0, 1.0],
         'format': 'THInstancedObject'
     };
+    let timestamp = Date.now();
+    const date = new Date();
+    let addWhen = date.toLocaleString();
     let otherInfo = {
         'instancedTransforms': instancedTransforms,
         'shelfKey': shelfKey,
         'shelfRow': r,
-        'shelfCol': c
+        'shelfCol': c,
+        'order': order,
+        'addBy': onlineGroup, 
+        'addWhen': addWhen,
+        'timestamp': timestamp
     };
     let object3d = addObjectByUUID(uuid, modelId, roomId, transform, otherInfo);
     object3d.name = uuid;
     emitFunctionCall('addObjectByUUID', [uuid, modelId, roomId, transform, otherInfo]);
 
-    commodities[r][c] = { modelId: modelId, uuid: uuid };
+    commodities[r][c] = { modelId: modelId, uuid: uuid, order: order, addBy: onlineGroup, addWhen: addWhen, timestamp: timestamp };
     let objectProperties = {};
     objectProperties[shelfKey] = { commodities: commodities };
     emitFunctionCall('updateObjectProperties', [objectProperties]);
@@ -318,7 +326,8 @@ let setShelfType = (t, i) => {
     for (let key of shelfKeys) {
         let shelf = manager.renderManager.instanceKeyCache[key];
         shelf.userData.json.shelfType = t;
-        objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
+        shelf.userData.json.selectShelfTypeRank = i;
+        objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType, selectShelfTypeRank: i };
     }
     console.log('selectShelfType', i);
     socket.emit('selectShelfType', onlineUserID, i, onlineGroup);
@@ -443,6 +452,13 @@ let releaseGroupShelf = function() {
 let recommendCommodities = (roomId) => {
     let retPlaceholders = {};
     for (let key in INTERSECT_SHELF_PLACEHOLDERS) {
+        if (manager.renderManager.instanceKeyCache[key].userData.json.shelfType === undefined) {
+            console.log("Please select shelf category!");
+            INTERSECT_OBJ = manager.renderManager.instanceKeyCache[key];
+            setIntersectShelf();
+            selectShelfGroup();
+            return;
+        }
         retPlaceholders[key] = {};
         let placeholderKeys = Array.from(INTERSECT_SHELF_PLACEHOLDERS[key]);
         for (let phKey of placeholderKeys) {
@@ -475,7 +491,7 @@ let recommendShelfType = (roomId, shelfKeys) => {
         type: "POST",
         url: "/shelfType",
         data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
+            room: JSON.stringify(manager.renderManager.scene_json.rooms[0]),
             shelfKeys: JSON.stringify(shelfKeys),
             mode: $("input[name='shelfModeRadio']:checked").val()
         }
@@ -483,7 +499,7 @@ let recommendShelfType = (roomId, shelfKeys) => {
         $("#shelfTypeRadios").empty();
         shelfTypes = JSON.parse(o);
         shelfTypes.forEach(function (st, i) {
-            let label = st.used ?  st.name : `<b>${st.name}</b>`;
+            let label = st.used ? shelfCategoryChineseName[st.name] : `<b>${shelfCategoryChineseName[st.name]}</b>`;
             $("#shelfTypeRadios").append(`
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${st.name}" onclick="setShelfType('${st.name}', ${i})">
@@ -498,7 +514,7 @@ let recommendShelfType = (roomId, shelfKeys) => {
 }
 
 let lookAtShelves = (shelfKeys) => {
-    if (!LOOK_AT_SHELF || $("input[name='shelfModeRadio']:checked").val() != '3') return; 
+    if (!LOOK_AT_SHELF) return;  // $("input[name='shelfModeRadio']:checked").val() != '3'
     if (shelfKeys.length > 5) {
         let aabb = new THREE.Box3();
         for (let shelfKey of shelfKeys) {
@@ -631,7 +647,7 @@ let clearAllShelves = () => {
     for (let obj of manager.renderManager.scene_json.rooms[0].objList) {
         if (obj?.modelId == 'shelf01' && obj.key in manager.renderManager.instanceKeyCache) {
             shelfRowClear(obj.key, [0, 1, 2, 3]);
-            obj.shelfType = undefined;
+            // obj.shelfType = undefined;
         }
     }
     clearDanglingCommodities();
@@ -652,7 +668,8 @@ let selectShelfGroup = () => {
     lookAtShelves(Object.keys(INTERSECT_SHELF_PLACEHOLDERS));
 }
 
-let startShelfPlannerExperiment = () => {
+let startShelfPlannerExperiment = (manualClick = false) => {
+    if (manualClick) $('#startShelfPlannerExperimentBtn').removeClass("btn-danger").addClass("btn-primary");
     let mode = $("input[name='shelfModeRadio']:checked").val();
     socket.emit('startShelfPlannerExperiment', onlineUserID, mode, onlineGroup);
 }
@@ -751,3 +768,174 @@ let computePlaceholdersVisbility = () => {
         }
     }
 }
+
+let yulinModelChineseName = {
+    "yulin-beer-green-tall": "啤酒",
+    "yulin-beerpack1": "啤酒",
+    "yulin-beerpack2": "啤酒",
+    "yulin-champagne-brown-tall": "香槟",
+    "yulin-coffee-brown-short": "咖啡",
+    "yulin-cola-red-short": "可乐",
+    "yulin-juice-blue-large": "果汁",
+    "yulin-juice-brown-large": "果汁",
+    "yulin-juice-white-large": "果汁",
+    "yulin-lemonwater-yellow-short": "柠檬水",
+    "yulin-milk-blue-short": "牛奶",
+    "yulin-milkpack": "牛奶",
+    "yulin-soda-orange-short": "苏打水",
+    "yulin-tea-brown-short": "茶",
+    "yulin-water-blue-tall": "水",
+    "yulin-wine-green-tall": "红酒",
+    "yulin-yogurt": "酸奶",
+    "yulin-yogurt-pink": "酸奶",
+    "yulin-burger": "汉堡",
+    "yulin-cakepack": "蛋糕",
+    "yulin-hotdog": "热狗",
+    "yulin-hotdog2": "热狗",
+    "yulin-sandwich": "三明治",
+    "yulin-toast": "吐司",
+    "yulin-donut": "甜甜圈",
+    "yulin-niujiaobao": "牛角包",
+    "yulin-pancakes": "班戟",
+    "yulin-pieceofcake": "蛋糕",
+    "yulin-pretzel": "椒盐脆饼",
+    "yulin-maffins": "松饼",
+    "yulin-blackricebasket": "谷物",
+    "yulin-colorricebasket": "谷物",
+    "yulin-flour": "面粉",
+    "yulin-flour2": "面粉",
+    "yulin-greenricebasket": "谷物",
+    "yulin-oil": "油",
+    "yulin-oil2": "油",
+    "yulin-orangericebasket": "谷物",
+    "yulin-rice": "米",
+    "yulin-rice2": "米",
+    "yulin-butter": "黄油",
+    "yulin-cheese": "芝士",
+    "yulin-jam": "果酱",
+    "yulin-ketchup": "番茄酱",
+    "yulin-pepper": "胡椒粉",
+    "yulin-salt": "盐",
+    "yulin-sause": "酱",
+    "yulin-sugar": "糖",
+    "yulin-sugar2": "糖",
+    "yulin-pasta": "意大利面",
+    "yulin-pasta2": "意大利面",
+    "yulin-sudong1": "速冻-派",
+    "yulin-sudong2": "速冻-饭",
+    "yulin-sudong3": "速冻-比萨",
+    "yulin-sushis": "寿司",
+    "yulin-sushis2": "寿司",
+    "yulin-apples": "苹果",
+    "yulin-artichokes": "朝鲜蓟",
+    "yulin-avocados": "牛油果",
+    "yulin-bananas": "香蕉",
+    "yulin-carrots": "胡萝卜",
+    "yulin-garlic": "大蒜",
+    "yulin-grapefruits": "柚子",
+    "yulin-kiwis": "猕猴桃",
+    "yulin-lemons": "柠檬",
+    "yulin-mangos": "芒果",
+    "yulin-mushrooms": "蘑菇",
+    "yulin-onions": "洋葱",
+    "yulin-papayas": "木瓜",
+    "yulin-perrys": "榨菜",
+    "yulin-pineapples": "菠萝",
+    "yulin-potatos": "土豆",
+    "yulin-pumpkins": "南瓜",
+    "yulin-squashs": "南瓜",
+    "yulin-tomatos": "西红柿",
+    "yulin-watermelons": "西瓜",
+    "yulin-zucchinis": "西葫芦",
+    "yulin-chicken": "鸡肉",
+    "yulin-egg": "鸡蛋",
+    "yulin-egg2": "鸡蛋",
+    "yulin-hampack": "火腿",
+    "yulin-meat": "火腿",
+    "yulin-meat2": "火腿",
+    "yulin-meatpack": "鸡翅",
+    "yulin-meatpack2": "牛肉",
+    "yulin-meatpack3": "猪肉",
+    "yulin-sausages": "香肠",
+    "yulin-steak": "牛排",
+    "yulin-cakebag": "蛋糕",
+    "yulin-cakebag2": "蛋糕",
+    "yulin-cakebox": "蛋糕",
+    "yulin-cakebox2": "蛋糕",
+    "yulin-candy": "糖果",
+    "yulin-chip1": "薯片",
+    "yulin-chip2": "薯片",
+    "yulin-choco": "巧克力",
+    "yulin-choco2": "巧克力",
+    "yulin-chocobox": "巧克力",
+    "yulin-chocopack": "巧克力",
+    "yulin-coffee": "咖啡",
+    "yulin-cream": "奶油",
+    "yulin-cream2": "奶油",
+    "yulin-frenchfries": "薯条",
+    "yulin-tea": "茶",
+    "yulin-tincan": "罐头",
+    "yulin-shampoo-black": "洗发水",
+    "yulin-shampoo-white": "洗发水",
+    "yulin-shampoo-green": "洗发水",
+    "yulin-cleaner1": "清洁剂",
+    "yulin-bleach": "漂白剂",
+    "yulin-fastfoodcup-pink": "杯",
+    "yulin-fastfoodcup-red": "杯子",
+    "yulin-glasscup-blue": "玻璃杯",
+    "yulin-glasscup-blue2": "玻璃杯",
+    "yulin-glasscup-grey": "玻璃杯",
+    "yulin-glasscup-grey2": "玻璃杯",
+    "yulin-glasscup-pink": "玻璃杯",
+    "yulin-glasscup-pink2": "玻璃杯",
+    "yulin-glassware-short-blue2": "玻璃杯",
+    "yulin-glassware-short-grey": "玻璃杯",
+    "yulin-glassware-short-grey2": "玻璃杯",
+    "yulin-glassware-short-orange": "玻璃杯",
+    "yulin-glassware-short-orange2": "玻璃杯",
+    "yulin-glassware-short-pink": "玻璃杯",
+    "yulin-glassware-tall-grey": "玻璃杯",
+    "yulin-glassware-tall-orange": "玻璃杯",
+    "yulin-glassware-tall-pink": "玻璃杯",
+    "yulin-holder-green": "容器",
+    "yulin-holder-yellow": "容器",
+    "yulin-laundry": "洗衣粉",
+    "yulin-laundry2": "洗衣粉",
+    "yulin-paperroll": "卫生纸",
+    "yulin-paperroll2": "卫生纸",
+    "yulin-rollingpin": "擀面杖",
+    "yulin-rollingpin2": "擀面杖",
+    "yulin-shortcup-brown": "杯子",
+    "yulin-shortcup-grey": "杯子",
+    "yulin-soap": "肥皂",
+    "yulin-soap2": "肥皂",
+    "yulin-tallcup-red": "杯子",
+    "yulin-tallcup-yellow": "杯子",
+    "yulin-toothpaste": "牙膏",
+    "yulin-vase": "花瓶",
+    "yulin-vase2": "花瓶",
+    "yulin-plant1": "植物",
+    "yulin-plant2": "植物",
+    "yulin-plant3": "植物",
+    "yulin-plant5": "植物",
+    "yulin-seedpack": "瓜子",
+    "yulin-seedpack2": "瓜子"
+}
+
+let shelfCategoryChineseName = {
+    "frozen fast food": "冷冻食品",
+    "vegetable": "蔬菜",
+    "snack": "零食",
+    "bakery": "面包烘培",
+    "drink": "饮料",
+    "dairy": "奶制品",
+    "fruit": "水果",
+    "condiment": "调味",
+    "grain": "谷物",
+    "plant": "植物",
+    "oil": "油",
+    "alcohol": "酒水",
+    "daily necessities": "日用品",
+    "meat": "肉类",
+    "mix": "混合"
+};
