@@ -1,0 +1,8 @@
+tmp_images
+*.mp4
+test.*
+object/*/
+.vscode
+outputs
+videos
+anno

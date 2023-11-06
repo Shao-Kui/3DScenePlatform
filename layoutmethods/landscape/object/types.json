@@ -1,0 +1,15 @@
+{
+  "big_tree": ["newTree1", "newTree2", "newTree3", "newTree4"],
+  "small_tree": ["newTreeSmall", "newTreeSmall2"],
+  "rock": ["stonerock1", "stonerock2", "stonerock3", "stonerock4", "stonerock5", "stonerock6"],
+  "bench": ["streetbench2"],
+  "shrub": ["shrub04", "shrub05", "shrub06", "new_shrub01"],
+  "plant": ["plants_leaves01", "plants_leaves02", "plants_leaves03", "plants_leaves04", "plants_leaves05"],
+  "flower": ["flower_yellow", "flower_purple", "flower_red", "flower_pink", "flower_orange"],
+  "grass": ["grass01"],
+  "drygrass": ["grass02"],
+  "grass_withflower": ["grass_withflower"],
+  "fence": ["fence_white"],
+  "fence_white": ["fence_single"],
+  "road": ["path01"]
+}

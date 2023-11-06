@@ -1,0 +1,563 @@
+{
+	"origin": "03a73289-5269-42b1-af4b-f30056c97c64",
+	"id": "156",
+	"bbox": {
+		"min": [-3.9612, -0.00000197781991, -2.37824],
+		"max": [5.9995, 2.4626, 2.5938]
+	},
+	"up": [0, 1, 0],
+	"front": [0, 0, 1],
+	"rooms": [
+		{
+			"id": "156_0",
+			"modelId": "Bedroom-14447",
+			"roomTypes": ["Bedroom"],
+			"bbox": {
+				"min": [1.9301334287921004, 0, -0.7860380733572868],
+				"max": [5.9995, 2.4626, 2.353845000159764]
+			},
+			"origin": "03a73289-5269-42b1-af4b-f30056c97c64",
+			"roomId": 0,
+			"objList": [
+				{
+					"id": "156_1",
+					"type": "Object",
+					"modelId": "8af37d06-bc11-4efd-bb27-5c2a79a85dcaX29255197",
+					"bbox": {
+						"min": [5.7595, 0.85, 0.52749],
+						"max": [5.9995, 2.4626, 2.24351]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Window",
+					"roomId": 0,
+					"inDatabase": false,
+					"roomIds": [0],
+					"key": "0846fab1-8d18-4d52-a574-f9596152c3ad"
+				}
+			],
+			"blockList": [
+				{
+					"id": "156_14",
+					"type": "Object",
+					"modelId": "73f4b08c-8bc3-41dc-90e0-aecf7042e240X29255451",
+					"bbox": {
+						"min": [1.6901, 0, 1.2761],
+						"max": [1.9301, 2, 2.0761]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 0,
+					"roomIds": [0, 2]
+				},
+				{
+					"id": "156_15",
+					"type": "Object",
+					"modelId": "73f4b08c-8bc3-41dc-90e0-aecf7042e240X29255454",
+					"bbox": {
+						"min": [1.6901, 0, 1.2761],
+						"max": [1.9301, 0, 2.0761]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 0,
+					"roomIds": [0, 2]
+				}
+			],
+			"roomShape": [
+				[5.7595, -0.7861],
+				[5.7595, 2.3538],
+				[1.9301, 2.3538],
+				[1.9301, -0.7861]
+			],
+			"roomNorm": [
+				[-1, 6.123233995736766e-17],
+				[-6.123233995736766e-17, -1],
+				[1, -6.123233995736766e-17],
+				[6.123233995736766e-17, 1]
+			],
+			"roomOrient": [
+				-1.5707963267948966, -3.141592653589793, 1.5707963267948968, 6.123233995736766e-17
+			],
+			"roomShapeBBox": {
+				"max": [5.7595, 2.3538],
+				"min": [1.9301, -0.7861]
+			}
+		},
+		{
+			"id": "156_8",
+			"modelId": "Kitchen-13984",
+			"roomTypes": ["Kitchen"],
+			"bbox": {
+				"min": [-0.7705, 0.45, -2.37824],
+				"max": [-0.5305, 2.15, -1.15096]
+			},
+			"origin": "03a73289-5269-42b1-af4b-f30056c97c64",
+			"roomId": 1,
+			"objList": [
+				{
+					"id": "156_9",
+					"type": "Object",
+					"modelId": "a2f9c59e-cb99-4281-8f2d-cf04b9f78c70X29255205",
+					"bbox": {
+						"min": [-0.7705, 0.45, -2.37824],
+						"max": [-0.5305, 2.15, -1.15096]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Window",
+					"roomId": 1,
+					"inDatabase": false,
+					"roomIds": [1],
+					"key": "a59b1145-2360-4e22-bdf9-4157effef05c"
+				}
+			],
+			"blockList": [
+				{
+					"id": "156_18",
+					"type": "Object",
+					"modelId": "7f88d946-d3c1-420c-a28c-f3c8a86c103aX29255773",
+					"bbox": {
+						"min": [-3.7019, 0, -1.0261],
+						"max": [-2.9019, 2.26, -0.7861]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 1,
+					"roomIds": [1, 2]
+				},
+				{
+					"id": "156_19",
+					"type": "Object",
+					"modelId": "7f88d946-d3c1-420c-a28c-f3c8a86c103aX29255776",
+					"bbox": {
+						"min": [-3.7019, 0, -1.0261],
+						"max": [-2.9019, 0, -0.7861]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 1,
+					"roomIds": [1, 2]
+				}
+			],
+			"roomShape": [
+				[-0.7705, -2.5167],
+				[-0.7705, -1.0261],
+				[-5.2489, -1.0261],
+				[-5.2489, -2.5167]
+			],
+			"roomNorm": [
+				[-1, 6.123233995736766e-17],
+				[-6.123233995736766e-17, -1],
+				[1, -6.123233995736766e-17],
+				[6.123233995736766e-17, 1]
+			],
+			"roomOrient": [
+				-1.5707963267948966, -3.141592653589793, 1.5707963267948968, 6.123233995736766e-17
+			],
+			"roomShapeBBox": {
+				"max": [-0.7705, -1.0261],
+				"min": [-5.2489, -2.5167]
+			}
+		},
+		{
+			"id": "156_10",
+			"modelId": "LivingDiningRoom-14848",
+			"roomTypes": ["LivingDiningRoom"],
+			"bbox": {
+				"min": [-3.9612, -0.00000197781991, -1.0261],
+				"max": [1.9301, 2.403244, 2.5938]
+			},
+			"origin": "03a73289-5269-42b1-af4b-f30056c97c64",
+			"roomId": 2,
+			"objList": [
+				{
+					"id": "156_14",
+					"type": "Object",
+					"modelId": "73f4b08c-8bc3-41dc-90e0-aecf7042e240X29255451",
+					"bbox": {
+						"min": [1.6901, 0, 1.2761],
+						"max": [1.9301, 2, 2.0761]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"roomIds": [0, 2],
+					"inDatabase": false,
+					"key": "eaaef93c-8bab-4847-96aa-07e5019466a5"
+				},
+				{
+					"id": "156_17",
+					"type": "Object",
+					"modelId": "eec5563a-9ecd-4cba-ac25-d80cde52b900X29255596",
+					"bbox": {
+						"min": [-3.4932, 0, 2.3538],
+						"max": [-2.5938, 0, 2.5938]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"inDatabase": false,
+					"roomIds": [2],
+					"key": "ae42b08b-5855-4f76-9e78-3ef051f53bd2"
+				},
+				{
+					"id": "156_18",
+					"type": "Object",
+					"modelId": "7f88d946-d3c1-420c-a28c-f3c8a86c103aX29255773",
+					"bbox": {
+						"min": [-3.7019, 0, -1.0261],
+						"max": [-2.9019, 2.26, -0.7861]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"roomIds": [1, 2],
+					"inDatabase": false,
+					"key": "8b93d6d5-a23b-4840-8316-9a6512e9f1f0"
+				},
+				{
+					"id": "156_11",
+					"type": "Object",
+					"modelId": "4ace0005-a22c-4176-8fef-c02700391980X29255301",
+					"bbox": {
+						"min": [-0.39252, 0.85, -1.0261],
+						"max": [1.28172, 2.2084, -0.7861]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Window",
+					"roomId": 2,
+					"inDatabase": false,
+					"roomIds": [2],
+					"key": "5a35f5fb-a09f-481c-b766-a5d672bd9dcb"
+				},
+				{
+					"id": "156_12",
+					"type": "Object",
+					"modelId": "dec1d6ce-1141-4b20-8580-dd5e9c3962e9X29255309",
+					"bbox": {
+						"min": [-3.9612, 0, 1.6474],
+						"max": [-3.7212, 2.1, 2.2974]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"inDatabase": false,
+					"roomIds": [2, 3],
+					"key": "8000cc19-13cb-443f-bf7f-cd4540ac722a"
+				},
+				{
+					"modelId": "124",
+					"translate": [1.5214762974739073, 1.4494896757398574, -0.6872735487729311],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [0, -1.5707963267948966, 0],
+					"orient": -1.5707963267948966,
+					"key": "b1763b46-4b81-446f-81cc-4c1ea3046049",
+					"coarseSemantic": "Wall Lamp",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				},
+				{
+					"id": "156_16",
+					"type": "Object",
+					"modelId": "eec5563a-9ecd-4cba-ac25-d80cde52b900X29255593",
+					"bbox": {
+						"min": [-3.4932, 0, 2.3538],
+						"max": [-2.5938, 2.0997, 2.5938]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"inDatabase": false,
+					"roomIds": [2],
+					"key": "c79bce17-df61-4d9e-861e-98e150882b13"
+				},
+				{
+					"id": "156_19",
+					"type": "Object",
+					"modelId": "7f88d946-d3c1-420c-a28c-f3c8a86c103aX29255776",
+					"bbox": {
+						"min": [-3.7019, 0, -1.0261],
+						"max": [-2.9019, 0, -0.7861]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"roomIds": [1, 2],
+					"inDatabase": false,
+					"key": "afee5e90-c984-449a-b7ea-e966e0cb32e6"
+				},
+				{
+					"id": "156_13",
+					"type": "Object",
+					"modelId": "dec1d6ce-1141-4b20-8580-dd5e9c3962e9X29255312",
+					"bbox": {
+						"min": [-3.9612, 0, 1.6474],
+						"max": [-3.7212, 0, 2.2974]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"inDatabase": false,
+					"roomIds": [2, 3],
+					"key": "2bb9e1ad-e2da-4786-9bc8-3228dab60589"
+				},
+				{
+					"id": "156_15",
+					"type": "Object",
+					"modelId": "73f4b08c-8bc3-41dc-90e0-aecf7042e240X29255454",
+					"bbox": {
+						"min": [1.6901, 0, 1.2761],
+						"max": [1.9301, 0, 2.0761]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 2,
+					"roomIds": [0, 2],
+					"inDatabase": false,
+					"key": "34ca9ca3-ae9e-4e12-9e5a-045b658992bc"
+				},
+				{
+					"modelId": "9177",
+					"coarseSemantic": "Footstool / Sofastool / Bed End Stool / Stool",
+					"translate": [1.2827488041169688, -0.0009646321064920027, 0.525960401269361],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [0, -3.141592653589793, 0],
+					"orient": -3.141592653589793,
+					"key": "9fc55bcb-603b-484f-8c65-b9dc5d4392e4",
+					"mageAddDerive": "2899-9177",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				},
+				{
+					"modelId": "10026",
+					"coarseSemantic": "armchair",
+					"translate": [0.7767949657057631, -0.002587682249013068, -0.08169615417972748],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [0, -1.1033206191808231, 0],
+					"orient": -1.1033206191808231,
+					"key": "7703bdf9-e6c2-4e82-b2b7-3190a8acc21d",
+					"mageAddDerive": "2899-10026",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				},
+				{
+					"modelId": "781",
+					"coarseSemantic": "Picture Frame",
+					"translate": [-1.4722839702026622, 1.3062923573487915, 2.258800000335276],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [0, -3.141592653589793, 0],
+					"orient": -3.141592653589793,
+					"key": "f2d505ee-175a-4ac5-bbd8-3ff27ad50d6c",
+					"mageAddDerive": "wall a524b3d2-ba46-42cc-bcd3-8de168655495",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				},
+				{
+					"modelId": "1360",
+					"translate": [-1.3806031938671217, 8.881784197001252e-16, 1.3368683391986944],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [0, -3.141592653589793, 0],
+					"orient": -3.141592653589793,
+					"key": "fa773a9d-94a0-477f-af7a-1a3c68724f1a",
+					"coarseSemantic": "King-size Bed",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				},
+				{
+					"modelId": "216",
+					"translate": [-1.37817547954311, 0.8284943858737219, -0.7860999703407288],
+					"scale": [1.3334370285428832, 1.4401365297485378, 1],
+					"roomId": 2,
+					"rotate": [0, 0, 0],
+					"orient": 0,
+					"key": "b1a00fe6-77f7-42f0-9841-f6f2abe5c08c"
+				},
+				{
+					"modelId": "8361",
+					"translate": [0.11243819281043921, 0.03608008359218906, 2.151554873979033],
+					"scale": [1, 1, 1],
+					"roomId": 2,
+					"rotate": [-3.141592653589793, 0.04554594183668241, -3.141592653589793],
+					"orient": 3.096046711753111,
+					"key": "99c2ff85-2075-4f00-a0ae-4f1a01b5892a",
+					"coarseSemantic": "Corner/Side Table",
+					"childnum": {},
+					"myparent": null,
+					"isHeu": true
+				}
+			],
+			"blockList": [],
+			"roomShape": [
+				[1.6901, -0.7861],
+				[1.6901, 2.3538],
+				[-3.7212, 2.3538],
+				[-3.7212, -0.7861]
+			],
+			"roomNorm": [
+				[-1, 6.123233995736766e-17],
+				[-6.123233995736766e-17, -1],
+				[1, -6.123233995736766e-17],
+				[6.123233995736766e-17, 1]
+			],
+			"roomOrient": [
+				-1.5707963267948966, -3.141592653589793, 1.5707963267948968, 6.123233995736766e-17
+			],
+			"roomShapeBBox": {
+				"max": [1.6901, 2.3538],
+				"min": [-3.7212, -0.7861]
+			}
+		},
+		{
+			"id": "156_29",
+			"modelId": "Bathroom-14805",
+			"roomTypes": ["Bathroom"],
+			"bbox": {
+				"min": [1000000000, 1000000000, 1000000000],
+				"max": [-1000000000, -1000000000, -1000000000]
+			},
+			"origin": "03a73289-5269-42b1-af4b-f30056c97c64",
+			"roomId": 3,
+			"objList": [],
+			"blockList": [
+				{
+					"id": "156_12",
+					"type": "Object",
+					"modelId": "dec1d6ce-1141-4b20-8580-dd5e9c3962e9X29255309",
+					"bbox": {
+						"min": [-3.9612, 0, 1.6474],
+						"max": [-3.7212, 2.1, 2.2974]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 3,
+					"inDatabase": false,
+					"roomIds": [2, 3]
+				},
+				{
+					"id": "156_13",
+					"type": "Object",
+					"modelId": "dec1d6ce-1141-4b20-8580-dd5e9c3962e9X29255312",
+					"bbox": {
+						"min": [-3.9612, 0, 1.6474],
+						"max": [-3.7212, 0, 2.2974]
+					},
+					"translate": [0, 0, 0],
+					"scale": [1, 1, 1],
+					"rotate": [0, 0, 0],
+					"rotateOrder": "XYZ",
+					"orient": 0,
+					"coarseSemantic": "Door",
+					"roomId": 3,
+					"inDatabase": false,
+					"roomIds": [2, 3]
+				}
+			],
+			"roomShape": [
+				[-3.9612, -0.7861],
+				[-3.9612, 2.3538],
+				[-5.2489, 2.3538],
+				[-5.2489, -0.7861]
+			],
+			"roomNorm": [
+				[-1, 6.123233995736766e-17],
+				[-6.123233995736766e-17, -1],
+				[1, -6.123233995736766e-17],
+				[6.123233995736766e-17, 1]
+			],
+			"roomOrient": [
+				-1.5707963267948966, -3.141592653589793, 1.5707963267948968, 6.123233995736766e-17
+			],
+			"roomShapeBBox": {
+				"max": [-3.9612, 2.3538],
+				"min": [-5.2489, -0.7861]
+			}
+		}
+	],
+	"coarseWallHeight": 2.6,
+	"PerspectiveCamera": {
+		"fov": 75,
+		"focalLength": 35,
+		"origin": [-1.4843869008714476, 5.999720484667252, 0.8587641804459787],
+		"rotate": [-1.5611437364168197, 0, 0],
+		"target": [-1.4843869008714476, 0, 0.8008495375293829],
+		"roomId": 2,
+		"up": [0, 0.009652440486099423, -0.9999534141112085]
+	},
+	"canvas": {
+		"width": 687,
+		"height": 651
+	}
+}
