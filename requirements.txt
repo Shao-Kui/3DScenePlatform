@@ -3,7 +3,7 @@ SQLAlchemy==1.2.13
 scipy==1.0.1
 Flask==1.0.2
 Shapely==1.7.0
-nltk==3.4.1
+nltk==3.6.3
 joblib==0.12.5
 Flask_Cors==3.0.7
 SoundFile==0.10.2
