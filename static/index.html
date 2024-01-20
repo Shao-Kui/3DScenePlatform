@@ -37,6 +37,7 @@
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
     <script src="/static/3rdparty/splitting.min.js"></script>
+    <script src="/static/3rdparty/color-hash.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
@@ -144,6 +145,7 @@
       var animaSliders;
       var orthline;
       const pressedKeys = [];
+      var colorHash = new ColorHash();
 
       var skyBox;
       var lx_level;

@@ -343,6 +343,53 @@ const traverseSceneJson = function(sj){
                 };
                 scene.add(object3d); 
             }
+            // SFY parameterized furniture
+            if (o.format === 'sfyobj') {
+                let generateTransparentBox = (o, color = 0xd92511, opacity = 0.5) => {
+                    let geometry = new THREE.BoxGeometry( 
+                        (o.bbox.max[0] - o.bbox.min[0]), 
+                        (o.bbox.max[1] - o.bbox.min[1]), 
+                        (o.bbox.max[2] - o.bbox.min[2])
+                    ); 
+                    let material = new THREE.MeshBasicMaterial({color: color});
+                    material.transparent = true;
+                    material.opacity = opacity
+                    let object3d = new THREE.Mesh( geometry, material );
+                    object3d.position.set(
+                        (o.bbox.max[0] + o.bbox.min[0]) / 2,
+                        (o.bbox.max[1] + o.bbox.min[1]) / 2,
+                        (o.bbox.max[2] + o.bbox.min[2]) / 2
+                    ); 
+                    return object3d;
+                };
+                let traverseSFYObjChildren = (rootO, parent) => {
+                    if (rootO.childrenList === undefined) return;
+                    rootO.childrenList.forEach(o => {
+                        let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx)); // THREE.MathUtils.randInt(0, 0xffffff)
+                        object3d.position.set(
+                            (o.bbox.max[0] + o.bbox.min[0]) / 2 - (rootO.bbox.max[0] + rootO.bbox.min[0]) / 2,
+                            (o.bbox.max[1] + o.bbox.min[1]) / 2 - (rootO.bbox.max[1] + rootO.bbox.min[1]) / 2,
+                            (o.bbox.max[2] + o.bbox.min[2]) / 2 - (rootO.bbox.max[2] + rootO.bbox.min[2]) / 2
+                        ); 
+                        if (o.childrenList) traverseSFYObjChildren(o, object3d);
+                        manager.renderManager.instanceKeyCache[o.key] = object3d;
+                        parent.add(object3d);
+                    });
+                };
+                let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx));
+                if (o.childrenList) traverseSFYObjChildren(o, object3d);
+                manager.renderManager.instanceKeyCache[o.key] = object3d;
+                object3d.userData = {
+                    "type": 'object',
+                    "key": o.key,
+                    "roomId": o.roomId,
+                    "modelId": o.modelId,
+                    "format": o.format,
+                    "coarseSemantic": o.coarseSemantic,
+                    "isSceneObj": true
+                };
+                scene.add(object3d); 
+            }
         })
     });
 }
