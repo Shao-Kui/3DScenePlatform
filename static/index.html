@@ -65,6 +65,10 @@
     <script src="/static/js/MageAdd.js"></script>
     <script>
       //Global state & variables! Careful!
+      ////两个模式
+      var On_LINEMOVE = false;//是否进入右键拖动模式
+      var MoveLineModel = false;
+      //
       var ALL_SCENE_READY = false;
       var On_MOVE = false;
       var On_ROTATE = false;
@@ -1177,7 +1181,13 @@
             >
               PlanIT
             </button>
-
+            <button
+            id="btnMoveLineModel"
+            type="button"
+            class="btn btn-lg btn-outline-light mx-2"
+          >
+            MoveLineModel
+          </button>
             <button
               id="stockshelf_button"
               type="button"
