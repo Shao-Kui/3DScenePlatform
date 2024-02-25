@@ -1,21 +1,21 @@
 const roomIDCaster = new THREE.Raycaster();
 //zjt const
-const arrayOfLines = [];//棱柱
+const arrayOfLines = [];//棱柱 在构造每一条的时候都要注意顺序
 const arrayOfDots = [];//断点
-//const arrayOfHideLines = [];//直线
 const now_move_line = [];//棱柱
-//const now_move_hide_line = [];//直线
 const arrayOfAllDots = [];//包含边界所有点 不只是断点
 var now_move_index =-1;
-var has_add = 0;//有问题
+//const arrayOfHideLines = [];//直线
+//const now_move_hide_line = [];//直线
+//var has_add = 0;//有问题
 var now_x1 = 0 ;
 var now_x2 = 0;
 var now_y1 = 0;
 var now_y2 = 0;
 var now_z1 = 0;
-var now_z2 = 0;
-
-//zjt const 
+var now_z2 = 0;//目前选中直线的两端点坐标
+var now_order = 0;
+var cut_point_num  = 0 ;//加入断点的个数
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
     let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache.concat(areaList), true);
@@ -1109,9 +1109,9 @@ function onDocumentMouseMove(event) {
     // TODO 
     if (MoveLineModel && On_LINEMOVE)
     {
-        follow_mouse( );
+        follow_mouse_pro( );
         //roomshape 反映在scenejson上
-
+        recreate_room();
     } 
 }
 
@@ -1385,8 +1385,7 @@ const setting_up = function () {
     // adding the `stats` panel for monitoring FPS; 
     stats = new Stats();
     stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-    // stats.dom.style.top = '5%'
-    // stats.dom.style.left = '25%'
+     // stats.dom.style.left = '25%'
     stats.dom.style.position = "absolute";
     document.getElementById('scene').appendChild(stats.dom);
 
@@ -1541,7 +1540,7 @@ const setting_up = function () {
             manager.renderManager.fCache.forEach(w => {scene.remove(w)});
             //manager.renderManager.scene_json.rooms[0].roomShape;//四个顶点
             var points = new Array(3);
-            for( var i = 0 ; i<5 ; i++ )
+            for( var i = 0 ; i<4 ; i++ )
             {//xyz坐标
                 if(i == 4)
                 {
@@ -1549,10 +1548,21 @@ const setting_up = function () {
                     break;
                 }
                 points[i] = [manager.renderManager.scene_json.rooms[0].roomShape[i][0],0,manager.renderManager.scene_json.rooms[0].roomShape[i][1]];//rooms[i]循环多个房间
+                var x_pos = manager.renderManager.scene_json.rooms[0].roomShape[i][0];
+                var z_pos = manager.renderManager.scene_json.rooms[0].roomShape[i][1];
+                //useless
+                var point_pos = [x_pos,z_pos];
+                arrayOfAllDots.push(point_pos);
+                //
             }
             for( var i = 0 ; i < 4 ; i++)
             {
-                createCyliner1(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2]);
+                if(i == 3)
+                {
+                createCyliner1(points[i][0],points[i][1],points[i][2],points[0][0],points[0][1],points[0][2],i);//四条初始边的order:0 1 2 3 对应roomShape[i][0] i从0到3
+                break;
+                }
+                createCyliner1(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2],i);//四条初始边的order:0 1 2 3 对应roomShape[i][0] i从0到3
                 //createLine_same(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2]);
             }
         }
@@ -1562,7 +1572,6 @@ const setting_up = function () {
             arrayOfLines.forEach(i =>{scene.remove(i)} );
             arrayOfDots.forEach(i => {scene.remove(i)});
             //刚刚的图形复原
-            recreate_room();
             manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
             manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
         }
@@ -3404,73 +3413,58 @@ const initAttributes = function() {
     });
 }
 
-
-//添加点： 1 加入sphere 2根据sphere，将原本的线删除，并加入两段线
-//如何维护点的顺序
-const add_dot = function(event){//important 
+//manager.renderManager.scene_json.rooms[0].roomShape[i][0]
+const add_dot = function(event)//加入点 同时也要加入线段
+{
     var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线(棱柱)
-    if(intersects.length > 0){
-        //console.log(intersects[0].object.length1);//intersects[0].object就是那条直线,或者说具体的交的物体，因此，scene.add/remove 的对象必须是object(point、distance与object平级)
+    if(intersects.length > 0)//有点击到
+    {
         var point  = intersects[0].point;//点击到棱柱上的坐标
+        console.log(intersects[0].object.length1);//intersects[0].object就是那条直线,或者说具体的交的物体，因此，scene.add/remove 的对象必须是object(point、distance与object平级)
         console.log(point);
-        var point3 = seperate_lines(intersects[0].object.start1,intersects[0].object.end1,intersects[0].point.x,intersects[0].point.y,intersects[0].point.z);//从所有线里找那条线
-        if(check_distance())
-        {
-            var dot = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshBasicMaterial({color: 0xffffff}));
-            dot.position.set(point3.x, point3.y, point3.z);//将这个点（sphere）布置在这个位置
-            scene.add(dot);
-            check_distance();
-            arrayOfDots.push(dot);
-        }
+        console.log("点击到的直线是");
+        console.log(arrayOfLines.indexOf(intersects[0].object));
+        seperate_lines(intersects[0].object,intersects[0].object.start1,intersects[0].object.end1,intersects[0].point.x,intersects[0].point.y,intersects[0].point.z);//从所有线里找那条线
+        console.log("已经加入了");
+        console.log(cut_point_num);
+        console.log("个断点");
     }
 }
-const enter_move_mode = function(event){
-    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线
-    if(intersects.length > 0)
-    {//点击到了直线 切换状态
-        On_LINEMOVE = !On_LINEMOVE;//状态量取非
-        if(On_LINEMOVE)
-        {
-            console.log("已进入可拖动状态");
-            console.log("选中的直线是");
-            console.log(intersects[0].object);//intersect是一个独特的类，加object是具体的物体
-            now_x1 = intersects[0].object.start1[0] ;
-            now_x2 = intersects[0].object.end1[0];
-            now_y1 = intersects[0].object.start1[1];
-            now_y2 = intersects[0].object.end1[1];
-            now_z1 = intersects[0].object.start1[2];
-            now_z2 = intersects[0].object.end1[2];
-            for( var i = 0 ; i < arrayOfLines.length ; i++)
-            {  
-                if((isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].start1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].end1))||(isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].end1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].start1)))
-                {
-                    
-                    //console.log(i);
-                    //now_move_hide_line.push(arrayOfHideLines[i]);
-                    now_move_line.push(arrayOfLines[i]);
-                    now_move_index = i;//选中直线的数组下标
-                    console.log("选中的index是")
-                    console.log(now_move_index);
-                }
-            }
-        }
-        if(!On_LINEMOVE)
-        {
-            console.log("已退出可拖动状态");
-            //now_move_hide_line.splice(0,1); 因为索引相同 这样会影响
-            now_move_index = -1;
-            now_x1 = 0 ;
-            now_x2 = 0;
-            now_y1 = 0;
-            now_y2 = 0;
-            now_z1 = 0;
-            now_z2 = 0;
-            now_move_index = -1;//全部重置
-        }
-    }
+function seperate_lines(object,start,end,x,y,z){//加断点后分割直线 要大改 加入断点的同时，断点那里也要有一个长度为0的直线
+    var now_order = arrayOfLines.indexOf(object);//找到下标
+    console.log("点到直线的顺序");
+    console.log(now_order);
+    var point2 = put_dot_to_cylinder(x,y,z,start[0],start[1],start[2],end[0],end[1],end[2]);//找到映射后的点坐标
+    //reimagined
+    console.log("映射后：");
+    console.log(point2);
+    arrayOfLines.splice(now_order,1);//删除掉这根棱柱
+    mycyl1 = createCyliner1(start[0],start[1],start[2],point2.x,point2.y,point2.z,now_order);//前面的那条，order小
+    mycyl2 = createCyliner1(point2.x,point2.y,point2.z,point2.x,point2.y,point2.z,now_order+1);//后面的那条
+    mycyl3 = createCyliner1(point2.x,point2.y,point2.z,end[0],end[1],end[2],now_order+2);//后面的那条
+    console.log("已经截断直线");
+    // if(check_distance())//点击的点距离其他已经存在的点距离没有过近
+    // {
+    create_dot(point2.x,point2.y,point2.z);
+    cut_point_num += 1;//断点数量加1
+    // }
+    return ;
 }
+function put_dot_to_cylinder(x,y,z,x1,y1,z1,x2,y2,z2)//传入点的坐标，线端点的坐标，返回加入点的位置投影坐标
+{
+    var p1 = new THREE.Vector3(x1,y1,z1);
+    var p2 = new THREE.Vector3(x2,y2,z2); 
+    var pline = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
+    var oripline = pline.normalize();//单位化
+    var dis1 = calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2);//点到直线的距离
+    var dis2 = Math.sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1)+(z-z1)*(z-z1));
+    var dis3 = Math.sqrt(dis2*dis2-dis1*dis1);
+    var finline = oripline.multiplyScalar(dis3);//单位向量乘以长度
+    var p3 =p1.add(finline);//点的坐标
+    console.log(p3);
+    return p3;
+} 
 
-//下面的是有用的
 function createCylinderMesh(x1,y1,z1,x2,y2,z2){		
     var x0 = (x1 + x2) / 2;
     var y0 = (y1 + y2) / 2;
@@ -3483,11 +3477,12 @@ function createCylinderMesh(x1,y1,z1,x2,y2,z2){
     mesh.position.set(x0,y0,z0);		
     return mesh;
 }
-function createCyliner1(x1,y1,z1,x2,y2,z2){
+function createCyliner1(x1,y1,z1,x2,y2,z2,order){//order +//为将来服务roomshape,应该注意先传进去的是start,后进去的是end，start为每条线关联点的坐标
     const cylinder =createCylinderMesh(x1,y1,z1,x2,y2,z2);
     cylinder.start1 = [x1,y1,z1];
     cylinder.end1 = [x2,y2,z2];
     cylinder.has_add = 0;
+    cylinder.order = order ;//index为将来服务roomshape
     cylinder.length = getlength(x1,y1,z1,x2,y2,z2);//加入我自己需要的属性start1 end1 长度
     if(check_line(x1,y1,z1,x2,y2,z2)==1)
             {
@@ -3498,12 +3493,14 @@ function createCyliner1(x1,y1,z1,x2,y2,z2){
                 cylinder.rotation.z = 1.57;
             }
     scene.add(cylinder);
-    arrayOfLines.push(cylinder);
+    arrayOfLines.splice(order,0,cylinder);//0表示不需要删除
 }
-function insertCyliner1(x1,y1,z1,x2,y2,z2,index){//插入线，维护roomshape顺序，多一个index参数
+function createCyliner1_pos(x1,y1,z1,x2,y2,z2,index,order){//指定位置加入线
     const cylinder =createCylinderMesh(x1,y1,z1,x2,y2,z2);
     cylinder.start1 = [x1,y1,z1];
     cylinder.end1 = [x2,y2,z2];
+    cylinder.has_add = 0;
+    cylinder.order = order ;//index为将来服务roomshape
     cylinder.length = getlength(x1,y1,z1,x2,y2,z2);//加入我自己需要的属性start1 end1 长度
     if(check_line(x1,y1,z1,x2,y2,z2)==1)
             {
@@ -3514,8 +3511,9 @@ function insertCyliner1(x1,y1,z1,x2,y2,z2,index){//插入线，维护roomshape�
                 cylinder.rotation.z = 1.57;
             }
     scene.add(cylinder);
-    arrayOfLines.insertBefore(cylinder,arrayOfLines[index]);//插入到index前面
+    arrayOfLines.splice(index,0,cylinder);//在index位置插入一个线
 }
+
 function check_line(x1,y1,z1,x2,y2,z2){//检查直线旋转朝向函数
     var p = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
     var ori = new THREE.Vector3(1,0,0);//x轴
@@ -3525,23 +3523,8 @@ function check_line(x1,y1,z1,x2,y2,z2){//检查直线旋转朝向函数
         return 1;//
     }
     else 
-        return 2;//rotate y
-
+        return 2;//与z轴垂直 rotate y
 }
-
-// function createLine_same(x1,y1,z1,x2,y2,z2){
-//     var p1 = new THREE.Vector3(x1,y1,z1);
-//     var p2 = new THREE.Vector3(x2,y2,z2);    
-//     var ps = [p1,p2];
-//     const linegeometry = new THREE.BufferGeometry().setFromPoints(ps);
-//     const linematerial = new THREE.LineBasicMaterial({color:'red'});
-//     const line = new THREE.Line(linegeometry,linematerial);
-//     line.start1 = [x1,y1,z1];
-//     line.end1 = [x2,y2,z2];
-//     line.length1 = getlength(x1,y1,z1,x2,y2,z2);
-//     scene.add(line);
-//     arrayOfHideLines.push(line);
-// }
 
 function getposition(x1,y1,z1,x2,y2,z2){
     var p1 = new THREE.Vector3((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
@@ -3573,24 +3556,6 @@ function isArrayEQUAL(arr1,arr2){
     return JSON.stringify(arr1) == JSON.stringify(arr2);
 }
 
-function seperate_lines(start,end,x,y,z){//加断点后分割直线
-    for( var i = 0 ; i < arrayOfLines.length ; i++)
-    {  
-        if((isArrayEQUAL(start,arrayOfLines[i].start1)&&isArrayEQUAL(end,arrayOfLines[i].end1))||(isArrayEQUAL(start,arrayOfLines[i].end1)&&isArrayEQUAL(end,arrayOfLines[i].start1)))
-            { 
-                var point2 = put_dot_to_cylinder(x,y,z,start[0],start[1],start[2],end[0],end[1],end[2]);
-                console.log("映射后：");
-                console.log(point2);
-                scene.remove(arrayOfLines[i]);//不再显示这根棱柱
-                arrayOfLines.splice(i,1);//删除掉这根棱柱
-                createCyliner1(start[0],start[1],start[2],point2.x,point2.y,point2.z);
-                createCyliner1(end[0],end[1],end[2],point2.x,point2.y,point2.z);
-                console.log("已经截断直线");
-                return point2;
-            }
-    }
-}
-
 function calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2)
 {//计算点到直线的距离 xyz 为点 
     var len1 = getlength(x1,y1,z1,x2,y2,z2);//那条直线长
@@ -3603,31 +3568,174 @@ function calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2)
     var sin1 = Math.sqrt(1-cos1*cos1);
     return sin1*len2;
 }
-
-function put_dot_to_cylinder(x,y,z,x1,y1,z1,x2,y2,z2)
+const enter_move_mode = function(event){
+    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线
+    if(intersects.length > 0)
+    {
+        On_LINEMOVE = !On_LINEMOVE;//状态量取非
+        if(On_LINEMOVE)
+        {
+             console.log("已进入可拖动状态");
+             console.log("选中的直线是");
+            console.log(intersects[0].object);//intersect是一个独特的类，加object是具体的物体
+            now_x1 = intersects[0].object.start1[0] ;
+            now_x2 = intersects[0].object.end1[0];
+            now_y1 = intersects[0].object.start1[1];
+            now_y2 = intersects[0].object.end1[1];
+            now_z1 = intersects[0].object.start1[2];
+            now_z2 = intersects[0].object.end1[2];
+            now_order =  intersects[0].object.end1[2].order;
+            for( var i = 0 ; i < arrayOfLines.length ; i++)
+            {  
+                if((isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].start1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].end1))||(isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].end1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].start1)))
+                {
+                    now_move_line.push(arrayOfLines[i]);
+                    now_move_index = i;//选中直线的数组下标
+                    console.log("选中的index是")
+                    console.log(now_move_index);
+                }
+            }
+        }
+        if(!On_LINEMOVE)
+        {
+            console.log("已退出可拖动状态");
+            now_move_index = -1;
+            now_x1 = 0 ;
+            now_x2 = 0;
+            now_y1 = 0;
+            now_y2 = 0;
+            now_z1 = 0;
+            now_z2 = 0;
+            now_move_index = -1;//全部重置
+        }
+    }
+}
+const enter_move_mode_pro = function(event){
+    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条棱柱
+    if(intersects.length > 0)
+    {
+        On_LINEMOVE = !On_LINEMOVE;//状态量取非
+        if(On_LINEMOVE)
+        {
+            now_order =  arrayOfLines.indexOf(intersects[0].object);//全局只记载所要拖动的线的顺序即可
+            now_move_line.push(arrayOfLines[now_order]);
+            now_move_index = now_order;
+        }
+        if(!On_LINEMOVE)
+        {
+            console.log("已退出可拖动状态");
+            now_move_index = -1;
+        }
+    }
+}
+function follow_mouse_pro()
 {
-    var p1 = new THREE.Vector3(x1,y1,z1);
-    var p2 = new THREE.Vector3(x2,y2,z2); 
-    var pline = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
-    var oripline = pline.normalize();//单位化
-    var dis1 = calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2);//点到直线的距离
-    var dis2 = Math.sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1)+(z-z1)*(z-z1));
-    var dis3 = Math.sqrt(dis2*dis2-dis1*dis1);
-    var finline = oripline.multiplyScalar(dis3);//单位向量乘以长度
-    var p3 =p1.add(finline);//点的坐标
-    console.log(p3);
-    return p3;
+    var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);//追踪鼠标在地面的投影，因此求交是与地面
+    var pt = intersect[0].point;//鼠标触碰地面的点
+    if(now_move_index != -1)//已经选中了直线
+    {
+        var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
+    }
+    var move_distance = calc_dot_line_dis(pt.x,pt.y,pt.z,now_x1,now_y1,now_z1,now_x2,now_y2,now_z2);
+    //分类讨论:1 拖动的是现成的边，无加入的断点 延长两条已有的边
+    if(cut_point_num >= 0)
+    {
+        //延长两条已有的边
+        console.log("进入1")
+        if(move_distance>0.1)//产生明显移动 再移动直线
+        {
+            if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==1)//与x轴垂直
+            {
+                if(pt.x<now_x1)//鼠标在线左侧
+                {
+                    move_distance = -1*move_distance;
+                }
+                obj.position.x= now_x1+move_distance;
+                obj.start1[0]=now_x1+move_distance;
+                obj.end1[0]=now_x1+move_distance;//可换回arrayOfLines[now_move_index]
+                //两条边线的动作 可以用数组给数组赋值
+                {
+                    var len = arrayOfLines.length;
+                    var front;
+                    var end;
+                    var sig1 = now_move_index-1;
+                    if(now_move_index-1<0)
+                    {
+                        sig1=len-1;
+                    }//
+                    var sig2 = now_move_index+1;  
+                    if(sig2>len-1)
+                    {
+                        sig2=0;
+                    }
+                        front =arrayOfLines[sig1].start1;
+                        scene.remove(arrayOfLines[sig1]);
+                        arrayOfLines.splice(sig1,1);
+                        createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
 
-} 
+                        end = arrayOfLines[sig2].end1;
+                        scene.remove(arrayOfLines[sig2]);
+                        arrayOfLines.splice(sig2,1);
+                        createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+                } 
+            }
+            else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
+            {
+                if(pt.z<now_z1)//鼠标在线下方
+                {
+                    move_distance = -1*move_distance;
+                }
+                obj.position.z = now_z1 + move_distance;
+                obj.start1[2]= now_z1 + move_distance;
+                obj.end1[2]= now_z1 + move_distance;
+                //两条边线的动作 可以用数组给数组赋值
+                {
+                    var len = arrayOfLines.length;
+                    var front;
+                    var end;
+                    var sig1 = now_move_index-1;
+                    if(now_move_index-1<0)
+                    {
+                        sig1=len-1;
+                    }//
+                    var sig2 = now_move_index+1;  
+                    if(sig2>len-1)
+                    {
+                        sig2=0;
+                    }
+                        front =arrayOfLines[sig1].start1;
+                        scene.remove(arrayOfLines[sig1]);
+                        arrayOfLines.splice(sig1,1);
+                        createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
 
+                        end = arrayOfLines[sig2].end1;
+                        scene.remove(arrayOfLines[sig2]);
+                        arrayOfLines.splice(sig2,1);
+                        createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+                } 
+            }
+        }
+    }
+    // else if(cut_point_num == 1)//有一个断点
+    // {
+    //     if(arrayOfLines)
+
+    //     cut_point_num-=1;//拖动之后，新的点就不再视为断点了
+    // }
+    // else if(cut_point_num ==2)
+    // {
+    //     //
+    //     cut_point_num-=2;//拖动之后，新的点就不再视为断点了
+    // }
+    //recreate_room();
+}
 function follow_mouse()
 {
-
-    var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);
+    var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);//追踪鼠标在地面的投影，因此求交是与地面
     var pt = intersect[0].point;
     if(now_move_index != -1)
     {
-        var obj = arrayOfLines[now_move_index];//选中的直线
+        var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
     }
     var move_distance = calc_dot_line_dis(pt.x,pt.y,pt.z,now_x1,now_y1,now_z1,now_x2,now_y2,now_z2);
     console.log("直线沿法向移动的距离是");
@@ -3642,10 +3750,8 @@ function follow_mouse()
         {
             move_distance = -1*move_distance;
         }
-        createCyliner1(now_x1,now_y1,now_z1,now_x1+0.1,now_y1,now_z1);
-        //createLine_same(now_x1,now_y1,now_z1,now_x1+0.1,now_y1,now_z1);
-        createCyliner1(now_x2,now_y2,now_z2,now_x2+0.1,now_y2,now_z2);
-        //createLine_same(now_x2,now_y2,now_z2,now_x2+0.1,now_y2,now_z2); 
+        createCyliner1_pos(now_x1,now_y1,now_z1,now_x1+0.1,now_y1,now_z1,now_move_index);
+        createCyliner1_pos(now_x2,now_y2,now_z2,now_x2+0.1,now_y2,now_z2,now_move_index+1);
     }
     else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
     {
@@ -3654,9 +3760,7 @@ function follow_mouse()
             move_distance = -1*move_distance;
         }
         createCyliner1(now_x1,now_y1,now_z1,now_x1,now_y1,now_z1+0.1);
-        //createLine_same(now_x1,now_y1,now_z1,now_x1,now_y1,now_z1+0.1);
         createCyliner1(now_x2,now_y2,now_z2,now_x2,now_y2,now_z2+0.1);
-        //createLine_same(now_x2,now_y2,now_z2,now_x2,now_y2,now_z2+0.1);
     }
     obj.has_add = 1;//标记成加入了
     } 
@@ -3669,25 +3773,17 @@ function follow_mouse()
             {
                 move_distance = -1*move_distance;
             }
-
             arrayOfLines[now_move_index].position.x= now_x1+move_distance;
-            //arrayOfHideLines[now_move_index].position.x =now_x1+move_distance;
             arrayOfLines[now_move_index].start1[0]=now_x1+move_distance;
             arrayOfLines[now_move_index].end1[0]=now_x1+move_distance;
-            //arrayOfHideLines[now_move_index].start1[0]=now_x1+move_distance;
-            //arrayOfHideLines[now_move_index].end1[0]=now_x1+move_distance;
             //两条辅助线的动作
-            var len = arrayOfLines.length;
+            var len  = arrayOfLines.length;
             for( var i = 1 ; i <= 2 ; i++)
             {
-                //arrayOfHideLines[len-i].position.x = now_x1+ (move_distance/2);
                 arrayOfLines[len-i].position.x = now_x1+ (move_distance/2);
                 var scaletime = Math.abs(move_distance)*10;
-                //arrayOfHideLines[len-i].scale.y = scaletime;
                 arrayOfLines[len-i].scale.y = scaletime;
-                //arrayOfHideLines[len-i].length1 = Math.abs(move_distance);
                 arrayOfLines[len-i].length1 = Math.abs(move_distance);
-
             } 
         }
         else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
@@ -3697,21 +3793,15 @@ function follow_mouse()
                 move_distance = -1*move_distance;
             }
             arrayOfLines[now_move_index].position.z = now_z1 + move_distance;
-            //arrayOfHideLines[now_move_index].position.z= now_z1 + move_distance;
             arrayOfLines[now_move_index].start1[2]= now_z1 + move_distance;
             arrayOfLines[now_move_index].end1[2]= now_z1 + move_distance;
-            //arrayOfHideLines[now_move_index].start1[2]= now_z1 + move_distance;
-            //arrayOfHideLines[now_move_index].end1[2]= now_z1 + move_distance;
             //两条辅助线的动作
             var len = arrayOfLines.length;
             for( var i = 1 ; i <= 2 ; i++)
             {
-                //arrayOfHideLines[len-i].position.z = now_z1 + (move_distance/2);
                 arrayOfLines[len-i].position.z = now_z1 + (move_distance/2);
                 var scaletime = Math.abs(move_distance)*10;
-                //arrayOfHideLines[len-i].scale.y = scaletime;
                 arrayOfLines[len-i].scale.y = scaletime;
-                //arrayOfHideLines[len-i].length1 = Math.abs(move_distance);
                 arrayOfLines[len-i].length1 = Math.abs(move_distance);
             }
         }
@@ -3722,12 +3812,8 @@ function follow_mouse()
         if(obj.has_add == 1)//还有辅助线
         {
             var len = arrayOfLines.length;
-            //scene.remove(arrayOfHideLines[len-1]);
             scene.remove(arrayOfLines[len-1]);
-            //scene.remove(arrayOfHideLines[len-2]);
             scene.remove(arrayOfLines[len-2]);
-            //arrayOfHideLines.pop();
-            //arrayOfHideLines.pop();
             arrayOfLines.pop();
             arrayOfLines.pop();//删除两条辅助线
             obj.has_add = 0;
@@ -3735,18 +3821,49 @@ function follow_mouse()
     }
 }
 //position移动1/2 distance
-
+function cover2lines(object1 , object2 , dot)//两条线有一个共同的端点且平行，则两条线合并，合并之前order应该相邻，splice一个即可，并注意删去中间的共用端点
+{
+    if(isArrayEQUAL(object1.start1,object2.end1)||isArrayEQUAL(object1.end1,object2.start1))//有共同端点
+    {
+        if(check_line(object1.start1[0],object1.start1[1],object1.start1[2],object1.end1[0],object1.end1[1],object1.end1[2])==check_line(object2.start1[0],object2.start1[1],object2.start1[2],object2.end1[0],object2.end1[1],object2.end1[2]))//方向相同
+        {
+            if(isArrayEQUAL(dot,object1.start1))//共同点是1的起点,2在1前面
+            {    
+                createCyliner1(object2.start1[0],object2.start1[1],object2.start1[2],object1.end1[0],object1.end1[1],object1.end1[2],object2.order);
+                scene.add(arrayOfLines[object2.order]);
+                scene.remove(arrayOfLines[object2.order+1]);
+                scene.remove(arrayOfLines[object2.order+2]);
+                arrayOfLines.splice(object2.order+1,2); //删掉两条线    
+            }
+            if(isArrayEQUAL(dot,object2.start1))//共同点是2的起点,1在2前面
+            {
+                createCyliner1(object1.start1[0],object1.start1[1],object1.start1[2],object2.end1[0],object2.end1[1],object2.end1[2],object1.order);
+                scene.add(arrayOfLines[object1.order]);
+                scene.remove(arrayOfLines[object1.order+1]);
+                scene.remove(arrayOfLines[object1.order+2]);
+                arrayOfLines.splice(object1.order+1,2); //删掉两条线
+            }
+            arrayOfDots.splice(dot.order,1);//删掉共同点
+            scene.remove(dot);
+        }
+    }
+}
 function recreate_room()//复原roomshape
 {
-    var len = arrayOfDots.length;
+    //遍历
+    console.log("开始重构房间")
+    var len = arrayOfLines.length;
     for( var i = 0 ; i < len ; i ++)
     {
-        var pos =[];
-        pos[0] = arrayOfDots[i].position.x;
-        pos[1] = arrayOfDots[i].position.z;
-        manager.renderManager.scene_json.rooms[0].roomShape.push(pos);
-        console.log(manager.renderManager.scene_json.rooms[0].roomShape);
-        //points[i] = [manager.renderManager.scene_json.rooms[0].roomShape[i][0],0,manager.renderManager.scene_json.rooms[0].roomShape[i][1]];//rooms[i]循环多个房间
-
+        manager.renderManager.scene_json.rooms[0].roomShape[i][0]=arrayOfLines[i].start1[0];
+        manager.renderManager.scene_json.rooms[0].roomShape[i][1]=arrayOfLines[i].start1[2];
     }
+}
+
+function create_dot(x,y,z)//记号点，直线拐弯处补充
+{
+    var dot = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshBasicMaterial({color: 0xffffff}));
+    dot.position.set(x, y, z);//将这个点（sphere）布置在这个位置
+    scene.add(dot);
+    arrayOfDots.push(dot);
 }
