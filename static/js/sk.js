@@ -3414,20 +3414,20 @@ const initAttributes = function() {
 }
 
 //manager.renderManager.scene_json.rooms[0].roomShape[i][0]
-const add_dot = function(event)//加入点 同时也要加入线段
+const add_dot = function(event)//加入断点 同时也要加入线段
 {
     var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线(棱柱)
     if(intersects.length > 0)//有点击到
     {
-        var point  = intersects[0].point;//点击到棱柱上的坐标
-        console.log(intersects[0].object.length1);//intersects[0].object就是那条直线,或者说具体的交的物体，因此，scene.add/remove 的对象必须是object(point、distance与object平级)
-        console.log(point);
-        console.log("点击到的直线是");
-        console.log(arrayOfLines.indexOf(intersects[0].object));
+        var point = intersects[0].point;//点击到棱柱上的坐标
+        // console.log(intersects[0].object.length1);//intersects[0].object就是那条直线,或者说具体的交的物体，因此，scene.add/remove 的对象必须是object(point、distance与object平级)
+        // console.log(point);
+        // console.log("点击到的直线是");
+        // console.log(arrayOfLines.indexOf(intersects[0].object));
         seperate_lines(intersects[0].object,intersects[0].object.start1,intersects[0].object.end1,intersects[0].point.x,intersects[0].point.y,intersects[0].point.z);//从所有线里找那条线
-        console.log("已经加入了");
-        console.log(cut_point_num);
-        console.log("个断点");
+        // console.log("已经加入了");
+        // console.log(cut_point_num);
+        // console.log("个断点");
     }
 }
 function seperate_lines(object,start,end,x,y,z){//加断点后分割直线 要大改 加入断点的同时，断点那里也要有一个长度为0的直线
@@ -3640,8 +3640,6 @@ function follow_mouse_pro()
     //分类讨论:1 拖动的是现成的边，无加入的断点 延长两条已有的边
     if(cut_point_num >= 0)
     {
-        //延长两条已有的边
-        console.log("进入1")
         if(move_distance>0.1)//产生明显移动 再移动直线
         {
             if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==1)//与x轴垂直
@@ -3652,31 +3650,27 @@ function follow_mouse_pro()
                 }
                 obj.position.x= now_x1+move_distance;
                 obj.start1[0]=now_x1+move_distance;
-                obj.end1[0]=now_x1+move_distance;//可换回arrayOfLines[now_move_index]
-                //两条边线的动作 可以用数组给数组赋值
+                obj.end1[0]=now_x1+move_distance;
+                scene.remove(obj);
+                scene.add(obj);
                 {
                     var len = arrayOfLines.length;
                     var front;
                     var end;
                     var sig1 = now_move_index-1;
                     if(now_move_index-1<0)
-                    {
                         sig1=len-1;
-                    }//
                     var sig2 = now_move_index+1;  
                     if(sig2>len-1)
-                    {
                         sig2=0;
-                    }
-                        front =arrayOfLines[sig1].start1;
-                        scene.remove(arrayOfLines[sig1]);
-                        arrayOfLines.splice(sig1,1);
-                        createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
-
-                        end = arrayOfLines[sig2].end1;
-                        scene.remove(arrayOfLines[sig2]);
-                        arrayOfLines.splice(sig2,1);
-                        createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+                    front =arrayOfLines[sig1].start1;
+                    scene.remove(arrayOfLines[sig1]);
+                    arrayOfLines.splice(sig1,1);
+                    createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+                    end = arrayOfLines[sig2].end1;
+                    scene.remove(arrayOfLines[sig2]);
+                    arrayOfLines.splice(sig2,1);
+                    createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
                 } 
             }
             else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
