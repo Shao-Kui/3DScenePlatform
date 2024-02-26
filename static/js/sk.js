@@ -3438,6 +3438,7 @@ function seperate_lines(object,start,end,x,y,z){//加断点后分割直线 要�
     //reimagined
     console.log("映射后：");
     console.log(point2);
+    scene.remove(arrayOfLines[now_order]);
     arrayOfLines.splice(now_order,1);//删除掉这根棱柱
     mycyl1 = createCyliner1(start[0],start[1],start[2],point2.x,point2.y,point2.z,now_order);//前面的那条，order小
     mycyl2 = createCyliner1(point2.x,point2.y,point2.z,point2.x,point2.y,point2.z,now_order+1);//后面的那条
@@ -3849,8 +3850,18 @@ function recreate_room()//复原roomshape
     var len = arrayOfLines.length;
     for( var i = 0 ; i < len ; i ++)
     {
-        manager.renderManager.scene_json.rooms[0].roomShape[i][0]=arrayOfLines[i].start1[0];
-        manager.renderManager.scene_json.rooms[0].roomShape[i][1]=arrayOfLines[i].start1[2];
+        var room_len = manager.renderManager.scene_json.rooms[0].roomShape.length;
+        if(i>=room_len)
+        {
+            var pos2 = [arrayOfLines[i].start1[0],arrayOfLines[i].start1[2]];
+            manager.renderManager.scene_json.rooms[0].roomShape.push(pos2);
+        }
+        else
+        {
+            manager.renderManager.scene_json.rooms[0].roomShape[i][0]=arrayOfLines[i].start1[0];
+            manager.renderManager.scene_json.rooms[0].roomShape[i][1]=arrayOfLines[i].start1[2];
+        }
+        
     }
 }
 
