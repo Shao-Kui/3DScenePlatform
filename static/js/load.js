@@ -324,9 +324,9 @@ const traverseSceneJson = function(sj){
                 ); 
                 let material = new THREE.MeshBasicMaterial({color: 0xd92511});
                 material.transparent = true;
-                material.opacity = 0.5
+                material.opacity = 0.25
                 let object3d = new THREE.Mesh( geometry, material );
-                object3d.position.set(
+                object3d.position.set( 
                     (o.bbox.max[0] + o.bbox.min[0]) / 2,
                     (o.bbox.max[1] + o.bbox.min[1]) / 2,
                     (o.bbox.max[2] + o.bbox.min[2]) / 2
@@ -340,6 +340,62 @@ const traverseSceneJson = function(sj){
                     "format": o.format,
                     "coarseSemantic": o.coarseSemantic,
                     "isSceneObj": true
+                };
+                scene.add(object3d); 
+            }
+            // SFY parameterized furniture
+            if (o.format === 'sfyobj') {
+                let generateTransparentBox = (o, color = 0xd92511, opacity = 0.5) => {
+                    let geometry = new THREE.BoxGeometry(o.value[0], o.value[2], o.value[1]);
+                    geometry.translate(o.value[0]/2, o.value[2]/2, -o.value[1]/2);
+                    let material = new THREE.MeshBasicMaterial({color: color});
+                    material.transparent = true;
+                    material.opacity = opacity
+                    let object3d = new THREE.Mesh( geometry, material );
+                    const m = new THREE.Matrix4();
+                        m.set(o.mtx[0][0], o.mtx[2][0], o.mtx[1][0], o.mtx[3][0], 
+                            o.mtx[0][2], o.mtx[2][2], o.mtx[1][2], o.mtx[3][2], 
+                            o.mtx[0][1], o.mtx[2][1], o.mtx[1][1], o.mtx[3][1], 
+                            o.mtx[0][3], o.mtx[2][3], o.mtx[1][3], o.mtx[3][3] );
+                    object3d.applyMatrix4(m);
+                    return object3d;
+                };
+
+                let traverseSFYObjChildren = (rootO, parent) => {
+                    if (rootO.childrenList === undefined) return;
+                    rootO.childrenList.forEach(o => {
+                        let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx));
+                        object3d.name = o.idx;
+                        object3d.userData = {
+                            "type": 'object',
+                            "key": o.key,
+                            "roomId": o.roomId,
+                            "modelId": o.modelId,
+                            "format": o.format,
+                            "coarseSemantic": o.coarseSemantic,
+                            "isSceneObj": true,
+                            "world_mtx": o.world_mtx,
+                            "isSceneObj": false
+                        };
+                        traverseSFYObjChildren(o, object3d);
+                        parent.add(object3d);
+                    });
+                };
+
+                let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx));
+                if (o.childrenList) traverseSFYObjChildren(o, object3d);
+                manager.renderManager.instanceKeyCache[o.key] = object3d;
+                object3d.name = o.idx;
+                object3d.userData = {
+                    "type": 'object',
+                    "key": o.key,
+                    "roomId": o.roomId,
+                    "modelId": o.modelId,
+                    "format": o.format,
+                    "coarseSemantic": o.coarseSemantic,
+                    "isSceneObj": true,
+                    "world_mtx": o.world_mtx,
+                    "json": o
                 };
                 scene.add(object3d); 
             }

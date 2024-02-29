@@ -37,6 +37,7 @@
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
     <script src="/static/3rdparty/splitting.min.js"></script>
+    <script src="/static/3rdparty/color-hash.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
@@ -65,6 +66,10 @@
     <script src="/static/js/MageAdd.js"></script>
     <script>
       //Global state & variables! Careful!
+      ////两个模式
+      var On_LINEMOVE = false;//是否进入右键拖动模式
+      var MoveLineModel = false;
+      //
       var ALL_SCENE_READY = false;
       var On_MOVE = false;
       var On_ROTATE = false;
@@ -140,6 +145,7 @@
       var animaSliders;
       var orthline;
       const pressedKeys = [];
+      var colorHash = new ColorHash();
 
       var skyBox;
       var lx_level;
@@ -1177,7 +1183,13 @@
             >
               PlanIT
             </button>
-
+            <button
+            id="btnMoveLineModel"
+            type="button"
+            class="btn btn-lg btn-outline-light mx-2"
+          >
+            MoveLineModel
+          </button>
             <button
               id="stockshelf_button"
               type="button"
