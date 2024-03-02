@@ -59,3 +59,8 @@ static/3rdparty/tf.min2.js
 static/dataset/*
 static/js/_deprecated.js
 /yltmp/classes
+/ylprivate
+./new_data.py
+./new_data.txt
+/yltmp/objConstraint.py
+static/js/yl.js
