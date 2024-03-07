@@ -14,6 +14,8 @@ var now_move_index =-1;
 //const arrayOfHideLines = [];//直线
 //const now_move_hide_line = [];//直线
 //var has_add = 0;//有问题
+var can_add_dot = 0;//右键拖动状态禁用左键点击加点，防止混乱
+var has_moved = 0;//用于后续吸附有关的线
 var now_x1 = 0 ;
 var now_x2 = 0;
 var now_y1 = 0;
@@ -823,7 +825,7 @@ var onClickObj = function (event) {//左键点击时触发
     }
     mageAddSinglePrior.enabled = false;
     
-    if(MoveLineModel)//左键点击触发，加点
+    if(MoveLineModel&&(can_add_dot==0))//左键点击触发，加点
     {
        add_dot(event); 
     }
@@ -3618,8 +3620,9 @@ const enter_move_mode = function(event){
         On_LINEMOVE = !On_LINEMOVE;//状态量取非
         if(On_LINEMOVE)
         {
-             console.log("已进入可拖动状态");
-             console.log("选中的直线是");
+            can_add_dot = 1;//1的状态不可加点
+            console.log("已进入可拖动状态");
+            console.log("选中的直线是");
             console.log(intersects[0].object);//intersect是一个独特的类，加object是具体的物体
             now_x1 = intersects[0].object.start1[0] ;
             now_x2 = intersects[0].object.end1[0];
@@ -3641,9 +3644,10 @@ const enter_move_mode = function(event){
         }
         if(!On_LINEMOVE)
         {
+            can_add_dot = 0;//0的状态可以加点
             console.log("已退出可拖动状态");
             now_move_index = -1;
-            now_x1 = 0 ;
+            now_x1 = 0;
             now_x2 = 0;
             now_y1 = 0;
             now_y2 = 0;
@@ -3653,24 +3657,24 @@ const enter_move_mode = function(event){
         }
     }
 }
-const enter_move_mode_pro = function(event){
-    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条棱柱
-    if(intersects.length > 0)
-    {
-        On_LINEMOVE = !On_LINEMOVE;//状态量取非
-        if(On_LINEMOVE)
-        {
-            now_order =  arrayOfLines.indexOf(intersects[0].object);//全局只记载所要拖动的线的顺序即可
-            now_move_line.push(arrayOfLines[now_order]);
-            now_move_index = now_order;
-        }
-        if(!On_LINEMOVE)
-        {
-            console.log("已退出可拖动状态");
-            now_move_index = -1;
-        }
-    }
-}
+// const enter_move_mode_pro = function(event){
+//     var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条棱柱
+//     if(intersects.length > 0)
+//     {
+//         On_LINEMOVE = !On_LINEMOVE;//状态量取非
+//         if(On_LINEMOVE)
+//         {
+//             now_order =  arrayOfLines.indexOf(intersects[0].object);//全局只记载所要拖动的线的顺序即可
+//             now_move_line.push(arrayOfLines[now_order]);
+//             now_move_index = now_order;
+//         }
+//         if(!On_LINEMOVE)
+//         {
+//             console.log("已退出可拖动状态");
+//             now_move_index = -1;
+//         }
+//     }
+// }
 function follow_mouse_pro()
 {
     var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);//追踪鼠标在地面的投影，因此求交是与地面
@@ -3684,82 +3688,159 @@ function follow_mouse_pro()
         selected_line_id = room_and_line_id[1];
     }
     var move_distance = calc_dot_line_dis(pt.x,pt.y,pt.z,now_x1,now_y1,now_z1,now_x2,now_y2,now_z2);
-    //分类讨论:1 拖动的是现成的边，无加入的断点 延长两条已有的边
-    if(cut_point_num >= 0)
+    if(move_distance>0.3)
     {
-        if(move_distance>0.1)//产生明显移动 再移动直线
+        has_moved = 0;
+    }
+    if(move_distance>0.3&&has_moved==0)//产生明显移动 再移动直线
+    {
+        if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==1)//与x轴垂直
         {
-            if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==1)//与x轴垂直
+            if(pt.x<now_x1)//鼠标在线左侧
             {
-                if(pt.x<now_x1)//鼠标在线左侧
+                move_distance = -1*move_distance;
+            }
+            obj.position.x= now_x1+move_distance;
+            obj.start1[0]=now_x1+move_distance;
+            obj.end1[0]=now_x1+move_distance;
+            arrayOfRooms[selected_room_id].points[selected_line_id][0]= now_x1 + move_distance;
+            arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][0] = now_x1 + move_distance;
+            // scene.remove(obj);
+            // scene.add(obj);
+            {
+                var len = arrayOfLines.length;
+                var front;
+                var end;
+                var sig1 = now_move_index-1;
+                if(now_move_index-1<0)
+                    sig1=len-1;
+                var sig2 = now_move_index+1;  
+                if(sig2>len-1)
+                    sig2=0;
+                front =arrayOfLines[sig1].start1;
+                scene.remove(arrayOfLines[sig1]);
+                arrayOfLines.splice(sig1,1);
+                createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+                end = arrayOfLines[sig2].end1;
+                scene.remove(arrayOfLines[sig2]);
+                arrayOfLines.splice(sig2,1);
+                createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+            } 
+        }
+        else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
+        {
+            if(pt.z<now_z1)//鼠标在线下方
+            {
+                move_distance = -1*move_distance;
+            }
+            obj.position.z = now_z1 + move_distance;
+            obj.start1[2]= now_z1 + move_distance;
+            obj.end1[2]= now_z1 + move_distance;
+            arrayOfRooms[selected_room_id].points[selected_line_id][1] = now_z1 + move_distance;
+            arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][1] = now_z1 + move_distance;
+            //两条边线的动作 可以用数组给数组赋值
+            {
+                var len = arrayOfLines.length;
+                var front;
+                var end;
+                var sig1 = now_move_index-1;
+                if(now_move_index-1<0)
                 {
-                    move_distance = -1*move_distance;
+                    sig1=len-1;
+                }//
+                var sig2 = now_move_index+1;  
+                if(sig2>len-1)
+                {
+                    sig2=0;
                 }
-                obj.position.x= now_x1+move_distance;
-                obj.start1[0]=now_x1+move_distance;
-                obj.end1[0]=now_x1+move_distance;
-                arrayOfRooms[selected_room_id].points[selected_line_id][0]= now_x1 + move_distance;
-                arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][0] = now_x1 + move_distance;
-                scene.remove(obj);
-                scene.add(obj);
-                {
-                    var len = arrayOfLines.length;
-                    var front;
-                    var end;
-                    var sig1 = now_move_index-1;
-                    if(now_move_index-1<0)
-                        sig1=len-1;
-                    var sig2 = now_move_index+1;  
-                    if(sig2>len-1)
-                        sig2=0;
                     front =arrayOfLines[sig1].start1;
                     scene.remove(arrayOfLines[sig1]);
                     arrayOfLines.splice(sig1,1);
                     createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+
                     end = arrayOfLines[sig2].end1;
                     scene.remove(arrayOfLines[sig2]);
                     arrayOfLines.splice(sig2,1);
                     createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
-                } 
-            }
-            else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
-            {
-                if(pt.z<now_z1)//鼠标在线下方
-                {
-                    move_distance = -1*move_distance;
-                }
-                obj.position.z = now_z1 + move_distance;
-                obj.start1[2]= now_z1 + move_distance;
-                obj.end1[2]= now_z1 + move_distance;
-                arrayOfRooms[selected_room_id].points[selected_line_id][1] = now_z1 + move_distance;
-                arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][1] = now_z1 + move_distance;
-                //两条边线的动作 可以用数组给数组赋值
-                {
-                    var len = arrayOfLines.length;
-                    var front;
-                    var end;
-                    var sig1 = now_move_index-1;
-                    if(now_move_index-1<0)
-                    {
-                        sig1=len-1;
-                    }//
-                    var sig2 = now_move_index+1;  
-                    if(sig2>len-1)
-                    {
-                        sig2=0;
-                    }
-                        front =arrayOfLines[sig1].start1;
-                        scene.remove(arrayOfLines[sig1]);
-                        arrayOfLines.splice(sig1,1);
-                        createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
-
-                        end = arrayOfLines[sig2].end1;
-                        scene.remove(arrayOfLines[sig2]);
-                        arrayOfLines.splice(sig2,1);
-                        createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
-                } 
-            }
+            } 
         }
+        has_moved = 1;
+    }
+    else if(move_distance<0.3&&has_moved==1)//已经移动过了，现在回位
+    {
+        if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==1)//与x轴垂直
+        {
+            obj.position.x= now_x1;
+            obj.start1[0]=now_x1;
+            obj.end1[0]=now_x1;
+            {
+                var len = arrayOfLines.length;
+                var front;
+                var end;
+                var sig1 = now_move_index-1;
+                if(now_move_index-1<0)
+                    sig1=len-1;
+                var sig2 = now_move_index+1;  
+                if(sig2>len-1)
+                    sig2=0;
+                front =arrayOfLines[sig1].start1;
+                scene.remove(arrayOfLines[sig1]);
+                arrayOfLines.splice(sig1,1);
+                createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+                end = arrayOfLines[sig2].end1;
+                scene.remove(arrayOfLines[sig2]);
+                arrayOfLines.splice(sig2,1);
+                createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+                arrayOfRooms[selected_room_id].points[selected_line_id][0] = now_x1;
+                arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][0] = now_x1;
+            } 
+        }
+        else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
+        {
+            obj.position.z = now_z1;
+            obj.start1[2]= now_z1;
+            obj.end1[2]= now_z1;
+            //两条边线的动作 可以用数组给数组赋值
+            {
+                var len = arrayOfLines.length;
+                var front;
+                var end;
+                var sig1 = now_move_index-1;
+                if(now_move_index-1<0)
+                {
+                    sig1=len-1;
+                }//
+                var sig2 = now_move_index+1;  
+                if(sig2>len-1)
+                {
+                    sig2=0;
+                }
+                    front =arrayOfLines[sig1].start1;
+                    scene.remove(arrayOfLines[sig1]);
+                    arrayOfLines.splice(sig1,1);
+                    createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+
+                    end = arrayOfLines[sig2].end1;
+                    scene.remove(arrayOfLines[sig2]);
+                    arrayOfLines.splice(sig2,1);
+                    createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+
+                    arrayOfRooms[selected_room_id].points[selected_line_id][1] = now_z1;
+                    arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length][1] = now_z1;
+                
+            } 
+        }
+        console.log("已退出可拖动状态");
+        now_move_index = -1;
+        now_x1 = 0 ;
+        now_x2 = 0;
+        now_y1 = 0;
+        now_y2 = 0;
+        now_z1 = 0;
+        now_z2 = 0;
+        now_move_index = -1;//全部重置
+        On_LINEMOVE = false;
+        has_moved = 0;
     }
     let division_result = decide(arrayOfRooms[selected_room_id],selected_line_id);
     // console.log(division_result);
@@ -3772,7 +3853,6 @@ function follow_mouse_pro()
         arrayOfRooms[father_id] = division_result[0];
         delete arrayOfRooms.selected_room_id;
         console.log("已退出可拖动状态");
-        now_move_index = -1;
         now_x1 = 0 ;
         now_x2 = 0;
         now_y1 = 0;
@@ -3813,14 +3893,15 @@ function follow_mouse_pro()
         arrayOfRooms[roomIndexCounter] = division_result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         console.log("已退出可拖动状态");
-        now_move_index = -1;
         now_x1 = 0 ;
         now_x2 = 0;
         now_y1 = 0;
         now_y2 = 0;
         now_z1 = 0;
         now_z2 = 0;
+        can_add_dot = 0;
         now_move_index = -1;//全部重置
+        has_moved = 0;
         On_LINEMOVE = false;
     }
     // else if(cut_point_num == 1)//有一个断点
