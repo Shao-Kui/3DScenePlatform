@@ -112,6 +112,86 @@ function room_merged_with_father(room)
     return new_room;
 }
 
+function move_point(point_id,new_coordinate)
+{
+    var pt1 = arrayOfRoomPoints[point_id];
+    pt1.position = new_coordinate;
+    var new_linkedInnerLines = [];
+    for(line_id in pt1.linkedInnerLines)
+    {
+        const line = pt1.linkedInnerLines[line_id];
+        const other_point_id = line[1],room_id = line[2];
+        const pt2 = arrayOfRoomPoints[other_point_id];
+        const new_line_obj = createCylinderMesh(pt1.position[0],0,pt1.position[1],pt2.position[0],0,pt2.position[1],0xff0000,0.05);
+        if(Math.abs(pt1.position[0] - pt2.position[0]) < 1e-7)new_line_obj.rotation.x = 1.57;
+        else new_line_obj.rotation.z = 1.57;
+        new_line_obj.startid = point_id;
+        new_line_obj.endid = other_point_id;
+        new_linkedInnerLines.push([new_line_obj,other_point_id,room_id]);
+        for(var i = 0; i < pt2.linkedInnerLines.length; i++)
+            if(pt2.linkedInnerLines[i][1] == point_id)pt2.linkedInnerLines[i][0] = new_line_obj;
+        for(var i = 0; i < arrayOfInnerLines[room_id].length; i++)
+        {
+            if(arrayOfInnerLines[room_id][i].uuid == line[0].uuid)arrayOfInnerLines[room_id][i] = new_line_obj;
+        }
+        scene.add(new_line_obj);
+        scene.remove(line[0]);
+    }
+    pt1.linkedInnerLines = new_linkedInnerLines;
+}
+
+function new_room_point(position)
+{
+    arrayOfRoomPoints[roomPointIndexCounter] = {
+        "position":position,
+        "id":roomPointIndexCounter,
+        "linkedInnerLines":[]
+    };
+    roomPointIndexCounter++;
+    return roomPointIndexCounter - 1;
+}
+
+function add_inner_line_between_points(pt1,pt2,roomid)
+{
+    const cylinder = createCylinderMesh(pt1.position[0],0,pt1.position[1],pt2.position[0],0,pt2.position[1],0xff0000,0.05);
+    if(Math.abs(pt1.position[0] - pt2.position[0]) < 1e-7)cylinder.rotation.x = 1.57;
+    else cylinder.rotation.z = 1.57;
+    cylinder.startid = pt1.id;
+    cylinder.endid = pt2.id;
+    scene.add(cylinder);
+    pt1.linkedInnerLines.push([cylinder,pt2.id,roomid]);
+    pt2.linkedInnerLines.push([cylinder,pt1.id,roomid]);
+    return cylinder;
+}
+
+function cut_inner_line(room_id,line_id,position)
+{
+    const newpt1 = arrayOfRoomPoints[new_room_point(position)], newpt2 = arrayOfRoomPoints[new_room_point(position)];
+    const pt1 = arrayOfRoomPoints[arrayOfRooms[room_id].points[line_id]],pt2 = arrayOfRoomPoints[arrayOfRooms[room_id].points[line_id == arrayOfRooms[room_id].points.length - 1 ? 0 : line_id + 1]];
+    const line = arrayOfInnerLines[room_id][line_id];
+    for(let i = 0; i < pt1.linkedInnerLines.length; i++)
+    {
+        if(pt1.linkedInnerLines[i][1] == pt2.id)
+        {
+            pt1.linkedInnerLines.splice(i,1);
+            break;
+        }
+    }
+    for(let i = 0; i < pt2.linkedInnerLines.length; i++)
+    {
+        if(pt2.linkedInnerLines[i][1] == pt1.id)
+        {
+            pt2.linkedInnerLines.splice(i,1);
+            break;
+        }
+    }
+    console.log('removing line');
+    console.log(line);
+    scene.remove(line);
+    arrayOfInnerLines[room_id].splice(line_id,1,add_inner_line_between_points(pt1,newpt1,room_id),add_inner_line_between_points(newpt1,newpt2,room_id),add_inner_line_between_points(newpt2,pt2,room_id));
+    arrayOfRooms[room_id].points.splice(line_id + 1,0,newpt1.id,newpt2.id);
+}
+
 function decide(room,line_id)
 {
     const eps = 1e-7;
@@ -120,73 +200,66 @@ function decide(room,line_id)
         'rooms':[],
         'division_lines':[],
         'division_points':[]};
-    var result_val = calculate_room_division_evaluation(room.points,room.type);
+    const room_shape = room.points.map(id => arrayOfRoomPoints[id].position);
+    var result_val = calculate_room_division_evaluation(room_shape,room.type);
     // console.log("Value of no division:");
     // console.log(result_val);
-    const origin_val = result_val;
     const idx_of_points = [line_id - 1, line_id, line_id + 1,line_id + 2].map(val => {
-        if(val < 0) val += room.points.length;
-        if(val >= room.points.length) val -= room.points.length;
+        if(val < 0) val += room_shape.length;
+        if(val >= room_shape.length) val -= room_shape.length;
         return val;
     });//ID of the four points considered
     var line_dim,line_dir;
-    if(Math.abs(room.points[idx_of_points[2]][1] - room.points[idx_of_points[1]][1]) < eps)line_dim = 1;
+    if(Math.abs(room_shape[idx_of_points[2]][1] - room_shape[idx_of_points[1]][1]) < eps)line_dim = 1;
     else line_dim = 0;
-    if(room.points[idx_of_points[0]][line_dim] > room.points[idx_of_points[1]][line_dim] && 
-        room.points[idx_of_points[3]][line_dim] > room.points[idx_of_points[2]][line_dim])line_dir = 1;
-    else if(room.points[idx_of_points[0]][line_dim] < room.points[idx_of_points[1]][line_dim] && 
-        room.points[idx_of_points[3]][line_dim] < room.points[idx_of_points[2]][line_dim])line_dir = -1;
+    if(room_shape[idx_of_points[0]][line_dim] > room_shape[idx_of_points[1]][line_dim] && 
+        room_shape[idx_of_points[3]][line_dim] > room_shape[idx_of_points[2]][line_dim])line_dir = 1;
+    else if(room_shape[idx_of_points[0]][line_dim] < room_shape[idx_of_points[1]][line_dim] && 
+        room_shape[idx_of_points[3]][line_dim] < room_shape[idx_of_points[2]][line_dim])line_dir = -1;
     else line_dir = 0;
     if(line_dir != 0)//split
     {
-        const max_move_step = Math.min(Math.abs(room.points[idx_of_points[0]][line_dim]-room.points[idx_of_points[1]][line_dim]),
-        Math.abs(room.points[idx_of_points[2]][line_dim]-room.points[idx_of_points[3]][line_dim]));
-        for(let delta = min_delta; delta < max_move_step; delta += step)
+        const max_move_step = Math.min(Math.abs(room_shape[idx_of_points[0]][line_dim]-room_shape[idx_of_points[1]][line_dim]),
+        Math.abs(room_shape[idx_of_points[2]][line_dim]-room_shape[idx_of_points[3]][line_dim]));
+        var original_cut_1 = structuredClone(room_shape[idx_of_points[1]]),
+        original_cut_2 = structuredClone(room_shape[idx_of_points[2]]);
+        for(let delta = min_delta; delta < max_move_step - min_delta; delta += step)
         {
-            var cut_point_1 = structuredClone(room.points[idx_of_points[1]]), cut_point_2 = structuredClone(room.points[idx_of_points[2]]);
-            cut_point_1[line_dim] += delta * line_dir;
-            cut_point_2[line_dim] += delta * line_dir;
-            var room1 = structuredClone(room);
-            if(room1.father_wall_start == room1.points[idx_of_points[1]])
-                room1.father_wall_start = structuredClone(cut_point_1);
-            else if(room1.father_wall_start == room1.points[idx_of_points[2]])
-                room1.father_wall_start = structuredClone(cut_point_2);
-            if(room1.father_wall_end == room1.points[idx_of_points[1]])
-                room1.father_wall_end = structuredClone(cut_point_1);
-            else if(room1.father_wall_end == room1.points[idx_of_points[2]])
-                room1.father_wall_end = structuredClone(cut_point_2);
-            room1.points[idx_of_points[1]] = structuredClone(cut_point_1);
-            room1.points[idx_of_points[2]] = structuredClone(cut_point_2);
-            room1.points.splice(idx_of_points[1],0,cut_point_1);
-            room1.points.splice(idx_of_points[3],0,cut_point_2);
-            
-            // console.log(d3.polygonArea(room1.points));
-            // console.log(d3.polygonArea(room2.points));
+            room_shape[idx_of_points[1]] = structuredClone(original_cut_1);
+            room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
+            room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
+            room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
+            const room1_val = calculate_room_division_evaluation(room_shape,room.type);
             for(const roomtype in area_distribution)
             {
                 var room2 = {
-                    "points":[structuredClone(cut_point_1),structuredClone(cut_point_1),
-                        structuredClone(room.points[idx_of_points[1]]),structuredClone(room.points[idx_of_points[2]])
-                    ,structuredClone(cut_point_2),structuredClone(cut_point_2)],
+                    "points":[structuredClone(room_shape[idx_of_points[1]]),
+                        structuredClone(room_shape[idx_of_points[1]]),
+                        structuredClone(room_shape[idx_of_points[1]]),
+                        structuredClone(original_cut_1),structuredClone(original_cut_2),
+                        structuredClone(room_shape[idx_of_points[2]]),
+                        structuredClone(room_shape[idx_of_points[2]]),
+                        structuredClone(room_shape[idx_of_points[2]]),
+                    ],
                     "id":-1,
                     "father":room.id,
                     "type":roomtype,
-                    "father_wall_start":structuredClone(cut_point_2),
-                    "father_wall_end":structuredClone(cut_point_1)
+                    "father_wall_start": -1,
+                    "father_wall_end": -1
                 };
-                const cur_val = Math.min(calculate_room_division_evaluation(room1.points,room1.type),calculate_room_division_evaluation(room2.points,room2.type));
+                const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type));
                 // console.log("Value of split:");
                 // console.log(cur_val);
                 if(cur_val > result_val)
                 {
                     result = {
-                        'rooms':[room1,room2],
-                        'division_lines':[
-                            [structuredClone(cut_point_1),structuredClone(cut_point_2)]
-                        ],
+                        'rooms':[{},room2],//temporarily save the information
+                        'division_lines':[],
                         'division_points':[
-                            cut_point_1,cut_point_2
+                            structuredClone(room_shape[idx_of_points[1]]),
+                            structuredClone(room_shape[idx_of_points[2]])
                         ],
+                        'inserted_points':[]
                     };
                     result_val = cur_val;
                 }
@@ -210,5 +283,69 @@ function decide(room,line_id)
     //         };
     //     }
     // }
-    return result;
+    if(result.rooms.length == 1)//Merge with father
+    {
+        console.log(selected_room_id);
+        arrayOfInnerLines[selected_room_id].forEach(l => {scene.remove(l)});
+        delete arrayOfInnerLines.selected_room_id;
+        let father_id = arrayOfRooms[selected_room_id].father;
+        arrayOfRooms[father_id] = result[0];
+        delete arrayOfRooms.selected_room_id;
+        console.log("已退出可拖动状态");
+        now_x1 = 0 ;
+        now_x2 = 0;
+        now_y1 = 0;
+        now_y2 = 0;
+        now_z1 = 0;
+        now_z2 = 0;
+        now_move_index = -1;//全部重置
+        On_LINEMOVE = false;
+    }
+    else if(result.rooms.length == 2)//divide
+    {
+        move_point(room.points[idx_of_points[1]],result.division_points[0]);
+        move_point(room.points[idx_of_points[2]],result.division_points[1]);
+        cut_inner_line(room.id,idx_of_points[1],result.division_points[1]);
+        cut_inner_line(room.id,idx_of_points[1],result.division_points[0]);
+        result.rooms[1].points = result.rooms[1].points.map(pos => new_room_point(pos));
+        // result.division_lines = [
+        //     [room.points[idx_of_points[1]],room.points[idx_of_points[2]]],
+        //     [roomPointIndexCounter - 4,roomPointIndexCounter - 1]
+        // ];
+        arrayOfInnerLines[roomIndexCounter] = [];
+        for(let i = 0; i < result.rooms[1].points.length; i++)
+        {
+            let j = (i == result.rooms[1].points.length - 1) ? 0 : i + 1;
+            arrayOfInnerLines[roomIndexCounter].push(add_inner_line_between_points(arrayOfRoomPoints[result.rooms[1].points[i]],arrayOfRoomPoints[result.rooms[1].points[j]],roomIndexCounter));
+        }
+        for(let i = 0; i < 2; i++)
+        {
+            const current_cutpoint = result.division_points[i];
+            for(let j = 0; j < arrayOfLines.length; j++)
+            {
+                const current_line = arrayOfLines[j];
+                if(on_same_line([current_line.start1[0],current_line.start1[2]],current_cutpoint,[current_line.end1[0],current_line.end1[2]])
+                 && point_between([current_line.start1[0],current_line.start1[2]],current_cutpoint,[current_line.end1[0],current_line.end1[2]]))
+                {
+                    seperate_lines(arrayOfLines[j],current_line.start1,current_line.end1,current_cutpoint[0],0,current_cutpoint[1],false);
+                    break;
+                }
+            }
+        }
+        room = result.rooms[0];
+        arrayOfRooms[roomIndexCounter] = result.rooms[1];
+        arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
+        roomIndexCounter++;
+        console.log("已退出可拖动状态");
+        now_x1 = 0 ;
+        now_x2 = 0;
+        now_y1 = 0;
+        now_y2 = 0;
+        now_z1 = 0;
+        now_z2 = 0;
+        can_add_dot = 0;
+        now_move_index = -1;//全部重置
+        has_moved = 0;
+        On_LINEMOVE = false;
+    }
 }
