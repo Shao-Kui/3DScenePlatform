@@ -3463,6 +3463,51 @@ function get_room_and_line_id(start,end)
                 return [i,j];
         }
     }
+    var cut_line_found = false;
+    for(const i in arrayOfRooms)
+    {
+        if(arrayOfRooms[i] != undefined)
+        {
+            for(let j = arrayOfRooms[i].points.length - 1; j >= 0; j--)
+            {
+                const next = (j == arrayOfRooms[i].points.length - 1) ? 0 : j + 1;
+                const pt1 = arrayOfRoomPoints[arrayOfRooms[i].points[j]].position, pt2 = arrayOfRoomPoints[arrayOfRooms[i].points[next]].position;
+                if(on_same_line(pt1,start,pt2) && on_same_line(pt1,end,pt2)
+                && point_between(pt1,start,pt2) && point_between(pt1,end,pt2))
+                {
+                    // console.log('make a new cut at');
+                    // console.log(pt1);
+                    // console.log(start);
+                    // console.log(end);
+                    // console.log(pt2);
+                    if(!same_point(pt2,end))cut_inner_line(i,j,end);
+                    if(!same_point(pt1,start))cut_inner_line(i,j,start);
+                    cut_line_found = true;
+                    break;
+                }
+            }
+            if(cut_line_found)break;
+        }
+    }
+    // console.log(start);
+    // console.log(end);
+    for(const i in arrayOfRooms)
+    {
+        // console.log(i);
+        if(arrayOfRooms[i] != undefined)
+        for(let j = arrayOfRooms[i].points.length -  1; j >= 0; j--)
+        {
+            // console.log(j);
+            // console.log(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position);
+            const next = (j == arrayOfRooms[i].points.length - 1) ? 0 : j + 1;
+            if(Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[0] - start[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[1] - start[1]) < 1e-7
+            && Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[0] - end[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[1] - end[1]) < 1e-7)
+                return [i,j];
+        }
+    }
+    // console.log("This should not happen");
     return undefined;
 }
 //manager.renderManager.scene_json.rooms[0].roomShape[i][0]
