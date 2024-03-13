@@ -3683,7 +3683,7 @@ function follow_mouse_pro()
                 obj.position.z = now_z1 + move_distance;
                 obj.start1[2]= now_z1 + move_distance;
                 obj.end1[2]= now_z1 + move_distance;
-                //两条边线的动作 可以用数组给数组赋值
+                //两条边线的动作 可以用数给组数组赋值
                 {
                     var len = arrayOfLines.length;
                     var front;

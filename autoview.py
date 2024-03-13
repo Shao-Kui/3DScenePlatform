@@ -1515,6 +1515,14 @@ def ylimgs(identifier):
 def catimgs(identifier):
     if os.path.exists(f'./yltmp/OSRfigures/{identifier}.png'):
         return flask.send_file(f'./yltmp/OSRfigures/{identifier}.png')
+    
+@app_autoView.route("/eboxes/<function>")
+def eboxes(function):
+    if os.path.exists(f'./yltmp/elasticBox/685.json'):
+        js = json.load(open('./yltmp/elasticBox/685.json'))
+    if os.path.exists(f'./yltmp/elasticBox/841.json'):
+        jss = json.load(open('./yltmp/elasticBox/841.json'))
+    return [js,jss]
 
 def loadClist(name):
     c_List = {}
