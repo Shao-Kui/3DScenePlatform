@@ -21,7 +21,7 @@ function on_same_line(point1,point2,point3)
     const eps = 1e-7;
     const vec1 = [point2[0]-point1[0],point2[1]-point1[1]];
     const vec2 = [point3[0]-point2[0],point3[1]-point2[1]];
-    return Math.abs(vec1[0] * vec2[1] - vec1[1] * vec2[0]) < eps;
+    return (Math.abs(vec1[0]) < eps && Math.abs(vec2[0]) < eps) || (Math.abs(vec1[1]) < eps && Math.abs(vec2[1]) < eps);
 }
 
 function point_between(point1,point2,point3)
@@ -29,7 +29,13 @@ function point_between(point1,point2,point3)
     const eps = 1e-7;
     const vec1 = [point2[0]-point1[0],point2[1]-point1[1]];
     const vec2 = [point3[0]-point2[0],point3[1]-point2[1]];
-    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= 0;
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= -eps;
+}
+
+function same_point(point1,point2)
+{
+    const eps = 1e-7;
+    return Math.abs(point1[0]-point2[0]) < eps && Math.abs(point1[1]-point2[1]) < eps;
 }
 
 function calculate_room_division_evaluation(points, type){
@@ -185,8 +191,8 @@ function cut_inner_line(room_id,line_id,position)
             break;
         }
     }
-    console.log('removing line');
-    console.log(line);
+    // console.log('removing line');
+    // console.log(line);
     scene.remove(line);
     arrayOfInnerLines[room_id].splice(line_id,1,add_inner_line_between_points(pt1,newpt1,room_id),add_inner_line_between_points(newpt1,newpt2,room_id),add_inner_line_between_points(newpt2,pt2,room_id));
     arrayOfRooms[room_id].points.splice(line_id + 1,0,newpt1.id,newpt2.id);
@@ -223,7 +229,7 @@ function decide(room,line_id)
         Math.abs(room_shape[idx_of_points[2]][line_dim]-room_shape[idx_of_points[3]][line_dim]));
         var original_cut_1 = structuredClone(room_shape[idx_of_points[1]]),
         original_cut_2 = structuredClone(room_shape[idx_of_points[2]]);
-        for(let delta = min_delta; delta < max_move_step - min_delta; delta += step)
+        for(let delta = min_delta; delta < max_move_step; delta += step)
         {
             room_shape[idx_of_points[1]] = structuredClone(original_cut_1);
             room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
@@ -234,12 +240,12 @@ function decide(room,line_id)
             {
                 var room2 = {
                     "points":[structuredClone(room_shape[idx_of_points[1]]),
-                        structuredClone(room_shape[idx_of_points[1]]),
-                        structuredClone(room_shape[idx_of_points[1]]),
+                        // structuredClone(room_shape[idx_of_points[1]]),
+                        // structuredClone(room_shape[idx_of_points[1]]),
                         structuredClone(original_cut_1),structuredClone(original_cut_2),
                         structuredClone(room_shape[idx_of_points[2]]),
-                        structuredClone(room_shape[idx_of_points[2]]),
-                        structuredClone(room_shape[idx_of_points[2]]),
+                        // structuredClone(room_shape[idx_of_points[2]]),
+                        // structuredClone(room_shape[idx_of_points[2]]),
                     ],
                     "id":-1,
                     "father":room.id,
@@ -305,8 +311,8 @@ function decide(room,line_id)
     {
         move_point(room.points[idx_of_points[1]],result.division_points[0]);
         move_point(room.points[idx_of_points[2]],result.division_points[1]);
-        cut_inner_line(room.id,idx_of_points[1],result.division_points[1]);
-        cut_inner_line(room.id,idx_of_points[1],result.division_points[0]);
+        // cut_inner_line(room.id,idx_of_points[1],result.division_points[1]);
+        // cut_inner_line(room.id,idx_of_points[1],result.division_points[0]);
         result.rooms[1].points = result.rooms[1].points.map(pos => new_room_point(pos));
         // result.division_lines = [
         //     [room.points[idx_of_points[1]],room.points[idx_of_points[2]]],
