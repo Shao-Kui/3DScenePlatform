@@ -1,13 +1,84 @@
 const area_distribution = {
     "livingroom":[31.34055880017362,37.98303794068651],
+    "diningroom":[8.502216889056243,13.928773352224832],
     "kitchen":[5.424599317113867,3.1243986198765556],
     "bathroom":[3.773808768026618,1.6098949048550089],
     "balcony":[4.0439683698808535,4.463824697714653],
-    "bedroom":[11.331962509888777,10.288293423901251],
-    "diningroom":[8.502216889056243,13.928773352224832],
     "storage":[2.4083905823027605,3.6633656211885017],
+    "bedroom":[11.331962509888777,10.288293423901251],
     // "entrance":[4.2053069540373595,10.083163192657635]
 };
+
+const room_type_distribution = [
+[[1, 0, 1, 1, 1, 0, 0, 2],0.2377457048076447],
+[[1, 0, 1, 1, 1, 0, 0, 3],0.17128781502203297],
+[[1, 0, 1, 1, 0, 0, 0, 3],0.04602168638906768],
+[[1, 0, 1, 1, 2, 0, 0, 3],0.06941624993810962],
+[[1, 0, 1, 2, 1, 0, 0, 2],0.015237411496756944],
+[[1, 0, 1, 1, 0, 0, 0, 2],0.05738476011288805],
+[[1, 0, 1, 1, 1, 0, 1, 2],0.012514234787344656],
+[[1, 0, 1, 1, 2, 0, 0, 2],0.11535128979551419],
+[[1, 0, 1, 2, 0, 0, 0, 3],0.024818042283507452],
+[[1, 0, 1, 2, 1, 0, 0, 3],0.12155270584740308],
+[[1, 0, 1, 2, 2, 0, 0, 2],0.010434718027429816],
+];
+
+const room_type_to_id_map = {
+    "livingroom":0,
+    "diningroom":1,
+    "kitchen":2,
+    "bathroom":3,
+    "balcony":4,
+    "entrance":5,
+    "storage":6,
+    "bedroom":7
+};
+
+const room_link_distribution = {
+'livingroom_bedroom': 196766, 
+ 'livingroom_kitchen': 75089, 
+ 'livingroom_bathroom': 79119, 
+ 'livingroom_balcony': 47740, 
+ 'bedroom_balcony': 24408, 
+ 'bedroom_bathroom': 14668, 
+ 'kitchen_balcony': 12502, 
+ 'kitchen_diningroom': 895, 
+ 'livingroom_diningroom': 1225, 
+ 'kitchen_bathroom': 1720, 
+ 'storage_livingroom': 2277, 
+ 'bedroom_bedroom': 858, 
+ 'kitchen_bedroom': 308, 
+ 'storage_kitchen': 403, 
+ 'storage_bedroom': 410, 
+ 'diningroom_bedroom': 306, 
+ 'diningroom_bathroom': 186, 
+ 'balcony_balcony': 64, 
+ 'bathroom_bathroom': 476, 
+ 'diningroom_balcony': 63, 
+ 'kitchen_kitchen': 61, 
+ 'storage_balcony': 69, 
+ 'bathroom_balcony': 293, 
+ 'storage_bathroom': 57, 
+}
+
+function get_room_type_evaluation(current_room_type)
+{
+    const room_type_count = 8;
+    let res = 0.0;
+    for(let i = 0; i < room_type_distribution.length; i++)
+    {
+        let tmp_res = 0.0;
+        for(let j = 0; j < room_type_count; j++)
+            tmp_res += Math.abs(current_room_type[j] - room_type_distribution[i][0][j]);
+        res += tmp_res * room_type_distribution[i][1];
+    }
+    return - res;    
+}
+
+function get_link_evaluation(room_type_1,room_type_2)
+{
+    return room_type_1 + '_' + room_type_2 in room_link_distribution || room_type_2 + '_' + room_type_1 in room_link_distribution; 
+}
 
 function normal_distribution_pdf(x, mean, variance)
 {
@@ -37,6 +108,8 @@ function same_point(point1,point2)
     const eps = 1e-7;
     return Math.abs(point1[0]-point2[0]) < eps && Math.abs(point1[1]-point2[1]) < eps;
 }
+
+const C_type = 30;
 
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
@@ -198,6 +271,8 @@ function cut_inner_line(room_id,line_id,position)
     arrayOfRooms[room_id].points.splice(line_id + 1,0,newpt1.id,newpt2.id);
 }
 
+const room_type_counter = [0,0,0,0,0,0,0,0];
+
 function decide(room,line_id)
 {
     const eps = 1e-7;
@@ -207,7 +282,7 @@ function decide(room,line_id)
         'division_lines':[],
         'division_points':[]};
     const room_shape = room.points.map(id => arrayOfRoomPoints[id].position);
-    var result_val = calculate_room_division_evaluation(room_shape,room.type);
+    var result_val = calculate_room_division_evaluation(room_shape,room.type) + C_type * get_room_type_evaluation(room_type_counter);
     // console.log("Value of no division:");
     // console.log(result_val);
     const idx_of_points = [line_id - 1, line_id, line_id + 1,line_id + 2].map(val => {
@@ -238,6 +313,7 @@ function decide(room,line_id)
             const room1_val = calculate_room_division_evaluation(room_shape,room.type);
             for(const roomtype in area_distribution)
             {
+                if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {
                     "points":[structuredClone(room_shape[idx_of_points[1]]),
                         // structuredClone(room_shape[idx_of_points[1]]),
@@ -253,7 +329,10 @@ function decide(room,line_id)
                     "father_wall_start": -1,
                     "father_wall_end": -1
                 };
-                const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type));
+                room_type_counter[room_type_to_id_map[roomtype]] += 1;
+                const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
+                + C_type * get_room_type_evaluation(room_type_counter);
+                room_type_counter[room_type_to_id_map[roomtype]] -= 1;
                 // console.log("Value of split:");
                 // console.log(cur_val);
                 if(cur_val > result_val)
@@ -338,6 +417,7 @@ function decide(room,line_id)
                 }
             }
         }
+        room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;
         room = result.rooms[0];
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
