@@ -18,13 +18,16 @@ var now_move_index =-1;
 //var has_add = 0;//有问题
 var can_add_dot = 0;//右键拖动状态禁用左键点击加点，防止混乱
 var has_moved = 0;//用于后续吸附有关的线
-var now_x1 = 0 ;
+var now_x1 = 0;
 var now_x2 = 0;
 var now_y1 = 0;
 var now_y2 = 0;
 var now_z1 = 0;
 var now_z2 = 0;//目前选中直线的两端点坐标
 var now_order = 0;
+var last_x = 0;
+var last_y = 0;
+var last_z = 0;//上一帧的点击点坐标
 var cut_point_num  = 0 ;//加入断点的个数
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
@@ -1594,6 +1597,7 @@ const setting_up = function () {
                     "father_wall_start":-1,
                     "father_wall_end":-1,
                 };
+                completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
             }
         }
@@ -3540,6 +3544,7 @@ function seperate_lines(object,start,end,x,y,z,update_room = true){//加断点�
     {
         var room_and_line_id = get_room_and_line_id([object.start1[0],object.start1[2]],[object.end1[0],object.end1[2]]);
         cut_inner_line(room_and_line_id[0],room_and_line_id[1],[point2.x,point2.z]);
+        cutting_inner_line(room_and_line_id[0],room_and_line_id[1],[point2.x,point2.z]);
         // arrayOfRoomPoints[roomPointIndexCounter++] = {"position":[point2.x,point2.z],"linkedInnerLines":[]};
         // arrayOfRoomPoints[roomPointIndexCounter++] = {"position":[point2.x,point2.z],"linkedInnerLines":[]};
         // arrayOfRooms[room_and_line_id[0]].points.splice(room_and_line_id[1] + 1, 0, roomPointIndexCounter - 2,roomPointIndexCounter - 1);
@@ -3676,14 +3681,15 @@ function calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2)
 }
 const enter_move_mode = function(event){
     var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线
+    var pt = intersects[0].point;//鼠标触碰地面的点
     if(intersects.length > 0)
     {
         On_LINEMOVE = !On_LINEMOVE;//状态量取非
         if(On_LINEMOVE)
         {
             can_add_dot = 1;//1的状态不可加点
-            console.log("已进入可拖动状态");
-            console.log("选中的直线是");
+            //console.log("已进入可拖动状态");
+            //console.log("选中的直线是");
             console.log(intersects[0].object);//intersect是一个独特的类，加object是具体的物体
             now_x1 = intersects[0].object.start1[0] ;
             now_x2 = intersects[0].object.end1[0];
@@ -3691,6 +3697,7 @@ const enter_move_mode = function(event){
             now_y2 = intersects[0].object.end1[1];
             now_z1 = intersects[0].object.start1[2];
             now_z2 = intersects[0].object.end1[2];
+            last_x = pt.x; last_y = pt.y; last_z = pt.z;
             now_order =  intersects[0].object.end1[2].order;
             for( var i = 0 ; i < arrayOfLines.length ; i++)
             {  
@@ -3698,7 +3705,7 @@ const enter_move_mode = function(event){
                 {
                     now_move_line.push(arrayOfLines[i]);
                     now_move_index = i;//选中直线的数组下标
-                    console.log("选中的index是")
+                    //console.log("选中的index是")
                     console.log(now_move_index);
                 }
             }
@@ -3706,7 +3713,7 @@ const enter_move_mode = function(event){
         if(!On_LINEMOVE)
         {
             can_add_dot = 0;//0的状态可以加点
-            console.log("已退出可拖动状态");
+            //console.log("已退出可拖动状态");
             now_move_index = -1;
             now_x1 = 0;
             now_x2 = 0;
@@ -3714,6 +3721,7 @@ const enter_move_mode = function(event){
             now_y2 = 0;
             now_z1 = 0;
             now_z2 = 0;
+            last_x = 0; last_y = 0; last_z = 0;
             now_move_index = -1;//全部重置
         }
     }
@@ -3764,21 +3772,31 @@ function follow_mouse_pro()
             obj.position.x= now_x1+move_distance;
             obj.start1[0]=now_x1+move_distance;
             obj.end1[0]=now_x1+move_distance;
+            var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+            var sig2 = (now_move_index+1)%(arrayOfLines.length);  
+            
+            if(0.01<arrayOfLines[sig1].length && arrayOfLines[sig1].length<0.2){
+                obj.position.x= arrayOfLines[sig1].start1[0];
+                obj.start1[0]=arrayOfLines[sig1].start1[0];
+                obj.end1[0]=arrayOfLines[sig1].start1[0];
+            }
+            else if(0.01<arrayOfLines[sig2].length && arrayOfLines[sig2].length<0.2){
+                obj.position.x= arrayOfLines[sig2].end1[0];
+                obj.start1[0]=arrayOfLines[sig2].end1[0];
+                obj.end1[0]=arrayOfLines[sig2].end1[0];
+            }
             const pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
-            move_point(pointid1,[now_x1 + move_distance,arrayOfRoomPoints[pointid1].position[1]]);
-            move_point(pointid2,[now_x1 + move_distance,arrayOfRoomPoints[pointid2].position[1]]);
+            move_point(pointid1,[obj.position.x,arrayOfRoomPoints[pointid1].position[1]]);
+            move_point(pointid2,[obj.position.x,arrayOfRoomPoints[pointid2].position[1]]);
+            
+            func({roomid:selected_room_id, wallid:selected_line_id, moveLength:Math.abs(pt.x-last_x), movedir:[Math.sign(pt.x-last_x),0]}, true, true)
+            
             // scene.remove(obj);
             // scene.add(obj);
             {
                 var len = arrayOfLines.length;
                 var front;
                 var end;
-                var sig1 = now_move_index-1;
-                if(now_move_index-1<0)
-                    sig1=len-1;
-                var sig2 = now_move_index+1;  
-                if(sig2>len-1)
-                    sig2=0;
                 front =arrayOfLines[sig1].start1;
                 scene.remove(arrayOfLines[sig1]);
                 arrayOfLines.splice(sig1,1);
@@ -3787,7 +3805,8 @@ function follow_mouse_pro()
                 scene.remove(arrayOfLines[sig2]);
                 arrayOfLines.splice(sig2,1);
                 createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
-            } 
+            }
+            
         }
         else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
         {
@@ -3798,36 +3817,40 @@ function follow_mouse_pro()
             obj.position.z = now_z1 + move_distance;
             obj.start1[2]= now_z1 + move_distance;
             obj.end1[2]= now_z1 + move_distance;
+            var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+            var sig2 = (now_move_index+1)%(arrayOfLines.length);  
+            if(0.01<arrayOfLines[sig1].length && arrayOfLines[sig1].length<0.2){
+                obj.position.z= arrayOfLines[sig1].start1[2];
+                obj.start1[2]=arrayOfLines[sig1].start1[2];
+                obj.end1[2]=arrayOfLines[sig1].start1[2];
+            }
+            else if(0.01<arrayOfLines[sig2].length && arrayOfLines[sig2].length<0.2){
+                obj.position.z= arrayOfLines[sig2].end1[2];
+                obj.start1[2]=arrayOfLines[sig2].end1[2];
+                obj.end1[2]=arrayOfLines[sig2].end1[2];
+            }
             const pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id], pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
-            move_point(pointid1,[arrayOfRoomPoints[pointid1].position[0],now_z1 + move_distance]);
-            move_point(pointid2,[arrayOfRoomPoints[pointid2].position[0],now_z1 + move_distance]);
+            move_point(pointid1,[arrayOfRoomPoints[pointid1].position[0],obj.position.z]);
+            move_point(pointid2,[arrayOfRoomPoints[pointid2].position[0],obj.position.z]);
+            func({roomid:selected_room_id, wallid:selected_line_id, moveLength:Math.abs(pt.z-last_z), movedir:[0,Math.sign(pt.z-last_z)]}, true, true)
             //两条边线的动作 可以用数组给数组赋值
             {
                 var len = arrayOfLines.length;
                 var front;
                 var end;
-                var sig1 = now_move_index-1;
-                if(now_move_index-1<0)
-                {
-                    sig1=len-1;
-                }//
-                var sig2 = now_move_index+1;  
-                if(sig2>len-1)
-                {
-                    sig2=0;
-                }
-                    front =arrayOfLines[sig1].start1;
-                    scene.remove(arrayOfLines[sig1]);
-                    arrayOfLines.splice(sig1,1);
-                    createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+                front =arrayOfLines[sig1].start1;
+                scene.remove(arrayOfLines[sig1]);
+                arrayOfLines.splice(sig1,1);
+                createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+                end = arrayOfLines[sig2].end1;
+                scene.remove(arrayOfLines[sig2]);
+                arrayOfLines.splice(sig2,1);
+                createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
+            }
 
-                    end = arrayOfLines[sig2].end1;
-                    scene.remove(arrayOfLines[sig2]);
-                    arrayOfLines.splice(sig2,1);
-                    createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
-            } 
         }
         has_moved = 1;
+        last_x = pt.x; last_y = pt.y; last_z = pt.z;
     }
     else if(move_distance<0.3&&has_moved==1)//已经移动过了，现在回位
     {
@@ -3855,8 +3878,11 @@ function follow_mouse_pro()
                 arrayOfLines.splice(sig2,1);
                 createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
                 const pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
-                move_point(pointid1,[now_x1,arrayOfRoomPoints[pointid1].position[1]]);
-                move_point(pointid2,[now_x1,arrayOfRoomPoints[pointid2].position[1]]);
+                move_point(pointid1,[obj.position.x,arrayOfRoomPoints[pointid1].position[1]]);
+                move_point(pointid2,[obj.position.x,arrayOfRoomPoints[pointid2].position[1]]);
+
+                func({roomid:selected_room_id, wallid:selected_line_id, moveLength:Math.abs(obj.position.x-last_x), movedir:[Math.sign(obj.position.x-last_x),0]}, true, true)
+
             } 
         }
         else if(check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2])==2)//与z垂直
@@ -3890,14 +3916,16 @@ function follow_mouse_pro()
                     createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2); 
 
                     const pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
-                    move_point(pointid1,[arrayOfRoomPoints[pointid1].position[0],now_z1]);
-                    move_point(pointid2,[arrayOfRoomPoints[pointid2].position[0],now_z1]);
+                    move_point(pointid1,[arrayOfRoomPoints[pointid1].position[0],obj.position.z]);
+                    move_point(pointid2,[arrayOfRoomPoints[pointid2].position[0],obj.position.z]);
                 
+                    func({roomid:selected_room_id, wallid:selected_line_id, moveLength:Math.abs(obj.position.z-last_z), movedir:[0,Math.sign(obj.position.z-last_z)]}, true, true)
+
             } 
         }
-        console.log("已退出可拖动状态");
+        //console.log("已退出可拖动状态");
         now_move_index = -1;
-        now_x1 = 0 ;
+        now_x1 = 0;
         now_x2 = 0;
         now_y1 = 0;
         now_y2 = 0;
@@ -3906,8 +3934,11 @@ function follow_mouse_pro()
         now_move_index = -1;//全部重置
         On_LINEMOVE = false;
         has_moved = 0;
+        last_x = pt.x; last_y = pt.y; last_z = pt.z;
     }
-    decide(arrayOfRooms[selected_room_id],selected_line_id);
+    //decide(arrayOfRooms[selected_room_id],selected_line_id);
+    
+    
     // else if(cut_point_num == 1)//有一个断点
     // {
     //     if(arrayOfLines)
