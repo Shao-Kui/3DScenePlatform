@@ -4,8 +4,8 @@
 
 //egEBox = {eBoxId:1, roomId:1, objList:[], edgeList:[], currentCover:[[0.0,0.0],[0.0,0.0]], currentRange:[0.0,0.0], dirRange:[[],[]]}
 
-//egEdge = {edgeId:1, eBoxId:-1,roomId:0, point:[[0,0],[0,0]], dir:[0,0], neighbourEdge:[ {edgeId:1, eBoxId:-1, roomId:1}, ], onWall:false} // 
-//egEdge = {edgeId:1, eBoxId:1, roomId:0, point:[[0,0],[0,0]], dir:[0,0], neighbourEdge:[ {edgeId:1, eBoxId:-1, roomId:1}, ], onWall:false}
+//egEdge = {edgeId:1, eBoxId:-1,roomId:0, point:[[0,0],[0,0]], dir:[1,0], neighbourEdge:[ {edgeId:1, eBoxId:-1, roomId:1}, ], onWall:false} // 
+//egEdge = {edgeId:1, eBoxId:1, roomId:0, point:[[0,0],[0,0]], dir:[0,-1],neighbourEdge:[ {edgeId:1, eBoxId:-1, roomId:1}, ], onWall:false}
 
 //egObj = {userData:{}, translate:[], relativeTranslate:{}}
 //我的方法
@@ -644,8 +644,8 @@ function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lo
                 coverFlag = cover(currentRoom.eBoxList[e].currentCover, blankBox.currentCover);
                 if(coverFlag) break;
             }if(coverFlag) continue;
-            let res = checkRoomCrossEBox(currentRoom, elasticBox);
-            if(res.edgeIds.length > 0) continue;
+            //let res = checkRoomCrossEBox(currentRoom, blankBox);
+            //if(res.edgeIds.length > 0) continue;
             return blankBox;
         }
     }
