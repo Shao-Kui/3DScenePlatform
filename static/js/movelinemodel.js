@@ -342,7 +342,7 @@ function decide(room,line_id)
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         roomIndexCounter++;
-        console.log("已退出可拖动状态");
+        /*console.log("已退出可拖动状态");
         now_x1 = 0 ;
         now_x2 = 0;
         now_y1 = 0;
@@ -352,6 +352,6 @@ function decide(room,line_id)
         can_add_dot = 0;
         now_move_index = -1;//全部重置
         has_moved = 0;
-        On_LINEMOVE = false;
+        On_LINEMOVE = false;*/
     }
 }

@@ -8,7 +8,6 @@
 //egEdge = {edgeId:1, eBoxId:1, roomId:0, point:[[0,0],[0,0]], dir:[0,-1],neighbourEdge:[ {edgeId:1, eBoxId:-1, roomId:1}, ], onWall:false}
 
 //egObj = {userData:{}, translate:[], relativeTranslate:{}}
-//我的方法
 
 function completeRoomInformationWhileAdding(id){ //temporary function to build bridge between data structure
     //console.log("fucking world!");
@@ -115,9 +114,8 @@ function cutting_inner_line(room_id,line_id,position){
     //console.log(r);
 }
 
-//大方法
-function func(info, realMove=false, dsMove=false){
-    console.log("func"); //console.log(info.movedir);
+function func(info, realMove=false, dsMove=false){ //return;
+    //console.log("func"); //console.log(info.movedir);
     scheme = null;
     //info.roomid
     //info.wallinfo
@@ -343,7 +341,7 @@ function newRoomOut(room, newRoomEdgeList){
 //递归方法
 function recur(info, path){
     //console.log(path);
-    console.log("recur");
+    //console.log("recur");
     if(info.eBoxId == -1 && path.flexLength > 0){ let scheme = {flexLength:path.flexLength, moveLength:0, history:[]}; return scheme;} //reached an wall, should stop
     
     //reached an wall, should stop
@@ -355,7 +353,7 @@ function recur(info, path){
     //info.eBoxId:-1
     //info.edgeId:?
     //var newEdgeId = (info.edgeId + 2)%4;
-
+    var s = (Math.abs(path.dir[0]) > Math.abs(path.dir[1]))?0:1;
     var currentEdge = info.eBoxId == -1 ? arrayOfRooms[info.roomId].edgeList[info.edgeId] : arrayOfRooms[info.roomId].eBoxList[info.eBoxId].edgeList[(info.edgeId+2)%4];
     var currentEBox = info.eBoxId == -1 ? null : arrayOfRooms[info.roomId].eBoxList[info.eBoxId];
     //console.log(currentEBox);
@@ -390,13 +388,8 @@ function recur(info, path){
         //{edgeId:1, eBoxId:-1,roomId:1, edgeList:[ [point:[[0,0],[0,0]], dir:[0,0]], [point:[[0,0],[0,0]], dir:[0,0]], ...... ],}
         return {flexLength:path.flexLength, moveLength:path.length, history:[newEBox]};
     }
-
     
-    if(
-        ((Math.abs(path.dir[0]) > Math.abs(path.dir[1]) && currentEBox.currentRange[0] >= currentEBox.dirRange[0][1])
-       ||(Math.abs(path.dir[0]) < Math.abs(path.dir[1]) && currentEBox.currentRange[1] >= currentEBox.dirRange[1][1]))
-    &&  (path.dir[0]*currentEdge.dir[0] + path.dir[1]*currentEdge.dir[1]) > 0.5
-    ){
+    if(currentEBox.currentRange[s]>=currentEBox.dirRange[s][1] && (path.dir[s]*currentEdge.dir[s]) > 0.5){
         //seperate the two boxes evenif they are close to each other. because myself is too large
         let newEBox = JSON.parse(JSON.stringify(currentEBox));
         for(let e = 0; e < newEBox.edgeList.length; ++e){
@@ -409,16 +402,11 @@ function recur(info, path){
         return {flexLength:path.flexLength, moveLength:path.length, history:[newEBox]};
     }
     
-
     let newPath = JSON.parse(JSON.stringify(path));
-    if (Math.abs(path.dir[0]) > Math.abs(path.dir[1])){
-        if(currentEBox.currentRange[0] < currentEBox.dirRange[0][1] && currentEBox.currentRange[0] > currentEBox.dirRange[0][0]){ console.log("adding flexlength"); newPath.flexLength += currentEBox.currentRange[0]; }
-        else{console.log("not adding");  newPath.flexLength += currentEBox.currentRange[0];}
-    }else{
-        if(currentEBox.currentRange[1] < currentEBox.dirRange[1][1] && currentEBox.currentRange[1] > currentEBox.dirRange[1][0]){ console.log("adding flexlength"); newPath.flexLength += currentEBox.currentRange[1]; }
-        else{console.log("not adding");  newPath.flexLength += currentEBox.currentRange[1];}
-    }
-
+    newPath.flexLength += currentEBox.currentRange[s];
+    if(currentEBox.currentRange[s] < currentEBox.dirRange[s][1] && currentEBox.currentRange[s] > currentEBox.dirRange[s][0]){ console.log("adding flexlength"); }
+    else{console.log("not adding");}
+    
     let synScheme = {flexLength:path.flexLength, moveLength:path.length, history:[]};
 
     for(let e = 0; e < currentEdge.neighbourEdge.length; ++e){
@@ -437,32 +425,17 @@ function recur(info, path){
     //it should cover this gap according to the sign
     let frontLength = path.length;
     let backLength = synScheme.moveLength;
-    console.log(backLength);console.log("backLength");
-    console.log(frontLength);console.log("frontLength");
+    //console.log(backLength);console.log("backLength");
+    //console.log(frontLength);console.log("frontLength");
 
-    if (Math.abs(frontLength - backLength) > 0.001){ console.log("gap between back and front");
-        if (Math.abs(path.dir[0]) > Math.abs(path.dir[1])){
-            if(currentEBox.currentRange[0] < currentEBox.dirRange[0][1] && currentEBox.currentRange[0] > currentEBox.dirRange[0][0]){console.log("in the range");
-                frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[0] / synScheme.flexLength;
-            }
-            else{ console.log("out of range");
-            frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[0] / synScheme.flexLength;
-                //frontLength = backLength
-                //though they are the same, what should be the value
-            }
-        }else{
-            if(currentEBox.currentRange[1] < currentEBox.dirRange[1][1] && currentEBox.currentRange[1] > currentEBox.dirRange[1][0]){console.log("in the range");
-                frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[1] / synScheme.flexLength;
-            }
-            else{ console.log("out of range");
-            frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[1] / synScheme.flexLength;
-                //frontLength = backLength
-                //though they are the same, what should be the value
-            }
-        }//cover this gap by the sign
+    if (Math.abs(frontLength - backLength) > 0.001){
+        frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[s] / synScheme.flexLength;
+        //console.log("gap between back and front");
+        //if(currentEBox.currentRange[s] < currentEBox.dirRange[s][1] && currentEBox.currentRange[s] > currentEBox.dirRange[s][0]){console.log("in the range");
+        //}else{ console.log("out of range");} //frontLength = backLength;//though they are the same, what should be the value    
     }
-    console.log(backLength);console.log("backLength");
-    console.log(frontLength);console.log("frontLength");
+    //console.log(backLength);console.log("backLength");
+    //console.log(frontLength);console.log("frontLength");
     //console.log(currentEBox);// edgeId == 1 is back, with lower z(1); edgeId==3 is front, with higher z(1);
     /*{
         console.log(currentEBox.edgeList[1].point[0][0]);
@@ -615,8 +588,8 @@ function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lo
     }
     
     for(let ii = 0; ii < I.length; ++ii){
-        let fi = I[ii]; console.log(ii); console.log(fi);
-        for(let pp=0; pp<currentRoom.edgeList.length; ++pp){ console.log(pp);
+        let fi = I[ii]; //console.log(ii); console.log(fi);
+        for(let pp=0; pp<currentRoom.edgeList.length; ++pp){ //console.log(pp);
             let ed = currentRoom.edgeList[pp];  let pt = [ed.point[1][0],ed.point[1][1]];
             let nexted = currentRoom.edgeList[(pp+1)%currentRoom.edgeList.length];
             
@@ -796,7 +769,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                     if(a == 1){
                         edgeList0[ii].neighbourEdge = edgeList0[ii].neighbourEdge.concat([{edgeId:jj, eBoxId:j, roomId:r}])
                         edgeList1[jj].neighbourEdge = edgeList1[jj].neighbourEdge.concat([{edgeId:ii, eBoxId:i, roomId:r}])
-                        console.log(ii); console.log(jj);
+                        /*console.log(ii); console.log(jj);
                         console.log(a); console.log(edgeList0[1].dir[0]); console.log(edgeList0[1].dir[1]); console.log(edgeList1[2].dir[0]); console.log(edgeList1[2].dir[1]);
                         console.log(edgeList0[1].point[0][0]);
                         console.log(edgeList0[1].point[0][1]);
@@ -805,10 +778,10 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                         console.log(edgeList1[2].point[0][0]);
                         console.log(edgeList1[2].point[0][1]);
                         console.log(edgeList1[2].point[1][0]);
-                        console.log(edgeList1[2].point[1][1]);
+                        console.log(edgeList1[2].point[1][1]);*/
                     }
                     else if(a==3 || a==2){
-                        console.log("cross"); console.log(ii); console.log(jj);
+                        console.log("cross"); /*console.log(ii); console.log(jj);
                         console.log(a); console.log(edgeList0[1].dir[0]); console.log(edgeList0[1].dir[1]); console.log(edgeList1[2].dir[0]); console.log(edgeList1[2].dir[1]);
                         console.log(edgeList0[1].point[0][0]);
                         console.log(edgeList0[1].point[0][1]);
@@ -817,7 +790,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                         console.log(edgeList1[2].point[0][0]);
                         console.log(edgeList1[2].point[0][1]);
                         console.log(edgeList1[2].point[1][0]);
-                        console.log(edgeList1[2].point[1][1]);
+                        console.log(edgeList1[2].point[1][1]);*/
                     }
                 }
             }
