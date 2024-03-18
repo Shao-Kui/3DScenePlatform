@@ -34,6 +34,16 @@ const room_type_to_id_map = {
     "bedroom":7
 };
 
+const min_side_length = {
+    "livingroom":3,
+    "diningroom":2,
+    "kitchen":2,
+    "bathroom":2,
+    "balcony":1,
+    "storage":1,
+    "bedroom":3
+};
+
 const room_link_distribution = {
 'livingroom_bedroom': 196766, 
  'livingroom_kitchen': 75089, 
@@ -69,7 +79,7 @@ function get_room_type_evaluation(current_room_type)
     {
         let tmp_res = 0.0;
         for(let j = 0; j < room_type_count; j++)
-            tmp_res += Math.abs(current_room_type[j] - room_type_distribution[i][0][j]);
+            tmp_res += Math.pow(3,Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
         res += tmp_res * room_type_distribution[i][1];
     }
     return - res;    
@@ -109,12 +119,12 @@ function same_point(point1,point2)
     return Math.abs(point1[0]-point2[0]) < eps && Math.abs(point1[1]-point2[1]) < eps;
 }
 
-const C_type = 30;
+const C_type = 0.01;
 
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
 
-    const C_1 = 0, C_2 = 0, C_3 = 0.5, C_4 = 5, C_5 = 30;
+    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 10;
 
     // const count_of_skeleton_edges = tri.triangles.length - points.length + tri.hull.length;
 
@@ -151,9 +161,21 @@ function calculate_room_division_evaluation(points, type){
         }
     }
 
+    if((outer_boundary[0][1] - outer_boundary[0][0]) < min_side_length[type] || (outer_boundary[1][1] - outer_boundary[1][0]) < min_side_length[type])return -1e9;
+    if(area < area_distribution[type][0] / 2)return -1e9;
+
     const outer_area = (outer_boundary[0][1] - outer_boundary[0][0]) * (outer_boundary[1][1] - outer_boundary[1][0]);
 
-    return - C_3 * Math.exp(real_boundary_points) + C_4 * Math.log(area / outer_area / 0.75) + C_5 * Math.exp(normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1]))
+    // console.log("Evaluation Info");
+    // console.log(type);
+    // console.log(area);
+    // console.log(outer_area);
+    // console.log(C_4 * Math.log(area / outer_area / 0.75));
+    // console.log(- C_3 * real_boundary_points);
+    // console.log(C_5 * Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])));
+    // console.log(- C_3 * real_boundary_points + C_4 * Math.log(area / outer_area / 0.75) + C_5 * Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])));
+
+    return - C_3 * Math.exp(real_boundary_points) + C_4 * Math.log(area / outer_area / 0.75) + C_5 * Math.exp(10 * (Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])) - 1));
 }
 
 function cut_half_of_room(points,startpoint,endpoint)
