@@ -114,7 +114,7 @@ function cutting_inner_line(room_id,line_id,position){
     //console.log(r);
 }
 
-function func(info, realMove=false, dsMove=false){ //return;
+function func(info, realMove=false, dsMove=false){ return;
     //console.log("func"); //console.log(info.movedir);
     scheme = null;
     //info.roomid
@@ -154,13 +154,13 @@ function func(info, realMove=false, dsMove=false){ //return;
     return;
 }
 
-function edgeCross(edge1, edge2){
+function edgeCross(edge1, edge2, strech1=0.0, strech2=0.0){
     if(Math.abs(edge1.dir[0]) == Math.abs(edge2.dir[0])){ return false; }
     p = 0;if(Math.abs(edge1.dir[0]) < Math.abs(edge2.dir[0])){p = 1;}
-    return (edge1.point[0][p]<Math.max(edge2.point[0][p], edge2.point[1][p]))
-         &&(Math.min(edge2.point[0][p], edge2.point[1][p])<edge1.point[0][p])
-         &&(edge2.point[0][1-p]<Math.max(edge1.point[0][1-p], edge1.point[1][1-p]))
-         &&(Math.min(edge1.point[0][1-p], edge1.point[1][1-p])<edge2.point[0][1-p]);
+    return (edge1.point[0][p]<Math.max(edge2.point[0][p], edge2.point[1][p])+strech2)
+         &&(Math.min(edge2.point[0][p], edge2.point[1][p])-strech2<edge1.point[0][p])
+         &&(edge2.point[0][1-p]<Math.max(edge1.point[0][1-p], edge1.point[1][1-p])+strech1)
+         &&(Math.min(edge1.point[0][1-p], edge1.point[1][1-p])-strech1<edge2.point[0][1-p]);
 }
 
 //房间分割之后，可能会出现比较大尺度上地位于房间外面，现在考虑怎么调整呢？
@@ -191,19 +191,21 @@ function checkRoomCrossEBox(room, elasticBox){
     let sump = 0;
     let dir = [];
     let dis = 0;
+    let p = [];
+    let ps = [];
     let singleEdgeCase = -1; let doubleEdgeCase = -1;
     for(let f=0;f<room.edgeList.length;++f){
-        p = []
+        p = [];
         for(let e=0;e<4;++e){
-            if(edgeCross(room.edgeList[f], elasticBox.edgeList[e])) p = p.concat([e]);
+            if(edgeCross(room.edgeList[f], elasticBox.edgeList[e],0.01,-0.01)) p = p.concat([e]);
         }
-        ps = ps.concat([p]);
+        ps = ps.concat([p]); //console.log(p);
         sump += p.length;
         if(p.length == 2 && p[1]-p[0] == 2){ singleEdgeCase = f; }
-    }
-
-    if(sump != 2){console.log("error p");return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[]}; }
-
+    }//console.log(sump);console.log(ps);
+    if(sump == 0){/*console.log("return edgeIds:[]");*/return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[]}; }
+    if(sump != 2){/*console.log("error p");*/return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[]}; }
+    
     for(let f=0;f<room.edgeList.length;++f){
         if(ps[f].length == 1 && ps[(f+1)%(room.edgeList.length)].length == 1 && Math.abs(ps[f][0] - ps[f][1]) == 1){
             doubleEdgeCase = f; break;
@@ -216,11 +218,11 @@ function checkRoomCrossEBox(room, elasticBox){
         let x = 1;
         glag = -1;
         for(let e=0;e<4;++e){
-            if(elasticBox.edgeList[e].dir[0] == room.edgeList[f].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[f].dir[1]){glag=e;break;}
+            if(elasticBox.edgeList[e].dir[0] == room.edgeList[flag].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[flag].dir[1]){glag=e;break;}
         }
         dir = elasticBox.edgeList[glag].dir;
 
-        if(abs(room.edgeList[flag].dir[0]) > abs(room.edgeList[flag].dir[1])){x=0;}
+        if(Math.abs(room.edgeList[flag].dir[0]) > Math.abs(room.edgeList[flag].dir[1])){x=0;}
 
         let x0 = room.edgeList[flag].point[0][x];
         let x1 = elasticBox.edgeList[glag].point[0][x]; let ratio = x1/elasticBox.currentRange[x]; 
@@ -237,11 +239,11 @@ function checkRoomCrossEBox(room, elasticBox){
         let x = 1;
         glag = -1;
         for(let e=0;e<4;++e){
-            if(elasticBox.edgeList[e].dir[0] == room.edgeList[f].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[f].dir[1]){glag=e;break;}
+            if(elasticBox.edgeList[e].dir[0] == room.edgeList[flag].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[flag].dir[1]){glag=e;break;}
         }
         dir = elasticBox.edgeList[glag].dir;
 
-        if(abs(room.edgeList[flag].dir[0]) > abs(room.edgeList[flag].dir[1])){x=0;}
+        if(Math.abs(room.edgeList[flag].dir[0]) > Math.abs(room.edgeList[flag].dir[1])){x=0;}
 
         let x0 = room.edgeList[flag].point[0][x];
         let x1 = elasticBox.edgeList[glag].point[0][x]; let ratio = x1/elasticBox.currentRange[x];
@@ -269,12 +271,12 @@ function checkRoomCrossEBox(room, elasticBox){
         return {edgeIds:[flag, flagg],eEdgeIds:[glag,glagg], dirs:[dir,dirr], diss:[dis,diss], out:(ratio>0.5)||(ratio1>0.5)};
     }
     
-    
+    console.log("return edgeIds:[]");
     return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[]};    
 }
 
 function checkRoomOut(room){
-    let flag = -1;
+    let flag = [];
     let elag = -1;
     let glag = -1;
     let dirs = [];
@@ -292,26 +294,30 @@ function checkRoomOut(room){
     return {eboxId:elag, edgeIds:flag, eEdgeIds:glag, dirs:dirs, diss:diss, outList:outList};
 }
 
-function newRoomOut(room, newRoomEdgeList){
+function newRoomOut(room, roomShape, realMove=false, dsMove=false){
     //calculate_room_division_evaluation函数有对房间形态的评分，我们可以将弹性盒割裂情况添加上去
     //decide函数中有对内部房间分割的决定，我需要修改那个函数从而实现弹性盒向房间形态对齐。
-    newRoom = JSON.parse(JSON.stringify(room));
-    newRoom.edgeList = newRoomEdgeList;
+    newRoom = {id:-1, type:room.type, eBoxList:[], edgeList:[]};
+    newRoom.eBoxList = JSON.parse(JSON.stringify(room.eBoxList));
+    newRoom.edgeList = JSON.parse(JSON.stringify(visualRoom(roomShape)));
 
     res = checkRoomOut(newRoom);
 
     if(res.eBoxId==100){return;}
 
-    if(res.edgeIds.length==1){
+    if(res.edgeIds.length==1 ){
         var scheme = recur({edgeId:res.eEdgeIds[0], eBoxId:res.eboxId, roomId:room.id}, {dir:res.dirs[0], length:res.diss[0], flexLength:0});
-        act(scheme);
+        act(scheme, realMove, dsMove);
+        return scheme;
     }
     else{
         var scheme = recur({edgeId:res.eEdgeIds[0], eBoxId:res.eboxId, roomId:room.id}, {dir:res.dirs[0], length:res.diss[0], flexLength:0});
-        act(scheme);
+        act(scheme, realMove, dsMove);
         scheme = recur({edgeId:res.eEdgeIds[1], eBoxId:res.eboxId, roomId:room.id}, {dir:res.dirs[1], length:res.diss[1], flexLength:0});
-        act(scheme);
+        act(scheme, realMove, dsMove);
+        return scheme;
     }
+
 
     //scheme = recur({edgeId:res.eEdgeIds, eBoxId:res.eboxId, roomId:room.id}, {dir:res.dir, length:res.dis, flexLength:0});
 
@@ -336,6 +342,19 @@ function newRoomOut(room, newRoomEdgeList){
      */
 
 
+}
+
+function visualRoom(roomShape){
+    let newRoomEdgeList = [];
+    let lp = roomShape[roomShape.length-1];
+    let tp = roomShape[i];
+    for(let i = 0; i < roomShape.length; ++i){
+        let tp = roomShape[i];
+        let newEdge = {edgeId:i,eBoxId:-1,roomId:-1, point:[[lp[0],lp[1]],[tp[0],tp[1]]], dir:[Math.sign(tp[1]-lp[1]),Math.sign(lp[0]-tp[0])], neighbourEdge:[], onWall:false}
+        newRoomEdgeList = newRoomEdgeList.concat([newEdge]);
+        lp[0] = tp[0]; 
+    }
+    return newRoomEdgeList;
 }
 
 //递归方法
@@ -414,7 +433,7 @@ function recur(info, path){
         sch = recur(newInfo, newPath);
         synScheme.moveLength = Math.min(synScheme.moveLength,sch.moveLength);
         synScheme.history = synScheme.history.concat(sch.history);
-        synScheme.flexLength = sch.flexLength; console.log(sch.flexLength); console.log(currentEBox.currentRange[1]);
+        synScheme.flexLength = sch.flexLength; //console.log(sch.flexLength); console.log(currentEBox.currentRange[1]);
     }
     
     //综合返回的ret和path来决断此弹性盒的调整方式
@@ -560,7 +579,7 @@ function searchBoxBasic(currentRoom){
     //search something under current situation
     if(currentRoom.type == "bedroom"){
         if(currentRoom.eBoxList.length == 1){
-            return [searchBoxBasicBuffer[currentRoom.id][1]];
+            return [searchBoxBasicBuffer[currentRoom.id][1]];//[];//
         }else if(currentRoom.eBoxList.length == 0){
             return [searchBoxBasicBuffer[currentRoom.id][0]];
         }else {
@@ -617,8 +636,7 @@ function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lo
                 coverFlag = cover(currentRoom.eBoxList[e].currentCover, blankBox.currentCover);
                 if(coverFlag) break;
             }if(coverFlag) continue;
-            //let res = checkRoomCrossEBox(currentRoom, blankBox);
-            //if(res.edgeIds.length > 0) continue;
+            let res = checkRoomCrossEBox(currentRoom, blankBox); if(res.edgeIds.length > 0) continue;
             return blankBox;
         }
     }

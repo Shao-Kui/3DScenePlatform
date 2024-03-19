@@ -3720,31 +3720,77 @@ function deleteEdge(sig){
     for(;i<arrayOfDots.length;++i){
         if(getlength(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],arrayOfDots[i].position.x,arrayOfDots[i].position.y,arrayOfDots[i].position.z)< 0.1){ scene.remove(arrayOfDots[i]);arrayOfDots.splice(i,1); cut_point_num-=1; }
     }
+    var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (sig+1)%(arrayOfLines.length);
     
-    if(1){
-        var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
-        var sig2 = (sig+1)%(arrayOfLines.length);
+    var rl = get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);    
+    var rl1= get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
+    var rl2= get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
+
+    if(rl1[0] == rl2[0]){ console.log(arrayOfRoomPoints);
+        let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
+        let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+        let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+        let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
+        remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+        remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
+        remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
+        
+        remove_room_point(pt1id,rl[0]);
+        remove_room_point(pt2id,rl[0]);
+        arrayOfInnerLines[rl[0]].splice(pt0id,0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
         
         scene.remove(arrayOfLines[sig1]);
         scene.remove(arrayOfLines[sig]);
         scene.remove(arrayOfLines[sig2]);
 
-        createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
-            arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig2);
-
+        console.log(arrayOfLines.length);
+        console.log(arrayOfLines);
+        
         if(sig == 0){
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+1);
             arrayOfLines.splice(sig1,1);
             arrayOfLines.splice(0,2);
-        }else if(sig == arrayOfLines.length-2){//because the length has just become longer for creating cylinder1
+        }else if(sig == arrayOfLines.length-1){//because the length has just become longer for creating cylinder1
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+2);
             arrayOfLines.splice(sig1,2);
             arrayOfLines.splice(0,1);
         }else{
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+3);
             arrayOfLines.splice(sig1,3);
         }
 
     }else{
+        if(rl[0] == rl2[0]){
+            let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+            let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+            let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
+
+            remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+            remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
+            
+            remove_room_point(pt2id,rl[0]);
+            add_inner_line_between_points(arrayOfRoomPoints[pt1id],arrayOfRoomPoints[pt3id],rl[0])
+
+        }else if(rl[0]==rl1[0]){
+            let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
+            let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+            let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+
+            remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+            remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
+            
+            remove_room_point(pt1id,rl[0]);
+            add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt2id],rl[0])
+
+        }
+
         scene.remove(arrayOfLines[sig]);
         arrayOfLines.splice(sig,1);
+
     }
 
     //arrayOfRooms = {};      //每个房间只有“点索引表”，
@@ -3900,7 +3946,7 @@ function follow_mouse(){
         arrayOfLines.splice(sig2,1);
         createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2);
     }
-
+    decide(arrayOfRooms[selected_room_id],selected_line_id);
     lastPoint[0] = ptPoint[0]; lastPoint[1] = ptPoint[1];
 }
 
