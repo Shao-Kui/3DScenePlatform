@@ -315,7 +315,7 @@ function decide(room,line_id)
                 // console.log("Value of split:");
                 // console.log(cur_val);
                 if(cur_val > result_val)
-                {console.log("you should give a inOrOut in here");
+                {//console.log("you should give a inOrOut in here");
                     let outRoomRes = newRoomOut(room, room2.points, roomIndexCounter);
                     room2.scheme = JSON.parse(JSON.stringify(outRoomRes)); room.scheme = JSON.parse(JSON.stringify(newRoomRes));
                     result = {
@@ -392,21 +392,21 @@ function decide(room,line_id)
             }
         }
         //room = result.rooms[0];
-        console.log(room.scheme); console.log(room.eBoxList); 
-        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        //console.log(room.scheme); console.log(room.eBoxList); 
+        //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         completeRoomInformationWhileAdding(roomIndexCounter);
         roomIndexCounter++;
-        console.log(room.scheme); console.log(room.eBoxList); 
-        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        //console.log(room.scheme); console.log(room.eBoxList); 
+        //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         
         act(room.scheme,true,true);
-        console.log(room.scheme); console.log(room.eBoxList); 
+        //console.log(room.scheme); console.log(room.eBoxList); 
         updateNeighbours(room.id);
         
         act(result.rooms[1].scheme,true,true);
-        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         updateNeighbours(result.rooms[1].id);
         
         updateMoveIndex(); 

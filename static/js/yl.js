@@ -276,8 +276,8 @@ function inOrOut(room, elasticBox){
         if(hint==4 || online)continue; //point e is on a room corner, no proper ray could be found (or) this point is on a edge so it should not effect the box is in or out
         if(outFlag<0)outFlag = crossCnt%2;
         else if(outFlag != crossCnt%2){console.log("not fully in or out");}
-        console.log("checking");console.log(e);
-        console.log(crossCnt);
+        //console.log("checking");console.log(e);
+        //console.log(crossCnt);
     }
     return outFlag;
 }
@@ -299,12 +299,12 @@ function checkRoomCrossEBox(room, elasticBox){
         ps = ps.concat([p]); //for(let k=0;k<p.length;++k)console.log(p[k]);
         sump += p.length;
         if(p.length == 2 && p[1]-p[0] == 2){ singleEdgeCase = f; }
-    }console.log(sump);console.log(ps);
+    }//console.log(sump);console.log(ps);
     if(sump == 0){
         let ioo = inOrOut(room, elasticBox); console.log(ioo);
-        if(ioo==1){console.log("inOrOut in");
+        if(ioo==1){//console.log("inOrOut in");
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:0};
-        }else{console.log("inOrOut out");
+        }else{//console.log("inOrOut out");
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:2};
         }
     }
@@ -382,7 +382,7 @@ function checkRoomCrossEBox(room, elasticBox){
 }
 
 function checkRoomOut(room){
-    let ret = []; console.log("room.eBoxList.length");console.log(room.eBoxList.length);
+    let ret = []; //console.log("room.eBoxList.length");console.log(room.eBoxList.length);
     for(let e=0; e<room.eBoxList.length;++e){ 
         let res = checkRoomCrossEBox(room, room.eBoxList[e]);
         ret = ret.concat([{eBoxId:e, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState}]);
@@ -410,7 +410,7 @@ function newRoomOut(room, roomShape, newRoomId=-1, realMove=false, dsMove=false)
             deleteList = deleteList.concat([res[j].eBoxId]);
             res.splice(j,1);
         }
-        else if(res[j].outState == 0) { console.log("something in new room");
+        else if(res[j].outState == 0) { //console.log("something in new room");
             newRoom.eBoxList[j].roomId = (newRoomId==-1)?room.id:newRoomId;
             newRoom.eBoxList[j].eBoxId = historyCnt; historyCnt++;
             historyList = historyList.concat([newRoom.eBoxList[j]]);
@@ -837,7 +837,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                 if(a == 2){
                     edgeList0[ii].neighbourEdge = edgeList0[ii].neighbourEdge.concat([{edgeId:jj, eBoxId:j, roomId:r}])
                     edgeList1[jj].neighbourEdge = edgeList1[jj].neighbourEdge.concat([{edgeId:ii, eBoxId:-1,roomId:r}])
-                    console.log("close");
+                    //console.log("close");
                 }
                 else if(a==1 || a==3){
                     console.log("cross");
@@ -854,7 +854,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
             }
         }
     }
-    if(arrayOfRooms[r].eBoxList.length > 0){
+    /*if(arrayOfRooms[r].eBoxList.length > 0){
         console.log(1);
         console.log(arrayOfRooms[r].edgeList[1].point[0][0]);
         console.log(arrayOfRooms[r].edgeList[1].point[0][1]);
@@ -872,7 +872,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
         console.log(arrayOfRooms[r].eBoxList[0].edgeList[1].dir[1]);
     }
     console.log("updateNeighbours");
-    console.log(arrayOfRooms[r].edgeList);
+    console.log(arrayOfRooms[r].edgeList);*/
     //console.log(arrayOfRooms[r].eBoxList[0].edgeList);
 
     for(let i = 0; i < arrayOfRooms[r].eBoxList.length; ++i){
@@ -921,7 +921,7 @@ function act(scheme, realMove, dsMove){
     if(dsMove){
         //firstly move the elastic boxes;
         for(let i = 0; i < scheme.history.length; ++i){
-            console.log(arrayOfRooms[scheme.history[i].roomId].eBoxList.length);
+            //console.log(arrayOfRooms[scheme.history[i].roomId].eBoxList.length);
             while(arrayOfRooms[scheme.history[i].roomId].eBoxList.length <= scheme.history[i].eBoxId){
                 let e0 = {edgeId:0, eBoxId:arrayOfRooms[scheme.history[i].roomId].eBoxList.length,roomId:scheme.history[i].roomId, point:[[0,0],[0,0]], dir:[1,0], neighbourEdge:[], onWall:false};
                 let e1 = {edgeId:1, eBoxId:arrayOfRooms[scheme.history[i].roomId].eBoxList.length,roomId:scheme.history[i].roomId, point:[[0,0],[0,0]], dir:[1,0], neighbourEdge:[], onWall:false};
@@ -930,7 +930,7 @@ function act(scheme, realMove, dsMove){
                 let egEBox = {eBoxId:arrayOfRooms[scheme.history[i].roomId].eBoxList.length, roomId:scheme.history[i].roomId, objList:[], edgeList:[e0,e1,e2,e3], currentCover:[[0.0,0.0],[0.0,0.0]], currentRange:[0.0,0.0], dirRange:[[0,0],[0,0]]};
                 arrayOfRooms[scheme.history[i].roomId].eBoxList = arrayOfRooms[scheme.history[i].roomId].eBoxList.concat([egEBox]);
             
-                console.log(arrayOfRooms[scheme.history[i].roomId].eBoxList.length);
+                //console.log(arrayOfRooms[scheme.history[i].roomId].eBoxList.length);
             }
             arrayOfRooms[scheme.history[i].roomId].eBoxList[scheme.history[i].eBoxId].objList = scheme.history[i].objList;
             arrayOfRooms[scheme.history[i].roomId].eBoxList[scheme.history[i].eBoxId].dirRange = scheme.history[i].dirRange;
