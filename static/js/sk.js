@@ -1586,6 +1586,7 @@ const setting_up = function () {
                     "father": -1,
                     "father_wall_start":-1,
                     "father_wall_end":-1,
+                    "edgeList":[],
                 };
                 completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
@@ -3932,11 +3933,6 @@ function follow_mouse(){
         actInfo.pos2[1] = (check_res==2)?targetValue:arrayOfRoomPoints[pointid2].position[1];
         actInfo.moveLength = Math.abs(targetValue-lastValue);
         actInfo.movedir[check_res-1] = Math.sign(targetValue-lastValue);
-        move_point(pointid1,[actInfo.pos1[0],actInfo.pos1[1]]);
-        move_point(pointid2,[actInfo.pos2[0],actInfo.pos2[1]]);
-            
-        func({roomid:selected_room_id, wallid:selected_line_id, moveLength:actInfo.moveLength, movedir:[actInfo.movedir[0],actInfo.movedir[1]]}, true, true);
-        
         var front =arrayOfLines[sig1].start1;
         scene.remove(arrayOfLines[sig1]);
         arrayOfLines.splice(sig1,1);
@@ -3945,8 +3941,15 @@ function follow_mouse(){
         scene.remove(arrayOfLines[sig2]);
         arrayOfLines.splice(sig2,1);
         createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2);
+        
+        move_point(pointid1,[actInfo.pos1[0],actInfo.pos1[1]]);
+        move_point(pointid2,[actInfo.pos2[0],actInfo.pos2[1]]);
+        
+        if(!decide(arrayOfRooms[selected_room_id],selected_line_id)){
+            func({roomid:selected_room_id, wallid:selected_line_id, moveLength:actInfo.moveLength, movedir:[actInfo.movedir[0],actInfo.movedir[1]]}, true, true);
+        }
     }
-    decide(arrayOfRooms[selected_room_id],selected_line_id);
+    //decide(arrayOfRooms[selected_room_id],selected_line_id);
     lastPoint[0] = ptPoint[0]; lastPoint[1] = ptPoint[1];
 }
 
