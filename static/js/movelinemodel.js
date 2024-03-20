@@ -258,7 +258,7 @@ function updateMoveIndex(){
 function decide(room,line_id)
 {
     const eps = 1e-7;
-    const step = 0.5 , min_delta = 2;
+    const step = 0.5 , min_delta = 3;
     var result = {
         'rooms':[],
         'division_lines':[],
@@ -402,11 +402,11 @@ function decide(room,line_id)
         //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         
         act(room.scheme,true,true);
-        //console.log(room.scheme); console.log(room.eBoxList); 
+        console.log(room.scheme); console.log(room.eBoxList); 
         updateNeighbours(room.id);
         
         act(result.rooms[1].scheme,true,true);
-        //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         updateNeighbours(result.rooms[1].id);
         
         updateMoveIndex(); 

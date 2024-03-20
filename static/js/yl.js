@@ -219,8 +219,8 @@ function edgeCross(edge1, edge2, strech1=0.0, strech2=0.0){
 
 function rayFactory(source, hint){
     let ray = {point:[[source[0],source[1]],[source[0],source[1]]], dir:[0,0]};
-    ray.point[Math.ceil(hint/2)][hint%2] = Math.ceil(hint/2)==0 ? -1000:1000;
-    ray.dir[1-hint%2] == 1;
+    ray.point[Math.floor(hint/2)][hint%2] = Math.floor(hint/2)==0 ? -1000:1000;
+    ray.dir[1-hint%2] = 1;
     return ray;
 }
 
@@ -263,9 +263,9 @@ function inOrOut(room, elasticBox){
                 if(hintReject) break;
                 else{
                     if(edgeCross(ed,ray,-0.01,-0.01) != edgeCross(ed,ray,0.01,0.01)){
-                        online=true;
+                        online=true; //console.log(online);
                     }else if(edgeCross(ed,ray)){
-                        crossCnt++;
+                        crossCnt++; //console.log(crossCnt);
                     }
                 } 
                 //console.log(crossCnt);
@@ -301,14 +301,14 @@ function checkRoomCrossEBox(room, elasticBox){
         if(p.length == 2 && p[1]-p[0] == 2){ singleEdgeCase = f; }
     }//console.log(sump);console.log(ps);
     if(sump == 0){
-        let ioo = inOrOut(room, elasticBox); console.log(ioo);
+        let ioo = inOrOut(room, elasticBox); //console.log(ioo);
         if(ioo==1){//console.log("inOrOut in");
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:0};
-        }else{//console.log("inOrOut out");
+        }else if(ioo==0){//console.log("inOrOut out");
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:2};
-        }
+        }else{console.log("ioo error"); console.log(room); console.log(elasticBox);}
     }
-    if(sump != 2){/*console.log("error p");*/return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:-1}; }
+    if(sump != 2){console.log("error p"); console.log(room);console.log(elasticBox); return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:-1}; }
     
     for(let f=0;f<room.edgeList.length;++f){
         if(ps[f].length == 1 && ps[(f+1)%(room.edgeList.length)].length == 1 && Math.abs(ps[f][0] - ps[f][1]) == 1){
@@ -390,7 +390,7 @@ function checkRoomOut(room){
     return ret;
 }
 
-function newRoomOut(room, roomShape, newRoomId=-1, realMove=false, dsMove=false){
+function newRoomOut(room, roomShape, newRoomId=-1){
     //calculate_room_division_evaluation函数有对房间形态的评分，我们可以将弹性盒割裂情况添加上去
     //decide函数中有对内部房间分割的决定，我需要修改那个函数从而实现弹性盒向房间形态对齐。
     let virtualRoomIndex = 100;
@@ -421,22 +421,23 @@ function newRoomOut(room, roomShape, newRoomId=-1, realMove=false, dsMove=false)
     if(res.length == 0){return {history:historyList, deleteList:deleteList, roomId:(newRoomId==-1)?room.id:newRoomId};}
     if(res.length>1){ console.log("more than one box"); return {history:[], deleteList:deleteList, roomId:room.id};}
 
+    updateNeighbours(virtualRoomIndex);
     //console.log(res);
-    if(res[0].edgeIds.length==1){
-        var scheme = recur({edgeId:res[0].eEdgeIds[0], eBoxId:res[0].eBoxId, roomId:virtualRoomIndex}, {dir:res[0].dirs[0], length:res[0].diss[0], flexLength:0});
-        act(scheme, realMove, dsMove);
+    var scheme;
+    if(res[0].edgeIds.length==1){ //console.log("single edge case");
+        scheme = recur({edgeId:res[0].eEdgeIds[0], eBoxId:res[0].eBoxId, roomId:virtualRoomIndex}, {dir:res[0].dirs[0], length:res[0].diss[0], flexLength:0});
+        act(scheme, true, false);
     }
-    else if(res[0].edgeIds.length==2){
-        var scheme = recur({edgeId:res[0].eEdgeIds[0], eBoxId:res[0].eBoxId, roomId:virtualRoomIndex}, {dir:res[0].dirs[0], length:res[0].diss[0], flexLength:0});
-        act(scheme, realMove, dsMove);
+    else if(res[0].edgeIds.length==2){  //console.log("double edge case");
+        scheme = recur({edgeId:res[0].eEdgeIds[0], eBoxId:res[0].eBoxId, roomId:virtualRoomIndex}, {dir:res[0].dirs[0], length:res[0].diss[0], flexLength:0});
+        act(scheme, true, false);
         scheme = recur({edgeId:res[0].eEdgeIds[1], eBoxId:res[0].eBoxId, roomId:virtualRoomIndex}, {dir:res[0].dirs[1], length:res[0].diss[1], flexLength:0});
-        act(scheme, realMove, dsMove);
-    }
-    //console.log(res[0]);
+        act(scheme, true, false);
+    }else{console.log("not single or double case");/*console.log(res);*/}
 
     delete arrayOfRooms[virtualRoomIndex];
 
-    for(let i = 0; i < scheme.history; ++i) scheme.history[i].roomId == (newRoomId==-1)?room.id:newRoomId;
+    for(let i = 0; i < scheme.history.length; ++i) scheme.history[i].roomId = (newRoomId==-1)?room.id:newRoomId;
     return {history:scheme.history, deleteList:deleteList, roomId:(newRoomId==-1)?room.id:newRoomId};
 }
 
@@ -445,10 +446,10 @@ function visualRoom(roomShape){
     let lp = roomShape[roomShape.length-1];
     for(let i = 0; i < roomShape.length; ++i){
         let tp = roomShape[i];
-        let newEdge = {edgeId:i,eBoxId:-1,roomId:-1, point:[[lp[0],lp[1]],[tp[0],tp[1]]], dir:[Math.sign(tp[1]-lp[1]),Math.sign(lp[0]-tp[0])], neighbourEdge:[], onWall:false}
+        let newEdge = {edgeId:i,eBoxId:-1,roomId:-1, point:[[lp[0],lp[1]],[tp[0],tp[1]]], dir:[Math.sign(lp[1]-tp[1]),Math.sign(tp[0]-lp[0])], neighbourEdge:[], onWall:false}
         newRoomEdgeList = newRoomEdgeList.concat([newEdge]);
         lp = tp; 
-    }
+    } //console.log(newRoomEdgeList);
     return newRoomEdgeList;
 }
 
@@ -676,7 +677,7 @@ function searchBoxBasic(currentRoom){
         if(currentRoom.eBoxList.length == 1){
             return [];//[searchBoxBasicBuffer[currentRoom.id][1]];//
         }else if(currentRoom.eBoxList.length == 0){
-            return [searchBoxBasicBuffer[currentRoom.id][1]];//[searchBoxBasicBuffer[currentRoom.id][0]];
+            return [searchBoxBasicBuffer[currentRoom.id][0]];
         }else {
             return [];
         }
@@ -703,7 +704,7 @@ function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lo
     
     for(let ii = 0; ii < I.length; ++ii){
         let fi = I[ii]; //console.log(ii); console.log(fi);
-        for(let pp=0; pp<currentRoom.edgeList.length; ++pp){ //console.log(pp);
+        for(let pp=0; pp < currentRoom.edgeList.length; ++pp){ //console.log(pp);
             let ed = currentRoom.edgeList[pp];  let pt = [ed.point[1][0],ed.point[1][1]];
             let nexted = currentRoom.edgeList[(pp+1)%currentRoom.edgeList.length];
             
@@ -730,7 +731,7 @@ function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lo
             for(let e=0; e < currentRoom.eBoxList.length; ++e){
                 coverFlag = cover(currentRoom.eBoxList[e].currentCover, blankBox.currentCover);
                 if(coverFlag) break;
-            }if(coverFlag) continue;  console.log("searchingBox");
+            }if(coverFlag) continue;  //console.log("searchingBox");
             let res = checkRoomCrossEBox(currentRoom, blankBox); if(res.outState > 0) continue;
             return blankBox;
         }
