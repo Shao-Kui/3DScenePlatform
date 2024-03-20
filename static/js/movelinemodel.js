@@ -226,8 +226,8 @@ function move_point(point_id,new_coordinate)
         const new_line_obj = createCylinderMesh(pt1.position[0],0,pt1.position[1],pt2.position[0],0,pt2.position[1],0xff0000,0.05);
         if(Math.abs(pt1.position[0] - pt2.position[0]) < 1e-7)new_line_obj.rotation.x = 1.57;
         else new_line_obj.rotation.z = 1.57;
-        new_line_obj.startid = point_id;
-        new_line_obj.endid = other_point_id;
+        new_line_obj.startid = (line[0].startid==point_id)?point_id:other_point_id;
+        new_line_obj.endid = (line[0].startid==point_id)?other_point_id:point_id;
         new_linkedInnerLines.push([new_line_obj,other_point_id,room_id]);
         for(var i = 0; i < pt2.linkedInnerLines.length; i++)
             if(pt2.linkedInnerLines[i][1] == point_id)pt2.linkedInnerLines[i][0] = new_line_obj;
@@ -263,6 +263,37 @@ function add_inner_line_between_points(pt1,pt2,roomid)
     pt1.linkedInnerLines.push([cylinder,pt2.id,roomid]);
     pt2.linkedInnerLines.push([cylinder,pt1.id,roomid]);
     return cylinder;
+}
+
+function remove_room_point(ptid, roomid)
+{
+    for(let t=0; t<arrayOfRooms[roomid].points.length; ++t){
+        if(arrayOfRooms[roomid].points[t]==ptid){ arrayOfRooms[roomid].points.splice(t,1); break;}
+    }
+    delete arrayOfRoomPoints[ptid];
+}
+
+function remove_inner_line(roomid,pt1id,pt2id)
+{
+    for(let t=0; t<arrayOfInnerLines[roomid].length; ++t){
+        if(arrayOfInnerLines[roomid][t].startid==pt1id && arrayOfInnerLines[roomid][t].endid==pt2id){
+            scene.remove(arrayOfInnerLines[roomid][t]);
+            arrayOfInnerLines[roomid].splice(t,1);break;
+        }
+    }
+    
+    let pt1 = arrayOfRoomPoints[pt1id], pt2 = arrayOfRoomPoints[pt2id];
+    for(let t=0; t<pt1.linkedInnerLines.length; ++t){
+        if(pt1.linkedInnerLines[t][1]==pt2id && pt1.linkedInnerLines[t][2]==roomid){
+            pt1.linkedInnerLines.splice(t,1);break;
+        }
+    }
+    for(let t=0; t<pt2.linkedInnerLines.length; ++t){
+        if(pt2.linkedInnerLines[t][1]==pt1id && pt2.linkedInnerLines[t][2]==roomid){
+            pt2.linkedInnerLines.splice(t,1);break;
+        }
+    }
+
 }
 
 function cut_inner_line(room_id,line_id,position)
@@ -332,7 +363,7 @@ function decide(room,line_id)
             room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
             room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
-            const room1_val = calculate_room_division_evaluation(room_shape,room.type);
+            const room1_val = calculate_room_division_evaluation(room_shape,room.type);//let newRoomRes=newRoomOut(room, roomShape);
             for(const roomtype in area_distribution)
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
@@ -398,15 +429,6 @@ function decide(room,line_id)
         let father_id = arrayOfRooms[selected_room_id].father;
         arrayOfRooms[father_id] = result[0];
         delete arrayOfRooms.selected_room_id;
-        console.log("已退出可拖动状态");
-        now_x1 = 0 ;
-        now_x2 = 0;
-        now_y1 = 0;
-        now_y2 = 0;
-        now_z1 = 0;
-        now_z2 = 0;
-        now_move_index = -1;//全部重置
-        On_LINEMOVE = false;
     }
     else if(result.rooms.length == 2)//divide
     {
@@ -425,7 +447,7 @@ function decide(room,line_id)
             let j = (i == result.rooms[1].points.length - 1) ? 0 : i + 1;
             arrayOfInnerLines[roomIndexCounter].push(add_inner_line_between_points(arrayOfRoomPoints[result.rooms[1].points[i]],arrayOfRoomPoints[result.rooms[1].points[j]],roomIndexCounter));
         }
-        for(let i = 0; i < 2; i++)
+        for(let i = 0; i < 2; i++)// && false
         {
             const current_cutpoint = result.division_points[i];
             for(let j = 0; j < arrayOfLines.length; j++)
@@ -444,16 +466,5 @@ function decide(room,line_id)
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         roomIndexCounter++;
-        console.log("已退出可拖动状态");
-        now_x1 = 0 ;
-        now_x2 = 0;
-        now_y1 = 0;
-        now_y2 = 0;
-        now_z1 = 0;
-        now_z2 = 0;
-        can_add_dot = 0;
-        now_move_index = -1;//全部重置
-        has_moved = 0;
-        On_LINEMOVE = false;
     }
 }
