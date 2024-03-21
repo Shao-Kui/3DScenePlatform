@@ -3946,7 +3946,7 @@ function follow_mouse(){
         arrayOfLines.splice(sig2,1);
         createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2);
     }
-    decide(arrayOfRooms[selected_room_id],selected_line_id);
+    room_division_decide(arrayOfRooms[selected_room_id],selected_line_id);
     lastPoint[0] = ptPoint[0]; lastPoint[1] = ptPoint[1];
 }
 

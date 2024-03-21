@@ -34,14 +34,25 @@ const room_type_to_id_map = {
     "bedroom":7
 };
 
+const room_type_mismatch_penalty = [
+    [2,10],
+    [1,10],
+    [1,10],
+    [1,3],
+    [1,1],
+    [1,1],
+    [1,1],
+    [1,3]
+];
+
 const min_side_length = {
-    "livingroom":3,
-    "diningroom":2,
-    "kitchen":2,
-    "bathroom":2,
-    "balcony":1,
-    "storage":1,
-    "bedroom":3
+    "livingroom":4,
+    "diningroom":3,
+    "kitchen":3,
+    "bathroom":3,
+    "balcony":2,
+    "storage":2,
+    "bedroom":4
 };
 
 const room_link_distribution = {
@@ -79,7 +90,10 @@ function get_room_type_evaluation(current_room_type)
     {
         let tmp_res = 0.0;
         for(let j = 0; j < room_type_count; j++)
-            tmp_res += Math.pow(3,Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
+        {
+            if(current_room_type[j] < room_type_distribution[i][0][j])tmp_res += Math.pow(3,room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]))
+            else tmp_res += Math.pow(3,room_type_mismatch_penalty[j][1] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
+        }
         res += tmp_res * room_type_distribution[i][1];
     }
     return - res;    
@@ -124,7 +138,7 @@ const C_type = 0.01;
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
 
-    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 10;
+    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 50, C_6 = 10;
 
     // const count_of_skeleton_edges = tri.triangles.length - points.length + tri.hull.length;
 
@@ -161,21 +175,35 @@ function calculate_room_division_evaluation(points, type){
         }
     }
 
-    if((outer_boundary[0][1] - outer_boundary[0][0]) < min_side_length[type] || (outer_boundary[1][1] - outer_boundary[1][0]) < min_side_length[type])return -1e9;
-    if(area < area_distribution[type][0] / 2)return -1e9;
-
-    const outer_area = (outer_boundary[0][1] - outer_boundary[0][0]) * (outer_boundary[1][1] - outer_boundary[1][0]);
-
     // console.log("Evaluation Info");
+    // console.log(points);
     // console.log(type);
     // console.log(area);
+    // if((outer_boundary[0][1] - outer_boundary[0][0]) < min_side_length[type] || (outer_boundary[1][1] - outer_boundary[1][0]) < min_side_length[type])
+    // {
+    //     console.log("Invalid 1e-9");
+    //     return -1e9;
+    // }
+    // if(area < area_distribution[type][0] * 0.8)
+    // {
+    //     console.log("Invalid 1e-9");
+    //     return -1e9;
+    // }
+
+    const outer_area = (outer_boundary[0][1] - outer_boundary[0][0]) * (outer_boundary[1][1] - outer_boundary[1][0]);
+    const min_edge = Math.min((outer_boundary[0][1] - outer_boundary[0][0]),(outer_boundary[1][1] - outer_boundary[1][0]));
+
     // console.log(outer_area);
     // console.log(C_4 * Math.log(area / outer_area / 0.75));
     // console.log(- C_3 * real_boundary_points);
     // console.log(C_5 * Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])));
     // console.log(- C_3 * real_boundary_points + C_4 * Math.log(area / outer_area / 0.75) + C_5 * Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])));
+    // console.log(C_6 * Math.tan(Math.PI / 2 * Math.min(0,min_edge / min_side_length[type] / 0.75 - 1)));
 
-    return - C_3 * Math.exp(real_boundary_points) + C_4 * Math.log(area / outer_area / 0.75) + C_5 * Math.exp(10 * (Math.exp(10 * normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1])) - 1));
+    return - C_3 * Math.exp(real_boundary_points) 
+    + C_4 * Math.log(area / outer_area / 0.75) 
+    + C_5 * Math.exp(normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1]))
+    + C_6 * Math.tan(Math.PI / 4 * Math.min(-1 ,min_edge / min_side_length[type] * 0.5 - 2));
 }
 
 function cut_half_of_room(points,startpoint,endpoint)
@@ -326,7 +354,7 @@ function cut_inner_line(room_id,line_id,position)
 
 const room_type_counter = [0,0,0,0,0,0,0,0];
 
-function decide(room,line_id)
+function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
     const step = 0.5 , min_delta = 2;
@@ -466,5 +494,14 @@ function decide(room,line_id)
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         roomIndexCounter++;
+        // console.log("已退出可拖动状态");
+        // now_x1 = 0 ;
+        // now_x2 = 0;
+        // now_y1 = 0;
+        // now_y2 = 0;
+        // now_z1 = 0;
+        // now_z2 = 0;
+        // now_move_index = -1;//全部重置
+        // On_LINEMOVE = false;
     }
 }
