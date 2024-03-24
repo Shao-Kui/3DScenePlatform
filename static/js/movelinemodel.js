@@ -9,6 +9,10 @@ const area_distribution = {
     // "entrance":[4.2053069540373595,10.083163192657635]
 };
 
+const ad = {
+    "bedroom":[11.331962509888777,10.288293423901251],
+};
+
 const room_type_distribution = [
 [[1, 0, 1, 1, 1, 0, 0, 2],0.2377457048076447],
 [[1, 0, 1, 1, 1, 0, 0, 3],0.17128781502203297],
@@ -121,10 +125,10 @@ function on_same_line(point1,point2,point3)
 
 function point_between(point1,point2,point3)
 {
-    const eps = 1e-7;
+    const eps = 0.01;
     const vec1 = [point2[0]-point1[0],point2[1]-point1[1]];
     const vec2 = [point3[0]-point2[0],point3[1]-point2[1]];
-    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= -eps;
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= eps;
 }
 
 function same_point(point1,point2)
@@ -352,12 +356,34 @@ function cut_inner_line(room_id,line_id,position)
     arrayOfRooms[room_id].points.splice(line_id + 1,0,newpt1.id,newpt2.id);
 }
 
+function updateMoveIndex(){
+    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线
+    if(intersects.length > 0)
+    {   
+        var pt = intersects[0].point;//鼠标触碰地面的点
+        //On_LINEMOVE = !On_LINEMOVE;//状态量取非
+        if(On_LINEMOVE){
+            can_add_dot = 1;//1的状态不可加点ntersect是一个独特的类，加object是具体的物体
+            
+            backPoint[0]=pt.x;backPoint[1]=pt.z;lastPoint[0]=pt.x;lastPoint[1]=pt.z;            
+            //now_order =  intersects[0].object.end1[2].order;
+            for(var i = 0 ; i < arrayOfLines.length ; i++){  
+                if((isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].start1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].end1))||(isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].end1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].start1))){
+                    //now_move_line.push(arrayOfLines[i]);
+                    now_move_index = i;//选中直线的数组下标 //console.log("选中的index是")
+                    console.log(now_move_index);break;
+                }
+            }
+        }
+    }
+}
+
 const room_type_counter = [0,0,0,0,0,0,0,0];
 
 function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
-    const step = 0.5 , min_delta = 2;
+    const step = 0.5 , min_delta = 3;
     var result = {
         'rooms':[],
         'division_lines':[],
@@ -391,8 +417,9 @@ function room_division_decide(room,line_id)
             room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
             room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
-            var room1_val = calculate_room_division_evaluation(room_shape,room.type);//let newRoomRes=newRoomOut(room, roomShape);
-            for(const roomtype in area_distribution)
+            var room1_val = calculate_room_division_evaluation(room_shape,room.type); 
+            let newRoomRes=newRoomOut(room, room_shape);
+            for(const roomtype in ad)//area_distribution)
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {
@@ -408,7 +435,8 @@ function room_division_decide(room,line_id)
                     "father":room.id,
                     "type":roomtype,
                     "father_wall_start": -1,
-                    "father_wall_end": -1
+                    "father_wall_end": -1,
+                    "edgeList":[],
                 };
                 room_type_counter[room_type_to_id_map[roomtype]] += 1;
                 const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
@@ -417,7 +445,9 @@ function room_division_decide(room,line_id)
                 // console.log("Value of split:");
                 // console.log(cur_val);
                 if(cur_val > result_val)
-                {
+                {//console.log("you should give a inOrOut in here");
+                    let outRoomRes = newRoomOut(room, room2.points, roomIndexCounter);
+                    room2.scheme = JSON.parse(JSON.stringify(outRoomRes)); room.scheme = JSON.parse(JSON.stringify(newRoomRes));
                     result = {
                         'rooms':[{},room2],//temporarily save the information
                         'division_lines':[],
@@ -433,6 +463,8 @@ function room_division_decide(room,line_id)
         }
         
     }
+    if(result.rooms.length == 1)//Merge with father
+    {
     // if(room.father != -1)//merge
     // {
     //     const merged_room = room_merged_with_father(room);
@@ -450,19 +482,19 @@ function room_division_decide(room,line_id)
     //         };
     //     }
     // }
-    if(result.rooms.length == 1)//Merge with father
-    {
         console.log(selected_room_id);
         arrayOfInnerLines[selected_room_id].forEach(l => {scene.remove(l)});
         delete arrayOfInnerLines.selected_room_id;
         let father_id = arrayOfRooms[selected_room_id].father;
         arrayOfRooms[father_id] = result[0];
         delete arrayOfRooms.selected_room_id;
+        return false;
     }
     else if(result.rooms.length == 2)//divide
     {
         move_point(room.points[idx_of_points[1]],result.division_points[0]);
         move_point(room.points[idx_of_points[2]],result.division_points[1]);
+        moveWallOnly(room.id,line_id,result.division_points[0],result.division_points[1]);
         // cut_inner_line(room.id,idx_of_points[1],result.division_points[1]);
         // cut_inner_line(room.id,idx_of_points[1],result.division_points[0]);
         result.rooms[1].points = result.rooms[1].points.map(pos => new_room_point(pos));
@@ -494,15 +526,31 @@ function room_division_decide(room,line_id)
         room = result.rooms[0];
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
+        completeRoomInformationWhileAdding(roomIndexCounter);
         roomIndexCounter++;
-        console.log("已退出可拖动状态");
-        now_x1 = 0 ;
-        now_x2 = 0;
-        now_y1 = 0;
-        now_y2 = 0;
-        now_z1 = 0;
-        now_z2 = 0;
-        now_move_index = -1;//全部重置
-        On_LINEMOVE = false;
+        //console.log(room.scheme); console.log(room.eBoxList); 
+        //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        
+        act(room.scheme,true,true);
+        console.log(room.scheme); console.log(room.eBoxList); 
+        updateNeighbours(room.id);
+        
+        act(result.rooms[1].scheme,true,true);
+        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
+        updateNeighbours(result.rooms[1].id);
+        
+        updateMoveIndex(); 
+        
+        // console.log("已退出可拖动状态");
+        // now_x1 = 0 ;
+        // now_x2 = 0;
+        // now_y1 = 0;
+        // now_y2 = 0;
+        // now_z1 = 0;
+        // now_z2 = 0;
+        // now_move_index = -1;//全部重置
+        // On_LINEMOVE = false;
+        return true;
     }
+    return false;
 }
