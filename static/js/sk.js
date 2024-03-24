@@ -3945,7 +3945,7 @@ function follow_mouse(){
         move_point(pointid1,[actInfo.pos1[0],actInfo.pos1[1]]);
         move_point(pointid2,[actInfo.pos2[0],actInfo.pos2[1]]);
         
-        if(!decide(arrayOfRooms[selected_room_id],selected_line_id)){
+        if(!room_division_decide(arrayOfRooms[selected_room_id],selected_line_id)){
             func({roomid:selected_room_id, wallid:selected_line_id, moveLength:actInfo.moveLength, movedir:[actInfo.movedir[0],actInfo.movedir[1]]}, true, true);
         }
     }
