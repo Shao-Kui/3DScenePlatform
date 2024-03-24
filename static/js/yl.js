@@ -89,7 +89,8 @@ function checkNeighbour(ed){
 
 function cutting_inner_line(room_id,line_id,position){
     //console.log("fuck the world again"); //console.log(position);
-    let r = arrayOfRooms[room_id];clearNeighbour(r.edgeList[line_id]);
+    let r = arrayOfRooms[room_id];
+    clearNeighbour(r.edgeList[line_id]);
     //line_id
     var s = JSON.parse(JSON.stringify(r.edgeList[line_id]));
     var t = JSON.parse(JSON.stringify(r.edgeList[line_id]));

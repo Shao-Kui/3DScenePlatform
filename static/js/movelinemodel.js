@@ -35,9 +35,9 @@ const room_type_to_id_map = {
 };
 
 const room_type_mismatch_penalty = [
+    [4,10],
+    [1,10],
     [2,10],
-    [1,10],
-    [1,10],
     [1,3],
     [1,1],
     [1,1],
@@ -49,10 +49,10 @@ const min_side_length = {
     "livingroom":4,
     "diningroom":3,
     "kitchen":3,
-    "bathroom":3,
-    "balcony":2,
-    "storage":2,
-    "bedroom":4
+    "bathroom":1.5,
+    "balcony":1,
+    "storage":1,
+    "bedroom":3
 };
 
 const room_link_distribution = {
@@ -138,7 +138,7 @@ const C_type = 0.01;
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
 
-    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 50, C_6 = 10;
+    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 50, C_6 = 15;
 
     // const count_of_skeleton_edges = tri.triangles.length - points.length + tri.hull.length;
 
@@ -381,7 +381,7 @@ function room_division_decide(room,line_id)
     else line_dir = 0;
     if(line_dir != 0)//split
     {
-        const max_move_step = Math.min(Math.abs(room_shape[idx_of_points[0]][line_dim]-room_shape[idx_of_points[1]][line_dim]),
+        const max_move_step = Math.max(Math.abs(room_shape[idx_of_points[0]][line_dim]-room_shape[idx_of_points[1]][line_dim]),
         Math.abs(room_shape[idx_of_points[2]][line_dim]-room_shape[idx_of_points[3]][line_dim]));
         var original_cut_1 = structuredClone(room_shape[idx_of_points[1]]),
         original_cut_2 = structuredClone(room_shape[idx_of_points[2]]);
@@ -391,7 +391,7 @@ function room_division_decide(room,line_id)
             room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
             room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
-            const room1_val = calculate_room_division_evaluation(room_shape,room.type);//let newRoomRes=newRoomOut(room, roomShape);
+            var room1_val = calculate_room_division_evaluation(room_shape,room.type);//let newRoomRes=newRoomOut(room, roomShape);
             for(const roomtype in area_distribution)
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
@@ -431,6 +431,7 @@ function room_division_decide(room,line_id)
                 }
             }
         }
+        
     }
     // if(room.father != -1)//merge
     // {
@@ -494,14 +495,14 @@ function room_division_decide(room,line_id)
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
         roomIndexCounter++;
-        // console.log("已退出可拖动状态");
-        // now_x1 = 0 ;
-        // now_x2 = 0;
-        // now_y1 = 0;
-        // now_y2 = 0;
-        // now_z1 = 0;
-        // now_z2 = 0;
-        // now_move_index = -1;//全部重置
-        // On_LINEMOVE = false;
+        console.log("已退出可拖动状态");
+        now_x1 = 0 ;
+        now_x2 = 0;
+        now_y1 = 0;
+        now_y2 = 0;
+        now_z1 = 0;
+        now_z2 = 0;
+        now_move_index = -1;//全部重置
+        On_LINEMOVE = false;
     }
 }
