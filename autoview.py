@@ -1518,11 +1518,22 @@ def catimgs(identifier):
     
 @app_autoView.route("/eboxes/<function>",methods=['POST'])
 def eboxes(function):
-    if os.path.exists(f'./yltmp/elasticBox/685.json'):
-        js = json.load(open('./yltmp/elasticBox/685.json'))
-    if os.path.exists(f'./yltmp/elasticBox/841.json'):
-        jss = json.load(open('./yltmp/elasticBox/841.json'))
-    return {"ls":[js,jss]}
+    mapping = {
+        "livingroom":[556,711],
+        "kitchen":[],
+        "bathroom":[],
+        "balcony":[],
+        "bedroom":[685,841],
+        "diningroom":[503],
+        "storage":[]
+    }
+    
+    jsList = []
+    for i in mapping[function]:
+        js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
+        jsList.append(js)
+
+    return {"ls":jsList}
 
 def loadClist(name):
     c_List = {}

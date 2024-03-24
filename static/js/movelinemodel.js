@@ -292,7 +292,7 @@ function decide(room,line_id)
             room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
             room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
-            const room1_val = calculate_room_division_evaluation(room_shape,room.type); let newRoomRes=newRoomOut(room, room_shape);
+            const room1_val = calculate_room_division_evaluation(room_shape,room.type);
             for(const roomtype in ad)//area_distribution)
             {
                 var room2 = {
@@ -316,7 +316,7 @@ function decide(room,line_id)
                 // console.log(cur_val);
                 if(cur_val > result_val)
                 {//console.log("you should give a inOrOut in here");
-                    let outRoomRes = newRoomOut(room, room2.points, roomIndexCounter);
+                    let outRoomRes = newRoomOut(room, room2.points, roomIndexCounter);  let newRoomRes=newRoomOut(room, room_shape);
                     room2.scheme = JSON.parse(JSON.stringify(outRoomRes)); room.scheme = JSON.parse(JSON.stringify(newRoomRes));
                     result = {
                         'rooms':[{},room2],//temporarily save the information
