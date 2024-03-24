@@ -142,7 +142,7 @@ const C_type = 0.01;
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
 
-    const C_1 = 0, C_2 = 0, C_3 = 5, C_4 = 5, C_5 = 50, C_6 = 15;
+    const C_1 = 0, C_2 = 0, C_3 = 10, C_4 = 5, C_5 = 50, C_6 = 15;
 
     // const count_of_skeleton_edges = tri.triangles.length - points.length + tri.hull.length;
 
@@ -388,46 +388,54 @@ function room_division_decide(room,line_id)
         'rooms':[],
         'division_lines':[],
         'division_points':[]};
-    const room_shape = room.points.map(id => arrayOfRoomPoints[id].position);
-    var result_val = calculate_room_division_evaluation(room_shape,room.type) + C_type * get_room_type_evaluation(room_type_counter);
+    room.room_shape = room.points.map(id => arrayOfRoomPoints[id].position);//Note that the room_shape is not synced during the 
+    var result_val = calculate_room_division_evaluation(room.room_shape,room.type) + C_type * get_room_type_evaluation(room_type_counter);
     // console.log("Value of no division:");
     // console.log(result_val);
     const idx_of_points = [line_id - 1, line_id, line_id + 1,line_id + 2].map(val => {
-        if(val < 0) val += room_shape.length;
-        if(val >= room_shape.length) val -= room_shape.length;
+        if(val < 0) val += room.room_shape.length;
+        if(val >= room.room_shape.length) val -= room.room_shape.length;
         return val;
     });//ID of the four points considered
     var line_dim,line_dir;
-    if(Math.abs(room_shape[idx_of_points[2]][1] - room_shape[idx_of_points[1]][1]) < eps)line_dim = 1;
+    if(Math.abs(room.room_shape[idx_of_points[2]][1] - room.room_shape[idx_of_points[1]][1]) < eps)line_dim = 1;
     else line_dim = 0;
-    if(room_shape[idx_of_points[0]][line_dim] > room_shape[idx_of_points[1]][line_dim] && 
-        room_shape[idx_of_points[3]][line_dim] > room_shape[idx_of_points[2]][line_dim])line_dir = 1;
-    else if(room_shape[idx_of_points[0]][line_dim] < room_shape[idx_of_points[1]][line_dim] && 
-        room_shape[idx_of_points[3]][line_dim] < room_shape[idx_of_points[2]][line_dim])line_dir = -1;
+    if(room.room_shape[idx_of_points[0]][line_dim] > room.room_shape[idx_of_points[1]][line_dim] && 
+        room.room_shape[idx_of_points[3]][line_dim] > room.room_shape[idx_of_points[2]][line_dim])line_dir = 1;
+    else if(room.room_shape[idx_of_points[0]][line_dim] < room.room_shape[idx_of_points[1]][line_dim] && 
+        room.room_shape[idx_of_points[3]][line_dim] < room.room_shape[idx_of_points[2]][line_dim])line_dir = -1;
     else line_dir = 0;
     if(line_dir != 0)//split
     {
-        const max_move_step = Math.max(Math.abs(room_shape[idx_of_points[0]][line_dim]-room_shape[idx_of_points[1]][line_dim]),
-        Math.abs(room_shape[idx_of_points[2]][line_dim]-room_shape[idx_of_points[3]][line_dim]));
-        var original_cut_1 = structuredClone(room_shape[idx_of_points[1]]),
-        original_cut_2 = structuredClone(room_shape[idx_of_points[2]]);
+        const max_move_step = Math.max(Math.abs(room.room_shape[idx_of_points[0]][line_dim]-room.room_shape[idx_of_points[1]][line_dim]),
+        Math.abs(room.room_shape[idx_of_points[2]][line_dim]-room.room_shape[idx_of_points[3]][line_dim]));
+        var original_cut_1 = structuredClone(room.room_shape[idx_of_points[1]]),
+        original_cut_2 = structuredClone(room.room_shape[idx_of_points[2]]);
         for(let delta = min_delta; delta < max_move_step; delta += step)
         {
-            room_shape[idx_of_points[1]] = structuredClone(original_cut_1);
-            room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
-            room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
-            room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
-            var room1_val = calculate_room_division_evaluation(room_shape,room.type); 
-            let newRoomRes=newRoomOut(room, room_shape);
+            room.room_shape[idx_of_points[1]] = structuredClone(original_cut_1);
+            room.room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
+            room.room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
+            room.room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
+            var room1_val = calculate_room_division_evaluation(room.room_shape,room.type); 
+            let newRoomRes=newRoomOut(room, room.room_shape);
             for(const roomtype in ad)//area_distribution)
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {
-                    "points":[structuredClone(room_shape[idx_of_points[1]]),
+                    "points":[structuredClone(room.room_shape[idx_of_points[1]]),
                         // structuredClone(room_shape[idx_of_points[1]]),
                         // structuredClone(room_shape[idx_of_points[1]]),
                         structuredClone(original_cut_1),structuredClone(original_cut_2),
-                        structuredClone(room_shape[idx_of_points[2]]),
+                        structuredClone(room.room_shape[idx_of_points[2]]),
+                        // structuredClone(room_shape[idx_of_points[2]]),
+                        // structuredClone(room_shape[idx_of_points[2]]),
+                    ],
+                    "room_shape":[structuredClone(room.room_shape[idx_of_points[1]]),
+                        // structuredClone(room_shape[idx_of_points[1]]),
+                        // structuredClone(room_shape[idx_of_points[1]]),
+                        structuredClone(original_cut_1),structuredClone(original_cut_2),
+                        structuredClone(room.room_shape[idx_of_points[2]]),
                         // structuredClone(room_shape[idx_of_points[2]]),
                         // structuredClone(room_shape[idx_of_points[2]]),
                     ],
@@ -452,8 +460,8 @@ function room_division_decide(room,line_id)
                         'rooms':[{},room2],//temporarily save the information
                         'division_lines':[],
                         'division_points':[
-                            structuredClone(room_shape[idx_of_points[1]]),
-                            structuredClone(room_shape[idx_of_points[2]])
+                            structuredClone(room.room_shape[idx_of_points[1]]),
+                            structuredClone(room.room_shape[idx_of_points[2]])
                         ],
                         'inserted_points':[]
                     };
