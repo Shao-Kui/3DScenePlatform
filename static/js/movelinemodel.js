@@ -389,7 +389,7 @@ function room_division_decide(room,line_id)
         'rooms':[],
         'division_lines':[],
         'division_points':[]};
-    room.room_shape = room.points.map(id => arrayOfRoomPoints[id].position);//Note that the room_shape is not synced during the 
+    room.room_shape = room.points.map(id => structuredClone(arrayOfRoomPoints[id].position));//Note that the room_shape is not synced during the 
     var result_val = calculate_room_division_evaluation(room.room_shape,room.type) + C_type * get_room_type_evaluation(room_type_counter);
     // console.log("Value of no division:");
     // console.log(result_val);
