@@ -383,7 +383,8 @@ const room_type_counter = [0,0,0,0,0,0,0,0];
 function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
-    const step = 0.5 , min_delta = 3;
+    const step = 0.5 , min_delta = 5;
+    var evaluation = [];
     var result = {
         'rooms':[],
         'division_lines':[],
@@ -418,7 +419,6 @@ function room_division_decide(room,line_id)
             room.room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room.room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
             var room1_val = calculate_room_division_evaluation(room.room_shape,room.type); 
-            let newRoomRes=newRoomOut(room, room.room_shape);
             for(const roomtype in ad)//area_distribution)
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
@@ -454,8 +454,7 @@ function room_division_decide(room,line_id)
                 // console.log(cur_val);
                 if(cur_val > result_val)
                 {//console.log("you should give a inOrOut in here");
-                    let outRoomRes = newRoomOut(room, room2.points, roomIndexCounter);  let newRoomRes=newRoomOut(room, room_shape);
-                    room2.scheme = JSON.parse(JSON.stringify(outRoomRes)); room.scheme = JSON.parse(JSON.stringify(newRoomRes));
+                    evaluation = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type)
                     result = {
                         'rooms':[{},room2],//temporarily save the information
                         'division_lines':[],
@@ -502,7 +501,7 @@ function room_division_decide(room,line_id)
     {
         move_point(room.points[idx_of_points[1]],result.division_points[0]);
         move_point(room.points[idx_of_points[2]],result.division_points[1]);
-        moveWallOnly(room.id,line_id,result.division_points[0],result.division_points[1]);
+        room.room_shape = room.points.map(id => arrayOfRoomPoints[id].position);//Note that the room_shape is not synced during the 
         // cut_inner_line(room.id,idx_of_points[1],result.division_points[1]);
         // cut_inner_line(room.id,idx_of_points[1],result.division_points[0]);
         result.rooms[1].points = result.rooms[1].points.map(pos => new_room_point(pos));
@@ -531,22 +530,16 @@ function room_division_decide(room,line_id)
             }
         }
         room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;
-        room = result.rooms[0];
+        //room = result.rooms[0];
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
-        completeRoomInformationWhileAdding(roomIndexCounter);
+        //completeRoomInformationWhileAdding(roomIndexCounter);
         roomIndexCounter++;
         //console.log(room.scheme); console.log(room.eBoxList); 
         //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         
-        act(room.scheme,true,true);
-        console.log(room.scheme); console.log(room.eBoxList); 
-        updateNeighbours(room.id);
-        
-        act(result.rooms[1].scheme,true,true);
-        console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
-        updateNeighbours(result.rooms[1].id);
-        
+        seperating(room.eBoxList, room/*result.rooms[0]*/, result.rooms[1], evaluation);
+
         updateMoveIndex(); 
         
         // console.log("已退出可拖动状态");
