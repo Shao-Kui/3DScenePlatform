@@ -259,7 +259,8 @@ class SceneManager {
         var self = this;
         fetch("/room/" + this.scene_json.origin + "/" + room.modelId).then(function (response) {
             return response.json();
-        }).then(function (meta) {
+        })
+        .then(function (meta) {
             for (var j = 0; j < meta.length; j++) {
                 if (meta[j] === 'c') {
                     continue;
@@ -267,6 +268,7 @@ class SceneManager {
                 self.load_cwf_instances(room.modelId, meta[j], room.roomId);
             }
         })
+        .catch(err => {console.log(err)})
     };
 
     load_cwf_instances = (modelId, suffix, roomId) => {
@@ -405,10 +407,19 @@ class SceneManager {
         var bbox = this.scene_json.bbox;
         var lx = (bbox.max[0] + bbox.min[0]) / 2;
         var lz = (bbox.max[2] + bbox.min[2]) / 2;
-        this.camera.rotation.order = 'YXZ';
-        this.camera.position.set(lx, 6, lz);
-        this.camera.lookAt(lx, 0, lz);
-        orbitControls.target.set(lx, 0, lz);
+        if(this.scene_json.PerspectiveCamera){
+            let origin = this.scene_json.PerspectiveCamera.origin;
+            let target = this.scene_json.PerspectiveCamera.target;
+            this.camera.rotation.order = 'YXZ';
+            this.camera.position.set(origin[0], origin[1], origin[2]);
+            this.camera.lookAt(target[0], target[1], target[2]);
+            orbitControls.target.set(target[0], target[1], target[2]);
+        }else{
+            this.camera.rotation.order = 'YXZ';
+            this.camera.position.set(lx, 6, lz);
+            this.camera.lookAt(lx, 0, lz);
+            orbitControls.target.set(lx, 0, lz);
+        }
         //Start to set orthogonal camera.
         var width = (bbox.max[0] - bbox.min[0]) + 1;
         var height = (bbox.max[2] - bbox.min[2]) + 1;
