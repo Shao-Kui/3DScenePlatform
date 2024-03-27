@@ -125,10 +125,10 @@ function on_same_line(point1,point2,point3)
 
 function point_between(point1,point2,point3)
 {
-    const eps = 0.01;
+    const eps = 1e-7;
     const vec1 = [point2[0]-point1[0],point2[1]-point1[1]];
     const vec2 = [point3[0]-point2[0],point3[1]-point2[1]];
-    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= eps;
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] >= -eps;
 }
 
 function same_point(point1,point2)
@@ -408,8 +408,24 @@ function room_division_decide(room,line_id)
     else line_dir = 0;
     if(line_dir != 0)//split
     {
-        const max_move_step = Math.max(Math.abs(room.room_shape[idx_of_points[0]][line_dim]-room.room_shape[idx_of_points[1]][line_dim]),
-        Math.abs(room.room_shape[idx_of_points[2]][line_dim]-room.room_shape[idx_of_points[3]][line_dim]));
+        var max_move_step;
+        const len_of_two_adjacent_edges = [Math.abs(room.room_shape[idx_of_points[0]][line_dim]-room.room_shape[idx_of_points[1]][line_dim]),
+        Math.abs(room.room_shape[idx_of_points[2]][line_dim]-room.room_shape[idx_of_points[3]][line_dim])];
+        if(len_of_two_adjacent_edges[0] > len_of_two_adjacent_edges[1])
+        {
+            if((room.room_shape[idx_of_points[2]][line_dim^1] - room.room_shape[idx_of_points[1]][line_dim^1]) *
+             (room.room_shape[idx_of_points[3] == room.room_shape.length - 1 ? 0 : idx_of_points[3] + 1][line_dim^1] - room.room_shape[idx_of_points[3]][line_dim^1]) > 0)
+                max_move_step = len_of_two_adjacent_edges[0];
+            else max_move_step = len_of_two_adjacent_edges[1];
+        }
+        else
+        {
+            if((room.room_shape[idx_of_points[2]][line_dim^1] - room.room_shape[idx_of_points[1]][line_dim^1]) *
+             (room.room_shape[idx_of_points[0]][line_dim^1] - room.room_shape[idx_of_points[0] == 0 ? room.room_shape.length - 1 : idx_of_points[0] - 1][line_dim^1]) > 0)
+                max_move_step = len_of_two_adjacent_edges[1];
+            else max_move_step = len_of_two_adjacent_edges[0];
+        }
+        // max_move_step = Math.max(len_of_two_adjacent_edges[0],len_of_two_adjacent_edges[1]);
         var original_cut_1 = structuredClone(room.room_shape[idx_of_points[1]]),
         original_cut_2 = structuredClone(room.room_shape[idx_of_points[2]]);
         for(let delta = min_delta; delta < max_move_step; delta += step)
@@ -551,6 +567,7 @@ function room_division_decide(room,line_id)
         // now_z2 = 0;
         // now_move_index = -1;//全部重置
         // On_LINEMOVE = false;
+        // can_add_dot = 0;
         return true;
     }
     return false;
