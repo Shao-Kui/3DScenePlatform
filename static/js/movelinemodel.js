@@ -419,7 +419,7 @@ function room_division_decide(room,line_id)
             room.room_shape[idx_of_points[1]][line_dim] += line_dir * delta;
             room.room_shape[idx_of_points[2]][line_dim] += line_dir * delta;
             var room1_val = calculate_room_division_evaluation(room.room_shape,room.type); 
-            for(const roomtype in ad)//area_distribution)
+            for(const roomtype in area_distribution)//ad)//
             {
                 if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {

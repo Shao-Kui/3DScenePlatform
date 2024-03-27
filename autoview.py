@@ -1519,13 +1519,14 @@ def catimgs(identifier):
 @app_autoView.route("/eboxes/<function>",methods=['POST'])
 def eboxes(function):
     mapping = {
-        "livingroom":[556,711],
+        "livingroom":[556,577,711,738,745,796,],
         "kitchen":[],
-        "bathroom":[],
+        "bathroom":[848,849,850,851,852,853,854,855,856,857,858,859],
         "balcony":[],
-        "bedroom":[685,841],
-        "diningroom":[503],
-        "storage":[]
+        "bedroom":[479,507,536,566,685,841],
+        "diningroom":[503,533,542,578],
+        "storage":[],
+        "study":[673,841,846]
     }
     
     jsList = []

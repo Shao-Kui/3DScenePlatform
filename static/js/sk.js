@@ -3866,8 +3866,8 @@ function follow_mouse(){
     
     var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
     const room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
-    selected_room_id = room_and_line_id[0]; console.log("selected_room_id");console.log(selected_room_id);
-    selected_line_id = room_and_line_id[1]; console.log("selected_line_id");console.log(selected_line_id);
+    selected_room_id = room_and_line_id[0]; //console.log("selected_room_id");console.log(selected_room_id);
+    selected_line_id = room_and_line_id[1]; //console.log("selected_line_id");console.log(selected_line_id);
     check_res = check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2]);
     
     var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);

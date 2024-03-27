@@ -552,6 +552,8 @@ def applyuuid():
 def getSceneJsonByID(origin):
     if os.path.exists(f'./dataset/Levels2021/{origin}.json'):
         return flask.send_file(f'./dataset/Levels2021/{origin}.json')
+    elif os.path.exists(f'./dataset/levelsuncg/{origin}.json'):
+        return flask.send_file(f'./dataset/levelsuncg/{origin}.json')
     elif os.path.exists(f'./layoutmethods/anno/{origin}.json'):
         return flask.send_file(f'./layoutmethods/anno/{origin}.json')
     else:

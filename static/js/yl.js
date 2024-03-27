@@ -302,34 +302,34 @@ function rayFactory(source, hint){
 function inOrOut(room, elasticBox){
     let outFlag = -1; let errorFlag=1;
     for(let e=0; e<4;++e){  
-        console.log(e);
+        /*console.log(e);
         console.log(elasticBox.edgeList[e].point[0][0]);
         console.log(elasticBox.edgeList[e].point[0][1]);
         console.log(elasticBox.edgeList[e].point[1][0]);
         console.log(elasticBox.edgeList[e].point[1][1]);
         console.log(elasticBox.edgeList[e].dir[0]);
-        console.log(elasticBox.edgeList[e].dir[1]);
+        console.log(elasticBox.edgeList[e].dir[1]);*/
         let crossCnt = 0;
         let hint=0; let online=false; 
         for(; hint<4;++hint){
             let ray = rayFactory(elasticBox.edgeList[e].point[0],hint);
-            console.log(hint);
+            /*console.log(hint);
             console.log(ray.point[0][0]);
             console.log(ray.point[0][1]);
             console.log(ray.point[1][0]);
             console.log(ray.point[1][1]);
             console.log(ray.dir[0]);
-            console.log(ray.dir[1]);
+            console.log(ray.dir[1]);*/
             let hintReject = false; crossCnt = 0;
             for(let f=0; f<room.edgeList.length;++f){
                 let ed = room.edgeList[f];
-                console.log(f);
+                /*console.log(f);
                 console.log(ed.point[0][0]);
                 console.log(ed.point[0][1]);
                 console.log(ed.point[1][0]);
                 console.log(ed.point[1][1]);
                 console.log(ed.dir[0]);
-                console.log(ed.dir[1]);
+                console.log(ed.dir[1]);*/
                 if(Math.abs(ed.dir[0])==Math.abs(ray.dir[0]) && Math.abs(ed.dir[1])==Math.abs(ray.dir[1])){
                     let dis = Math.abs(ed.dir[0])>Math.abs(ed.dir[1])?Math.abs(ed.point[0][0]-ray.point[0][0]):Math.abs(ed.point[0][1]-ray.point[0][1]);
                     console.log(dis);
@@ -338,12 +338,12 @@ function inOrOut(room, elasticBox){
                 if(hintReject) break;
                 else{
                     if(edgeCross(ed,ray,0,-0.01) != edgeCross(ed,ray,0,0.01)){
-                        online=true; console.log(online);
+                        online=true; //console.log(online);
                     }else if(edgeCross(ed,ray)){
-                        crossCnt++; console.log(crossCnt);
+                        crossCnt++; //console.log(crossCnt);
                     }
                 } 
-                console.log(crossCnt);
+                //console.log(crossCnt);
                 if(online) break;
             }
             if(!hintReject || online){break;}
@@ -351,8 +351,8 @@ function inOrOut(room, elasticBox){
         if(hint==4 || online)continue; //point e is on a room corner, no proper ray could be found (or) this point is on a edge so it should not effect the box is in or out
         if(outFlag<0)outFlag = crossCnt%2;
         else if(outFlag != crossCnt%2){console.log("not fully in or out"); errorFlag=-1;}
-        console.log("checking");console.log(e);
-        console.log(crossCnt);
+        //console.log("checking");console.log(e);
+        //console.log(crossCnt);
     }
     return (errorFlag==-1?-1:outFlag);
 }
