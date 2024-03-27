@@ -1114,7 +1114,7 @@ function onDocumentMouseMove(event) {
     {
         follow_mouse();
         //roomshape 反映在scenejson上
-        recreate_room();
+        // recreate_room();
     } 
 }
 
@@ -1542,6 +1542,8 @@ const setting_up = function () {
             manager.renderManager.newWallCache.forEach(w => {scene.remove(w)});
             manager.renderManager.fCache.forEach(w => {scene.remove(w)});
             //manager.renderManager.scene_json.rooms[0].roomShape;//四个顶点
+            if(arrayOfAllDots.length == 0)
+            {
             var points = new Array(3);
             for( var i = 0 ; i<4 ; i++ )
             {//xyz坐标
@@ -1567,6 +1569,14 @@ const setting_up = function () {
                 }
                 createCyliner1(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2],i);//四条初始边的order:0 1 2 3 对应roomShape[i][0] i从0到3
                 //createLine_same(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2]);
+            }
+            }
+            else
+            {
+                arrayOfLines.forEach(i =>{scene.add(i)});
+                arrayOfDots.forEach(i => {scene.add(i)});
+                for(const roomid in arrayOfInnerLines)
+                    arrayOfInnerLines[roomid].forEach(i => {scene.add(i)});
             }
             if(Object.keys(arrayOfRooms).length == 0)// The room data has not been written
             {
@@ -1599,10 +1609,11 @@ const setting_up = function () {
             arrayOfDots.forEach(i => {scene.remove(i)});
             for(const roomid in arrayOfInnerLines)
                 arrayOfInnerLines[roomid].forEach(i => {scene.remove(i)});
-            arrayOfInnerLines = {};
+            // arrayOfInnerLines = {};
             //刚刚的图形复原
-            manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
-            manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
+            // manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
+            // manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
+            recreate_room();
         }
     })
 
@@ -4088,22 +4099,92 @@ function recreate_room()//复原roomshape
 {
     //遍历
     //console.log("开始重构房间")
-    var len = arrayOfLines.length;
-    for( var i = 0 ; i < len ; i ++)
+    var new_json = structuredClone(manager.renderManager.scene_json);
+    new_json.rooms = [];
+    for(const i in arrayOfRooms)
     {
-        var room_len = manager.renderManager.scene_json.rooms[0].roomShape.length;
-        if(i>=room_len)
+        if(arrayOfRooms[i] != undefined)
         {
-            var pos2 = [arrayOfLines[i].start1[0],arrayOfLines[i].start1[2]];
-            manager.renderManager.scene_json.rooms[0].roomShape.push(pos2);
+            var roomShape = arrayOfRooms[i].points.map(id => structuredClone(arrayOfRoomPoints[id].position));
+            var shapeX = roomShape.map(pos => pos[0]),shapeZ = roomShape.map(pos => pos[1]);
+            var roomBbox = {
+                "Max":[Math.max.apply(Math,shapeX),Math.max.apply(Math,shapeZ)],
+                "Min":[Math.min.apply(Math,shapeX),Math.min.apply(Math,shapeZ)]
+            };
+            var new_room =
+                {
+                    "id": "6443_0",
+                    "modelId": "Bathroom-6473",
+                    "roomTypes": [
+                        arrayOfRooms[i].type
+                    ],
+                    "bbox": {
+                    "min": [
+                        roomBbox["Min"][0],
+                        0.85,
+                        roomBbox["Min"][1]
+                    ],
+                    "max": [
+                        roomBbox["Max"][0],
+                        1.75,
+                        roomBbox["Max"][1]
+                    ]
+                },
+                "origin": "ad0ae7b6-f80d-4ba3-be86-2c2c7f86776e",
+                "roomId": new_json.rooms.length,
+                "objList": [],
+                "blockList": [],
+                "roomShape": roomShape,
+                "roomNorm":[],
+                "roomOrient": [
+                    -1.5707963267948966,
+                    -3.141592653589793,
+                    1.5707963267948968,
+                    6.123233995736766e-17
+                ],
+                "roomShapeBBox": roomBbox
+            };
+            for(let j = 0; j < new_room.roomShape.length; j++)
+            {
+                const k = j == new_room.roomShape.length - 1 ? 0 : j + 1;
+                if(Math.abs(new_room.roomShape[j][0] - new_room.roomShape[k][0]) < 1e-7)
+                    new_room.roomNorm.push([new_room.roomShape[j][1] < new_room.roomShape[k][1] ? 1 : -1, 0]);
+                else
+                    new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? -1 : 1]);
+            }
+            if("eBoxList" in arrayOfRooms[i])
+            {
+                for(eBox in arrayOfRooms[i]["eBoxList"])
+                {
+                    for(obj in eBox.objList)
+                    {
+                        scene.removeObjectByUUID(obj.key);
+                        var f = 'obj';
+                        var stt = 'origin';
+                        if('currentState' in obj && isNaN(parseInt(obj.id))){
+                            f = 'glb';
+                            stt = obj.currentState;
+                        }
+                        new_room.objList.push({
+                            "modelId":obj.id,
+                            "translate":obj.position,
+                            "roomId":new_json.rooms.length,
+                            'rotate': [0, obj.orient, 0],
+                            'scale': obj.scl,
+                            'key':obj.key,
+                            'format':f,
+                            'startState':stt,
+                            "isSceneObj": true,
+                            "inDatabase": true,
+                        });
+                    }
+                }
+            }
+            new_json.rooms.push(new_room);
         }
-        else
-        {
-            manager.renderManager.scene_json.rooms[0].roomShape[i][0]=arrayOfLines[i].start1[0];
-            manager.renderManager.scene_json.rooms[0].roomShape[i][1]=arrayOfLines[i].start1[2];
-        }
-        
     }
+    // console.log(new_json);
+    manager.renderManager.refresh_scene(new_json, false);
 }
 
 function create_dot(x,y,z)//记号点，直线拐弯处补充
