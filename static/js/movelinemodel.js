@@ -384,7 +384,7 @@ function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
     const step = 0.5 , min_delta = 2;
-    var evaluation = [];
+    var evaluation = []; var eva = [];
     var result = {
         'rooms':[],
         'division_lines':[],
@@ -462,6 +462,7 @@ function room_division_decide(room,line_id)
                     "father_wall_end": -1,
                     "edgeList":[],
                 };
+                if(!debugHJK)eva = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type);
                 room_type_counter[room_type_to_id_map[roomtype]] += 1;
                 const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
                 + C_type * get_room_type_evaluation(room_type_counter);
@@ -470,7 +471,7 @@ function room_division_decide(room,line_id)
                 // console.log(cur_val);
                 if(cur_val > result_val)
                 {//console.log("you should give a inOrOut in here");
-                    if(!debugHJK)evaluation = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type)
+                    if(!debugHJK)evaluation = JSON.parse(JSON.stringify(eva));
                     result = {
                         'rooms':[{},room2],//temporarily save the information
                         'division_lines':[],

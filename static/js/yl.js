@@ -551,7 +551,7 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
     //其实每一个弹性盒是属于0还是属于1（甚至是哪条边应该往哪里移动）还是都不属于应该删了就可以从这里给出了。
     //存在evaluation里
     //因为这些内容其实都是在你评估房间划分时需要捎带手去做的。
-    var eva = [[],[],[]];
+    var eva = [[],[],[],{removedBox:0,confiltBox:0,conflictDis:0}];
 
     let virtualRoomIndex = 100; //while(virtualRoomIndex in arrayOfRooms){virtualRoomIndex++;}
     var newRoom0 = {id:virtualRoomIndex, type:type0, edgeList:JSON.parse(JSON.stringify(visualRoom(roomshape0)))};
@@ -592,10 +592,13 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
         if(res1.semanticLevel<0) res1.outState = 2;//check my semantic, if I failed
         if(res0.outState == 2 && res1.outState == 2){
             eva[2]=eva[2].concat([{eBoxId:e, roomId:eBoxList[e].roomId, outState:3}]);
+            eva[3].removedBox+=1;
         }else if(res0.outState == 2){ let res = res1;
             eva[1]=eva[1].concat([{eBoxId:e, roomId:newRoom1.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
+            if(res1.outState>0){eva[3].conflictBox+=1; for(let j=0;j<res.diss;++j)eva[3].conflictDis+=res.diss[j]; }
         }else if(res1.outState == 2){ let res = res0;
             eva[0]=eva[0].concat([{eBoxId:e, roomId:newRoom0.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
+            if(res0.outState>0){eva[3].conflictBox+=1; for(let j=0;j<res.diss;++j)eva[3].conflictDis+=res.diss[j]; }
         }else{
             console.log("some ebox is regarded as belonging to both room while seperating");
         }
