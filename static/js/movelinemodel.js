@@ -415,14 +415,14 @@ function room_division_decide(room,line_id)
         {
             if((room.room_shape[idx_of_points[2]][line_dim^1] - room.room_shape[idx_of_points[1]][line_dim^1]) *
              (room.room_shape[idx_of_points[3] == room.room_shape.length - 1 ? 0 : idx_of_points[3] + 1][line_dim^1] - room.room_shape[idx_of_points[3]][line_dim^1]) > 0)
-                max_move_step = len_of_two_adjacent_edges[0];
+                max_move_step = len_of_two_adjacent_edges[0] - 1;
             else max_move_step = len_of_two_adjacent_edges[1];
         }
         else
         {
             if((room.room_shape[idx_of_points[2]][line_dim^1] - room.room_shape[idx_of_points[1]][line_dim^1]) *
              (room.room_shape[idx_of_points[0]][line_dim^1] - room.room_shape[idx_of_points[0] == 0 ? room.room_shape.length - 1 : idx_of_points[0] - 1][line_dim^1]) > 0)
-                max_move_step = len_of_two_adjacent_edges[1];
+                max_move_step = len_of_two_adjacent_edges[1] - 1;
             else max_move_step = len_of_two_adjacent_edges[0];
         }
         // max_move_step = Math.max(len_of_two_adjacent_edges[0],len_of_two_adjacent_edges[1]);
