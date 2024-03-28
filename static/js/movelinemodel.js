@@ -383,7 +383,7 @@ const room_type_counter = [0,0,0,0,0,0,0,0];
 function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
-    const step = 0.5 , min_delta = 5;
+    const step = 0.5 , min_delta = 2;
     var evaluation = [];
     var result = {
         'rooms':[],
@@ -470,7 +470,7 @@ function room_division_decide(room,line_id)
                 // console.log(cur_val);
                 if(cur_val > result_val)
                 {//console.log("you should give a inOrOut in here");
-                    evaluation = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type)
+                    if(!debugHJK)evaluation = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type)
                     result = {
                         'rooms':[{},room2],//temporarily save the information
                         'division_lines':[],
@@ -539,13 +539,13 @@ function room_division_decide(room,line_id)
                 const current_line = arrayOfLines[j];
                 if(on_same_line([current_line.start1[0],current_line.start1[2]],current_cutpoint,[current_line.end1[0],current_line.end1[2]])
                  && point_between([current_line.start1[0],current_line.start1[2]],current_cutpoint,[current_line.end1[0],current_line.end1[2]]))
-                {
+                { if(now_move_index>j)now_move_index+=2;
                     seperate_lines(arrayOfLines[j],current_line.start1,current_line.end1,current_cutpoint[0],0,current_cutpoint[1],false);
                     break;
                 }
             }
         }
-        room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;
+        room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;console.log("break");
         //room = result.rooms[0];
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
@@ -554,9 +554,9 @@ function room_division_decide(room,line_id)
         //console.log(room.scheme); console.log(room.eBoxList); 
         //console.log(result.rooms[1].scheme);  console.log(result.rooms[1].eBoxList); 
         
-        seperating(room.eBoxList, room/*result.rooms[0]*/, result.rooms[1], evaluation);
+        if(!debugHJK)seperating(room.eBoxList, room/*result.rooms[0]*/, result.rooms[1], evaluation);
 
-        updateMoveIndex(); 
+        updateMoveIndex();
         
         // console.log("已退出可拖动状态");
         // now_x1 = 0 ;
@@ -566,7 +566,7 @@ function room_division_decide(room,line_id)
         // now_z1 = 0;
         // now_z2 = 0;
         // now_move_index = -1;//全部重置
-        // On_LINEMOVE = false;
+        //On_LINEMOVE = false;
         // can_add_dot = 0;
         return true;
     }

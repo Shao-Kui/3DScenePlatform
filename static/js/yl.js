@@ -150,7 +150,7 @@ function cutting_inner_line(room_id,line_id,position){
 
 }*/
 
-function func(info, realMove=false, dsMove=false){ //return;
+function func(info, realMove=false, dsMove=false){ if(debugHJK)return;
     /*if(1 in arrayOfRooms){//[0].eBoxList.length>0
     console.log(info);
     console.log("room1 edge0 before");
@@ -521,6 +521,31 @@ function newRoomOut(room, roomShape, newRoomId=-1){
     return {history:scheme.history, deleteList:deleteList, roomId:(newRoomId==-1)?room.id:newRoomId};
 }*/
 
+const roomTypeSemanticLevels={
+    "livingroom":["sofa","dining table","desk"],
+    "kitchen":[],
+    "bathroom":["a"],
+    "balcony":[],
+    "bedroom":["bed","desk"],
+    "diningroom":["dining table"],
+    "storage":[],
+    "study":["desk"]
+}
+
+function checkRoomEboxSemantic(roomType, ebox){
+    if(roomType=="bathroom"){ return ebox.bid<860 && ebox.bid>847 ? 0:-1;}
+    for(let i=0; i<roomTypeSemanticLevels[roomType].length; ++i){
+        let nm = roomTypeSemanticLevels[roomType][i]; console.log(nm);
+        for(let o=0; o<ebox.objList.length; ++o){
+            console.log(ebox.objList[o].cs.toLowerCase());
+            if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;
+        }
+    }
+    
+    return -1;
+}
+
+
 function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
     //originalRoom里有很多的弹性盒，这些弹性盒在如此的房间划分方案之下会有哪些问题呢？
     //其实每一个弹性盒是属于0还是属于1（甚至是哪条边应该往哪里移动）还是都不属于应该删了就可以从这里给出了。
@@ -546,31 +571,35 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
     console.log(newRoom1.edgeList[ii].point[1][0]);
     console.log(newRoom1.edgeList[ii].point[1][1]);}*/
     
-    console.log(eBoxList);
+    //console.log(eBoxList);
 
     for(let e=0; e<eBoxList.length;++e){
-        console.log("eBoxList[e]");
-        console.log(eBoxList[e]);
+        /*console.log("eBoxList[e]");
+        console.log(eBoxList[e]);*/
         let res0 = checkRoomCrossEBox(newRoom0, eBoxList[e]);
-        console.log("res0");
+        /*console.log("res0");
         console.log(res0);
         console.log("newRoom0");
-        console.log(newRoom0);
+        console.log(newRoom0);*/
+        res0.semanticLevel = checkRoomEboxSemantic(type0, eBoxList[e]);
+        if(res0.semanticLevel<0) res0.outState = 2;//check my semantic, if I failed
         let res1 = checkRoomCrossEBox(newRoom1, eBoxList[e]);
-        console.log("res1");
+        /*console.log("res1");
         console.log(res1);
         console.log("newRoom1");
-        console.log(newRoom1);
+        console.log(newRoom1);*/
+        res1.semanticLevel = checkRoomEboxSemantic(type1, eBoxList[e]);
+        if(res1.semanticLevel<0) res1.outState = 2;//check my semantic, if I failed
         if(res0.outState == 2 && res1.outState == 2){
             eva[2]=eva[2].concat([{eBoxId:e, roomId:eBoxList[e].roomId, outState:3}]);
         }else if(res0.outState == 2){ let res = res1;
-            eva[1]=eva[1].concat([{eBoxId:e, roomId:newRoom1.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState}]);
+            eva[1]=eva[1].concat([{eBoxId:e, roomId:newRoom1.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
         }else if(res1.outState == 2){ let res = res0;
-            eva[0]=eva[0].concat([{eBoxId:e, roomId:newRoom0.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState}]);
+            eva[0]=eva[0].concat([{eBoxId:e, roomId:newRoom0.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
         }else{
             console.log("some ebox is regarded as belonging to both room while seperating");
         }
-    }console.log(eva);
+    }//console.log(eva);
     return eva;
 }
 
@@ -661,16 +690,18 @@ function seperationAction(roomId, roomshape, tp, cal){
     };  }
     arrayOfRooms[roomId].eBoxList = JSON.parse(JSON.stringify(cal));
     arrayOfRooms[roomId].edgeList = JSON.parse(JSON.stringify(visualRoom(roomshape)));
-    for(let ii=0;ii<4;++ii){console.log("roomId " + String(roomId) + "  edgeId " + String(ii));
+    /*for(let ii=0;ii<4;++ii){console.log("roomId " + String(roomId) + "  edgeId " + String(ii));
     console.log(arrayOfRooms[roomId].edgeList[ii].point[0][0]);
     console.log(arrayOfRooms[roomId].edgeList[ii].point[0][1]);
     console.log(arrayOfRooms[roomId].edgeList[ii].point[1][0]);
-    console.log(arrayOfRooms[roomId].edgeList[ii].point[1][1]);}
+    console.log(arrayOfRooms[roomId].edgeList[ii].point[1][1]);}*/
     for(let i = 0; i < arrayOfRooms[roomId].edgeList.length; ++i){
         arrayOfRooms[roomId].edgeList[i].roomId=roomId;
     }
-    arrayOfRooms[roomId].type = tp;
-        
+    arrayOfRooms[roomId].type = tp;console.log(roomSemanticState);
+    while(roomSemanticState.length <= roomId){roomSemanticState=roomSemanticState.concat([[]]);}
+    while(roomSemanticState[roomId].length < roomTypeSemanticLevels[tp].length){roomSemanticState[roomId]=roomSemanticState[roomId].concat([0]);}
+
     for(let i = 0; i < cal.length; ++i){
         //console.log(arrayOfRooms[cal[i].roomId].eBoxList[i]);
         arrayOfRooms[roomId].eBoxList[i].roomId = roomId;
@@ -695,6 +726,9 @@ function seperationAction(roomId, roomshape, tp, cal){
                 transformObject3DOnly(obj.key, obj.position, 'position');
             }
         }
+
+        roomSemanticState[roomId][checkRoomEboxSemantic(tp,arrayOfRooms[roomId].eBoxList[i])] = 1;
+
     }
     updateNeighbours(roomId);
     console.log(arrayOfRooms[roomId]);
@@ -890,13 +924,83 @@ function toEbox(p0, p1){ //console.log(p0);console.log(p1);
     return ebox;
 }
 
+var roomTypeSemanticLevelEboxes = {};
+var roomSemanticState = [[]];
+function searchBoxBasic(currentRoom){
+    if(!(currentRoom.type in roomTypeSemanticLevelEboxes)){
+        //load all things related to this function from the backend
+        roomTypeSemanticLevelEboxes[currentRoom.type] = [];
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/eboxes/${currentRoom.type}`,
+            async: false,
+            success: function (msg) {
+                roomTypeSemanticLevelEboxes[currentRoom.type] = msg.ls;
+                //alert(msg);
+            }
+        });
+    }
+
+    while(roomSemanticState.length <= currentRoom.id){
+        roomSemanticState=roomSemanticState.concat([[]]);
+    }
+    
+    //search something under current situation
+    if(currentRoom.type == "bedroom"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0];
+        
+        if(roomSemanticState[currentRoom.id][0] == 0){console.log("bedroom level 0");
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];
+        }else if(roomSemanticState[currentRoom.id][1] == 0){console.log("bedroom level 1");
+            return roomTypeSemanticLevelEboxes[currentRoom.type][1];
+        }else {
+            return [];
+        }
+    }
+    else if(currentRoom.type == "livingroom"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0,0];
+
+        if(roomSemanticState[currentRoom.id][0] == 0){
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+        }else if(roomSemanticState[currentRoom.id][1] == 0){
+            return roomTypeSemanticLevelEboxes[currentRoom.type][1];
+        }else if(roomSemanticState[currentRoom.id][2] == 0){
+            return roomTypeSemanticLevelEboxes[currentRoom.type][2];
+        }else {
+            return [];
+        }
+    }else if(currentRoom.type == "diningroom"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
+
+        if(currentRoom.eBoxList.length == 0){
+            return searchBoxBasicBuffer[currentRoom.id][0];//
+        }else {
+            return [];
+        }
+    }else if(currentRoom.type == "bathroom"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
+        
+        if(currentRoom.eBoxList.length == 0){
+            return searchBoxBasicBuffer[currentRoom.id][0];//
+        }else {
+            return [];
+        }
+    }else{
+        alert("unimplemented function");
+    }
+
+    return [];
+}
+
 function adding(info){
     currentRoom = arrayOfRooms[info.roomid];//.eBoxList;///console.log(currentRoom);
     
     var funcBoxes = searchBoxBasic(currentRoom);
     for(let f=0; f<funcBoxes.length;++f){
         let box = searchingBox(funcBoxes[f], currentRoom)
-        if(box){
+        if(box){ console.log("selected funcbox id " + String(f));
             let eid = addingCalc(box, info.roomid);
             addingAct(info.roomid, eid); break;
         }
@@ -917,53 +1021,6 @@ function transformBox(f,spin,trans,scale){///console.log(f);
     return e;
 }
 
-var searchBoxBasicBuffer = [];
-function searchBoxBasic(currentRoom){
-    if(searchBoxBasicBuffer.length <= currentRoom.id){
-        //load all things related to this function from the backend
-        while(searchBoxBasicBuffer.length <= currentRoom.id){searchBoxBasicBuffer = searchBoxBasicBuffer.concat([{}]);}
-
-        $.ajax({
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            url: `/eboxes/${currentRoom.type}`,
-            async: false,
-            success: function (msg) {
-                searchBoxBasicBuffer[currentRoom.id] = msg.ls;
-                //alert(msg);
-            }
-        });
-
-    }
-    
-    //search something under current situation
-    if(currentRoom.type == "bedroom"){
-        if(currentRoom.eBoxList.length == 1){
-            return [searchBoxBasicBuffer[currentRoom.id][1]];//
-        }else if(currentRoom.eBoxList.length == 0){
-            return [searchBoxBasicBuffer[currentRoom.id][0]];
-        }else {
-            return [];
-        }
-    }
-    else if(currentRoom.type == "livingroom"){
-        if(currentRoom.eBoxList.length == 0){
-            return [searchBoxBasicBuffer[currentRoom.id][0]];//
-        }else {
-            return [];
-        }
-    }else if(currentRoom.type == "diningroom"){
-        if(currentRoom.eBoxList.length == 0){
-            return [searchBoxBasicBuffer[currentRoom.id][0]];//
-        }else {
-            return [];
-        }
-    }else{
-        alert("unimplemented function");
-    }
-
-    return [];
-}
 
 let lock=2;
 function searchingBox(funcBox, currentRoom){ //if(lock==0){return false;}else{lock-=1;}
@@ -1065,10 +1122,12 @@ function addingCalc(box, i){
             }
         }
     }
+    let currentRoom = arrayOfRooms[i];
     box.eBoxId = currentRoom.eBoxList.length;
     box.roomId = i;
     currentRoom.eBoxList = currentRoom.eBoxList.concat([box]);
-    //console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
+    roomSemanticState[i][checkRoomEboxSemantic(currentRoom.type,box)] = 1;
+    console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
     return box.eBoxId;
 }
 
