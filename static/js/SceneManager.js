@@ -213,7 +213,10 @@ class SceneManager {
         }
         this.defaultCWFMaterial = getMaterial('/GeneralTexture/51124.jpg');
         this.scene_json = scene_json;
-        this.refresh_wall_and_floor();
+        if('wall_width' in scene_json)
+            this.refresh_wall_and_floor(scene_json.wall_width);
+        else
+            this.refresh_wall_and_floor();
         this.refresh_instances();
         this.refresh_light();
         if (refresh_camera) {
@@ -240,7 +243,7 @@ class SceneManager {
         spotLight.target.position.set(lx_level, 0, lz_level);
     }
 
-    refresh_wall_and_floor = () => {
+    refresh_wall_and_floor = (wall_width = 0.25) => {
         this.cwfCache = [];
         this.fCache = []; 
         this.wfCache = []; 
@@ -248,7 +251,7 @@ class SceneManager {
         this.newWallCache = [];
         this.useNewWall = USE_NEW_WALL;
         if (this.useNewWall)
-            this.reconstructWalls();
+            this.reconstructWalls(wall_width);
         var self = this;
         for (var i = 0; i < this.scene_json.rooms.length; i++) {
             self.load_cwf_room_meta(this.scene_json.rooms[i])
@@ -508,7 +511,7 @@ class SceneManager {
         this.wallGroup.push(wg);
     }
 
-    reconstructWalls = () => {
+    reconstructWalls = (wall_width = 0.25) => {
         var self = this;
         this.walls = { x: [{}, {}], z: [{}, {}] };
         this.wallGroup = [];
@@ -577,7 +580,7 @@ class SceneManager {
                 let seg0 = [...wall0[k0]];
                 for (let k1 of key1) {
                     if (k0 > k1) continue;
-                    if (k0 + 0.25 < k1) break;
+                    if (k0 + wall_width < k1) break;
                     let tmpSeg=[];
                     for (let i = 0; i < seg0.length; ++i) {
                         let w0 = wall0[k0][i];
@@ -606,12 +609,12 @@ class SceneManager {
                 }
                 
                 for (let w0 of seg0)
-                    this.addWallGroup(axis, k0, k0+0.24, w0);
+                    this.addWallGroup(axis, k0, k0+wall_width - 0.01, w0);
             }
             for (let k1 of key1)
                 for (let w1 of wall1[k1])
                     if (!w1[2])
-                        this.addWallGroup(axis, k1 - 0.24, k1, w1);
+                        this.addWallGroup(axis, k1 - wall_width + 0.01, k1, w1);
         }
 
         for (let wg of this.wallGroup) {
@@ -719,7 +722,7 @@ class SceneManager {
                         let pos = attr.position.array;
                         for (let i = axis == "x" ? 0 : 2; i < pos.length; i += 3) {
                             let q = axis == "x" ? pos[i + 2] : pos[i - 2];
-                            if (q < wg.seg[0] - 0.25 || q > wg.seg[1] + 0.25) continue;
+                            if (q < wg.seg[0] - wall_width || q > wg.seg[1] + wall_width) continue;
                             if (Math.abs(pos[i] - wg.coor[0]) < 0.001) {
                                 pIdList[0].push(i);
                             } else if (Math.abs(pos[i] - wg.coor[1]) < 0.001) {
@@ -748,7 +751,7 @@ class SceneManager {
                 let offsetq = axis == "x" ? instance.position.z : instance.position.x;
                 for (let i = axis == "x" ? 0 : 2; i < pos.length; i += 3) {
                     let q = axis == "x" ? pos[i + 2] : pos[i - 2];
-                    if (offsetq + q < wg.seg[0]-0.25 || offsetq + q > wg.seg[1]+0.25) continue;
+                    if (offsetq + q < wg.seg[0]-wall_width || offsetq + q > wg.seg[1]+wall_width) continue;
                     if (Math.abs(offsetp + pos[i] - coor[0])<0.001) {
                         pIdList[0].push(i);
                     } else if (Math.abs(offsetp + pos[i] - coor[1])<0.001) {

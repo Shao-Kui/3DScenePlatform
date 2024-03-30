@@ -4000,9 +4000,9 @@ function recreate_room()//复原roomshape
             {
                 const k = j == new_room.roomShape.length - 1 ? 0 : j + 1;
                 if(Math.abs(new_room.roomShape[j][0] - new_room.roomShape[k][0]) < 1e-7)
-                    new_room.roomNorm.push([new_room.roomShape[j][1] < new_room.roomShape[k][1] ? 1 : -1, 0]);
+                    new_room.roomNorm.push([new_room.roomShape[j][1] < new_room.roomShape[k][1] ? -1 : 1, 0]);
                 else
-                    new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? -1 : 1]);
+                    new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? 1 : -1]);
             }
             if("eBoxList" in arrayOfRooms[i])
             {
@@ -4037,6 +4037,7 @@ function recreate_room()//复原roomshape
             new_json.rooms.push(new_room);
         }
     }
+    new_json.wall_width = 0.01;
     // console.log(new_json);
     refreshSceneByJson(new_json);
 }
