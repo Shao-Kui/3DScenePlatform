@@ -674,12 +674,31 @@ function seperationCalculation(eBoxList, roomshape, tp, evaluation){
     return arrayOfRooms[currentRoomId].eBoxList; //就它的ebox吧
 }
 
-function seperationRemoving(evaluation2){
+function seperationRemoving(evaluation2, room0Id, room1Id){
     for(let e=0; e<evaluation2.length; ++e){
         let ebox=arrayOfRooms[evaluation2[e].roomId].eBoxList[evaluation2[e].eBoxId];
         for(let o = 0; o < ebox.objList.length; ++o){
             removeObjectByUUID(ebox.objList[o].key);
         }
+    }
+}
+
+function seperationReloading(bids, room0Id, room1Id){
+    for(let b=0; b<bids.length; ++b){
+
+        let funcBox = searchOriginalFuncBox(bids[b]);
+        let box = searchingBox(funcBox, arrayOfRooms[room0Id]);
+        if(box){ //console.log("selected funcbox id " + String(f));
+            let eid = addingCalc(box, room0Id);
+            addingAct(room0Id, eid); continue;
+        }
+
+        box = searchingBox(funcBox, arrayOfRooms[room1Id]);
+        if(box){ //console.log("selected funcbox id " + String(f));
+            let eid = addingCalc(box, room1Id);
+            addingAct(room1Id, eid); continue;
+        }
+
     }
 }
 
@@ -749,10 +768,13 @@ function seperating(eBoxList, room0, room1, evaluation){
     var calculation0 = seperationCalculation(eBoxList, room0.room_shape, room0.type, evaluation[0]);
     console.log(room1.room_shape);
     var calculation1 = seperationCalculation(eBoxList, room1.room_shape, room1.type, evaluation[1]);
-    seperationRemoving(evaluation[2]);
+    var bids = seperationRemoving(evaluation[2]);
     seperationAction(parseInt(room0.id), room0.room_shape, room0.type, calculation0); console.log(0);
     console.log(room1.room_shape);
     seperationAction(parseInt(room1.id), room1.room_shape, room1.type, calculation1); console.log(1);
+    
+    seperationReloading(bids, room0.id, room1.id);
+    
     return;
 }
 
@@ -1028,6 +1050,16 @@ function searchBoxBasic(currentRoom){
     return [];
 }
 
+function searchOriginalFuncBox(bid){
+    for(let type in roomTypeSemanticLevelEboxes){
+        for(let i = 0; i < roomTypeSemanticLevelEboxes[type].length; ++i){
+            for(let j = 0; j < roomTypeSemanticLevelEboxes[type][i].length; ++j){
+                if(roomTypeSemanticLevelEboxes[type][i][j].bid == bid) return roomTypeSemanticLevelEboxes[type][i][j];
+            }
+        }
+    }
+}
+
 function adding(info){
     currentRoom = arrayOfRooms[info.roomid];//.eBoxList;///console.log(currentRoom);
     
@@ -1265,7 +1297,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
             }
         }
     }
-    if(arrayOfRooms[r].eBoxList.length > 0){
+    if(arrayOfRooms[r].eBoxList.length > 0 && false){
         console.log(1);
         console.log(arrayOfRooms[r].edgeList[4].point[0][0]);
         console.log(arrayOfRooms[r].edgeList[4].point[0][1]);

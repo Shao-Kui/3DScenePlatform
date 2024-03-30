@@ -3727,7 +3727,7 @@ function deleteEdge(sig){
             arrayOfLines.splice(sig1,3);
         }
 
-    }else{
+    }/*else{
         if(rl[0] == rl2[0]){
             let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
             let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
@@ -3755,7 +3755,7 @@ function deleteEdge(sig){
         scene.remove(arrayOfLines[sig]);
         arrayOfLines.splice(sig,1);
 
-    }
+    }*/
 
     //arrayOfRooms = {};      //每个房间只有“点索引表”，
     //roomIndexCounter = 0;
@@ -3820,6 +3820,30 @@ var follow_mouse_mode = 0;
 var shutPoint = [0,0];
 var backPoint = [0,0];
 var lastPoint = [0,0];
+
+function shortWallSwap(sig, check_res, target_value, last_value){
+    var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (sig+1)%(arrayOfLines.length);
+
+    if(arrayOfLines[sig1].length<0.1){
+        var obj = arrayOfLines[sig1];//选中的直线，index为线的下标
+        var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+        var room_id = room_and_line_id[0];
+        var line_id = room_and_line_id[1];
+        arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(last_value-target_value);
+        //dir:[Math.sign(lp[1]-tp[1]),Math.sign(tp[0]-lp[0])]
+    }
+    if(arrayOfLines[sig2].length<0.1){
+        var obj = arrayOfLines[sig2];//选中的直线，index为线的下标
+        var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+        var room_id = room_and_line_id[0];
+        var line_id = room_and_line_id[1];
+        arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(target_value-last_value);
+    }
+
+    return;
+}
+
 function follow_mouse(){
     var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);//追踪鼠标在地面的投影，因此求交是与地面
     var pt = intersect[0].point;//鼠标触碰地面的点
@@ -3882,6 +3906,7 @@ function follow_mouse(){
         }else if(0.3<Math.abs(ptPoint[check_res-1]-shutPoint[check_res-1])){//else if我的临边长度都大于0.3
             follow_mouse_mode=1;//拉动状态
             targetValue = ptPoint[check_res-1]; lastValue = shutPoint[check_res-1];
+            shortWallSwap(now_move_index, check_res, targetValue, lastValue);
             
         }else{actInfo.flag=false;}//在状态内部是不移动边的，但last还要正常设置
     }
