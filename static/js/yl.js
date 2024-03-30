@@ -524,18 +524,20 @@ function newRoomOut(room, roomShape, newRoomId=-1){
 const roomTypeSemanticLevels={
     "livingroom":["sofa","dining table","desk"],
     "kitchen":[],
-    "bathroom":["a"],
+    "bathroom":["a"],//(847,860)
     "balcony":[],
     "bedroom":["bed","desk"],
     "diningroom":["dining table"],
-    "storage":[],
+    "storage":["b"], //[558,683,684,687]
     "study":["desk"]
 }
 
 function checkRoomEboxSemantic(roomType, ebox){
     if(roomType=="bathroom"){ return ebox.bid<860 && ebox.bid>847 ? 0:-1;}
+    if(roomType=="kitchen"){ return ebox.bid<865 && ebox.bid>859 ? 0:-1;}
+    if(roomType=="storage"){ return (ebox.bid in [558,683,684,687]) ? 0:-1;}
     for(let i=0; i<roomTypeSemanticLevels[roomType].length; ++i){
-        let nm = roomTypeSemanticLevels[roomType][i]; console.log(nm);
+        let nm = roomTypeSemanticLevels[roomType][i]; //console.log(nm);
         for(let o=0; o<ebox.objList.length; ++o){
             console.log(ebox.objList[o].cs.toLowerCase());
             if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;
@@ -978,7 +980,7 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
 
         if(currentRoom.eBoxList.length == 0){
-            return searchBoxBasicBuffer[currentRoom.id][0];//
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
@@ -986,10 +988,30 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
         
         if(currentRoom.eBoxList.length == 0){
-            return searchBoxBasicBuffer[currentRoom.id][0];//
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
+    }else if(currentRoom.type == "storage"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
+        
+        if(currentRoom.eBoxList.length == 0){
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+        }else {
+            return [];
+        }
+    }else if(currentRoom.type == "kitchen"){
+        if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
+        
+        if(currentRoom.eBoxList.length == 0){
+            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+        }else {
+            return [];
+        }
+    }else if(currentRoom.type == "balcony"){
+        roomSemanticState[currentRoom.id]=[];
+        
+        return [];
     }else{
         alert("unimplemented function");
     }
