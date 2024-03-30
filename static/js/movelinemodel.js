@@ -50,13 +50,13 @@ const room_type_mismatch_penalty = [
 ];
 
 const min_side_length = {
-    "livingroom":4,
-    "diningroom":3,
-    "kitchen":3,
-    "bathroom":1.5,
-    "balcony":1,
-    "storage":1,
-    "bedroom":3
+    "livingroom":5,
+    "diningroom":4,
+    "kitchen":4,
+    "bathroom":2.5,
+    "balcony":2,
+    "storage":2,
+    "bedroom":5
 };
 
 const room_link_distribution = {
@@ -462,7 +462,8 @@ function room_division_decide(room,line_id)
                 if(!debugHJK)eva = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type);
                 room_type_counter[room_type_to_id_map[roomtype]] += 1;
                 const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
-                + C_type * get_room_type_evaluation(room_type_counter) - eva.removedBox * 10;
+                + C_type * get_room_type_evaluation(room_type_counter) - eva[3].removedBox * 10;
+                // console.log(eva);
                 room_type_counter[room_type_to_id_map[roomtype]] -= 1;
                 // console.log("Value of split:");
                 // console.log(cur_val);
