@@ -1276,7 +1276,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                 else if(a==1 || a==3){
                     console.log("cross");
                 }
-                if(ii==4 && jj==1){
+                if(ii==4 && jj==1 && false){
                     console.log("a here");
                     console.log(a);
                     console.log(ii);
@@ -1314,8 +1314,8 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
         console.log(arrayOfRooms[r].eBoxList[0].edgeList[1].dir[0]);
         console.log(arrayOfRooms[r].eBoxList[0].edgeList[1].dir[1]);
     }
-    console.log("updateNeighbours");
-    console.log(arrayOfRooms[r].edgeList);
+    //console.log("updateNeighbours");
+    //console.log(arrayOfRooms[r].edgeList);
     //console.log(arrayOfRooms[r].eBoxList[0].edgeList);
 
     for(let i = 0; i < arrayOfRooms[r].eBoxList.length; ++i){
