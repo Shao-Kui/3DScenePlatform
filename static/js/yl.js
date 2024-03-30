@@ -675,12 +675,14 @@ function seperationCalculation(eBoxList, roomshape, tp, evaluation){
 }
 
 function seperationRemoving(evaluation2, room0Id, room1Id){
+    var bids=[];
     for(let e=0; e<evaluation2.length; ++e){
         let ebox=arrayOfRooms[evaluation2[e].roomId].eBoxList[evaluation2[e].eBoxId];
         for(let o = 0; o < ebox.objList.length; ++o){
             removeObjectByUUID(ebox.objList[o].key);
-        }
+        }bids=bids.concat([ebox.bid]);
     }
+    return bids;
 }
 
 function seperationReloading(bids, room0Id, room1Id){
