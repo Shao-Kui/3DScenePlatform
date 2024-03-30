@@ -3,7 +3,7 @@ const area_distribution = {
     "diningroom":[9.502216889056243,13.928773352224832],
     "kitchen":[9.424599317113867,3.1243986198765556],
     "bathroom":[9.773808768026618,1.6098949048550089],
-    "balcony":[4.0439683698808535,4.463824697714653],
+    // "balcony":[4.0439683698808535,4.463824697714653],
     "storage":[3.4083905823027605,3.6633656211885017],
     "bedroom":[15.331962509888777,10.288293423901251],
     // "entrance":[4.2053069540373595,10.083163192657635]
@@ -39,13 +39,13 @@ const room_type_to_id_map = {
 };
 
 const room_type_mismatch_penalty = [
-    [4,10],
+    [6,10],
     [1,10],
     [2,10],
     [1,3],
-    [1,1],
-    [1,1],
-    [1,1],
+    [0.5,3],
+    [0.5,3],
+    [0.5,3],
     [1,3]
 ];
 
@@ -53,9 +53,9 @@ const min_side_length = {
     "livingroom":5,
     "diningroom":4,
     "kitchen":4,
-    "bathroom":2.5,
-    "balcony":2,
-    "storage":2,
+    "bathroom":4,
+    "balcony":3,
+    "storage":3,
     "bedroom":5
 };
 
@@ -77,7 +77,7 @@ const room_link_distribution = {
  'storage_bedroom': 410, 
  'diningroom_bedroom': 306, 
  'diningroom_bathroom': 186, 
- 'bathroom_bathroom': 476, 
+//  'bathroom_bathroom': 476, 
  'diningroom_balcony': 63, 
  'bathroom_balcony': 293, 
  'storage_bathroom': 57, 
@@ -95,7 +95,7 @@ function get_room_type_evaluation(current_room_type)
         for(let j = 0; j < room_type_count; j++)
         {
             if(current_room_type[j] < room_type_distribution[i][0][j])
-            tmp_res += Math.exp(room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
+            tmp_res += room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]);
             else tmp_res += Math.exp(room_type_mismatch_penalty[j][1] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
         }
         res += tmp_res * room_type_distribution[i][1];
@@ -206,7 +206,7 @@ function calculate_room_division_evaluation(points, type){
 
     return - C_3 * Math.exp(real_boundary_points) 
     + C_4 * Math.log(area / outer_area / 0.75) 
-    + C_5 * Math.log(normal_distribution_pdf(area,area_distribution[type][0],area_distribution[type][1]))
+    + C_5 * Math.log(normal_distribution_pdf(area * 0.6,area_distribution[type][0],area_distribution[type][1]))
     + C_6 * Math.tan(Math.PI / 4 * Math.min(-1 ,min_edge / min_side_length[type] * 0.5 - 2));
 }
 
