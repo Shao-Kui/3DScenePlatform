@@ -61,7 +61,7 @@ function clearNeighbour(ed){
         let e = arrayOfRooms[vi.roomId].eBoxList[vi.eBoxId].edgeList[vi.edgeId];
         for(let j = 0; j < e.neighbourEdge.length; ++j){
             let vj = e.neighbourEdge[j];
-            if(vj.roomId == ed.roomId && vj.edgeId == ed.edgeId && vj.eBoxId == vj.eBoxId){
+            if(vj.roomId == ed.roomId && vj.edgeId == ed.edgeId && vj.eBoxId == -1){
                 e.neighbourEdge.splice(j,1); break;
             }
         }
@@ -332,7 +332,7 @@ function inOrOut(room, elasticBox){
                 console.log(ed.dir[1]);*/
                 if(Math.abs(ed.dir[0])==Math.abs(ray.dir[0]) && Math.abs(ed.dir[1])==Math.abs(ray.dir[1])){
                     let dis = Math.abs(ed.dir[0])>Math.abs(ed.dir[1])?Math.abs(ed.point[0][0]-ray.point[0][0]):Math.abs(ed.point[0][1]-ray.point[0][1]);
-                    console.log(dis);
+                    //console.log(dis);
                     if(dis<0.01) hintReject = true;
                 }
                 if(hintReject) break;
@@ -539,7 +539,7 @@ function checkRoomEboxSemantic(roomType, ebox){
     for(let i=0; i<roomTypeSemanticLevels[roomType].length; ++i){
         let nm = roomTypeSemanticLevels[roomType][i]; //console.log(nm);
         for(let o=0; o<ebox.objList.length; ++o){
-            console.log(ebox.objList[o].cs.toLowerCase());
+            //console.log(ebox.objList[o].cs.toLowerCase());
             if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;
         }
     }
@@ -720,7 +720,9 @@ function seperationAction(roomId, roomshape, tp, cal){
                 obj.position[0] = Math.cos(obj0.orient) * obj.tr[0] + Math.sin(obj0.orient) * obj.tr[2] + obj0.position[0];
                 obj.position[1] = obj.tr[1] + obj0.position[1];
                 obj.position[2] = Math.cos(obj0.orient) * obj.tr[2] - Math.sin(obj0.orient) * obj.tr[0] + obj0.position[2];
-                transformObject3DOnly(obj.key, obj.position, 'position');
+                try{
+                    transformObject3DOnly(obj.key, obj.position, 'position');
+                }catch(error){}
             }
             else{
                 let wall = arrayOfRooms[roomId].eBoxList[i].edgeList[obj.wallid];
@@ -728,7 +730,9 @@ function seperationAction(roomId, roomshape, tp, cal){
                 obj.position[0] = wall.point[0][0]*obj.ver+wall.point[1][0]*(1-obj.ver)+wall.dir[0]*obj.dis;
                 obj.position[1] = obj.height;
                 obj.position[2] = wall.point[0][1]*obj.ver+wall.point[1][1]*(1-obj.ver)+wall.dir[1]*obj.dis;
-                transformObject3DOnly(obj.key, obj.position, 'position');
+                try{
+                    transformObject3DOnly(obj.key, obj.position, 'position');
+                }catch(error){}
             }
         }
 
@@ -772,6 +776,11 @@ function recur(info, path){
     //info.edgeId:?
     //var newEdgeId = (info.edgeId + 2)%4;
     var s = (Math.abs(path.dir[0]) > Math.abs(path.dir[1]))?0:1;
+    //console.log(arrayOfRooms[info.roomId].edgeList[info.edgeId]);//return;
+    if(info.eBoxId != -1){
+    if(arrayOfRooms[info.roomId].eBoxList[info.eBoxId].edgeList[info.edgeId].neighbourEdge.length>1 && path.dir[s] == -arrayOfRooms[info.roomId].eBoxList[info.eBoxId].edgeList[info.edgeId].dir[s]){
+        return {flexLength:path.flexLength, moveLength:path.length, history:[]};
+    }}
     var currentEdge = info.eBoxId == -1 ? arrayOfRooms[info.roomId].edgeList[info.edgeId] : arrayOfRooms[info.roomId].eBoxList[info.eBoxId].edgeList[(info.edgeId+2)%4];
     var currentEBox = info.eBoxId == -1 ? null : arrayOfRooms[info.roomId].eBoxList[info.eBoxId];
     //console.log(currentEBox);
@@ -956,9 +965,9 @@ function searchBoxBasic(currentRoom){
     if(currentRoom.type == "bedroom"){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0];
         
-        if(roomSemanticState[currentRoom.id][0] == 0){console.log("bedroom level 0");
+        if(roomSemanticState[currentRoom.id][0] == 0){//console.log("bedroom level 0");
             return roomTypeSemanticLevelEboxes[currentRoom.type][0];
-        }else if(roomSemanticState[currentRoom.id][1] == 0){console.log("bedroom level 1");
+        }else if(roomSemanticState[currentRoom.id][1] == 0){//console.log("bedroom level 1");
             return roomTypeSemanticLevelEboxes[currentRoom.type][1];
         }else {
             return [];
@@ -1025,7 +1034,7 @@ function adding(info){
     var funcBoxes = searchBoxBasic(currentRoom);
     for(let f=0; f<funcBoxes.length;++f){
         let box = searchingBox(funcBoxes[f], currentRoom)
-        if(box){ console.log("selected funcbox id " + String(f));
+        if(box){ //console.log("selected funcbox id " + String(f));
             let eid = addingCalc(box, info.roomid);
             addingAct(info.roomid, eid); break;
         }
@@ -1152,7 +1161,7 @@ function addingCalc(box, i){
     box.roomId = i;
     currentRoom.eBoxList = currentRoom.eBoxList.concat([box]);
     roomSemanticState[i][checkRoomEboxSemantic(currentRoom.type,box)] = 1;
-    console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
+    //console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
     return box.eBoxId;
 }
 
@@ -1194,6 +1203,15 @@ function edgeStatus(e,f){ //if(Math.abs(f.dir[0])==0)f.dir[0]=0;if(Math.abs(f.di
     }
     else if(fx == ex && f.dir[fx] == e.dir[ex]){
         if(Math.abs(f.point[0][fx]-e.point[0][ex])<0.05 && Math.max(f.point[0][1-fx],f.point[1][1-fx]) > Math.min(e.point[0][1-ex],e.point[1][1-ex]) && Math.max(e.point[0][1-ex],e.point[1][1-ex]) > Math.min(f.point[0][1-fx],f.point[1][1-fx])){
+            
+            /*console.log("f");
+            console.log(f.roomId);
+            console.log(f.eBoxId);
+            console.log(f.edgeId);
+            console.log("e");
+            console.log(e.roomId);
+            console.log(e.eBoxId);
+            console.log(e.edgeId);*/
             return 2; //face to back close
         }
     }
@@ -1226,26 +1244,35 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
                 else if(a==1 || a==3){
                     console.log("cross");
                 }
-                /*if(a==2){
+                if(ii==4 && jj==1){
                     console.log("a here");
                     console.log(a);
                     console.log(ii);
-                    console.log(edgeList0[ii]);
-                    console.log(j);
+                    console.log(edgeList0[ii].point[0][0]);
+                    console.log(edgeList0[ii].point[0][1]);
+                    console.log(edgeList0[ii].point[1][0]);
+                    console.log(edgeList0[ii].point[1][1]);
+                    console.log(edgeList0[ii].dir[0]);
+                    console.log(edgeList0[ii].dir[1]);
                     console.log(jj);
-                    console.log(edgeList1[jj]);
-                }*/
+                    console.log(edgeList1[jj].point[0][0]);
+                    console.log(edgeList1[jj].point[0][1]);
+                    console.log(edgeList1[jj].point[1][0]);
+                    console.log(edgeList1[jj].point[1][1]);
+                    console.log(edgeList1[jj].dir[0]);
+                    console.log(edgeList1[jj].dir[1]);
+                }
             }
         }
     }
-    /*if(arrayOfRooms[r].eBoxList.length > 0){
+    if(arrayOfRooms[r].eBoxList.length > 0){
         console.log(1);
-        console.log(arrayOfRooms[r].edgeList[1].point[0][0]);
-        console.log(arrayOfRooms[r].edgeList[1].point[0][1]);
-        console.log(arrayOfRooms[r].edgeList[1].point[1][0]);
-        console.log(arrayOfRooms[r].edgeList[1].point[1][1]);
-        console.log(arrayOfRooms[r].edgeList[1].dir[0]);
-        console.log(arrayOfRooms[r].edgeList[1].dir[1]);
+        console.log(arrayOfRooms[r].edgeList[4].point[0][0]);
+        console.log(arrayOfRooms[r].edgeList[4].point[0][1]);
+        console.log(arrayOfRooms[r].edgeList[4].point[1][0]);
+        console.log(arrayOfRooms[r].edgeList[4].point[1][1]);
+        console.log(arrayOfRooms[r].edgeList[4].dir[0]);
+        console.log(arrayOfRooms[r].edgeList[4].dir[1]);
         console.log(0);
         console.log(1);
         console.log(arrayOfRooms[r].eBoxList[0].edgeList[1].point[0][0]);
@@ -1256,7 +1283,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
         console.log(arrayOfRooms[r].eBoxList[0].edgeList[1].dir[1]);
     }
     console.log("updateNeighbours");
-    console.log(arrayOfRooms[r].edgeList);*/
+    console.log(arrayOfRooms[r].edgeList);
     //console.log(arrayOfRooms[r].eBoxList[0].edgeList);
 
     for(let i = 0; i < arrayOfRooms[r].eBoxList.length; ++i){
@@ -1381,9 +1408,7 @@ function act(scheme, realMove, dsMove){
                         obj.position[2] = Math.cos(obj0.orient) * obj.tr[2] - Math.sin(obj0.orient) * obj.tr[0] + obj0.position[2];
                         try{
                             transformObject3DOnly(obj.key, obj.position, 'position');
-                        }catch(error){
-
-                        }
+                        }catch(error){}
                     }
                     else{
                         let wall = arrayOfRooms[scheme.history[i].roomId].eBoxList[scheme.history[i].eBoxId].edgeList[obj.wallid];
@@ -1399,9 +1424,7 @@ function act(scheme, realMove, dsMove){
                         obj.position[2] = wall.point[0][1]*obj.ver+wall.point[1][1]*(1-obj.ver)+wall.dir[1]*obj.dis;
                         try{
                             transformObject3DOnly(obj.key, obj.position, 'position');
-                        }catch(error){
-                            
-                        }
+                        }catch(error){}
                     }
                 }
             }
