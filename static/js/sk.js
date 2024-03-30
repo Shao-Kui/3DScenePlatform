@@ -3486,8 +3486,16 @@ function get_room_and_line_id(start,end)
                     // console.log(start);
                     // console.log(end);
                     // console.log(pt2);
-                    if(!same_point(pt2,end))cut_inner_line(i,j,end);
-                    if(!same_point(pt1,start))cut_inner_line(i,j,start);
+                    if(!same_point(pt2,end))
+                    {
+                        cut_inner_line(i,j,end);
+                        cutting_inner_line(i,j,end);
+                    }
+                    if(!same_point(pt1,start))
+                    {
+                        cut_inner_line(i,j,start);
+                        cutting_inner_line(i,j,start);
+                    }
                     cut_line_found = true;
                     break;
                 }
@@ -3859,7 +3867,7 @@ function follow_mouse(){
     if(now_move_index == -1){console.log("follow_mousewas called before edge selected");}
     
     var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
-    const room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+    var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
     selected_room_id = room_and_line_id[0]; //console.log("selected_room_id");console.log(selected_room_id);
     selected_line_id = room_and_line_id[1]; //console.log("selected_line_id");console.log(selected_line_id);
     check_res = check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2]);
@@ -3867,7 +3875,7 @@ function follow_mouse(){
     var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
     var sig2 = (now_move_index+1)%(arrayOfLines.length);
     var actInfo = {flag:true,pos1:[0,0],pos2:[0,0],moveLength:0,movedir:[0,0]};
-    const pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
+    var pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
     var targetValue = -1, lastValue = -1;
     
     if(follow_mouse_mode==1){//拉动状态
@@ -3919,7 +3927,10 @@ function follow_mouse(){
     }
 
     if(actInfo.flag){
-
+        room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+        selected_room_id = room_and_line_id[0]; //console.log("selected_room_id");console.log(selected_room_id);
+        selected_line_id = room_and_line_id[1]; //console.log("selected_line_id");console.log(selected_line_id);
+        var pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
         if(check_res==1){obj.position.x = targetValue;}
         else{obj.position.z = targetValue;} //console.log(obj);
 

@@ -69,10 +69,10 @@ const room_link_distribution = {
  'kitchen_balcony': 12502, 
  'kitchen_diningroom': 895, 
  'livingroom_diningroom': 1225, 
- 'kitchen_bathroom': 1720, 
+//  'kitchen_bathroom': 1720, 
  'storage_livingroom': 2277, 
 //  'bedroom_bedroom': 858, 
- 'kitchen_bedroom': 308, 
+//  'kitchen_bedroom': 308, 
  'storage_kitchen': 403, 
  'storage_bedroom': 410, 
  'diningroom_bedroom': 306, 
@@ -206,8 +206,8 @@ function calculate_room_division_evaluation(points, type){
 
     return - C_3 * Math.exp(real_boundary_points) 
     + C_4 * Math.log(area / outer_area / 0.75) 
-    + C_5 * Math.log(normal_distribution_pdf(area * 0.6,area_distribution[type][0],area_distribution[type][1]))
-    + C_6 * Math.tan(Math.PI / 4 * Math.min(-1 ,min_edge / min_side_length[type] * 0.5 - 2));
+    + C_5 * Math.log(normal_distribution_pdf(area * 0.75,area_distribution[type][0],area_distribution[type][1]))
+    + C_6 * Math.tan(Math.PI / 4 * Math.min(-1 ,min_edge / min_side_length[type] * 0.3 - 2));
 }
 
 function cut_half_of_room(points,startpoint,endpoint)
