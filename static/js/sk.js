@@ -3735,35 +3735,60 @@ function deleteEdge(sig){
             arrayOfLines.splice(sig1,3);
         }
 
-    }/*else{
-        if(rl[0] == rl2[0]){
-            let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
-            let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
-            let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
+    }else if(rl[0] == rl2[0]){
+        let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+        let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+        let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
 
-            remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
-            remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
-            
-            remove_room_point(pt2id,rl[0]);
-            add_inner_line_between_points(arrayOfRoomPoints[pt1id],arrayOfRoomPoints[pt3id],rl[0])
+        remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+        remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
+        
+        remove_room_point(pt2id,rl[0]);
 
-        }else if(rl[0]==rl1[0]){
-            let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
-            let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
-            let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
-
-            remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
-            remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
-            
-            remove_room_point(pt1id,rl[0]);
-            add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt2id],rl[0])
-
-        }
+        arrayOfInnerLines[rl[0]].splice(pt1id,0,add_inner_line_between_points(arrayOfRoomPoints[pt1id],arrayOfRoomPoints[pt3id],rl[0]));
 
         scene.remove(arrayOfLines[sig]);
-        arrayOfLines.splice(sig,1);
+        scene.remove(arrayOfLines[sig2]);
 
-    }*/
+
+        if(sig == arrayOfLines.length-1){//because the length has just become longer for creating cylinder1
+            createCyliner1(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig+1);
+            arrayOfLines.splice(sig,1);
+            arrayOfLines.splice(0,1);
+        }else{
+            createCyliner1(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig+2);
+            arrayOfLines.splice(sig,2);
+        }
+
+    }else if(rl[0]==rl1[0]){
+        let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
+        let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+        let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+
+        remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+        remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
+        
+        remove_room_point(pt1id,rl[0]);
+
+        arrayOfInnerLines[rl[0]].splice(pt0id,0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt2id],rl[0]));
+
+        scene.remove(arrayOfLines[sig1]);
+        scene.remove(arrayOfLines[sig]);
+        
+        if(sig == 0){
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[1],arrayOfLines[sig].end1[2], sig1+1);
+            arrayOfLines.splice(sig1,1);
+            arrayOfLines.splice(0,1);
+        }else{//because the length has just become longer for creating cylinder1
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[1],arrayOfLines[sig].end1[2], sig1+2);
+            arrayOfLines.splice(sig1,2);
+        }
+
+    }
 
     //arrayOfRooms = {};      //每个房间只有“点索引表”，
     //roomIndexCounter = 0;
@@ -3839,8 +3864,6 @@ function shortWallSwap(sig, check_res, target_value, last_value){
             var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
-            console.log(room_id);
-            console.log(line_id);
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(last_value-target_value);
         }catch(error){}
     }
@@ -3850,8 +3873,6 @@ function shortWallSwap(sig, check_res, target_value, last_value){
             var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
-            console.log(room_id);
-            console.log(line_id);
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(target_value-last_value);
         }catch(error){}
     }
