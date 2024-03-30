@@ -39,9 +39,9 @@ const room_type_to_id_map = {
 };
 
 const room_type_mismatch_penalty = [
-    [4,3],
-    [1,3],
-    [2,3],
+    [4,10],
+    [1,10],
+    [2,10],
     [1,3],
     [1,1],
     [1,1],
@@ -87,16 +87,16 @@ function get_room_type_evaluation(current_room_type)
 {
     const room_type_count = 8;
     let res = 0.0;
-    let current_bedroom_count = current_room_type[room_type_to_id_map['bedroom']];
+    // let current_bedroom_count = current_room_type[room_type_to_id_map['bedroom']];
     for(let i = 0; i < room_type_distribution.length; i++)
     {
         let tmp_res = 0.0;
-        let target_bedroom_count = room_type_distribution[i][0][room_type_to_id_map['bedroom']];
+        // let target_bedroom_count = room_type_distribution[i][0][room_type_to_id_map['bedroom']];
         for(let j = 0; j < room_type_count; j++)
         {
-            if(current_room_type[j] / current_bedroom_count < room_type_distribution[i][0][j] / target_bedroom_count)
-            tmp_res += Math.exp(room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] / current_bedroom_count - room_type_distribution[i][0][j] / target_bedroom_count));
-            else tmp_res += Math.exp(room_type_mismatch_penalty[j][1] * Math.abs(current_room_type[j] / current_bedroom_count - room_type_distribution[i][0][j] / target_bedroom_count));
+            if(current_room_type[j] < room_type_distribution[i][0][j])
+            tmp_res += Math.exp(room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
+            else tmp_res += Math.exp(room_type_mismatch_penalty[j][1] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
         }
         res += tmp_res * room_type_distribution[i][1];
     }
