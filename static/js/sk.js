@@ -4006,11 +4006,13 @@ function recreate_room()//复原roomshape
             }
             if("eBoxList" in arrayOfRooms[i])
             {
-                for(eBox in arrayOfRooms[i]["eBoxList"])
+                for(var eBoxID in arrayOfRooms[i]["eBoxList"])
                 {
-                    for(obj in eBox.objList)
+                    var eBox = arrayOfRooms[i]["eBoxList"][eBoxID];
+                    for(var objID in eBox.objList)
                     {
-                        scene.removeObjectByUUID(obj.key);
+                        var obj = eBox.objList[objID];
+                        removeObjectByUUID(obj.key);
                         var f = 'obj';
                         var stt = 'origin';
                         if('currentState' in obj && isNaN(parseInt(obj.id))){
@@ -4036,7 +4038,7 @@ function recreate_room()//复原roomshape
         }
     }
     // console.log(new_json);
-    manager.renderManager.refresh_scene(new_json, false);
+    refreshSceneByJson(new_json);
 }
 
 function create_dot(x,y,z)//记号点，直线拐弯处补充
