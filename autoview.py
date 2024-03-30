@@ -1523,7 +1523,7 @@ def eboxes(function):
         "kitchen":[[860,861,862,863,864]],
         "bathroom":[[848,849,850,851,852,853,854,855,856,857,858,859]],
         "balcony":[],
-        "bedroom":[[479,507,536,685],[673,841,846]],#,566
+        "bedroom":[[479,507,685],[673,841,846]],#,566  536,
         "diningroom":[[503,533,542,578]],
         "storage":[[558,683,684,687]],
         "study":[[673,841,846]]
@@ -1533,8 +1533,9 @@ def eboxes(function):
     for j in mapping[function]:
         p = []
         for i in j:
-            js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
-            p.append(js)
+            if(random.random()>-0.5):
+                js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
+                p.append(js)
         jsList.append(p)
 
     return {"ls":jsList}

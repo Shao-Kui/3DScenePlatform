@@ -3889,7 +3889,7 @@ function follow_mouse(){
     if(actInfo.flag){
 
         if(check_res==1){obj.position.x = targetValue;}
-        else{obj.position.z = targetValue;} console.log(obj);
+        else{obj.position.z = targetValue;} //console.log(obj);
 
         obj.start1[2-2*(2-check_res)]=targetValue; obj.end1[2-2*(2-check_res)]=targetValue;
         actInfo.pos1[0] = (check_res==1)?targetValue:arrayOfRoomPoints[pointid1].position[0];
