@@ -1533,7 +1533,7 @@ def eboxes(function):
     for j in mapping[function]:
         p = []
         for i in j:
-            if(random.random()>-0.5):
+            if(random.random()>0.5):
                 js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
                 p.append(js)
         jsList.append(p)
