@@ -50,13 +50,13 @@ const room_type_mismatch_penalty = [
 ];
 
 const min_side_length = {
-    "livingroom":5,
+    "livingroom":4,
     "diningroom":4,
     "kitchen":4,
     "bathroom":4,
     "balcony":3,
     "storage":3,
-    "bedroom":5
+    "bedroom":4
 };
 
 const room_link_distribution = {
@@ -440,6 +440,7 @@ function room_division_decide(room,line_id)
             for(const roomtype in area_distribution)//ad)//
             {
                 if(roomtype == 'bathroom' && room.type == 'bedroom' && room.roomLinkCount[room_type_to_id_map['bathroom']] >= 1)continue;
+                // if((room.type == "bathroom" || room.type == "storage") && (roomtype == "kitchen" || roomtype == "livingroom" || roomtype == "bedroom"))continue;
                 if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {
                     "points":[structuredClone(room.room_shape[idx_of_points[1]]),

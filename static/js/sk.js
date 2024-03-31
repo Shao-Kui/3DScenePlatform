@@ -3454,7 +3454,7 @@ const initAttributes = function() {
     });
 }
 
-function get_room_and_line_id(start,end)
+function get_room_and_line_id(start,end,add_point = true)
 {
     //TODO: modify this by checking the point id rather than point coordinates
     for(const i in arrayOfRooms)
@@ -3470,6 +3470,7 @@ function get_room_and_line_id(start,end)
                 return [i,j];
         }
     }
+    if(!add_point)throw new Error("Point not found");
     var cut_line_found = false;
     for(const i in arrayOfRooms)
     {
@@ -3711,7 +3712,7 @@ function deleteEdge(sig){
         
         remove_room_point(pt1id,rl[0]);
         remove_room_point(pt2id,rl[0]);
-        arrayOfInnerLines[rl[0]].splice(pt0id,0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
+        arrayOfInnerLines[rl[0]].splice(rl1[1],0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
         
         scene.remove(arrayOfLines[sig1]);
         scene.remove(arrayOfLines[sig]);
@@ -3871,7 +3872,7 @@ function shortWallSwap(sig, check_res, target_value, last_value){
     if(arrayOfLines[sig1].length<0.1){
         var obj = arrayOfLines[sig1];//选中的直线，index为线的下标
         try{
-            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(last_value-target_value);
@@ -3880,7 +3881,7 @@ function shortWallSwap(sig, check_res, target_value, last_value){
     if(arrayOfLines[sig2].length<0.1){
         var obj = arrayOfLines[sig2];//选中的直线，index为线的下标
         try{
-            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(target_value-last_value);

@@ -992,9 +992,10 @@ var onlineBids=[];
 function searchBoxDetail(roomType, level){
     let i = 0;
     while(i<roomTypeSemanticLevelEboxes[roomType][level].length && onlineBids.indexOf(roomTypeSemanticLevelEboxes[roomType][level][i].bid)>=0) ++i;
-    if(i<roomTypeSemanticLevelEboxes[roomType][level].length){
-        return [roomTypeSemanticLevelEboxes[roomType][level][i]];
-    }
+    // if(i<roomTypeSemanticLevelEboxes[roomType][level].length){
+        // return [roomTypeSemanticLevelEboxes[roomType][level][i]];
+    // }
+    return [roomTypeSemanticLevelEboxes[roomType][level][i % roomTypeSemanticLevelEboxes[roomType][level].length]];
 }
 
 function searchBoxBasic(currentRoom){
