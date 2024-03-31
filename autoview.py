@@ -1519,7 +1519,7 @@ def catimgs(identifier):
 @app_autoView.route("/eboxes/<function>",methods=['POST'])
 def eboxes(function):
     mapping = {
-        "livingroom":[[556,577,595,604,711,738,745,796],[503,533,542,578],[673,841]],
+        "livingroom":[[556,577,595,604,711,738,796],[503,533,542,578],[673,841]],#745
         "kitchen":[[860,861,862,863,864]],
         "bathroom":[[848,849,850,851,852,853,854,855,856,857,858,859]],
         "balcony":[],

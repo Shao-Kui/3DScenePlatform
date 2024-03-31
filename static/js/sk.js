@@ -3835,12 +3835,19 @@ const enter_move_mode_pro = function(event){
             }else{
                 follow_mouse_mode = 1; //拉动
             }
-
-
+            return;
+        }else{
+            can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
+            if(follow_mouse_mode == 3){
+                var sig = (now_move_index+1)%(arrayOfLines.length);
+                if(arrayOfLines[sig].length>0.1)sig=(now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+                deleteEdge(sig);
+            }
+            now_move_index = -1;//全部重置?
         }
     }
     
-    if(!On_LINEMOVE){
+    if(On_LINEMOVE){
         On_LINEMOVE = !On_LINEMOVE;//状态量取非
         can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
         if(follow_mouse_mode == 3){

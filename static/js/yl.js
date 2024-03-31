@@ -850,8 +850,9 @@ function recur(info, path){
         //{edgeId:1, eBoxId:-1,roomId:1, edgeList:[ [point:[[0,0],[0,0]], dir:[0,0]], [point:[[0,0],[0,0]], dir:[0,0]], ...... ],}
         return {flexLength:path.flexLength, moveLength:path.length, history:[newEBox]};
     }
-    
-    if(currentEBox.currentRange[s]>=currentEBox.dirRange[s][1] && (path.dir[s]*currentEdge.dir[s]) > 0.5){
+
+    let rangeMax = currentEBox.dirRange[(currentEdge.edgeId)%2][1];//currentEBox.dirRange[s][1];
+    if(currentEBox.currentRange[s]>=rangeMax && (path.dir[s]*currentEdge.dir[s]) > 0.5){
         //seperate the two boxes evenif they are close to each other. because myself is too large
         let newEBox = JSON.parse(JSON.stringify(currentEBox));
         for(let e = 0; e < newEBox.edgeList.length; ++e){
