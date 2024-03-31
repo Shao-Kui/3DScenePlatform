@@ -1597,6 +1597,7 @@ const setting_up = function () {
                     "father_wall_start":-1,
                     "father_wall_end":-1,
                     "edgeList":[],
+                    "roomLinkCount":[0,0,0,0,0,0,0,0],
                 };
                 if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
