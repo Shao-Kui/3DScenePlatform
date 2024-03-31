@@ -749,17 +749,21 @@ def wall_distance_orient_weiyu():
 origin, xaxis, yaxis, zaxis = [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]
 def wall_distance_orient():
     import trimesh
-    ROOT = './dataset/'
-    level_root = "./dataset/alilevel_oriFix/"
-    room_root = "./dataset/room/"
-    object_root = "./dataset/object/"
-    with open('./dataset/sk_to_ali.json') as f:
-        obj_semantic = json.load(f)
+    # level_root = "./dataset/alilevel_oriFix/"
+    level_root = './layoutmethods/Levels20240331'
+    # room_root = "./dataset/room/"
+    yllist = ["s__973", "395", "670", "669", "668", "633", "672", "671", "665", "666", "405", 
+              "604", "92", "599", "652", "407", "232", "221", "222", "662", "131", "41", "3289", 
+              "7687", "2226", "2054", "5340", "8042", "10697", "81", "83", "447", "448", "s__1319", 
+              "85", "74", "188", "135", "499", "181", "s__557", "s__490", "192", "139", "314", "82", 
+              "s__413", "s__541", "s__491", "328", "150", "183"]
+    # with open('./dataset/sk_to_ali.json') as f:
+    #     obj_semantic = json.load(f)
 
     level_dirs = os.listdir(level_root)
     ds = {}
     objMeshCache = {}
-    for obj in obj_semantic:
+    for obj in yllist:
         ds[obj] = []
     for i in range(0, len(level_dirs)):
         dire = level_dirs[i]
@@ -767,12 +771,13 @@ def wall_distance_orient():
         # if dire not in ['3c29e2e4-4b96-4124-91b6-00580ba3414d.json']:
         #     continue
         print('(%d/%d) tackle ' % (i + 1, len(level_dirs)) + dire)
-        with open(f'./dataset/alilevel_oriFix/{dire}', 'r') as f:
+        with open(f'./layoutmethods/Levels20240331/{dire}', 'r') as f:
             h = json.load(f)
         for i in range(0, len(h['rooms'])):
             room = h['rooms'][i]
             try:
-                shape = processGeo(room_root + '/' + room['origin'], room['modelId'] + 'f.obj')
+                # shape = processGeo(room_root + '/' + room['origin'], room['modelId'] + 'f.obj')
+                shape = np.array(room['roomShape'])
             except Exception as e:
                 continue
             if len(shape) <= 2:
@@ -780,7 +785,7 @@ def wall_distance_orient():
             for i in range(len(room['objList'])):
                 obji = room['objList'][i]
 
-                if obji['modelId'] not in obj_semantic:
+                if obji['modelId'] not in yllist:
                     continue
                 if 'translate' not in obji:
                     continue
@@ -854,9 +859,9 @@ def wall_distance_orient():
         if len(ds[obji]) == 0:
             continue
         print('(%d/%d) saving ' % (cnt, len(ds)) + obji)
-        if os.path.exists(f'./latentspace/{wdotdirname}') is False:
-            os.mkdir(f'./latentspace/{wdotdirname}')
-        with open(f'./latentspace/{wdotdirname}/{obji}.json', 'w') as f:
+        if os.path.exists(f'./{wdotdirname}') is False:
+            os.mkdir(f'./{wdotdirname}')
+        with open(f'./{wdotdirname}/{obji}.json', 'w') as f:
             json.dump(ds[obji], f)
         cnt+=1
 
@@ -900,10 +905,10 @@ if __name__ == "__main__":
     # get_norm = True
     # file_search('/Users/ervinxie/Research/Fast3DISS/00a4ff0c-ec69-4202-9420-cc8536ffffe0')
 
-    # wall_distance_orient()
-    p = Polygon(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj'))
+    wall_distance_orient()
+    # p = Polygon(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj'))
     # print(Polygon(processGeo('./dataset/room/3a3fea81-7302-4de5-8249-1958954fe769', 'MasterBedroom-6118f.obj')))
-    print(p.area)
+    #print(p.area)
     # file_search('/Users/ervinxie/Desktop/suncg/room/3e60029ce929bf20fd66204028a72c1b')
     # process('.', 'fr_0rm_0f.obj')
 

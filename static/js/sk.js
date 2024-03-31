@@ -964,8 +964,7 @@ function onDocumentMouseMove(event) {
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache).concat(arrayOfLines);//TODO .concat(manager.renderManager.newWallCache).
     let intersects = raycaster.intersectObjects(
-        instanceKeyCache,
-        //.concat(Object.values(manager.renderManager.fCache))
+        instanceKeyCache.concat(Object.values(manager.renderManager.fCache)),
         //.concat(Object.values(manager.renderManager.wCache))
         true
     );
@@ -1037,6 +1036,7 @@ function onDocumentMouseMove(event) {
     if(On_CGSeries){
         moveCGSeries();
     }
+    tf.engine().endScope();
     if (On_ROTATE && INTERSECT_OBJ != null) {
         var rtt_pre = new THREE.Vector2();
         var rtt_nxt = new THREE.Vector2();
