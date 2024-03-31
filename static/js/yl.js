@@ -551,7 +551,7 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
     //其实每一个弹性盒是属于0还是属于1（甚至是哪条边应该往哪里移动）还是都不属于应该删了就可以从这里给出了。
     //存在evaluation里
     //因为这些内容其实都是在你评估房间划分时需要捎带手去做的。
-    var eva = [[],[],[],{removedBox:0,confiltBox:0,conflictDis:0,removedBoxes:[], reloadBox:0}];
+    var eva = [[],[],[],{removedBox:0,confiltBox:0,conflictDis:0,removedBoxes:[],reloadBox:0}];
 
     let virtualRoomIndex = 100; //while(virtualRoomIndex in arrayOfRooms){virtualRoomIndex++;}
     var newRoom0 = {id:virtualRoomIndex, type:type0, edgeList:JSON.parse(JSON.stringify(visualRoom(roomshape0)))};
@@ -593,18 +593,6 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
         if(res0.outState == 2 && res1.outState == 2){
             eva[2]=eva[2].concat([{eBoxId:e, roomId:eBoxList[e].roomId, outState:3}]);
             eva[3].removedBox+=1; eva[3].removedBoxes = eva[3].removedBoxes.concat([res0.semanticLevel]);
-            
-            let funcBox = searchOriginalFuncBox(eBoxList[e].bid);
-            let box = 0;
-            if(res0.semanticLevel>=0){
-                box = searchingBox(funcBox, newRoom0);
-            }else if(res1.semanticLevel>=0){
-                box = searchingBox(funcBox, newRoom1);
-            }
-            if(box){ //console.log("selected funcbox id " + String(f));
-                eva[3].reloadBox+=1;
-            }
-
         }else if(res0.outState == 2){ let res = res1;
             eva[1]=eva[1].concat([{eBoxId:e, roomId:newRoom1.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
             if(res1.outState>0){eva[3].conflictBox+=1; for(let j=0;j<res.diss;++j)eva[3].conflictDis+=res.diss[j]; }
@@ -691,6 +679,7 @@ function seperationRemoving(evaluation2, room0Id, room1Id){
         for(let o = 0; o < ebox.objList.length; ++o){
             removeObjectByUUID(ebox.objList[o].key);
         }bids=bids.concat([ebox.bid]);
+        onlineBids=onlineBids.filter(function(it){return it != ebox.bid;});
     }
     return bids;
 }
@@ -974,6 +963,15 @@ function toEbox(p0, p1){ //console.log(p0);console.log(p1);
 
 var roomTypeSemanticLevelEboxes = {};
 var roomSemanticState = [[]];
+var onlineBids=[];
+function searchBoxDetail(roomType, level){
+    let i = 0;
+    while(i<roomTypeSemanticLevelEboxes[roomType][level].length && roomTypeSemanticLevelEboxes[roomType][level][i] in onlineBids) ++i;
+    if(i<roomTypeSemanticLevelEboxes[roomType][level].length){
+        return [roomTypeSemanticLevelEboxes[roomType][level][i]];
+    }
+}
+
 function searchBoxBasic(currentRoom){
     if(!(currentRoom.type in roomTypeSemanticLevelEboxes)){
         //load all things related to this function from the backend
@@ -986,6 +984,7 @@ function searchBoxBasic(currentRoom){
             async: false,
             success: function (msg) {
                 roomTypeSemanticLevelEboxes[currentRoom.type] = msg.ls;
+                for(let i=0;i<roomTypeSemanticLevelEboxes[currentRoom.type].length; ++i){roomTypeSemanticLevelEboxes[currentRoom.type][i].shuffle();}
                 //alert(msg);
             }
         });
@@ -1000,9 +999,9 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0];
         
         if(roomSemanticState[currentRoom.id][0] == 0){//console.log("bedroom level 0");
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];
+            return searchBoxDetail(currentRoom.type,0);// roomTypeSemanticLevelEboxes[currentRoom.type][0];
         }else if(roomSemanticState[currentRoom.id][1] == 0){//console.log("bedroom level 1");
-            return roomTypeSemanticLevelEboxes[currentRoom.type][1];
+            return searchBoxDetail(currentRoom.type,1);//roomTypeSemanticLevelEboxes[currentRoom.type][1];
         }else {
             return [];
         }
@@ -1011,11 +1010,11 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0,0];
 
         if(roomSemanticState[currentRoom.id][0] == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+            return searchBoxDetail(currentRoom.type,0);//roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else if(roomSemanticState[currentRoom.id][1] == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][1];
+            return searchBoxDetail(currentRoom.type,1);//roomTypeSemanticLevelEboxes[currentRoom.type][1];
         }else if(roomSemanticState[currentRoom.id][2] == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][2];
+            return searchBoxDetail(currentRoom.type,2);//roomTypeSemanticLevelEboxes[currentRoom.type][2];
         }else {
             return [];
         }
@@ -1023,7 +1022,7 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
 
         if(currentRoom.eBoxList.length == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+            return searchBoxDetail(currentRoom.type,0);//roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
@@ -1031,7 +1030,7 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
         
         if(currentRoom.eBoxList.length == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+            return searchBoxDetail(currentRoom.type,0);//roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
@@ -1039,7 +1038,7 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
         
         if(currentRoom.eBoxList.length == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+            return searchBoxDetail(currentRoom.type,0);//roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
@@ -1047,7 +1046,7 @@ function searchBoxBasic(currentRoom){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0];
         
         if(currentRoom.eBoxList.length == 0){
-            return roomTypeSemanticLevelEboxes[currentRoom.type][0];//
+            return searchBoxDetail(currentRoom.type,0);//roomTypeSemanticLevelEboxes[currentRoom.type][0];//
         }else {
             return [];
         }
@@ -1205,7 +1204,7 @@ function addingCalc(box, i){
     box.roomId = i;
     currentRoom.eBoxList = currentRoom.eBoxList.concat([box]);
     roomSemanticState[i][checkRoomEboxSemantic(currentRoom.type,box)] = 1;
-    //console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
+    onlineBids = onlineBids.concat([box.bid]);//console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
     return box.eBoxId;
 }
 
