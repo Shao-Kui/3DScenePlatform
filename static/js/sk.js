@@ -4022,6 +4022,15 @@ function cover2lines(object1 , object2 , dot)//两条线有一个共同的端点
     }
 }
 
+const SceneExpander_to_CGS_type_map = {
+    "livingroom":"LivingRoom",
+    "diningroom":"DiningRoom",
+    "kitchen":"Kitchen",
+    "bathroom":"Bathroom",
+    "storage":"Storage",
+    "bedroom":"Bedroom"
+};
+
 function recreate_room()//复原roomshape
 {
     //遍历
@@ -4043,7 +4052,7 @@ function recreate_room()//复原roomshape
                     "id": "6443_0",
                     "modelId": "Bathroom-6473",
                     "roomTypes": [
-                        arrayOfRooms[i].type
+                        SceneExpander_to_CGS_type_map[arrayOfRooms[i].type]
                     ],
                     "bbox": {
                     "min": [
