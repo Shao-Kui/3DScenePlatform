@@ -1,5 +1,5 @@
 const area_distribution = {
-    "livingroom":[31.34055880017362,37.98303794068651],
+    "livingroom":[25.34055880017362,37.98303794068651],
     "diningroom":[9.502216889056243,13.928773352224832],
     "kitchen":[9.424599317113867,3.1243986198765556],
     "bathroom":[9.773808768026618,1.6098949048550089],
@@ -80,23 +80,25 @@ const room_link_distribution = {
 //  'bathroom_bathroom': 476, 
  'diningroom_balcony': 63, 
  'bathroom_balcony': 293, 
- 'storage_bathroom': 57, 
+//  'storage_bathroom': 57, 
 }
 
 function get_room_type_evaluation(current_room_type)
 {
     const room_type_count = 8;
     let res = 0.0;
-    // let current_bedroom_count = current_room_type[room_type_to_id_map['bedroom']];
+    let current_bedroom_count = current_room_type[room_type_to_id_map['bedroom']];
     for(let i = 0; i < room_type_distribution.length; i++)
     {
         let tmp_res = 0.0;
-        // let target_bedroom_count = room_type_distribution[i][0][room_type_to_id_map['bedroom']];
+        let target_bedroom_count = room_type_distribution[i][0][room_type_to_id_map['bedroom']];
         for(let j = 0; j < room_type_count; j++)
         {
-            if(current_room_type[j] < room_type_distribution[i][0][j])
-            tmp_res += room_type_mismatch_penalty[j][0] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]);
-            else tmp_res += Math.exp(room_type_mismatch_penalty[j][1] * Math.abs(current_room_type[j] - room_type_distribution[i][0][j]));
+            let current_ratio = current_room_type[j];
+            let target_ratio = room_type_distribution[i][0][j];
+            if(current_ratio < target_ratio)
+            tmp_res += Math.exp(room_type_mismatch_penalty[j][0] * (target_ratio - current_ratio));
+            else tmp_res += Math.exp(room_type_mismatch_penalty[j][1] * (current_ratio - target_ratio));
         }
         res += tmp_res * room_type_distribution[i][1];
     }
@@ -142,7 +144,7 @@ const C_type = 0.1;
 function calculate_room_division_evaluation(points, type){
     // const tri = D3.delaunay(points);
 
-    const C_1 = 0, C_2 = 0, C_3 = 10, C_4 = 5, C_5 = 30, C_6 = 100;
+    const C_1 = 0, C_2 = 0, C_3 = 10, C_4 = 5, C_5 = 30, C_6 = 200;
 
     // const count_of_skeleton_edges = tri.triangles.length - points.length + tri.hull.length;
 
@@ -437,6 +439,7 @@ function room_division_decide(room,line_id)
             var room1_val = calculate_room_division_evaluation(room.room_shape,room.type); 
             for(const roomtype in area_distribution)//ad)//
             {
+                if(roomtype == 'bathroom' && room.type == 'bedroom' && room.roomLinkCount[room_type_to_id_map['bathroom']] >= 1)continue;
                 if(!get_link_evaluation(room.type, roomtype))continue;
                 var room2 = {
                     "points":[structuredClone(room.room_shape[idx_of_points[1]]),
@@ -461,6 +464,7 @@ function room_division_decide(room,line_id)
                     "father_wall_start": -1,
                     "father_wall_end": -1,
                     "edgeList":[],
+                    "roomLinkCount":[0,0,0,0,0,0,0,0],
                 };
                 if(!debugHJK)eva = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type);
                 room_type_counter[room_type_to_id_map[roomtype]] += 1;
@@ -548,6 +552,8 @@ function room_division_decide(room,line_id)
             }
         }
         room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;console.log("break");
+        result.rooms[1].roomLinkCount[room_type_to_id_map[room.type]] += 1;
+        room.roomLinkCount[room_type_to_id_map[result.rooms[1].type]] += 1;
         //room = result.rooms[0];
         arrayOfRooms[roomIndexCounter] = result.rooms[1];
         arrayOfRooms[roomIndexCounter].id = roomIndexCounter;
