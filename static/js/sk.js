@@ -3693,9 +3693,6 @@ function deleteEdge(sig){
     var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
     var sig2 = (sig+1)%(arrayOfLines.length);
     
-    get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);
-    get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
-    get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
     var rl = get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);    
     var rl1= get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
     var rl2= get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
@@ -3715,7 +3712,7 @@ function deleteEdge(sig){
         
         remove_room_point(pt1id,rl[0]);
         remove_room_point(pt2id,rl[0]);
-        arrayOfInnerLines[rl[0]].splice(pt0id,0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
+        arrayOfInnerLines[rl[0]].splice(rl1[1],0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
         
         scene.remove(arrayOfLines[sig1]);
         scene.remove(arrayOfLines[sig]);
