@@ -3841,6 +3841,7 @@ const enter_move_mode_pro = function(event){
     }
     
     if(!On_LINEMOVE){
+        On_LINEMOVE = !On_LINEMOVE;//状态量取非
         can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
         if(follow_mouse_mode == 3){
             var sig = (now_move_index+1)%(arrayOfLines.length);
