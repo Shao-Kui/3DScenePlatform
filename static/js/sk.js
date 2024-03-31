@@ -4072,12 +4072,7 @@ function recreate_room()//复原roomshape
                 "blockList": [],
                 "roomShape": roomShape,
                 "roomNorm":[],
-                "roomOrient": [
-                    -1.5707963267948966,
-                    -3.141592653589793,
-                    1.5707963267948968,
-                    6.123233995736766e-17
-                ],
+                "roomOrient": [],
                 "roomShapeBBox": roomBbox
             };
             for(let j = 0; j < new_room.roomShape.length; j++)
@@ -4088,6 +4083,7 @@ function recreate_room()//复原roomshape
                 else
                     new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? 1 : -1]);
             }
+            new_room.roomOrient = new_room.roomNorm.map(vec => Math.atan2(vec[0],vec[1]));
             if("eBoxList" in arrayOfRooms[i])
             {
                 for(var eBoxID in arrayOfRooms[i]["eBoxList"])
