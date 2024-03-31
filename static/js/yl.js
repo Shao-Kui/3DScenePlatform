@@ -522,11 +522,11 @@ function newRoomOut(room, roomShape, newRoomId=-1){
 }*/
 
 const roomTypeSemanticLevels={
-    "livingroom":[["three-seat / multi-seat sofa", "loveseat sofa", "l-shaped sofa", "lazy sofa", "chaise longue sofa"],["dining table"],["desk"]],
+    "livingroom":[["three-seat / multi-seat sofa", "loveseat sofa", "l-shaped sofa", "lazy sofa", "chaise longue sofa"],["dining table"],["bookcase / jewelry armoire","desk"]],
     "kitchen":[],
     "bathroom":["a"],//(847,860)
     "balcony":[],
-    "bedroom":[["king-size bed", "kids bed", "bunk bed", "single bed"],["desk"]],
+    "bedroom":[["king-size bed", "kids bed", "bunk bed", "single bed"],["bookcase / jewelry armoire","desk"]],
     "diningroom":[["dining table"]],
     "storage":["b"], //[558,683,684,687]
     "study":[["desk"]]
@@ -978,7 +978,7 @@ var roomSemanticState = [[]];
 var onlineBids=[];
 function searchBoxDetail(roomType, level){
     let i = 0;
-    while(i<roomTypeSemanticLevelEboxes[roomType][level].length && roomTypeSemanticLevelEboxes[roomType][level][i] in onlineBids) ++i;
+    while(i<roomTypeSemanticLevelEboxes[roomType][level].length && onlineBids.indexOf(roomTypeSemanticLevelEboxes[roomType][level][i].bid)>=0) ++i;
     if(i<roomTypeSemanticLevelEboxes[roomType][level].length){
         return [roomTypeSemanticLevelEboxes[roomType][level][i]];
     }
@@ -996,7 +996,10 @@ function searchBoxBasic(currentRoom){
             async: false,
             success: function (msg) {
                 roomTypeSemanticLevelEboxes[currentRoom.type] = msg.ls;
-                for(let i=0;i<roomTypeSemanticLevelEboxes[currentRoom.type].length; ++i){roomTypeSemanticLevelEboxes[currentRoom.type][i].shuffle();}
+                for(let i=0;i<roomTypeSemanticLevelEboxes[currentRoom.type].length; ++i){
+                    //roomTypeSemanticLevelEboxes[currentRoom.type][i]=roomTypeSemanticLevelEboxes[currentRoom.type][i].shuffle();
+                    roomTypeSemanticLevelEboxes[currentRoom.type][i].sort(()=>Math.random()-0.5);
+                }
                 //alert(msg);
             }
         });
