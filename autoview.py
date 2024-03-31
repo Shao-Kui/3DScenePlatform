@@ -1519,11 +1519,11 @@ def catimgs(identifier):
 @app_autoView.route("/eboxes/<function>",methods=['POST'])
 def eboxes(function):
     mapping = {
-        "livingroom":[[556,577,711,738,745,796],[503,533,542,578],[673,841,846]],
+        "livingroom":[[556,577,595,604,711,738,745,796],[503,533,542,578],[673,841,846]],
         "kitchen":[[860,861,862,863,864]],
         "bathroom":[[848,849,850,851,852,853,854,855,856,857,858,859]],
         "balcony":[],
-        "bedroom":[[479,507,685],[673,841,846]],#,566  536,
+        "bedroom":[[466,470,471,472,476,479,507,566,685],[673,841,846]],#,566  536,
         "diningroom":[[503,533,542,578]],
         "storage":[[558,683,684,687]],
         "study":[[673,841,846]]
@@ -1533,7 +1533,7 @@ def eboxes(function):
     for j in mapping[function]:
         p = []
         for i in j:
-            if(random.random()>0.5):
+            if(random.random()>0.8):
                 js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
                 p.append(js)
         jsList.append(p)

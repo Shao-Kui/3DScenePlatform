@@ -3837,15 +3837,16 @@ const enter_move_mode_pro = function(event){
 
 
         }
-        if(!On_LINEMOVE){
-            can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
-            if(follow_mouse_mode == 3){
-                var sig = (now_move_index+1)%(arrayOfLines.length);
-                if(arrayOfLines[sig].length>0.1)sig=(now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
-                deleteEdge(sig);
-            }
-            now_move_index = -1;//全部重置?
+    }
+    
+    if(!On_LINEMOVE){
+        can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
+        if(follow_mouse_mode == 3){
+            var sig = (now_move_index+1)%(arrayOfLines.length);
+            if(arrayOfLines[sig].length>0.1)sig=(now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+            deleteEdge(sig);
         }
+        now_move_index = -1;//全部重置?
     }
 }
 

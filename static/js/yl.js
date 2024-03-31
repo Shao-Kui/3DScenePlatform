@@ -414,7 +414,7 @@ function checkRoomCrossEBox(room, elasticBox){
         dis = (x0 - x1)*room.edgeList[flag].dir[x]; let ratio = dis/elasticBox.currentRange[x]; 
         if(dis<-0.01){ console.log("dis < 0 error"); }
 
-        let outState = (ratio<0.3) ? 1 : 2;
+        let outState = (ratio<0.6) ? 1 : 2;
 
         return {edgeIds:[flag],eEdgeIds:[glag], dirs:[dir], diss:[dis], outState:outState};
     }
@@ -522,14 +522,14 @@ function newRoomOut(room, roomShape, newRoomId=-1){
 }*/
 
 const roomTypeSemanticLevels={
-    "livingroom":["sofa","dining table","desk"],
+    "livingroom":[["three-seat / multi-seat sofa", "loveseat sofa", "l-shaped sofa", "lazy sofa", "chaise longue sofa"],["dining table"],["desk"]],
     "kitchen":[],
     "bathroom":["a"],//(847,860)
     "balcony":[],
-    "bedroom":["bed","desk"],
-    "diningroom":["dining table"],
+    "bedroom":[["king-size bed", "kids bed", "bunk bed", "single bed"],["desk"]],
+    "diningroom":[["dining table"]],
     "storage":["b"], //[558,683,684,687]
-    "study":["desk"]
+    "study":[["desk"]]
 }
 
 function checkRoomEboxSemantic(roomType, ebox){
@@ -538,10 +538,8 @@ function checkRoomEboxSemantic(roomType, ebox){
     if(roomType=="storage"){ return (ebox.bid in [558,683,684,687]) ? 0:-1;}
     for(let i=0; i<roomTypeSemanticLevels[roomType].length; ++i){
         let nm = roomTypeSemanticLevels[roomType][i]; //console.log(nm);
-        for(let o=0; o<ebox.objList.length; ++o){
-            //console.log(ebox.objList[o].cs.toLowerCase());
-            if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;
-        }
+        //for(let o=0; o<ebox.objList.length; ++o){if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;}
+        for(let j=0; j < nm.length; ++j){for(let o=0; o<ebox.objList.length; ++o){if(ebox.objList[o].cs.toLowerCase() == nm[j]) return i;}}
     }
     
     return -1;
@@ -553,7 +551,7 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
     //其实每一个弹性盒是属于0还是属于1（甚至是哪条边应该往哪里移动）还是都不属于应该删了就可以从这里给出了。
     //存在evaluation里
     //因为这些内容其实都是在你评估房间划分时需要捎带手去做的。
-    var eva = [[],[],[],{removedBox:0,confiltBox:0,conflictDis:0}];
+    var eva = [[],[],[],{removedBox:0,confiltBox:0,conflictDis:0,removedBoxes:[], reloadBox:0}];
 
     let virtualRoomIndex = 100; //while(virtualRoomIndex in arrayOfRooms){virtualRoomIndex++;}
     var newRoom0 = {id:virtualRoomIndex, type:type0, edgeList:JSON.parse(JSON.stringify(visualRoom(roomshape0)))};
@@ -594,7 +592,19 @@ function seperationEvaluation(eBoxList, roomshape0, type0, roomshape1, type1){
         if(res1.semanticLevel<0) res1.outState = 2;//check my semantic, if I failed
         if(res0.outState == 2 && res1.outState == 2){
             eva[2]=eva[2].concat([{eBoxId:e, roomId:eBoxList[e].roomId, outState:3}]);
-            eva[3].removedBox+=1;
+            eva[3].removedBox+=1; eva[3].removedBoxes = eva[3].removedBoxes.concat([res0.semanticLevel]);
+            
+            let funcBox = searchOriginalFuncBox(eBoxList[e].bid);
+            let box = 0;
+            if(res0.semanticLevel>=0){
+                box = searchingBox(funcBox, newRoom0);
+            }else if(res1.semanticLevel>=0){
+                box = searchingBox(funcBox, newRoom1);
+            }
+            if(box){ //console.log("selected funcbox id " + String(f));
+                eva[3].reloadBox+=1;
+            }
+
         }else if(res0.outState == 2){ let res = res1;
             eva[1]=eva[1].concat([{eBoxId:e, roomId:newRoom1.id, edgeIds:res.edgeIds, eEdgeIds:res.eEdgeIds, dirs:res.dirs, diss:res.diss, outState:res.outState, semanticLevel:res.semanticLevel}]);
             if(res1.outState>0){eva[3].conflictBox+=1; for(let j=0;j<res.diss;++j)eva[3].conflictDis+=res.diss[j]; }
