@@ -210,7 +210,7 @@ function func(info, realMove=false, dsMove=false){ if(debugHJK)return;
     //console.log(arrayOfRooms[info.roomid]); return;
 
     let currentEdge = arrayOfRooms[info.roomid].edgeList[info.wallid];
-    let synScheme = {flexLength:0, moveLength:info.moveLength, history:[]};
+    let synScheme = {flexLength:0, moveLength:info.moveLength, history:[], deleteList:[],roomId:info.roomid};
     for(let e = 0; e < currentEdge.neighbourEdge.length; ++e){
         let newInfo = JSON.parse(JSON.stringify(currentEdge.neighbourEdge[e]));
         //console.log("fuck the world again and again and again and again"); console.log(newInfo);
@@ -218,6 +218,7 @@ function func(info, realMove=false, dsMove=false){ if(debugHJK)return;
 
         synScheme.moveLength = Math.min(synScheme.moveLength,sch.moveLength);
         synScheme.history = synScheme.history.concat(JSON.parse(JSON.stringify(sch.history)));
+        if("deleteList" in sch) synScheme.deleteList = synScheme.deleteList.concat(JSON.parse(JSON.stringify(sch.deleteList)));
         //console.log(synScheme.history);console.log(synScheme.moveLength);console.log(synScheme.history[0].edgeList[0].point[0][0]);console.log(arrayOfRooms[info.roomid].eBoxList[0].edgeList[0].point[0][0]);
     }
     //scheme = recur({edgeId:info.wallid, eBoxId:-1, roomId:info.roomid}, {dir:info.movedir, length:info.moveLength, flexLength:0});
@@ -384,9 +385,7 @@ function checkRoomCrossEBox(room, elasticBox){
         }else{console.log("ioo error"); console.log(room); console.log(elasticBox);}
     }
     if(sump != 2){
-        console.log("error p");
-        console.log(room);
-        console.log(elasticBox);
+        //console.log("error p");console.log(room);console.log(elasticBox);
         return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:-1};
     }
     
@@ -454,7 +453,9 @@ function checkRoomCrossEBox(room, elasticBox){
         let diss = (x0 - x1)*room.edgeList[flagg].dir[x]; let ratio1 = diss/elasticBox.currentRange[x];
         if(diss<-0.01){ console.log("dis < 0 error"); }
 
-        return {edgeIds:[flag, flagg],eEdgeIds:[glag,glagg], dirs:[dir,dirr], diss:[dis,diss], out:(ratio>0.5)||(ratio1>0.5)};
+        let outState = ((ratio>0.5)||(ratio1>0.5)) ? 1 : 2;
+
+        return {edgeIds:[flag, flagg],eEdgeIds:[glag,glagg], dirs:[dir,dirr], diss:[dis,diss], out:outState};
     }
     
     console.log("not single or double case");
@@ -690,7 +691,7 @@ function seperationRemoving(evaluation2, room0Id, room1Id){
         let ebox=arrayOfRooms[evaluation2[e].roomId].eBoxList[evaluation2[e].eBoxId];
         for(let o = 0; o < ebox.objList.length; ++o){
             removeObjectByUUID(ebox.objList[o].key);
-        }bids=bids.concat([ebox.bid]);
+        }bids=bids.concat([ebox.bid]);  
         onlineBids=onlineBids.filter(function(it){return it != ebox.bid;});
     }
     return bids;
@@ -832,6 +833,7 @@ function recur(info, path){
 
     //add my own infomation into path
     //
+    //console.log("stage 0 ");
     if(currentEdge.neighbourEdge.length == 0){ //no children, can move
         if(info.eBoxId == -1){ let scheme = {flexLength:path.flexLength, moveLength:path.length, history:[]}; return scheme;} //only moving wall, not effecting elastic boxes
         //console.log("fucking it is here"); console.log(path.length);
@@ -850,8 +852,10 @@ function recur(info, path){
         //{edgeId:1, eBoxId:-1,roomId:1, edgeList:[ [point:[[0,0],[0,0]], dir:[0,0]], [point:[[0,0],[0,0]], dir:[0,0]], ...... ],}
         return {flexLength:path.flexLength, moveLength:path.length, history:[newEBox]};
     }
+    //console.log("stage 1 ");
 
     let rangeMax = currentEBox.dirRange[(currentEdge.edgeId)%2][1];//currentEBox.dirRange[s][1];
+    let rangeMin = currentEBox.dirRange[(currentEdge.edgeId)%2][0];
     if(currentEBox.currentRange[s]>=rangeMax && (path.dir[s]*currentEdge.dir[s]) > 0.5){
         //seperate the two boxes evenif they are close to each other. because myself is too large
         let newEBox = JSON.parse(JSON.stringify(currentEBox));
@@ -864,6 +868,13 @@ function recur(info, path){
         //{edgeId:1, eBoxId:-1,roomId:1, edgeList:[ [point:[[0,0],[0,0]], dir:[0,0]], [point:[[0,0],[0,0]], dir:[0,0]], ...... ],}
         return {flexLength:path.flexLength, moveLength:path.length, history:[newEBox]};
     }
+
+    //console.log("stage 2 ");
+    //console.log(rangeMin);console.log(currentEBox.currentRange[s]);
+    if(currentEBox.currentRange[s]<=rangeMin && (path.dir[s]*currentEdge.dir[s]) < -0.5){
+        return {flexLength:path.flexLength, moveLength:path.length, history:[], deleteList:[info.eBoxId]};
+    }
+    //console.log("stage 3 ");
     
     let newPath = JSON.parse(JSON.stringify(path));
     newPath.flexLength += currentEBox.currentRange[s];
@@ -891,8 +902,8 @@ function recur(info, path){
     //console.log(backLength);console.log("backLength");
     //console.log(frontLength);console.log("frontLength");
 
-    if (Math.abs(frontLength - backLength) > 0.001){
-        frontLength = backLength + (frontLength - backLength) * currentEBox.currentRange[s] / synScheme.flexLength;
+    if (Math.abs(frontLength - backLength) > 0.001){ // - backLength
+        frontLength = backLength + (frontLength) * currentEBox.currentRange[s] / synScheme.flexLength;
         //console.log("gap between back and front");
         //if(currentEBox.currentRange[s] < currentEBox.dirRange[s][1] && currentEBox.currentRange[s] > currentEBox.dirRange[s][0]){console.log("in the range");
         //}else{ console.log("out of range");} //frontLength = backLength;//though they are the same, what should be the value    
@@ -944,6 +955,7 @@ function recur(info, path){
     let scheme = {flexLength:synScheme.flexLength, moveLength:frontLength, history:synScheme.history};
     //scheme需要包含什么信息
         //已移动长度moveLength，相关总长度flexLength，历史弹性盒的调整方式（包括自己）history
+    if("deleteList" in synScheme) scheme.deleteList = synScheme.deleteList;
     return scheme;
 }
 
@@ -1387,7 +1399,7 @@ function updateNeighbours(r){ //if(lock==0){return;}else{lock=0;}
 }
 
 //实践方法
-function act(scheme, realMove, dsMove){
+function act(scheme, realMove, dsMove){ //console.log(scheme.deleteList);
     if(dsMove){
         //firstly move the elastic boxes;
         for(let i = 0; i < scheme.history.length; ++i){
@@ -1492,8 +1504,16 @@ function act(scheme, realMove, dsMove){
         
         if("deleteList" in scheme && scheme.deleteList.length > 0 && "roomId" in scheme){
             let j = scheme.deleteList.length-1;let cnt = 0;
-            for(let i = arrayOfRooms[scheme.roomId].eBoxList.length-1; i>=0; --i){
+            for(let i = arrayOfRooms[scheme.roomId].eBoxList.length-1; i>=0; --i){ //console.log(i); console.log(j);
                 if(arrayOfRooms[scheme.roomId].eBoxList[i].eBoxId == scheme.deleteList[j]){
+                    
+                    let ebox=arrayOfRooms[scheme.roomId].eBoxList[i];
+                    
+                    
+                    roomSemanticState[scheme.roomId][checkRoomEboxSemantic(arrayOfRooms[scheme.roomId].type,arrayOfRooms[scheme.roomId].eBoxList[i])] = 0;
+                    for(let o = 0; o < ebox.objList.length; ++o){removeObjectByUUID(ebox.objList[o].key);}
+                    onlineBids=onlineBids.filter(function(it){return it != ebox.bid;});
+                    
                     arrayOfRooms[scheme.roomId].eBoxList.splice(i,1);
                     j -= 1; cnt += 1;
                 }else{
