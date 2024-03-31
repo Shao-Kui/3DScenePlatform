@@ -3454,7 +3454,7 @@ const initAttributes = function() {
     });
 }
 
-function get_room_and_line_id(start,end)
+function get_room_and_line_id(start,end,add_point = true)
 {
     //TODO: modify this by checking the point id rather than point coordinates
     for(const i in arrayOfRooms)
@@ -3470,6 +3470,7 @@ function get_room_and_line_id(start,end)
                 return [i,j];
         }
     }
+    if(!add_point)throw new Error("Point not found");
     var cut_line_found = false;
     for(const i in arrayOfRooms)
     {
@@ -3692,6 +3693,9 @@ function deleteEdge(sig){
     var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
     var sig2 = (sig+1)%(arrayOfLines.length);
     
+    get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
     var rl = get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);    
     var rl1= get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
     var rl2= get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
@@ -3871,7 +3875,7 @@ function shortWallSwap(sig, check_res, target_value, last_value){
     if(arrayOfLines[sig1].length<0.1){
         var obj = arrayOfLines[sig1];//选中的直线，index为线的下标
         try{
-            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(last_value-target_value);
@@ -3880,7 +3884,7 @@ function shortWallSwap(sig, check_res, target_value, last_value){
     if(arrayOfLines[sig2].length<0.1){
         var obj = arrayOfLines[sig2];//选中的直线，index为线的下标
         try{
-            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
             var room_id = room_and_line_id[0];
             var line_id = room_and_line_id[1];
             arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(target_value-last_value);
