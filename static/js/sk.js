@@ -959,6 +959,9 @@ const castMousePosition = function(){
 
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    let rtt_pre = new THREE.Vector2();
+    let rtt_nxt = new THREE.Vector2();
+    rtt_pre.set(mouse.x, mouse.y);
     updateMousePosition();
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
@@ -1038,9 +1041,6 @@ function onDocumentMouseMove(event) {
     }
     tf.engine().endScope();
     if (On_ROTATE && INTERSECT_OBJ != null) {
-        var rtt_pre = new THREE.Vector2();
-        var rtt_nxt = new THREE.Vector2();
-        rtt_pre.set(mouse.x, mouse.y);
         updateMousePosition();
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
@@ -1066,7 +1066,6 @@ function onDocumentMouseMove(event) {
                 resOri = Math.atan2(closestDir.x, closestDir.y);
             }
         }
-        
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
             resOri, 
@@ -1602,6 +1601,7 @@ const setting_up = function () {
                 if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
             }
+            timeCounter.cgsStart = moment();
         }
         else{
             button.style.backgroundColor = 'red';//红：退出模式
@@ -1615,6 +1615,7 @@ const setting_up = function () {
             // manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
             // manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
             recreate_room();
+            timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         }
     })
 
