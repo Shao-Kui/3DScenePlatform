@@ -4119,6 +4119,7 @@ function recreate_room()//复原roomshape
     }
     new_json.wall_width = 0.01;
     // console.log(new_json);
+    encodePerspectiveCamera(new_json)
     refreshSceneByJson(new_json);
 }
 
