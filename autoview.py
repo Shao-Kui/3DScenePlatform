@@ -1626,7 +1626,7 @@ def catagory_prior(identifier, identi):
         orderCnt += 1
     return json.dumps(selected[:13])#print(selected[:13])
 
-methods = ["Inds", "MgAdd", "CLPT", "CGS", "FFG"]
+methods = ["CLPT", "SD", "MgAdd", "Inds", "SE"]
 @app_autoView.route("/clickTimer",methods=['POST'])
 def clickTimer():
     data = flask.request.json
