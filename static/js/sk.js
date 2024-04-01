@@ -959,13 +959,15 @@ const castMousePosition = function(){
 
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    let rtt_pre = new THREE.Vector2();
+    let rtt_nxt = new THREE.Vector2();
+    rtt_pre.set(mouse.x, mouse.y);
     updateMousePosition();
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache).concat(arrayOfLines);//TODO .concat(manager.renderManager.newWallCache).
     let intersects = raycaster.intersectObjects(
-        instanceKeyCache,
-        //.concat(Object.values(manager.renderManager.fCache))
+        instanceKeyCache.concat(Object.values(manager.renderManager.fCache)),
         //.concat(Object.values(manager.renderManager.wCache))
         true
     );
@@ -1037,10 +1039,8 @@ function onDocumentMouseMove(event) {
     if(On_CGSeries){
         moveCGSeries();
     }
+    tf.engine().endScope();
     if (On_ROTATE && INTERSECT_OBJ != null) {
-        var rtt_pre = new THREE.Vector2();
-        var rtt_nxt = new THREE.Vector2();
-        rtt_pre.set(mouse.x, mouse.y);
         updateMousePosition();
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
@@ -1066,7 +1066,6 @@ function onDocumentMouseMove(event) {
                 resOri = Math.atan2(closestDir.x, closestDir.y);
             }
         }
-        
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
             resOri, 
@@ -1602,6 +1601,7 @@ const setting_up = function () {
                 if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
             }
+            timeCounter.cgsStart = moment();
         }
         else{
             button.style.backgroundColor = 'red';//红：退出模式
@@ -1615,6 +1615,7 @@ const setting_up = function () {
             // manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
             // manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
             recreate_room();
+            timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         }
     })
 
@@ -4022,6 +4023,15 @@ function cover2lines(object1 , object2 , dot)//两条线有一个共同的端点
     }
 }
 
+const SceneExpander_to_CGS_type_map = {
+    "livingroom":"LivingRoom",
+    "diningroom":"DiningRoom",
+    "kitchen":"Kitchen",
+    "bathroom":"Bathroom",
+    "storage":"Storage",
+    "bedroom":"Bedroom"
+};
+
 function recreate_room()//复原roomshape
 {
     //遍历
@@ -4043,7 +4053,7 @@ function recreate_room()//复原roomshape
                     "id": "6443_0",
                     "modelId": "Bathroom-6473",
                     "roomTypes": [
-                        arrayOfRooms[i].type
+                        SceneExpander_to_CGS_type_map[arrayOfRooms[i].type]
                     ],
                     "bbox": {
                     "min": [
@@ -4063,12 +4073,7 @@ function recreate_room()//复原roomshape
                 "blockList": [],
                 "roomShape": roomShape,
                 "roomNorm":[],
-                "roomOrient": [
-                    -1.5707963267948966,
-                    -3.141592653589793,
-                    1.5707963267948968,
-                    6.123233995736766e-17
-                ],
+                "roomOrient": [],
                 "roomShapeBBox": roomBbox
             };
             for(let j = 0; j < new_room.roomShape.length; j++)
@@ -4079,6 +4084,7 @@ function recreate_room()//复原roomshape
                 else
                     new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? 1 : -1]);
             }
+            new_room.roomOrient = new_room.roomNorm.map(vec => Math.atan2(vec[0],vec[1]));
             if("eBoxList" in arrayOfRooms[i])
             {
                 for(var eBoxID in arrayOfRooms[i]["eBoxList"])
@@ -4114,6 +4120,7 @@ function recreate_room()//复原roomshape
     }
     new_json.wall_width = 0.01;
     // console.log(new_json);
+    encodePerspectiveCamera(new_json)
     refreshSceneByJson(new_json);
 }
 

@@ -40,7 +40,7 @@ const loadObjectToCacheContent = function(instance){
     ), new THREE.MeshPhongMaterial({color: 0xffffff}));
     associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
     instance.associatedBox = associatedBox;
-    // traverseMtlToOpacity(instance); // from 2023.3.3 this feature is temperally removed due to instanseMesh. 
+    traverseMtlToOpacity(instance); // from 2023.3.3 this feature is temperally removed due to instanseMesh. 
     objectCache[modelId] = instance;
     playAnimation(objectCache[modelId]);
     while(objectLoadingQueue[modelId].length){

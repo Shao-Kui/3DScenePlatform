@@ -15,6 +15,7 @@ import sk
 import uuid
 from itertools import combinations
 from shapely.geometry.polygon import Polygon, Point
+from layoutmethods.projection2d import processGeo as p2d
 # the following code is for backend-rendering. 
 # from celery import Celery
 # app = Celery('tasks', backend='rpc://', broker='pyamqp://')
@@ -48,7 +49,11 @@ def autoPerspectiveCamera(scenejson):
         roomShape = np.array(roomShape)
         wh = 0
     else:
-        roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+        if 'roomShape' not in scenejson['rooms'][0]:
+            room_meta = p2d('.', f'/dataset/room/{scenejson["origin"]}/{scenejson["rooms"][0]["modelId"]}f.obj')
+            roomShape = room_meta[:, 0:2]
+        else:
+            roomShape = np.array(scenejson['rooms'][0]['roomShape'])
         wh = WALLHEIGHT
     lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
     lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
@@ -220,7 +225,7 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             room['objList'] = []
         if 'areaType' not in room:
             room['areaType'] = 'unknown'
-        if os.path.exists(f'./dataset/area/{scenejson["id"]}/{room["modelId"]}.obj'):
+        if 'id' in scenejson and os.path.exists(f'./dataset/area/{scenejson["id"]}/{room["modelId"]}.obj'):
             scenejson['renderroomobjlist'].append({
                 'modelPath': f'../../area/{scenejson["id"]}/{room["modelId"]}.obj',
                 'translate': [0,0,0],
