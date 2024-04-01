@@ -157,7 +157,7 @@ const topdownview = function(bbox = undefined){
 };
 
 var ctrlPressing = false;
-var fivePressing=false;
+var tPressing=false;
 var duplicateTimes = 1;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
@@ -240,8 +240,8 @@ const onKeyDown = function(event){
                 if (!$('#shelfSelectRow3Btn').prop('disabled')) $('#shelfSelectRow3Btn').click();
             }
             break;
-        case 84:  // 5
-            fivePressing=true;console.log("fivePressing");
+        case 84:  // T
+            tPressing=true;
             break;
         case 192: // `
             auxiliary_catlist(0)
@@ -276,7 +276,7 @@ const onKeyDown = function(event){
             transformControls.setMode('scale');
             break;
         case 17:
-            ctrlPressing = true; console.log("ctrlPressing");
+            ctrlPressing = true;
             break;
         case 18:
             enteringBoxSelectionMode();
@@ -349,11 +349,11 @@ var onKeyUp = function (event) {
         case 13: // ENTER
             clickTextSearchButton();
             break;
-        case 84:  // 5
-            fivePressing=false;console.log("fiveLosing");
+        case 84:  // T
+            tPressing=false;
             break;
         case 17:
-            ctrlPressing = false;console.log("ctrlLosing");
+            ctrlPressing = false;
             break;
         case 18:
             leavingBoxSelectionMode();
