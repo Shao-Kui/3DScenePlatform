@@ -1630,6 +1630,8 @@ methods = ["CLPT", "SD", "MgAdd", "Inds", "SE"]
 @app_autoView.route("/clickTimer",methods=['POST'])
 def clickTimer():
     data = flask.request.json
+    if data['methodName'] is None or data['methodName'] == '' or int(data['methodName']) > 4:
+        return
     timestr = time.strftime("%Y%m%d-%H%M%S")
     f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
     f.write(json.dumps(data['timeC']))
