@@ -1530,6 +1530,7 @@ const setting_up = function () {
         timeCounter.remove = 0;
         timeCounter.clicks = 0;
         timeCounter.totalStart = moment();
+        $("#nameOSR").val('');
     });
     document.addEventListener('click', function(){timeCounter.clicks+=1;});
 
