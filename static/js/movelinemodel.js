@@ -250,7 +250,7 @@ function room_merged_with_father(room)
 function move_point(point_id,new_coordinate)
 {
     var pt1 = arrayOfRoomPoints[point_id];
-    pt1.position = new_coordinate;
+    pt1.position = structuredClone(new_coordinate);
     var new_linkedInnerLines = [];
     for(line_id in pt1.linkedInnerLines)
     {
@@ -382,6 +382,34 @@ function updateMoveIndex(){
 
 const room_type_counter = [0,0,0,0,0,0,0,1];
 
+function delete_outer_point_only(sig)
+{
+    var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (sig+1)%(arrayOfLines.length);
+    var i = 0;
+    for(;i<arrayOfDots.length;++i){
+        if(getlength(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],arrayOfDots[i].position.x,arrayOfDots[i].position.y,arrayOfDots[i].position.z)< 0.1){ scene.remove(arrayOfDots[i]);arrayOfDots.splice(i,1); cut_point_num-=1; }
+    }
+    scene.remove(arrayOfLines[sig1]);
+    scene.remove(arrayOfLines[sig]);
+    scene.remove(arrayOfLines[sig2]);
+    if(sig == 0){
+        createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+            arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+1);
+        arrayOfLines.splice(sig1,1);
+        arrayOfLines.splice(0,2);
+    }else if(sig == arrayOfLines.length-1){//because the length has just become longer for creating cylinder1
+        createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+            arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+2);
+        arrayOfLines.splice(sig1,2);
+        arrayOfLines.splice(0,1);
+    }else{
+        createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+            arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+3);
+        arrayOfLines.splice(sig1,3);
+    }
+}
+
 function room_division_decide(room,line_id)
 {
     const eps = 1e-7;
@@ -392,7 +420,8 @@ function room_division_decide(room,line_id)
         'division_lines':[],
         'division_points':[]};
     room.room_shape = room.points.map(id => structuredClone(arrayOfRoomPoints[id].position));//Note that the room_shape is not synced during the 
-    var result_val = calculate_room_division_evaluation(room.room_shape,room.type) + C_type * get_room_type_evaluation(room_type_counter);
+    var cur_room_val = calculate_room_division_evaluation(room.room_shape,room.type);
+    var result_val = cur_room_val + C_type * get_room_type_evaluation(room_type_counter);
     // console.log("Value of no division:");
     // console.log(result_val);
     const idx_of_points = [line_id - 1, line_id, line_id + 1,line_id + 2].map(val => {
@@ -430,7 +459,7 @@ function room_division_decide(room,line_id)
         // max_move_step = Math.max(len_of_two_adjacent_edges[0],len_of_two_adjacent_edges[1]);
         var original_cut_1 = structuredClone(room.room_shape[idx_of_points[1]]),
         original_cut_2 = structuredClone(room.room_shape[idx_of_points[2]]);
-        for(let delta = min_delta; delta < max_move_step; delta += step)
+        for(let delta = min_delta; delta <= max_move_step; delta += step)
         {
             room.room_shape[idx_of_points[1]] = structuredClone(original_cut_1);
             room.room_shape[idx_of_points[2]] = structuredClone(original_cut_2);
@@ -462,21 +491,20 @@ function room_division_decide(room,line_id)
                     "id":-1,
                     "father":room.id,
                     "type":roomtype,
-                    "father_wall_start": -1,
-                    "father_wall_end": -1,
+                    "father_wall_start": idx_of_points[1],
+                    "father_wall_end": idx_of_points[2],
+                    "mergeable":true,
                     "edgeList":[],
                     "roomLinkCount":[0,0,0,0,0,0,0,0],
                 };
                 if(!debugHJK)eva = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type);
                 room_type_counter[room_type_to_id_map[roomtype]] += 1;
-                const cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
-                + C_type * get_room_type_evaluation(room_type_counter) - eva[3].removedBox * 10;
-                // console.log(eva);
+                var cur_val = Math.min(room1_val,calculate_room_division_evaluation(room2.points,room2.type))
+                + C_type * get_room_type_evaluation(room_type_counter);
+                if(!debugHJK) cur_val -= eva[3].removedBox * 10;
                 room_type_counter[room_type_to_id_map[roomtype]] -= 1;
-                // console.log("Value of split:");
-                // console.log(cur_val);
                 if(cur_val > result_val)
-                {//console.log("you should give a inOrOut in here");
+                {
                     if(!debugHJK)evaluation = JSON.parse(JSON.stringify(eva));
                     result = {
                         'rooms':[{},room2],//temporarily save the information
@@ -490,34 +518,71 @@ function room_division_decide(room,line_id)
                     result_val = cur_val;
                 }
             }
+            if(delta + step > max_move_step) delta = max_move_step;
+        }   
+    }
+    if(result.rooms.length == 0 && room.mergeable)
+    {
+        let father_room_id = room.father;
+        let father_room = arrayOfRooms[father_room_id];
+        let father_room_val = calculate_room_division_evaluation(father_room.points.map(id => structuredClone(arrayOfRoomPoints[id].position)),father_room.type);
+        let merged_room_shape = father_room.points.map(id => structuredClone(arrayOfRoomPoints[id].position));
+        merged_room_shape[room.father_wall_start] = structuredClone(arrayOfRoomPoints[room.points[1]].position);
+        merged_room_shape[room.father_wall_end] = structuredClone(arrayOfRoomPoints[room.points[2]].position);
+        room_type_counter[room.type] -= 1;
+        let merged_room_val = calculate_room_division_evaluation(merged_room_shape,father_room.type) + C_type * get_room_type_evaluation(room_type_counter);
+        room_type_counter[room.type] += 1;
+        let cur_val = Math.min(father_room_val,cur_room_val) + C_type * get_room_type_evaluation(room_type_counter);
+        if(cur_val + 2 < merged_room_val)
+        {
+            result = {
+                "rooms":[merged_room_shape],
+                "division_lines":[],
+                "division_points":[],
+                "inserted_points":[]
+            };
         }
-        
     }
     if(result.rooms.length == 1)//Merge with father
     {
-    // if(room.father != -1)//merge
-    // {
-    //     const merged_room = room_merged_with_father(room);
-    //     const father_val = calculate_room_division_evaluation(arrayOfRooms[room.father].points,arrayOfRooms[room.father].type);
-    //     const merged_val = calculate_room_division_evaluation(merged_room.points,merged_room.type);
-    //     // console.log("Value of merge:");
-    //     // console.log(merged_val);
-    //     if(Math.max(Math.min(origin_val,father_val),result_val) < merged_val)
-    //     {
-    //         result_val = merged_val;
-    //         result = {
-    //             'rooms':[merged_room],
-    //             'division_lines':[],
-    //             'division_points':[],
-    //         };
-    //     }
-    // }
-        console.log(selected_room_id);
-        arrayOfInnerLines[selected_room_id].forEach(l => {scene.remove(l)});
-        delete arrayOfInnerLines.selected_room_id;
-        let father_id = arrayOfRooms[selected_room_id].father;
-        arrayOfRooms[father_id] = result[0];
-        delete arrayOfRooms.selected_room_id;
+        // Only considered recoving condition with only two points currently
+        // More general case needs much more coding
+        // console.log("merging");
+        let father_room_id = room.father;
+        let father_room = arrayOfRooms[father_room_id];
+        merging(father_room,room,result.rooms[0]);
+        room_type_counter[room.type] -= 1;
+        move_point(father_room.points[room.father_wall_start],arrayOfRoomPoints[room.points[1]].position);
+        move_point(father_room.points[room.father_wall_end],arrayOfRoomPoints[room.points[2]].position);
+        let current_room_id = room.id;
+        // let new_idx_of_points = [
+        //     (room.father_wall_start + room.points.length - 1) % room.points.length,           
+        //     room.father_wall_start,
+        //     room.father_wall_end,
+        //     (room.father_wall_end + 1) % room.points.length
+        // ];
+        for(var sig = 0; sig < arrayOfLines.length; sig++)
+        {
+            if(same_point([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],arrayOfRoomPoints[room.points[0]].position) && same_point([arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]],arrayOfRoomPoints[room.points[0]].position))
+            {
+                delete_outer_point_only(sig);
+                break;
+            }
+        }
+            // cut_inner_line(father_room_id,new_idx_of_points[0],arrayOfRoomPoints[room.points[0]].position);
+        for(var sig = 0; sig < arrayOfLines.length; sig++)
+        {
+            if(same_point([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],arrayOfRoomPoints[room.points[3]].position) && same_point([arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]],arrayOfRoomPoints[room.points[3]].position))
+            {
+                delete_outer_point_only(sig);
+                break;
+            }
+        }
+        // cut_inner_line(father_room_id,new_idx_of_points[2] + (new_idx_of_points[0] < new_idx_of_points[2] ? 2 : 0),arrayOfRoomPoints[room.points[3]].position);
+        arrayOfInnerLines[current_room_id].forEach(l => {scene.remove(l)});
+        delete arrayOfInnerLines[current_room_id];
+        delete arrayOfRooms[current_room_id];
+        updateMoveIndex();
         return false;
     }
     else if(result.rooms.length == 2)//divide
