@@ -1626,20 +1626,20 @@ def catagory_prior(identifier, identi):
         orderCnt += 1
     return json.dumps(selected[:13])#print(selected[:13])
 
-methods = ["CLPT", "SD", "MgAdd", "Inds", "SE"]
+methods = ["CLPT", "MgAdd", "SD", "Inds", "SE"]
 @app_autoView.route("/clickTimer",methods=['POST'])
 def clickTimer():
     data = flask.request.json
-    if data['methodName'] is None or data['methodName'] == '' or int(data['methodName']) > 4:
-        return
+    if data['methodName'] is None or data['methodName'] == '':
+        return ""
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
+    f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],data['methodName'],data['usern'],timestr),"w")
     f.write(json.dumps(data['timeC']))
     f.close()
-    f = open("./yltmp/experiment/%s-%s-%s-%s-result.json"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr),"w")
+    f = open("./yltmp/experiment/%s-%s-%s-%s-result.json"%(data['homeType'],data['methodName'],data['usern'],timestr),"w")
     f.write(json.dumps(data['json']))
     f.close()
-    return "%s-%s-%s-%s OK"%(data['homeType'],methods[int(data['methodName'])],data['usern'],timestr)
+    return "%s-%s-%s-%s OK"%(data['homeType'], data['methodName'],data['usern'],timestr)
 
 @app_autoView.route("/autoviewfp2023", methods=['POST'])
 def autoviewfp2023():

@@ -1519,7 +1519,8 @@ const setting_up = function () {
             async: false,
             data: JSON.stringify({methodName: $("#nameOSR").val(), usern: $("#userOSR").val(), homeType:$("#searchinput").val(), timeC: timeCounter, json: getDownloadSceneJson()}),
             success: function (msg) {
-                alert(msg);
+                console.log(msg)
+                if(msg !== ""){alert(msg);}
             }
         });
         timeCounter.navigate = 0;
