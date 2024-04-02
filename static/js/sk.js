@@ -1416,7 +1416,8 @@ const setting_up = function () {
     $("#sklayout").click(auto_layout);
     $("#btnPlanIT").click(auto_layout_PlanIT);
     $("#clear_button").click(() => {
-        if(currentRoomId === undefined) return;
+        if(currentRoomId === undefined) return; var crid = currentRoomId;
+        for(let currentRoomId=0; currentRoomId<manager.renderManager.scene_json.rooms.length;++currentRoomId){
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
         for(let i = 0; i < objlist.length; i++){
             if(objlist[i] === undefined || objlist[i] === null) continue;
@@ -1426,6 +1427,8 @@ const setting_up = function () {
             delete objlist[i];
         }
         manager.renderManager.scene_json.rooms[currentRoomId].objList = objlist.filter(o => o!==undefined&&o!==null); 
+        }
+        currentRoomId = crid;
         refreshRoomByID(currentRoomId, manager.renderManager.scene_json.rooms[currentRoomId].objList);
     });
     $("#clearALL_button").click(() => {
