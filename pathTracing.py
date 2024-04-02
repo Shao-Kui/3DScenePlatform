@@ -54,6 +54,9 @@ def autoPerspectiveCamera(scenejson):
             roomShape = room_meta[:, 0:2]
         else:
             roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+            for i in range(1, len(scenejson['rooms'])):
+                room = scenejson['rooms'][i]
+                roomShape = np.vstack((roomShape, room['roomShape']))
         wh = WALLHEIGHT
     lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
     lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
