@@ -959,13 +959,15 @@ const castMousePosition = function(){
 
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    let rtt_pre = new THREE.Vector2();
+    let rtt_nxt = new THREE.Vector2();
+    rtt_pre.set(mouse.x, mouse.y);
     updateMousePosition();
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
     instanceKeyCache = Object.values(instanceKeyCache).concat(arrayOfLines);//TODO .concat(manager.renderManager.newWallCache).
     let intersects = raycaster.intersectObjects(
-        instanceKeyCache,
-        //.concat(Object.values(manager.renderManager.fCache))
+        instanceKeyCache.concat(Object.values(manager.renderManager.fCache)),
         //.concat(Object.values(manager.renderManager.wCache))
         true
     );
@@ -1037,10 +1039,8 @@ function onDocumentMouseMove(event) {
     if(On_CGSeries){
         moveCGSeries();
     }
+    tf.engine().endScope();
     if (On_ROTATE && INTERSECT_OBJ != null) {
-        var rtt_pre = new THREE.Vector2();
-        var rtt_nxt = new THREE.Vector2();
-        rtt_pre.set(mouse.x, mouse.y);
         updateMousePosition();
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
@@ -1066,7 +1066,6 @@ function onDocumentMouseMove(event) {
                 resOri = Math.atan2(closestDir.x, closestDir.y);
             }
         }
-        
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
             resOri, 
@@ -1602,6 +1601,7 @@ const setting_up = function () {
                 if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
             }
+            timeCounter.cgsStart = moment();
         }
         else{
             button.style.backgroundColor = 'red';//红：退出模式
@@ -1615,6 +1615,7 @@ const setting_up = function () {
             // manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
             // manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
             recreate_room();
+            timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         }
     })
 
@@ -4119,6 +4120,7 @@ function recreate_room()//复原roomshape
     }
     new_json.wall_width = 0.01;
     // console.log(new_json);
+    encodePerspectiveCamera(new_json)
     refreshSceneByJson(new_json);
 }
 

@@ -157,6 +157,7 @@ const topdownview = function(bbox = undefined){
 };
 
 var ctrlPressing = false;
+var tPressing=false;
 var duplicateTimes = 1;
 const onKeyDown = function(event){
     if(event.target.matches("input")) return;
@@ -238,6 +239,9 @@ const onKeyDown = function(event){
             if (shelfstocking_Mode) {
                 if (!$('#shelfSelectRow3Btn').prop('disabled')) $('#shelfSelectRow3Btn').click();
             }
+            break;
+        case 84:  // T
+            tPressing=true;
             break;
         case 192: // `
             auxiliary_catlist(0)
@@ -344,6 +348,9 @@ var onKeyUp = function (event) {
             break;
         case 13: // ENTER
             clickTextSearchButton();
+            break;
+        case 84:  // T
+            tPressing=false;
             break;
         case 17:
             ctrlPressing = false;

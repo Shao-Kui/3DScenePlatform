@@ -211,15 +211,17 @@ function func(info, realMove=false, dsMove=false){ if(debugHJK)return;
 
     let currentEdge = arrayOfRooms[info.roomid].edgeList[info.wallid];
     let synScheme = {flexLength:0, moveLength:info.moveLength, history:[], deleteList:[],roomId:info.roomid};
-    for(let e = 0; e < currentEdge.neighbourEdge.length; ++e){
-        let newInfo = JSON.parse(JSON.stringify(currentEdge.neighbourEdge[e]));
-        //console.log("fuck the world again and again and again and again"); console.log(newInfo);
-        sch = recur(newInfo, {dir:info.movedir, length:info.moveLength, flexLength:0});
+    if(!tPressing){
+        for(let e = 0; e < currentEdge.neighbourEdge.length; ++e){
+            let newInfo = JSON.parse(JSON.stringify(currentEdge.neighbourEdge[e]));
+            //console.log("fuck the world again and again and again and again"); console.log(newInfo);
+            sch = recur(newInfo, {dir:info.movedir, length:info.moveLength, flexLength:0});
 
-        synScheme.moveLength = Math.min(synScheme.moveLength,sch.moveLength);
-        synScheme.history = synScheme.history.concat(JSON.parse(JSON.stringify(sch.history)));
-        if("deleteList" in sch) synScheme.deleteList = synScheme.deleteList.concat(JSON.parse(JSON.stringify(sch.deleteList)));
-        //console.log(synScheme.history);console.log(synScheme.moveLength);console.log(synScheme.history[0].edgeList[0].point[0][0]);console.log(arrayOfRooms[info.roomid].eBoxList[0].edgeList[0].point[0][0]);
+            synScheme.moveLength = Math.min(synScheme.moveLength,sch.moveLength);
+            synScheme.history = synScheme.history.concat(JSON.parse(JSON.stringify(sch.history)));
+            if("deleteList" in sch) synScheme.deleteList = synScheme.deleteList.concat(JSON.parse(JSON.stringify(sch.deleteList)));
+            //console.log(synScheme.history);console.log(synScheme.moveLength);console.log(synScheme.history[0].edgeList[0].point[0][0]);console.log(arrayOfRooms[info.roomid].eBoxList[0].edgeList[0].point[0][0]);
+        }
     }
     //scheme = recur({edgeId:info.wallid, eBoxId:-1, roomId:info.roomid}, {dir:info.movedir, length:info.moveLength, flexLength:0});
     

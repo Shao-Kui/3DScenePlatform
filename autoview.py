@@ -1519,14 +1519,14 @@ def catimgs(identifier):
 @app_autoView.route("/eboxes/<function>",methods=['POST'])
 def eboxes(function):
     mapping = {
-        "livingroom":[[556,577,595,604,711,738,796],[503,533,542,578],[673,841]],#745
+        "livingroom":[[556,577,595,604,711,738,796],[503,533,542,578],[673,833,834,836,837,838,841]],#745
         "kitchen":[[860,861,862,863,864]],
         "bathroom":[[848,849,850,851,852,853,854,855,856,857,858,859]],
         "balcony":[],
-        "bedroom":[[466,470,471,472,476,479,507,566,685],[673,841]],#,846  536,
+        "bedroom":[[466,470,471,472,476,479,507,566,685],[673,833,834,836,837,838,841]],#,846  536,
         "diningroom":[[503,533,542,578]],
         "storage":[[558,683,684,687]],
-        "study":[[673,841,846]]
+        "study":[[673,833,834,836,837,838,841]]
     }
     
     jsList = []
@@ -1626,7 +1626,7 @@ def catagory_prior(identifier, identi):
         orderCnt += 1
     return json.dumps(selected[:13])#print(selected[:13])
 
-methods = ["Inds", "MgAdd", "CLPT", "CGS", "FFG"]
+methods = ["CLPT", "SD", "MgAdd", "Inds", "SE"]
 @app_autoView.route("/clickTimer",methods=['POST'])
 def clickTimer():
     data = flask.request.json

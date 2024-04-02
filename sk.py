@@ -17,6 +17,7 @@ import time
 import random
 import copy
 import math
+from layoutmethods.projection2d import wall_distance_orient
 
 AABBcache = {}
 ASPECT = 16 / 9
@@ -706,6 +707,8 @@ class cgDiff:
         return r == s
 
     def k_tag(self, r, s):
+        if(r not in self.objCat or s not in self.objCat):
+            return 0
         if len(self.objCat[r]) == 0 or len(self.objCat[s]) == 0:
             return 0
         rCat = self.objCat[r][0].lower()
@@ -1102,9 +1105,18 @@ if __name__ == "__main__":
     start_time = time.time()
     # cgs('6453', None, '梳妆台哈哈')
     # cgs('7644', ['3699', '7836', '2740', '2565'], 'init')
-    # cgs('10198', None, '灰色现代风')
+    # cgs('652', None, 'zhangsk18-岳亮Super')
+    # cgs('41', None, 'philip-abc')
+    # cgs('3289', None, 'huangjk21-202403311风格')
     # cgs('5810', None, '新中式简约风')
     # cgs('1133', None, 'rkx-优雅田园风')
+    # cgs('s__1319', None, 'zjt-zjt2')
+    # cgs('s__1319', None, 'zjt-zjt3')
+
+    cgs('s__541',None, 'zjt-zjt9')
+    cgs('s__973',None, 'zjt-zjt13')
+
+    # wall_distance_orient()
     # analyzeAnswerPlanner()
     # cgsBatch()
     # cgsUSRenderBatch()
@@ -1120,16 +1132,10 @@ if __name__ == "__main__":
     #     except:
     #         print(modelId)
 
-    # renderModel20('sofa2bed', 'glb', 'origin')
-    # renderModel20('sofa2bed', 'glb', 'bed')
+    # renderModel20('stool2bed2', 'glb', 'origin')
+    # renderModel20('stool2bed2', 'glb', 'bed')
     # renderGLBbatch()
     # renderAnimationResults('sample3_origin')
-    pt.SAVECONFIG = False
-    pt.emitter = 'sky'
-    pt.USENEWWALL = True
-    # pt.CAMGEN = True
-    sj = json.load(open(f'./static/dataset/infiniteLayout/out_16-r1.json'))
-    pt.pathTracing(sj, 256, f'./static/dataset/infiniteLayout/out_16-r1-4.png')
     # renderAnimationResults('out_16_origin')
     # renderAnimationResults('out_11_origin')
     # renderAnimationResults('out_13_origin')
