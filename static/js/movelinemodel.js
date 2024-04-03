@@ -583,7 +583,7 @@ function room_division_decide(room,line_id)
         delete arrayOfInnerLines[current_room_id];
         delete arrayOfRooms[current_room_id];
         updateMoveIndex();
-        return false;
+        return true;
     }
     else if(result.rooms.length == 2)//divide
     {
@@ -617,7 +617,7 @@ function room_division_decide(room,line_id)
                 }
             }
         }
-        room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;console.log("break");
+        room_type_counter[room_type_to_id_map[result.rooms[1].type]] += 1;//console.log("break");
         result.rooms[1].roomLinkCount[room_type_to_id_map[room.type]] += 1;
         room.roomLinkCount[room_type_to_id_map[result.rooms[1].type]] += 1;
         //room = result.rooms[0];
@@ -632,16 +632,6 @@ function room_division_decide(room,line_id)
 
         updateMoveIndex();
         
-        // console.log("已退出可拖动状态");
-        // now_x1 = 0 ;
-        // now_x2 = 0;
-        // now_y1 = 0;
-        // now_y2 = 0;
-        // now_z1 = 0;
-        // now_z2 = 0;
-        // now_move_index = -1;//全部重置
-        //On_LINEMOVE = false;
-        // can_add_dot = 0;
         return true;
     }
     return false;

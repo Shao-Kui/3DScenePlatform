@@ -36,9 +36,7 @@ function completeRoomInformationWhileAdding(id){ //temporary function to build b
     ed3 ={edgeId:3,roomId:id,eBoxId:-1,point:[[p3[0],p3[1]],[p0[0],p0[1]]],dir:[Math.abs(Math.sign(p3[1]-p0[1]))*Math.sign(p2[0]-p3[0]),Math.abs(Math.sign(p3[0]-p0[0]))*Math.sign(p2[1]-p3[1])],neighbourEdge:[], onWall:false};
     
     arrayOfRooms[id].edgeList = [ed0,ed1,ed2,ed3];
-    console.log("go fuck yourself");
-    //console.log(arrayOfRooms[id].edgeList);
-
+    //console.log("go fuck yourself"); console.log(arrayOfRooms[id].edgeList);
 }
 
 function changeNeighbour(ed, oldId){
@@ -333,7 +331,7 @@ function checkRoomCrossEBox(room, elasticBox){
     let dis = 0;
     let p = [];
     let ps = [];
-    let singleEdgeCase = -1; let doubleEdgeCase = -1;
+    let singleEdgeCase = -1; let doubleEdgeCase = -1; let backEdgeCase=-1;
     for(let f=0;f<room.edgeList.length;++f){
         p = [];
         for(let e=0;e<4;++e){
@@ -349,7 +347,7 @@ function checkRoomCrossEBox(room, elasticBox){
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:0};
         }else if(ioo==0){//console.log("inOrOut out");
             return {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:2};
-        }else{console.log("ioo error"); console.log(room); console.log(elasticBox);}
+        }//else{console.log("ioo error"); console.log(room); console.log(elasticBox);}
     }
     if(sump != 2){
         //console.log("error p");console.log(room);console.log(elasticBox);
@@ -358,7 +356,9 @@ function checkRoomCrossEBox(room, elasticBox){
     
     for(let f=0;f<room.edgeList.length;++f){
         if(ps[f].length == 1 && ps[(f+1)%(room.edgeList.length)].length == 1 && Math.abs(ps[f][0] - ps[f][1]) == 1){
-            doubleEdgeCase = f; break;
+            let ed = room.edgeList[f]; let nexted = room.edgeList[(f+1)%(room.edgeList.length)];
+            if((nexted.point[1][0]-nexted.point[0][0])*ed.dir[0]+(nexted.point[1][1]-nexted.point[0][1])*ed.dir[1]<0) {backEdgeCase = f;}
+            else{doubleEdgeCase = f;} break;
         }
     }
 
@@ -385,8 +385,6 @@ function checkRoomCrossEBox(room, elasticBox){
         return {edgeIds:[flag],eEdgeIds:[glag], dirs:[dir], diss:[dis], outState:outState};
     }
     
-
-    var check_res = {edgeIds:[],eEdgeIds:[], dirs:[], diss:[], outState:1};
     if(doubleEdgeCase >= 0){console.log("double edge case");
         flag = doubleEdgeCase;
 
@@ -403,13 +401,13 @@ function checkRoomCrossEBox(room, elasticBox){
         let x1 = elasticBox.edgeList[glag].point[0][x];
         //前进距离，那就是沿着room.edgeList[f].dir的移动距离，
         dis = (x0 - x1)*room.edgeList[flag].dir[x]; let ratio = dis/elasticBox.currentRange[x];
-        if(dis>-0.01){
-            check_res.edgeIds = check_res.edgeIds.concat([flag]);
+        if(dis<-0.01){
+            /*check_res.edgeIds = check_res.edgeIds.concat([flag]);
             check_res.eEdgeIds = check_res.eEdgeIds.concat([glag]);
             check_res.dirs = check_res.dirs.concat([dir]);
             check_res.diss = check_res.diss.concat([dis]);
-            check_res.outState = (ratio<0.5) ? 1 : 2;
-            //console.log("dis < 0 error");
+            check_res.outState = (ratio<0.5) ? 1 : 2;*/
+            console.log("dis < 0 error");
         }
 
         let flagg = (doubleEdgeCase+1)%(room.edgeList);
@@ -427,18 +425,61 @@ function checkRoomCrossEBox(room, elasticBox){
         x1 = elasticBox.edgeList[glagg].point[0][x];
         //前进距离，那就是沿着room.edgeList[f].dir的移动距离，
         let diss = (x0 - x1)*room.edgeList[flagg].dir[x]; let ratio1 = diss/elasticBox.currentRange[x];
-        if(diss>-0.01){
-            check_res.edgeIds = check_res.edgeIds.concat([flagg]);
+        if(diss<-0.01){
+            /*check_res.edgeIds = check_res.edgeIds.concat([flagg]);
             check_res.eEdgeIds = check_res.eEdgeIds.concat([glagg]);
             check_res.dirs = check_res.dirs.concat([dirr]);
             check_res.diss = check_res.diss.concat([diss]);
-            if(check_res.outState==1)check_res.outState = (ratio1<0.5) ? 1 : 2;
-            //console.log("dis < 0 error");
+            if(check_res.outState==1)check_res.outState = (ratio1<0.5) ? 1 : 2;*/
+            console.log("dis < 0 error");
         }
 
-        //let outState = ((ratio>0.5)||(ratio1>0.5)) ? 2 : 1;
+        let outState = ((ratio>0.5)||(ratio1>0.5)) ? 2 : 1;
 
-        return check_res;//{edgeIds:[flag, flagg],eEdgeIds:[glag,glagg], dirs:[dir,dirr], diss:[dis,diss], out:outState};
+        return {edgeIds:[flag, flagg],eEdgeIds:[glag,glagg], dirs:[dir,dirr], diss:[dis,diss], out:outState};
+    }
+
+    if(backEdgeCase >= 0){console.log("back edge case");
+        flag = backEdgeCase;
+
+        let x = 1;
+        glag = -1;
+        for(let e=0;e<4;++e){
+            if(elasticBox.edgeList[e].dir[0] == room.edgeList[flag].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[flag].dir[1]){glag=e;break;}
+        }
+        dir = elasticBox.edgeList[glag].dir;
+
+        if(Math.abs(room.edgeList[flag].dir[0]) > Math.abs(room.edgeList[flag].dir[1])){x=0;}
+
+        let x0 = room.edgeList[flag].point[0][x];
+        let x1 = elasticBox.edgeList[glag].point[0][x];
+        //前进距离，那就是沿着room.edgeList[f].dir的移动距离，
+        dis = (x0 - x1)*room.edgeList[flag].dir[x]; let ratio = dis/elasticBox.currentRange[x];
+        if(dis<-0.01){console.log("dis < 0 error");}
+        let outState = (ratio>0.5) ? 2 : 1;
+
+        let flagg = (doubleEdgeCase+1)%(room.edgeList);
+
+        x = 1;
+        let glagg = -1;
+        for(let e=0;e<4;++e){
+            if(elasticBox.edgeList[e].dir[0] == room.edgeList[flagg].dir[0] && elasticBox.edgeList[e].dir[1] == room.edgeList[flagg].dir[1]){glagg=e;break;}
+        }
+        let dirr = elasticBox.edgeList[glagg].dir;
+
+        if(abs(room.edgeList[flagg].dir[0]) > abs(room.edgeList[flagg].dir[1])){x=0;}
+
+        x0 = room.edgeList[flagg].point[0][x];
+        x1 = elasticBox.edgeList[glagg].point[0][x];
+        //前进距离，那就是沿着room.edgeList[f].dir的移动距离，
+        let diss = (x0 - x1)*room.edgeList[flagg].dir[x]; let ratio1 = diss/elasticBox.currentRange[x];
+        if(diss<-0.01){console.log("dis < 0 error");}
+
+        let outState1 = (ratio1>0.5) ? 2 : 1;
+
+        if(dis<diss){return {edgeIds:[flag],eEdgeIds:[glag], dirs:[dir], diss:[dis], out:outState}; }
+        else{ return {edgeIds:[flagg],eEdgeIds:[glagg], dirs:[dirr], diss:[diss], out:outState1};}
+        
     }
     
     //console.log("not single or double case");
@@ -459,7 +500,7 @@ const roomTypeSemanticLevels={
 function checkRoomEboxSemantic(roomType, ebox){
     if(roomType=="bathroom"){ return ebox.bid<860 && ebox.bid>847 ? 0:-1;}
     if(roomType=="kitchen"){ return ebox.bid<865 && ebox.bid>859 ? 0:-1;}
-    if(roomType=="storage"){ return (ebox.bid in [558,683,684,687]) ? 0:-1;}
+    if(roomType=="storage"){ return ([558,683,684,687].indexOf(ebox.bid)>=0) ? 0:-1;}
     for(let i=0; i<roomTypeSemanticLevels[roomType].length; ++i){
         let nm = roomTypeSemanticLevels[roomType][i]; //console.log(nm);
         //for(let o=0; o<ebox.objList.length; ++o){if(ebox.objList[o].cs.toLowerCase().includes(nm)) return i;}
@@ -620,18 +661,18 @@ function seperationRemoving(evaluation2, room0Id, room1Id){
     return bids;
 }
 
-function seperationReloading(bids, room0Id, room1Id){
+function seperationReloading(bids, room0Id, room1Id){ //console.log("reloading ");
     for(let b=0; b<bids.length; ++b){
 
         let funcBox = searchOriginalFuncBox(bids[b]);
         let box = searchingBox(funcBox, arrayOfRooms[room0Id]);
-        if(box){ //console.log("selected funcbox id " + String(f));
+        if(box && checkRoomEboxSemantic(arrayOfRooms[room0Id].type,box)>=0){ //console.log("selected funcbox id " + String(f));
             let eid = addingCalc(box, room0Id);
             addingAct(room0Id, eid); continue;
         }
 
         box = searchingBox(funcBox, arrayOfRooms[room1Id]);
-        if(box){ //console.log("selected funcbox id " + String(f));
+        if(box && checkRoomEboxSemantic(arrayOfRooms[room1Id].type,box)>=0){ //console.log("selected funcbox id " + String(f));
             let eid = addingCalc(box, room1Id);
             addingAct(room1Id, eid); continue;
         }
@@ -659,8 +700,11 @@ function seperationAction(roomId, roomshape, tp, cal){
     for(let i = 0; i < arrayOfRooms[roomId].edgeList.length; ++i){
         arrayOfRooms[roomId].edgeList[i].roomId=roomId;
     }
-    arrayOfRooms[roomId].type = tp;console.log(roomSemanticState);
-    while(roomSemanticState.length <= roomId){roomSemanticState=roomSemanticState.concat([[]]);}
+    arrayOfRooms[roomId].type = tp;//console.log(roomSemanticState);
+    //while(roomSemanticState.length <= roomId){roomSemanticState=roomSemanticState.concat([[]]);}
+    //if(!(roomId in roomSemanticState)){
+        roomSemanticState[roomId]=[];
+    //}
     while(roomSemanticState[roomId].length < roomTypeSemanticLevels[tp].length){roomSemanticState[roomId]=roomSemanticState[roomId].concat([0]);}
 
     for(let i = 0; i < cal.length; ++i){
@@ -691,7 +735,7 @@ function seperationAction(roomId, roomshape, tp, cal){
                 }catch(error){}
             }
         }
-
+        if(checkRoomEboxSemantic(arrayOfRooms[roomId].type,arrayOfRooms[roomId].eBoxList[i])<0){alert("seperationAction: this should not less than 0");}       
         roomSemanticState[roomId][checkRoomEboxSemantic(tp,arrayOfRooms[roomId].eBoxList[i])] = 1;
 
     }
@@ -716,7 +760,23 @@ function seperating(eBoxList, room0, room1, evaluation){
 }
 
 function merging(room0, room1, newRoomShape){
-
+    //重新设置room0的edgeList
+    //逐个检查room1的eBox的语义是否服从room0
+    arrayOfRooms[room0.id].edgeList = JSON.parse(JSON.stringify(visualRoom(newRoomShape)));
+    for(let e=0;e<arrayOfRooms[room1.id].eBoxList.length;++e){
+        let ebox=arrayOfRooms[room1.id].eBoxList[e];
+        let semanticLevel = checkRoomEboxSemantic(room0.type, ebox);
+        if(semanticLevel>=0 && roomSemanticState[room0.id][semanticLevel]==0){
+            ebox.roomId=room0.id; ebox.eBoxId=arrayOfRooms[room0.id].eBoxList.length;
+            for(let ed=0;ed<4;++ed){ebox.edgeList[ed].roomId=room0.id;} roomSemanticState[room0.id][semanticLevel]=1;
+            arrayOfRooms[room0.id].eBoxList = arrayOfRooms[room0.id].eBoxList.concat([JSON.parse(JSON.stringify(ebox))]);
+        }else{
+            for(let o = 0; o < ebox.objList.length; ++o){removeObjectByUUID(ebox.objList[o].key);}
+            onlineBids=onlineBids.filter(function(it){return it != ebox.bid;});
+        }
+    }
+    updateNeighbours(room0.id);
+    delete roomSemanticState[room1.id];
 }
 
 //递归方法
@@ -910,15 +970,14 @@ function toEbox(p0, p1){ //console.log(p0);console.log(p1);
 }
 
 var roomTypeSemanticLevelEboxes = {};
-var roomSemanticState = [[]];
+var roomSemanticState = {};
 var onlineBids=[];
 function searchBoxDetail(roomType, level){
     let i = 0;
     while(i<roomTypeSemanticLevelEboxes[roomType][level].length && onlineBids.indexOf(roomTypeSemanticLevelEboxes[roomType][level][i].bid)>=0) ++i;
-    // if(i<roomTypeSemanticLevelEboxes[roomType][level].length){
-        // return [roomTypeSemanticLevelEboxes[roomType][level][i]];
-    // }
-    return [roomTypeSemanticLevelEboxes[roomType][level][i % roomTypeSemanticLevelEboxes[roomType][level].length]];
+    if(i<roomTypeSemanticLevelEboxes[roomType][level].length){return [roomTypeSemanticLevelEboxes[roomType][level][i]];}
+    else{return [];}
+    //return [roomTypeSemanticLevelEboxes[roomType][level][i % roomTypeSemanticLevelEboxes[roomType][level].length]];
 }
 
 function searchBoxBasic(currentRoom){
@@ -942,10 +1001,9 @@ function searchBoxBasic(currentRoom){
         });
     }
 
-    while(roomSemanticState.length <= currentRoom.id){
-        roomSemanticState=roomSemanticState.concat([[]]);
-    }
-    
+    //while(roomSemanticState.length <= currentRoom.id){roomSemanticState=roomSemanticState.concat([[]]);}
+    if(!(currentRoom.id in roomSemanticState)){roomSemanticState[currentRoom.id]=[];}
+
     //search something under current situation
     if(currentRoom.type == "bedroom"){
         if(roomSemanticState[currentRoom.id].length==0) roomSemanticState[currentRoom.id]=[0,0];
@@ -1024,12 +1082,12 @@ function searchOriginalFuncBox(bid){
 }
 
 function adding(info){
-    currentRoom = arrayOfRooms[info.roomid];//.eBoxList;///console.log(currentRoom);
+    let currentRoom = arrayOfRooms[info.roomid];//.eBoxList;///console.log(currentRoom);
     
     var funcBoxes = searchBoxBasic(currentRoom);
     for(let f=0; f<funcBoxes.length;++f){
         let box = searchingBox(funcBoxes[f], currentRoom)
-        if(box){ //console.log("selected funcbox id " + String(f));
+        if(box){ //console.log("adding " + String(f));
             let eid = addingCalc(box, info.roomid);
             addingAct(info.roomid, eid); break;
         }
@@ -1155,6 +1213,7 @@ function addingCalc(box, i){
     box.eBoxId = currentRoom.eBoxList.length;
     box.roomId = i;
     currentRoom.eBoxList = currentRoom.eBoxList.concat([box]);
+    if(checkRoomEboxSemantic(currentRoom.type,box)<0){console.log(currentRoom.type); console.log(box); alert("addingCal: this should not less than 0");}
     roomSemanticState[i][checkRoomEboxSemantic(currentRoom.type,box)] = 1;
     onlineBids = onlineBids.concat([box.bid]);//console.log(roomSemanticState[0][0]);console.log(roomSemanticState[0][1]);//console.log(currentRoom.eBoxList); //console.log(currentRoom.eBoxList[0]);
     return box.eBoxId;
@@ -1433,7 +1492,7 @@ function act(scheme, realMove, dsMove){ //console.log(scheme.deleteList);
                     
                     let ebox=arrayOfRooms[scheme.roomId].eBoxList[i];
                     
-                    
+                    if(checkRoomEboxSemantic(arrayOfRooms[scheme.roomId].type,arrayOfRooms[scheme.roomId].eBoxList[i])<0){alert("act: this should not less than 0");}
                     roomSemanticState[scheme.roomId][checkRoomEboxSemantic(arrayOfRooms[scheme.roomId].type,arrayOfRooms[scheme.roomId].eBoxList[i])] = 0;
                     for(let o = 0; o < ebox.objList.length; ++o){removeObjectByUUID(ebox.objList[o].key);}
                     onlineBids=onlineBids.filter(function(it){return it != ebox.bid;});
