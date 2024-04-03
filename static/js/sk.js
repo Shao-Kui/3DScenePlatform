@@ -1040,7 +1040,6 @@ function onDocumentMouseMove(event) {
     if(On_CGSeries){
         moveCGSeries();
     }
-    tf.engine().endScope();
     if (On_ROTATE && INTERSECT_OBJ != null) {
         updateMousePosition();
         rtt_nxt.set(mouse.x, mouse.y);
@@ -1103,6 +1102,7 @@ function onDocumentMouseMove(event) {
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         auxiliaryMove();
     }
+    tf.engine().endScope();
     if (INTERSECT_WALL != undefined) {
         let ip = castMousePositionForWall();
         if(ip){
