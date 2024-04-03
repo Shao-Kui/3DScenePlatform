@@ -962,7 +962,7 @@ def renderGLBbatch():
                 except Exception as e:
                     print(e)
 
-icosavn = np.loadtxt("./assets/icosavn", dtype=np.float)
+icosavn = np.loadtxt("./assets/icosavn", dtype=float)
 # icosavn = torch.from_numpy(icosavn).float().to("cuda")
 def renderModel20(objname, format='obj', stateName='origin'):
     RENDER20DIR = f'./dataset/object/{objname}/render20'
@@ -1425,7 +1425,7 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
 
 from typing import List, Optional
 # 计算用于构建树结构的数据
-def calculate_tree_data(path:str,groupName:str):
+def calculate_tree_data(path:str,groupName:str,globalMaxDiff:float=0.02):
     Room_label: int = 4
     Room_num: int = 10
     # norm = norm3
@@ -1495,7 +1495,7 @@ def calculate_tree_data(path:str,groupName:str):
         return False
 
     # 一个结点的集合中可以有多个布局，只要它们的1-范数小于等于参数maxDiff，默认为2
-    def norm3(l1: Layout, l2: Layout, j:int, maxDiff:float = 0.02) -> bool:
+    def norm3(l1: Layout, l2: Layout, j:int, maxDiff:float = globalMaxDiff) -> bool:
         # return True
         diff = 0
         for i in range(Room_label):
@@ -1504,7 +1504,7 @@ def calculate_tree_data(path:str,groupName:str):
             return True
         return False
     
-    def norm4(l1: Layout, l2: Layout, j:int, maxDiff:float = 0.02, indexMin: float = 0.5)->bool:
+    def norm4(l1: Layout, l2: Layout, j:int, maxDiff:float = globalMaxDiff, indexMin: float = 0.5)->bool:
         if norm3(l1, l2, j):    
             if l1.property[j] <= indexMin:
                 return False
@@ -1518,7 +1518,9 @@ def calculate_tree_data(path:str,groupName:str):
 
     def divide(nodes: List[Layout], parent: Optional[LayoutNode] = None):
         if len(nodes) == 0:
-            return
+            return 0
+        
+        nodecnt = 1
 
         # room_label = len(nodes[0].property)
         nodes_vec = [[] for _ in range(Room_label)]
@@ -1562,7 +1564,8 @@ def calculate_tree_data(path:str,groupName:str):
             # t.name = "".join('房{} '.format(x.flag) for x in t.layout_set) + ":{}".format(len(t.layout_set))
             t.name = "房{}".format(t.layout_set[0].flag) + "等{}套".format(len(t.layout_set))
             t.meta = anim_map[int(t.layout_set[0].id)] if t.layout_set[0].id != anim_data['center']+'_0' else {'root':anim_data['center']+'_0'}
-            divide(nodes_vec[i].copy(), t)
+            nodecnt += divide(nodes_vec[i].copy(), t)
+        return nodecnt
 
     def normalize_layout(t: Layout):
         total = sum(t.property)
@@ -1639,11 +1642,13 @@ def calculate_tree_data(path:str,groupName:str):
 
         nodes_all_1 = nodes_all[1:]
 
-        divide(nodes_all_1, origin)
+        returnvalue = divide(nodes_all_1, origin)
 
         rootDir = os.listdir('./')
 
         write_json(origin, path+"/{}.json".format('layoutTree'))
+
+        return returnvalue
         
         # with open(path+"/{}.js".format('layoutTree'), 'w') as f:
         # # with open("{}.js".format(new_data), 'w') as f:
@@ -1686,4 +1691,4 @@ def calculate_tree_data(path:str,groupName:str):
     filterLayoutSet = True
     filterValue = 0.03
 
-    treeMethod()
+    return treeMethod()

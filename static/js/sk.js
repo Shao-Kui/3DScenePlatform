@@ -12,6 +12,7 @@ var roomPointIndexCounter = 0;
 // points father type uuid
 var debugHJK = false;//true;//
 var arrayOfInnerLines = {};//环绕每个房间的线
+var last_moved_line;
 var now_move_index =-1;
 //const arrayOfHideLines = [];//直线
 //const now_move_hide_line = [];//直线
@@ -1600,6 +1601,7 @@ const setting_up = function () {
                     "father": -1,
                     "father_wall_start":-1,
                     "father_wall_end":-1,
+                    "mergeable":false,
                     "edgeList":[],
                     "roomLinkCount":[0,0,0,0,0,0,0,0],
                 };
@@ -3497,12 +3499,12 @@ function get_room_and_line_id(start,end,add_point = true)
                     if(!same_point(pt2,end))
                     {
                         cut_inner_line(i,j,end);
-                        cutting_inner_line(i,j,end);
+                        if(!debugHJK)cutting_inner_line(i,j,end);
                     }
-                    if(!same_point(pt1,start))
+                    if(!same_point(pt1,start) && !same_point(start,end))
                     {
                         cut_inner_line(i,j,start);
-                        cutting_inner_line(i,j,start);
+                        if(!debugHJK)cutting_inner_line(i,j,start);
                     }
                     cut_line_found = true;
                     break;
@@ -3699,6 +3701,9 @@ function deleteEdge(sig){
     var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
     var sig2 = (sig+1)%(arrayOfLines.length);
     
+    get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
     var rl = get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);    
     var rl1= get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
     var rl2= get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
@@ -3814,6 +3819,15 @@ const enter_move_mode_pro = function(event){
         var pt = intersects[0].point;//鼠标触碰地面的点
         On_LINEMOVE = !On_LINEMOVE;//状态量取非
         if(On_LINEMOVE){
+            if(intersects[0].object != last_moved_line)
+            {
+                for(let i = roomIndexCounter - 1; i >= 0; i--)
+                {
+                    if(i in arrayOfRooms && !arrayOfRooms[i].mergeable)break;
+                    if(i in arrayOfRooms)arrayOfRooms[i].mergeable = false;
+                }
+            }
+            last_moved_line = intersects[0].object;
             can_add_dot = 1;//1的状态不可加点ntersect是一个独特的类，加object是具体的物体
             
             backPoint[0]=pt.x;backPoint[1]=pt.z;lastPoint[0]=pt.x;lastPoint[1]=pt.z;            
