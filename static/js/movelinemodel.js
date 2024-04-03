@@ -495,6 +495,7 @@ function room_division_decide(room,line_id)
                     "father_wall_end": idx_of_points[2],
                     "mergeable":true,
                     "edgeList":[],
+                    "eBoxList":[],
                     "roomLinkCount":[0,0,0,0,0,0,0,0],
                 };
                 if(!debugHJK)eva = seperationEvaluation(room.eBoxList,room.room_shape, room.type, room2.room_shape, room2.type);
@@ -529,9 +530,9 @@ function room_division_decide(room,line_id)
         let merged_room_shape = father_room.points.map(id => structuredClone(arrayOfRoomPoints[id].position));
         merged_room_shape[room.father_wall_start] = structuredClone(arrayOfRoomPoints[room.points[1]].position);
         merged_room_shape[room.father_wall_end] = structuredClone(arrayOfRoomPoints[room.points[2]].position);
-        room_type_counter[room.type] -= 1;
+        room_type_counter[room_type_to_id_map[room.type]] -= 1;
         let merged_room_val = calculate_room_division_evaluation(merged_room_shape,father_room.type) + C_type * get_room_type_evaluation(room_type_counter);
-        room_type_counter[room.type] += 1;
+        room_type_counter[room_type_to_id_map[room.type]] += 1;
         let cur_val = Math.min(father_room_val,cur_room_val) + C_type * get_room_type_evaluation(room_type_counter);
         if(cur_val + 2 < merged_room_val)
         {
@@ -551,7 +552,7 @@ function room_division_decide(room,line_id)
         let father_room_id = room.father;
         let father_room = arrayOfRooms[father_room_id];
         merging(father_room,room,result.rooms[0]);
-        room_type_counter[room.type] -= 1;
+        room_type_counter[room_type_to_id_map[room.type]] -= 1;
         move_point(father_room.points[room.father_wall_start],arrayOfRoomPoints[room.points[1]].position);
         move_point(father_room.points[room.father_wall_end],arrayOfRoomPoints[room.points[2]].position);
         let current_room_id = room.id;

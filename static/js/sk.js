@@ -1604,6 +1604,7 @@ const setting_up = function () {
                     "mergeable":false,
                     "edgeList":[],
                     "roomLinkCount":[0,0,0,0,0,0,0,0],
+                    "eBoxList":[],
                 };
                 if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
                 roomIndexCounter++;
