@@ -1195,7 +1195,7 @@ const onAddOff = function(){
     scenecanvas.style.cursor = "auto";
     scene.remove(scene.getObjectByName(INSERT_NAME)); 
     On_ADD = false; 
-    timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+    // timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
 }; 
 
 const onRightClickObj = function(event){
@@ -3264,7 +3264,7 @@ const setting_up = function () {
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#modulebtn').click();
+        $('#searchbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){
