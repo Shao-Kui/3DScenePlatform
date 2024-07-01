@@ -40,7 +40,7 @@ const loadObjectToCacheContent = function(instance){
     ), new THREE.MeshPhongMaterial({color: 0xffffff}));
     associatedBox.position.set(0, (instance.boundingBox.max.y - instance.boundingBox.min.y)/2, 0)
     instance.associatedBox = associatedBox;
-    // traverseMtlToOpacity(instance); // from 2023.3.3 this feature is temperally removed due to instanseMesh. 
+    traverseMtlToOpacity(instance); // from 2023.3.3 this feature is temperally removed due to instanseMesh. 
     objectCache[modelId] = instance;
     playAnimation(objectCache[modelId]);
     while(objectLoadingQueue[modelId].length){
@@ -62,7 +62,7 @@ let loadObjectToCache = function(modelId, anchor=()=>{}, anchorArgs=[], format='
     objectLoadingQueue[modelId] = [];
     let mtlurl = `/mtl/${modelId}`;
     let meshurl = `/mesh/${modelId}`;
-    if(format === 'obj'){
+    if(format === 'obj' || format === 'THInstancedObject'){
         let objLoader = new THREE.OBJLoader();
         let mtlLoader = new THREE.MTLLoader();
         mtlLoader.load(mtlurl, function (mCreator) {
@@ -134,6 +134,22 @@ const traverseMtlToOpacity = function (object, opacity = 0.6) {
 let refreshObjectFromCache = function(objToInsert){
     if(!(objToInsert.modelId in objectCache)) return;
     let object3dFull = objectCache[objToInsert.modelId].clone();
+    if (objToInsert.format ==="THInstancedObject") {
+        let instancedTransforms = objToInsert.instancedTransforms;
+        object3dFull = new THREE.Group();
+        objectCache[objToInsert.modelId].children.forEach(c => {
+            let mesh = new THREE.InstancedMesh(c.geometry, c.material, instancedTransforms.length);
+            for (let i = 0; i < instancedTransforms.length; ++i) {
+                const temp = new THREE.Object3D();
+                temp.position.set(instancedTransforms[i].translate[0], instancedTransforms[i].translate[1], instancedTransforms[i].translate[2]);
+                temp.rotation.set(instancedTransforms[i].rotate[0], instancedTransforms[i].rotate[1], instancedTransforms[i].rotate[2]);
+                temp.scale.set(instancedTransforms[i].scale[0], instancedTransforms[i].scale[1], instancedTransforms[i].scale[2]);
+                temp.updateMatrix();
+                mesh.setMatrixAt(i, temp.matrix);
+            }
+            object3dFull.add(mesh);
+        });
+    }
     let object3d;
     if(manager.renderManager.islod){
         object3d = new THREE.LOD();
@@ -284,7 +300,7 @@ const traverseSceneJson = function(sj){
     });
     sj.rooms.forEach(room => {
         room.objList.forEach(o => {
-            if(modelIds.get(o.modelId) > 10 || o.format === 'instancedMesh'){
+            if(modelIds.get(o.modelId) > 100000 || o.format === 'instancedMesh'){
                 o.format = 'instancedMesh';
                 loadObjectToCache(o.modelId, () => {
                     if(o.modelId in instancedCache){
@@ -299,6 +315,89 @@ const traverseSceneJson = function(sj){
                     instancedCache[o.modelId] = res;
                 }, []);
                 addObjectUsingInstance(o);
+            }
+            if(o.format === 'sfy'){
+                let geometry = new THREE.BoxGeometry( 
+                    (o.bbox.max[0] - o.bbox.min[0]), 
+                    (o.bbox.max[1] - o.bbox.min[1]), 
+                    (o.bbox.max[2] - o.bbox.min[2])
+                ); 
+                let material = new THREE.MeshBasicMaterial({color: 0xd92511});
+                material.transparent = true;
+                material.opacity = 0.25
+                let object3d = new THREE.Mesh( geometry, material );
+                object3d.position.set( 
+                    (o.bbox.max[0] + o.bbox.min[0]) / 2,
+                    (o.bbox.max[1] + o.bbox.min[1]) / 2,
+                    (o.bbox.max[2] + o.bbox.min[2]) / 2
+                ); 
+                manager.renderManager.instanceKeyCache[o.key] = object3d;
+                object3d.userData = {
+                    "type": 'object',
+                    "key": o.key,
+                    "roomId": o.roomId,
+                    "modelId": o.modelId,
+                    "format": o.format,
+                    "coarseSemantic": o.coarseSemantic,
+                    "isSceneObj": true
+                };
+                scene.add(object3d); 
+            }
+            // SFY parameterized furniture
+            if (o.format === 'sfyobj') {
+                let generateTransparentBox = (o, color = 0xd92511, opacity = 0.5) => {
+                    let geometry = new THREE.BoxGeometry(o.value[0], o.value[2], o.value[1]);
+                    geometry.translate(o.value[0]/2, o.value[2]/2, -o.value[1]/2);
+                    let material = new THREE.MeshBasicMaterial({color: color});
+                    material.transparent = true;
+                    material.opacity = opacity
+                    let object3d = new THREE.Mesh( geometry, material );
+                    const m = new THREE.Matrix4();
+                        m.set(o.mtx[0][0], o.mtx[2][0], o.mtx[1][0], o.mtx[3][0], 
+                            o.mtx[0][2], o.mtx[2][2], o.mtx[1][2], o.mtx[3][2], 
+                            o.mtx[0][1], o.mtx[2][1], o.mtx[1][1], o.mtx[3][1], 
+                            o.mtx[0][3], o.mtx[2][3], o.mtx[1][3], o.mtx[3][3] );
+                    object3d.applyMatrix4(m);
+                    return object3d;
+                };
+
+                let traverseSFYObjChildren = (rootO, parent) => {
+                    if (rootO.childrenList === undefined) return;
+                    rootO.childrenList.forEach(o => {
+                        let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx));
+                        object3d.name = o.idx;
+                        object3d.userData = {
+                            "type": 'object',
+                            "key": o.key,
+                            "roomId": o.roomId,
+                            "modelId": o.modelId,
+                            "format": o.format,
+                            "coarseSemantic": o.coarseSemantic,
+                            "isSceneObj": true,
+                            "world_mtx": o.world_mtx,
+                            "isSceneObj": false
+                        };
+                        traverseSFYObjChildren(o, object3d);
+                        parent.add(object3d);
+                    });
+                };
+
+                let object3d = generateTransparentBox(o, color=colorHash.hex(o.idx));
+                if (o.childrenList) traverseSFYObjChildren(o, object3d);
+                manager.renderManager.instanceKeyCache[o.key] = object3d;
+                object3d.name = o.idx;
+                object3d.userData = {
+                    "type": 'object',
+                    "key": o.key,
+                    "roomId": o.roomId,
+                    "modelId": o.modelId,
+                    "format": o.format,
+                    "coarseSemantic": o.coarseSemantic,
+                    "isSceneObj": true,
+                    "world_mtx": o.world_mtx,
+                    "json": o
+                };
+                scene.add(object3d); 
             }
         })
     });
@@ -404,7 +503,7 @@ const getShapeByAreaShape = function(areaShape, interior){
     return shape;
 }
 const waterparams = {
-    color: '#ffffff',
+    color: '#0040C0',
     scale: 1,
     flowX: 10,
     flowY: 10
@@ -428,6 +527,9 @@ const addAreaToScene = function(mesh, room){
 }
 const addAreaByRoom = function(room){
     let mesh;
+    if(!room.areaType){
+        room.areaType = 'earth'
+    }
     if(room.areaType === 'water'){
         mesh = new THREE.Water( new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape)), {
             color: waterparams.color,
@@ -436,7 +538,7 @@ const addAreaByRoom = function(room){
             textureWidth: 128,
             textureHeight: 128
         });
-        // addAreaToScene(mesh, room);return;
+        addAreaToScene(mesh, room);return;
     }
     if(room.areaType === 'grass'){
         mesh = new THREE.Mesh(new THREE.ShapeGeometry(getShapeByAreaShape(room.areaShape, room.interior)), assignMaterial('/GeneralTexture/grass02.jpg')) ;
@@ -460,6 +562,10 @@ const addAreaByRoom = function(room){
         setTimeout(addAreaByRoom, 1000, room);
         return;
     }
+    // const vertices = mesh.geometry.attributes.position.array;
+    // for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+    //     vertices[ j + 2 ] = Math.random() * 3;
+    // }
     addAreaToScene(mesh, room);
 }
 
@@ -472,7 +578,13 @@ const refreshArea = function(scene_json){
     });
     areaList.length = 0;
     scene_json.rooms.forEach(room => {
+        if(!room.areaShape){return;}
         setTimeout(addAreaByRoom, areaCounter * 100, room);
         areaCounter++;
     });
+}
+
+
+const addWater = function(geometry){
+    const watermaterial = 1;
 }

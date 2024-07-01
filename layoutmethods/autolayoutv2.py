@@ -424,9 +424,3 @@ def sceneSynthesis(rj):
         #         print("--->>>", pend_obj_list[j]['modelId'], pend_obj_list[j]['coarseSemantic'])
     print("\r\n --- %s secondes --- \r\n" % (time.time() - start_time))
     return rj
-
-if __name__ == "__main__":
-    with open('./examples/{}.json'.format("4cc6dba0-a26e-42cb-a964-06cb78d60bae-l2685-dl (20)")) as f:
-        ex = json.load(f)
-    sceneSynthesis(ex['rooms'][3])
-    # print()

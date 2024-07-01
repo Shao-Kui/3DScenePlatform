@@ -233,6 +233,15 @@ root/
 ----trafficflow/
 ```
 Note that the code generates scene jsons which should be loaded in this platform for visualization. 
+# StoreSketcher
+<!-- ![StoreSketcher]() -->
+
+This project includes our algorithm for interactively synthesizing commercial scenes. The related source code is all in the following directory:
+```
+root/
+--layoutmethods/
+----shelfarrangement/
+```
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   

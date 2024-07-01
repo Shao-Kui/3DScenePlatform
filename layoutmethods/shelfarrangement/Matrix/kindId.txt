@@ -1,0 +1,14 @@
+alcohol
+drink
+bakery
+grain
+oil
+dairy
+condiment
+frozen fast food
+fruit
+vegetable
+meat
+snack
+daily necessities
+plant

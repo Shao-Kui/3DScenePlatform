@@ -1,4 +1,25 @@
 const roomIDCaster = new THREE.Raycaster();
+//zjt const
+const arrayOfLines = [];//棱柱 在构造每一条的时候都要注意顺序
+const arrayOfDots = [];//断点
+const now_move_line = [];//棱柱
+const arrayOfAllDots = [];//包含边界所有点 不只是断点
+
+var arrayOfRooms = {};
+var arrayOfRoomPoints = {};
+var roomIndexCounter = 0;
+var roomPointIndexCounter = 0;
+// points father type uuid
+var debugHJK = false;//true;//
+var arrayOfInnerLines = {};//环绕每个房间的线
+var last_moved_line;
+var now_move_index =-1;
+//const arrayOfHideLines = [];//直线
+//const now_move_hide_line = [];//直线
+//var has_add = 0;//有问题
+var can_add_dot = 0;//右键拖动状态禁用左键点击加点，防止混乱
+
+var cut_point_num  = 0 ;//加入断点的个数
 const calculateRoomID = function(translate){
     roomIDCaster.set(new THREE.Vector3(translate[0], 100, translate[2]), new THREE.Vector3(0, -1, 0)); 
     let intersects = roomIDCaster.intersectObjects(manager.renderManager.cwfCache.concat(areaList), true);
@@ -175,6 +196,7 @@ const updateTimerTab = function(){
     $('#tab_Scale').text(timeCounter.scale.toFixed(3));
     $('#tab_CGS').text(timeCounter.cgs.toFixed(3));
     $('#tab_CLTP').text(timeCounter.cltp.toFixed(3));
+    $('#tab_Clicks').text(timeCounter.clicks);
     $('#tab_Total').text(timeCounter.total.toFixed(3));
 }
 
@@ -529,7 +551,7 @@ const objectToAction = function(object3d, actionName, duration=1){
         actionForthToTarget(object3d.actions[actionName], duration);
     }
     if(actionName != 'origin'){
-        console.log(actionName, 'origin')
+        // console.log(object3d.userData.modelId, actionName)
         object3d.actions[actionName].afterCall = a => {a.weight = 1;a.time = a.getClip().duration;}
     }
 }
@@ -581,6 +603,7 @@ const setNewIntersectObj = function(event = undefined){
                         "s2": $(e.target).attr("actionName"),
                         "t": [startTime, startTime+1]
                     });
+                    updateAnimationSlider(index);
                 }
                 objectToAction(object3d, $(e.target).attr("actionName"), 1);
                 synchronize_json_object(object3d);
@@ -654,8 +677,8 @@ const onClutterpaletteClick = function() {
     let intersects = raycaster.intersectObjects(manager.renderManager.wfCache, true);
     if (intersects.length > 0) {
         clutterpalettePos = { x: intersects[0].point.x, y: 0, z: intersects[0].point.z };
-        while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-        while (secondaryCatalogItems.firstChild) { secondaryCatalogItems.firstChild.remove(); }
+        $("#catalogItems").empty();
+        $("#secondaryCatalogItems").empty();
         let roomId = intersects[0].object.parent.userData.roomId;
         let room = manager.renderManager.scene_json.rooms[roomId];
         let aabb = new THREE.Box3();
@@ -700,8 +723,13 @@ const onClickIntersectObject = function(event){
             if(intersects[0].object.parent.userData.key !== INTERSECT_OBJ.userData.key){
                 if (shelfstocking_Mode) {
                     if(INTERSECT_OBJ.userData.modelId === 'shelf01') {
-                        claimControlObject3D(INTERSECT_OBJ.userData.key, true);
-                        clearShelfInfo();
+                        if (pressedKeys[16] && intersects[0].object.parent?.userData.modelId === 'shelf01') {
+                            addToGroupShelf(toSceneObj(intersects[0].object));
+                            return;
+                        } else {
+                            releaseGroupShelf();
+                            clearShelfInfo();
+                        }
                     }
                 }else if(pressedKeys[16]){// entering group transformation mode: 
                     addToGTRANS(toSceneObj(intersects[0].object.parent));
@@ -729,7 +757,9 @@ const onClickIntersectObject = function(event){
         INTERSECT_OBJ = toSceneObj(intersects[0].object);
         // INTERSECT_OBJ = intersects[0].object.parent; //currentRoomId = INTERSECT_OBJ.userData.roomId;
         if (shelfstocking_Mode) {
-            if(isShelfPlaceholder(INTERSECT_OBJ)){
+            if (pressedKeys[16]) {
+                return;
+            }else if(isShelfPlaceholder(INTERSECT_OBJ)){
                 shelfPlaceholderHandler();
                 return;
             }else if(INTERSECT_OBJ.userData.modelId === 'shelf01'){
@@ -738,6 +768,12 @@ const onClickIntersectObject = function(event){
             }else{
                 cancelClickingShelfPlaceholders();
             }
+        }
+        if (animaRecord_Mode) {
+            $("#AnimationRecordDiv label").removeClass("fw-bold text-danger");
+            let sforder = INTERSECT_OBJ.userData.json.sforder;
+            if (sforder !== undefined)
+                $(`#AnimationRecordDiv > label:eq(${sforder})`).addClass("fw-bold text-danger");
         }
         setNewIntersectObj(event);
         menu.style.left = (event.clientX - 63) + "px";
@@ -769,7 +805,7 @@ const onClickIntersectObject = function(event){
     }
 }
 
-var onClickObj = function (event) {
+var onClickObj = function (event) {//左键点击时触发
     updateTimerTab();
     scenecanvas.style.cursor = "auto";
     // do raycasting, judge whether or not users choose a new object; 
@@ -784,6 +820,12 @@ var onClickObj = function (event) {
         // currentRoomId = undefined;
     }
     mageAddSinglePrior.enabled = false;
+    
+    if(MoveLineModel&&(can_add_dot==0))//左键点击触发，加点
+    {
+       add_dot(event); 
+    }
+    
     if(On_MAGEADD){
         On_MAGEADD = false;
         if(scene.getObjectByName(AUXILIARY_NAME)){
@@ -865,7 +907,11 @@ var onClickObj = function (event) {
             let index = INTERSECT_OBJ.userData.json.sforder;
             let a = currentSeqs[index][0].at(-1);
             a.r2 = INTERSECT_OBJ.rotation.y;
-            a.t[1] = a.t[0]+1;
+            let dr = Math.abs(a.r1 - a.r2);
+            dr = Math.min(dr, Math.PI * 2 - dr);
+            let duration = dr / Math.PI;
+            a.t[1] = a.t[0] + duration;
+            updateAnimationSlider(index);
         }
         return;
     }
@@ -914,13 +960,16 @@ const castMousePosition = function(){
 
 function onDocumentMouseMove(event) {
     event.preventDefault();
+    let rtt_pre = new THREE.Vector2();
+    let rtt_nxt = new THREE.Vector2();
+    rtt_pre.set(mouse.x, mouse.y);
+    updateMousePosition();
     // raycasting & highlight objects: 
     var instanceKeyCache = manager.renderManager.instanceKeyCache;
-    instanceKeyCache = Object.values(instanceKeyCache).concat(manager.renderManager.newWallCache);
+    instanceKeyCache = Object.values(instanceKeyCache).concat(arrayOfLines);//TODO .concat(manager.renderManager.newWallCache).
     let intersects = raycaster.intersectObjects(
-        instanceKeyCache
-        .concat(Object.values(manager.renderManager.fCache))
-        .concat(Object.values(manager.renderManager.wCache)), 
+        instanceKeyCache.concat(Object.values(manager.renderManager.fCache)),
+        //.concat(Object.values(manager.renderManager.wCache))
         true
     );
     if(intersects.length > 0){
@@ -930,6 +979,9 @@ function onDocumentMouseMove(event) {
     }
     if(manager.renderManager.islod){
         outlinePass.selectedObjects = [];
+    }
+    else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && arrayOfLines.includes(intersects[0].object)){
+        outlinePass.selectedObjects = [intersects[0].object];
     }
     else if(instanceKeyCache.length > 0 && intersects.length > 0 && INTERSECT_OBJ === undefined && instanceKeyCache.includes(toSceneObj(intersects[0].object.parent))) {
         outlinePass.selectedObjects = [toSceneObj(intersects[0].object.parent), GTRANS_GROUP];
@@ -989,9 +1041,6 @@ function onDocumentMouseMove(event) {
         moveCGSeries();
     }
     if (On_ROTATE && INTERSECT_OBJ != null) {
-        var rtt_pre = new THREE.Vector2();
-        var rtt_nxt = new THREE.Vector2();
-        rtt_pre.set(mouse.x, mouse.y);
         updateMousePosition();
         rtt_nxt.set(mouse.x, mouse.y);
         rtt_pre.sub(mouse.rotateBase);
@@ -1017,7 +1066,6 @@ function onDocumentMouseMove(event) {
                 resOri = Math.atan2(closestDir.x, closestDir.y);
             }
         }
-        
         transformObject3DOnly(INTERSECT_OBJ.userData.key, [
             INTERSECT_OBJ.rotation.x, 
             resOri, 
@@ -1054,15 +1102,21 @@ function onDocumentMouseMove(event) {
     if(AUXILIARY_MODE && auxiliaryPrior !== undefined){
         auxiliaryMove();
     }
+    tf.engine().endScope();
     if (INTERSECT_WALL != undefined) {
         let ip = castMousePositionForWall();
         if(ip){
             transformWall(INTERSECT_WALL, [ip.x, ip.y, ip.z]); 
         }
     }
-    tf.engine().endScope();
-    updateMousePosition();
-};
+    // TODO 
+    if (MoveLineModel && On_LINEMOVE)
+    {
+        follow_mouse();
+        //roomshape 反映在scenejson上
+        // recreate_room();
+    } 
+}
 
 const onWindowResize = function(){
     camera.aspect = scenecanvas.clientWidth / scenecanvas.clientHeight;
@@ -1141,7 +1195,7 @@ const onAddOff = function(){
     scenecanvas.style.cursor = "auto";
     scene.remove(scene.getObjectByName(INSERT_NAME)); 
     On_ADD = false; 
-    timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
+    // timeCounter.add += moment.duration(moment().diff(timeCounter.addStart)).asSeconds();
 }; 
 
 const onRightClickObj = function(event){
@@ -1167,6 +1221,10 @@ const onRightClickObj = function(event){
         timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
         return;
     }
+    if(MoveLineModel){      
+        enter_move_mode_pro(event);//右键点击了 注意切换状态
+    }
+    
     updateTimerTab();
 }
 
@@ -1322,7 +1380,7 @@ const setting_up = function () {
     // clear_panel();  // clear panel first before use individual functions.
     setUpCanvasDrawing();
     render_initialization();
-    orth_initialization();
+    // orth_initialization();
     searchPanelInitialization();
     radial_initialization();
     onlineInitialization();
@@ -1330,8 +1388,7 @@ const setting_up = function () {
     // adding the `stats` panel for monitoring FPS; 
     stats = new Stats();
     stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-    // stats.dom.style.top = '5%'
-    // stats.dom.style.left = '25%'
+     // stats.dom.style.left = '25%'
     stats.dom.style.position = "absolute";
     document.getElementById('scene').appendChild(stats.dom);
 
@@ -1360,7 +1417,8 @@ const setting_up = function () {
     $("#sklayout").click(auto_layout);
     $("#btnPlanIT").click(auto_layout_PlanIT);
     $("#clear_button").click(() => {
-        if(currentRoomId === undefined) return;
+        if(currentRoomId === undefined) return; var crid = currentRoomId;
+        for(let currentRoomId=0; currentRoomId<manager.renderManager.scene_json.rooms.length;++currentRoomId){
         let objlist = manager.renderManager.scene_json.rooms[currentRoomId].objList; 
         for(let i = 0; i < objlist.length; i++){
             if(objlist[i] === undefined || objlist[i] === null) continue;
@@ -1370,6 +1428,8 @@ const setting_up = function () {
             delete objlist[i];
         }
         manager.renderManager.scene_json.rooms[currentRoomId].objList = objlist.filter(o => o!==undefined&&o!==null); 
+        }
+        currentRoomId = crid;
         refreshRoomByID(currentRoomId, manager.renderManager.scene_json.rooms[currentRoomId].objList);
     });
     $("#clearALL_button").click(() => {
@@ -1422,13 +1482,23 @@ const setting_up = function () {
         }
     });
     timeCounter.totalStart = moment();
-    $("#operationFuture").click(function(){
-        let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
-        $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, function (data) {
-            currentAnimation = data;
-            operationFuture();
-        });
-    });
+    // $("#operationFuture").click(function(){
+    //     let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    //     $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+    //         currentAnimation = data;
+    //     });
+    // });
+    // $("#operationFuture").click(function(){
+    //     let taID = manager.renderManager.scene_json.rooms[0].totalAnimaID;
+    //     $.getJSON(`/static/dataset/infiniteLayout/${taID}.json`, data => {
+    //         console.log(data);
+    //         currentAnimation = data;
+    //         $.getJSON(`/static/dataset/infiniteLayout/${taID}img/layoutTree.json`, function (data) {
+    //             console.log(data);
+    //             updateTreeWindow(data); // This code initialize the Tree for InfiniteLayout. 
+    //         });
+    //     });
+    // });
     $("#operationTimer").click(function(){
         timeCounter.total += moment.duration(moment().diff(timeCounter.totalStart)).asSeconds();
         updateTimerTab();
@@ -1443,6 +1513,17 @@ const setting_up = function () {
         timeCounter.cltp - ${timeCounter.cltp}\r\n
         timeCounter.total - ${timeCounter.total}
         `);
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/clickTimer`,
+            async: false,
+            data: JSON.stringify({methodName: $("#nameOSR").val(), usern: $("#userOSR").val(), homeType:$("#searchinput").val(), timeC: timeCounter, json: getDownloadSceneJson()}),
+            success: function (msg) {
+                console.log(msg)
+                if(msg !== ""){alert(msg);}
+            }
+        });
         timeCounter.navigate = 0;
         timeCounter.move = 0;
         timeCounter.rotate = 0;
@@ -1452,8 +1533,100 @@ const setting_up = function () {
         timeCounter.total = 0;
         timeCounter.add = 0;
         timeCounter.remove = 0;
+        timeCounter.clicks = 0;
         timeCounter.totalStart = moment();
+        $("#nameOSR").val('');
     });
+    document.addEventListener('click', function(){timeCounter.clicks+=1;});
+
+    $("#btnMoveLineModel").click(function(){
+        let button = document.getElementById("btnMoveLineModel");
+        MoveLineModel = !MoveLineModel;//开关按一次取非
+        if(MoveLineModel){
+            button.style.backgroundColor = 'blue';//蓝：在模式中
+            manager.renderManager.newWallCache.forEach(w => {scene.remove(w)});
+            manager.renderManager.fCache.forEach(w => {scene.remove(w)});
+            //manager.renderManager.scene_json.rooms[0].roomShape;//四个顶点
+            if(arrayOfAllDots.length == 0)
+            {
+            var points = new Array(3);
+            for( var i = 0 ; i<4 ; i++ )
+            {//xyz坐标
+                if(i == 4)
+                {
+                    points[i] = points[0];
+                    break;
+                }
+                points[i] = [manager.renderManager.scene_json.rooms[0].roomShape[i][0],0,manager.renderManager.scene_json.rooms[0].roomShape[i][1]];//rooms[i]循环多个房间
+                var x_pos = manager.renderManager.scene_json.rooms[0].roomShape[i][0];
+                var z_pos = manager.renderManager.scene_json.rooms[0].roomShape[i][1];
+                //useless
+                var point_pos = [x_pos,z_pos];
+                arrayOfAllDots.push(point_pos);
+                //
+            }
+            for( var i = 0 ; i < 4 ; i++)
+            {
+                if(i == 3)
+                {
+                createCyliner1(points[i][0],points[i][1],points[i][2],points[0][0],points[0][1],points[0][2],i);//四条初始边的order:0 1 2 3 对应roomShape[i][0] i从0到3
+                break;
+                }
+                createCyliner1(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2],i);//四条初始边的order:0 1 2 3 对应roomShape[i][0] i从0到3
+                //createLine_same(points[i][0],points[i][1],points[i][2],points[i+1][0],points[i+1][1],points[i+1][2]);
+            }
+            }
+            else
+            {
+                arrayOfLines.forEach(i =>{scene.add(i)});
+                arrayOfDots.forEach(i => {scene.add(i)});
+                for(const roomid in arrayOfInnerLines)
+                    arrayOfInnerLines[roomid].forEach(i => {scene.add(i)});
+            }
+            if(Object.keys(arrayOfRooms).length == 0)// The room data has not been written
+            {
+                for(let i = 0; i < 4; i++)
+                    new_room_point([points[i][0],points[i][2]]);
+                arrayOfInnerLines[roomIndexCounter] = [];
+                for(let i = 0; i < 4; i++)
+                {
+                    var j = i == 3 ? 0: i + 1;
+                    const pt1 = arrayOfRoomPoints[i], pt2 = arrayOfRoomPoints[j];
+                    arrayOfInnerLines[roomIndexCounter].push(add_inner_line_between_points(pt1,pt2,roomIndexCounter));
+                }
+                arrayOfRooms[roomIndexCounter] = {
+                    "points": [0,1,2,3],
+                    "type": "bedroom",
+                    "id": roomIndexCounter,
+                    "father": -1,
+                    "father_wall_start":-1,
+                    "father_wall_end":-1,
+                    "mergeable":false,
+                    "edgeList":[],
+                    "roomLinkCount":[0,0,0,0,0,0,0,0],
+                    "eBoxList":[],
+                };
+                if(!debugHJK)completeRoomInformationWhileAdding(roomIndexCounter);
+                roomIndexCounter++;
+            }
+            timeCounter.cgsStart = moment();
+        }
+        else{
+            button.style.backgroundColor = 'red';//红：退出模式
+            //删除掉新的工作
+            arrayOfLines.forEach(i =>{scene.remove(i)} );
+            arrayOfDots.forEach(i => {scene.remove(i)});
+            for(const roomid in arrayOfInnerLines)
+                arrayOfInnerLines[roomid].forEach(i => {scene.remove(i)});
+            // arrayOfInnerLines = {};
+            //刚刚的图形复原
+            // manager.renderManager.newWallCache.forEach(w => {scene.add(w)});//原墙体
+            // manager.renderManager.fCache.forEach(w => {scene.add(w)});//原地面
+            recreate_room();
+            timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
+        }
+    })
+
     $("#clutterpalette_button").click(function() {
         let button = document.getElementById("clutterpalette_button");
         clutterpalette_Mode = !clutterpalette_Mode;
@@ -1521,13 +1694,18 @@ const setting_up = function () {
         let button = document.getElementById("animaRecord_button");
         animaRecord_Mode = !animaRecord_Mode;
         if(animaRecord_Mode){
-            currentSeqs = [...Array(manager.renderManager.scene_json.rooms[currentRoomId].objList.length)].map(e => [[]]);
-            for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
-                manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
-            }
+            let numofglbs = 0;
+            manager.renderManager.scene_json.rooms[currentRoomId].objList.forEach(o => {if(o.format === 'glb'){numofglbs++}});
+            currentSeqs = [...Array(numofglbs)].map(e => [[]]);
+            // for(let i = 0; i < manager.renderManager.scene_json.rooms[currentRoomId].objList.length; i++){
+            //     manager.renderManager.scene_json.rooms[currentRoomId].objList[i].sforder = i;
+            // }
             button.style.backgroundColor = '#9400D3';
+            AnimationSlider.setInitStates();
+            updateAnimationRecordDiv();
         }else{
             button.style.backgroundColor = 'transparent';
+            $("#AnimationRecordDiv").empty();
         }
     });    
     $("#useNewWallCheckBox").prop('checked', USE_NEW_WALL)
@@ -1611,11 +1789,1390 @@ const setting_up = function () {
         }
     });
 
+    const tmpPriorClick = function(){
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/prior_catagory`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                floorPlanMapping.clear();
+                while (osrCatalogItems.firstChild) {
+                    osrCatalogItems.firstChild.remove();
+                }
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let ip = document.createElement('p'); ip.style.color = 'black'; ip.style.fontSize = '15px'; ip.innerHTML = "(" + item.le + "-" + item.leng + ") " + item.mainObjects[0] + "%";
+                    let up = document.createElement('p');
+                    if(item.mainObjects.length == 2){
+                        up.style.position = 'absolute'; up.style.bottom = '0px'; up.style.color = 'black'; up.style.fontSize = '15px'; up.innerHTML = item.mainObjects[1] + "%";
+                    }
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/catimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/catimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('click', priorcatagoryClickMiddle);
+                    iDiv.classList.add('tiler'); iDiv.appendChild(ip); if(item.mainObjects.length == 2){ iDiv.appendChild(up); }
+                    osrCatalogItems.appendChild(iDiv);
+                    $(iDiv).data('meta', item);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                });
+            }
+        });
+    };
+
+    $("#priorsearchfullbtn").click(() => {
+        tmpPriorClick();
+    });
+
+    let priorcatagoryClickMiddle = function(e){
+        floorPlanMapping.clear();
+        while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/catimgs/back`;//`/catimgs/${$(e.target).data("meta").identifier}`;//
+        iDiv.className = "mapping catalogItem";
+        iDiv.style.backgroundImage = `url(/catimgs/back)`;//`url(/catimgs/${$(e.target).data("meta").identifier})`;//
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        osrCatalogItems.appendChild(iDiv);
+        iDiv.addEventListener('click', tmpPriorClick);
+        $(iDiv).data('meta', $(e.target).data("meta"));
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/catagory_prior_middle/${$(e.target).data("meta").identifier}`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let ip = document.createElement('p'); ip.style.color = 'black'; ip.style.fontSize = '15px'; ip.innerHTML = item.leng + ' imgs';
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    $(iDiv).data('meta', item);
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('click', priorcatagoryClick);
+                    iDiv.classList.add('tiler'); iDiv.appendChild(ip);
+                    osrCatalogItems.appendChild(iDiv);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                })
+            }
+        });
+    };
+
+    let priorcatagoryClick = function(e){
+        floorPlanMapping.clear();
+        while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+        let iDiv = document.createElement('div');
+        let image = new Image();
+        image.onload = function(){
+            iDiv.style.width = `${$(window).width() * 0.10}px`;
+            iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+        };
+        image.src = `/catimgs/back`;//`/ylimgs/${$(e.target).data("meta").identifier}`;//
+        iDiv.className = "mapping catalogItem";
+        iDiv.id = `grid order 0`;
+        iDiv.style.backgroundImage = `url(/catimgs/back)`;//`url(/ylimgs/${$(e.target).data("meta").identifier})`;//
+        iDiv.style.backgroundSize = '100% 100%';
+        iDiv.style.visibility = 'visible';
+        osrCatalogItems.appendChild(iDiv);
+        let newMeta = {};
+        newMeta.identifier = $(e.target).data("meta").mother;
+        newMeta.img = $(e.target).data("meta").mother + ".png";
+        $(iDiv).data('meta', newMeta);
+        iDiv.addEventListener('click', priorcatagoryClickMiddle);
+        
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/catagory_prior/${$(e.target).data("meta").mother}/${$(e.target).data("meta").identifier}`,
+            success: function (data) {
+                searchResults = JSON.parse(data);
+                searchResults.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.id = `grid order ${item.priorMeta.order}`;
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    $(iDiv).data('meta', item);
+                    iDiv.addEventListener('contextmenu', mappingHover);
+                    iDiv.addEventListener('mouseout', mappingLeave);
+                    iDiv.addEventListener('mouseenter', priorHover);
+                    iDiv.addEventListener('click', priorClick);
+                    iDiv.classList.add('tiler');
+                    osrCatalogItems.appendChild(iDiv);
+                    floorPlanMapping.set(item.identifier, image);
+                });
+                Splitting({
+                    target: '.tiler',
+                    by: 'cells',
+                    rows: nrs,
+                    columns: ncs,
+                    image: true
+                });
+                $('.tiler .cell-grid .cell').each(function(index){
+                    let meta = $(this).parent().parent().data("meta");
+                    $(this).parent().attr('id', `grids-${meta.identifier}`);
+                    $(this).attr('id', `grid-${meta.identifier}`);
+                })
+            }
+        });
+    };
+
+    $("#priorsearchbtn").click(() => {
+        if(INTERSECT_OBJ == null){
+            alert("blankly recommendation is not allowed. Please select an object then search the prior about it.");
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: `/usersearchOSR`,
+            data: JSON.stringify({
+                interjson: INTERSECT_OBJ.userData.json,
+                json: getDownloadSceneJson()}),
+            success: function (data) {
+                aaa = JSON.parse(data);
+                while (osrCatalogItems.firstChild) osrCatalogItems.firstChild.remove();
+                aaa.forEach(function (item) {
+                    let iDiv = document.createElement('div');
+                    let image = new Image();
+                    image.onload = function(){
+                        iDiv.style.width = `${$(window).width() * 0.10}px`;
+                        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+                    };
+                    image.src = `/ylimgs/${item.priorMeta.identifier}`;
+                    iDiv.className = "mapping catalogItem";
+                    iDiv.style.backgroundImage = `url(/ylimgs/${item.priorMeta.identifier})`;
+                    iDiv.style.backgroundSize = '100% 100%';
+                    iDiv.style.visibility = 'visible';
+                    iDiv.addEventListener('click', priorClick);
+                    osrCatalogItems.appendChild(iDiv);
+                    $(iDiv).data('meta', item);
+                    //alert(item.priorMeta.identifier);
+                });
+                //alert(data);
+            }
+        });
+        
+    });
+
+    let queryAABB = function(attachedObjId, currentState){
+        var bbb = 0;
+        $.ajax({
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            url: `queryAABB/${attachedObjId}/${currentState}`,
+            async: false,
+            success: function (data) {
+                var aaa = JSON.parse(data);
+                bbb = {"max":{"x":aaa.max[0], "y":aaa.max[0], "z":aaa.max[2] }, "min":{ "x":aaa.min[0], "y":aaa.min[0], "z":aaa.min[2] }};
+            }
+        });
+        //console.log(bbb);
+        return bbb;
+    }
+
+    let singleObjectBounding = function(itm){
+        var realx = itm.objPosX;
+        var realz = itm.objPosZ;
+        //console.log(realx);
+        //console.log(realz);
+        //console.log(objectCache[itm.attachedObjId].boundingBox);
+        var objBbox = objectCache[itm.attachedObjId].boundingBox;
+        if(itm.currentState && isNaN(parseInt(itm.attachedObjId))) objBbox = queryAABB(itm.attachedObjId, itm.currentState);
+        if(itm.attachedObjId == "desk2shelf") console.log(objBbox);
+        var scaledBbox = {"max":{"x":itm.objScaleX * objBbox.max.x, "y":itm.objScaleY * objBbox.max.y, "z":itm.objScaleZ * objBbox.max.z}, "min":{"x":itm.objScaleX * objBbox.min.x, "y":itm.objScaleY * objBbox.min.y, "z":itm.objScaleZ * objBbox.min.z}}
+        objBbox = scaledBbox;
+        if(itm.attachedObjId == "desk2shelf") console.log(objBbox);
+        var phi = itm.objOriY;
+        var maxX = objBbox.max.x;
+        var minX = objBbox.min.x;
+        var maxZ = objBbox.max.z;
+        var minZ = objBbox.min.z;
+        while(phi < 0.00) phi += 6.2832
+        while(phi >= 1.5708){
+            phi -= 1.5708
+            var aX = maxZ;
+            var iZ =-maxX;
+            var iX = minZ;
+            var aZ =-minX;
+            maxX = aX;
+            maxZ = aZ;
+            minX = iX;
+            minZ = iZ;
+        }
+
+        //console.log(phi);
+        var cosphi = Math.cos(phi);
+        var sinphi = Math.sin(phi);
+        var realMaxX = maxX * cosphi + maxZ * sinphi + realx;
+        var realMinZ =-maxX * sinphi + minZ * cosphi + realz;
+        var realMaxZ = maxZ * cosphi - minX * sinphi + realz;
+        var realMinX = minZ * sinphi + minX * cosphi + realx;
+        return {"max":{"x":realMaxX, "z":realMaxZ}, "min":{"x":realMinX, "z":realMinZ}};
+    }
+
+    let moveSinglePriorBbox = function(itm, currentLocation){
+        if(itm.attachedObjId == "desk2shelf") console.log("desk2shelf");
+        var priorBbox = singleObjectBounding(itm);
+        console.log(priorBbox);
+        if(itm.attachedObjId == "desk2shelf") console.log([itm.objPosX, itm.objPosZ, itm.objOriY]);
+        var rbox = rotatePriorBbox(priorBbox, currentLocation[1]);
+        console.log(rbox);
+        var tbox = {"max":{"x":rbox.max.x + currentLocation[0][0], "z":rbox.max.z + currentLocation[0][2]}, "min":{"x":rbox.min.x + currentLocation[0][0], "z":rbox.min.z + currentLocation[0][2]}};
+        console.log(tbox);
+        return tbox;//currentLocation[0][0];  //currentLocation[0][2]
+    }
+
+    let singleObjectRelativeLocation = function(itm, mainTrans){
+        var theta = mainTrans[1];//INTERSECT_OBJ.rotation.y;
+        var costheta = Math.cos(theta);
+        var sintheta = Math.sin(theta);
+
+        var realx = itm.objPosX * costheta + itm.objPosZ * sintheta;
+        var realz =-itm.objPosX * sintheta + itm.objPosZ * costheta;
+            
+        return [realx, realz];
+    };
+
+    let singleObjectInformation = function(itm){
+        var theta = INTERSECT_OBJ.rotation.y;
+        var costheta = Math.cos(theta);
+        var sintheta = Math.sin(theta);
+
+        var realx = itm.objPosX * costheta + itm.objPosZ * sintheta;
+        var realz =-itm.objPosX * sintheta + itm.objPosZ * costheta;
+            
+        //console.log(objectCache[itm.attachedObjId].boundingBox);
+        var objBbox = objectCache[itm.attachedObjId].boundingBox;
+        if(itm.currentState && isNaN(parseInt(itm.attachedObjId))) objBbox = queryAABB(itm.attachedObjId, itm.currentState);
+        //console.log(manager.renderManager.scene_json['rooms'][INTERSECT_OBJ.userData.json.roomId]);
+        var roomBbox = manager.renderManager.scene_json['rooms'][INTERSECT_OBJ.userData.json.roomId].roomShapeBBox;
+
+        var phi = INTERSECT_OBJ.rotation.y + itm.objOriY;
+        var maxX = objBbox.max.x;
+        var minX = objBbox.min.x;
+        var maxZ = objBbox.max.z;
+        var minZ = objBbox.min.z;
+        while(phi < 0.00) phi += 6.2832
+        while(phi >= 1.5708){
+            phi -= 1.5708
+            var aX = maxZ;
+            var iZ =-maxX;
+            var iX = minZ;
+            var aZ =-minX;
+            maxX = aX;
+            maxZ = aZ;
+            minX = iX;
+            minZ = iZ;
+        }
+
+        //console.log(phi);
+        var cosphi = Math.cos(phi);
+        var sinphi = Math.sin(phi);
+        var realMaxX = maxX * cosphi + maxZ * sinphi + INTERSECT_OBJ.position.x + realx;
+        var realMinZ =-maxX * sinphi + minZ * cosphi + INTERSECT_OBJ.position.z + realz;
+        var realMaxZ = maxZ * cosphi - minX * sinphi + INTERSECT_OBJ.position.z + realz;
+        var realMinX = minZ * sinphi + minX * cosphi + INTERSECT_OBJ.position.x + realx;
+
+        var overMaxX = Math.max(realMaxX - roomBbox.max[0], 0.0);
+        var overMaxZ = Math.max(realMaxZ - roomBbox.max[1], 0.0);
+        var overMinX = Math.min(realMinX - roomBbox.min[0], 0.0);
+        var overMinZ = Math.min(realMinZ - roomBbox.min[1], 0.0);
+
+        //console.log(overMaxX, overMaxZ, overMinX, overMinZ);
+        return [realx, realz, overMaxX, overMaxZ, overMinX, overMinZ];
+
+    };
+
+    let clearSubsets = function(){
+        var child = osrCatalogItems.firstChild;
+        var last = osrCatalogItems.lastChild;
+        while(child != last) {
+            var delChild = child;
+            child = child.nextSibling;
+            if(delChild.id.match('__subsets')) delChild.remove();
+        }
+        if(child.id.match('__subsets')) child.remove();
+    }
+
+    const priorHover = function(e){
+        clearSubsets();
+        let iDiv = document.createElement('div');
+        let meta = $(e.target).data("meta");
+        thisId = meta.priorMeta.identifier + '__subsets';
+        if(document.getElementById(thisId)) return;
+        iDiv.id = thisId;
+        let subsets = meta.priorMeta.subsets;
+        //console.log(subsets);
+        let subsetLen = subsets.length;
+        if(subsetLen == 0) return;
+        subsets.forEach(function(item){
+            let jDiv = document.createElement('div');
+            let image = new Image();
+            image.onload = function(){
+                jDiv.style.width = `${$(window).width() * 0.10}px`;
+                jDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+            };
+            image.src = `/ylimgs/${meta.priorMeta.identifier}____${item}`;
+            jDiv.className = "mapping catalogItem";
+            jDiv.style.backgroundImage = `url(/ylimgs/${meta.priorMeta.identifier}____${item})`;
+            jDiv.style.backgroundSize = '100% 100%';
+            jDiv.style.visibility = 'visible';
+            jDiv.addEventListener('click', priorClick);
+            thisMeta = JSON.parse(JSON.stringify(meta)); //deep copy
+            thisGtrans = [];
+            thisMeta.gtrans.forEach(function(itm){
+                if(itm.attachedObjId != item) thisGtrans = thisGtrans.concat([itm]);
+            });
+            thisMeta.gtrans = thisGtrans;
+            thisMeta.identifier = `${meta.priorMeta.identifier}____${item}`;
+            thisMeta.priorMeta.identifier = `${meta.priorMeta.identifier}____${item}`;
+            thisMeta.priorMeta.img = `${meta.priorMeta.identifier}____${item}.png`;
+            jDiv.addEventListener('mouseover', mappingHover);
+            jDiv.addEventListener('mouseout', mappingLeave);
+            jDiv.classList.add('tiler');
+            iDiv.appendChild(jDiv);
+            $(jDiv).data('meta', thisMeta);
+            floorPlanMapping.set(thisMeta.identifier, image);
+        });
+
+        iDiv.style.position = 'absolute';
+        let order = meta.priorMeta.order;
+        let startOrder = 0;
+        if(order < 4){//?????????
+            if(subsetLen == 1) startOrder = order + 2;
+            else{
+                startOrder = order + 2 - (order % 2);
+            }
+        }
+        else{
+            if(subsetLen == 1) startOrder = order - 2;
+            else{
+                startOrder = order - 2 - (order%2);
+                if(subsetLen > 2) startOrder -= 2;
+                if(subsetLen > 4) startOrder -= 2;
+            }
+        }
+        startDiv = document.getElementById(`grid order ${startOrder}`);
+        if(order < 4) iDiv.style.top = startDiv.offsetTop - 8;//
+        else iDiv.style.top = startDiv.offsetTop + 8;//
+        iDiv.style.left = startDiv.offsetLeft;
+        iDiv.style.visibility = 'visible';
+        iDiv.style.backgroundColor = 'skyblue';
+        iDiv.addEventListener('mouseleave', priorLeave);
+        osrCatalogItems.appendChild(iDiv);
+
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(index){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta.identifier}`);
+            $(this).attr('id', `grid-${meta.identifier}`);
+        });
+    }
+
+    const priorLeave = function(e){
+        while (e.target.firstChild) e.target.firstChild.remove();
+        e.target.style.visibility = 'invisible';
+        e.target.remove();//
+    }
+
+    let directionofWindoor = function(room, bbox){
+        let center = [(bbox.max[0] + bbox.min[0])/2.0, 0.0, (bbox.max[2] + bbox.min[2])/2.0];
+        let result = [0, 0];
+        if( (bbox.max[0] - bbox.min[0]) > (bbox.max[2] - bbox.min[2]) ){
+            for(var i = 0; i < room.roomShape.length; ++i){
+                if(Math.abs(room.roomShape[i][1] - center[2]) < 0.15){
+                    if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][1] - center[2]) < 0.15) ) i = room.roomShape.length-1;
+                    if(Math.abs(room.roomOrient[i]) < 0.2) result = [[0,1],i];
+                    else result = [[0,-1],i];
+                    break;
+                }
+            }
+        }
+        else{
+            for(var i = 0; i < room.roomShape.length; ++i){
+                if(Math.abs(room.roomShape[i][0] - center[0]) < 0.15){
+                    if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][0] - center[0]) < 0.15) ) i = room.roomShape.length-1;
+                    if(room.roomOrient[i] > 0.0) result = [[1, 0],i];
+                    else result = [[-1, 0],i];
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    let windoorofRoom = function(room){
+        result = {"window":[], "door":[]};
+        //console.log(room);
+        for(var i = 0; i < room.objList.length; ++i){
+            let obj = room.objList[i];
+            let bbox = obj.bbox;
+            if(obj.coarseSemantic == "door" || obj.coarseSemantic == "Door"){
+                if (bbox.max[1] > 0.1){
+                    if(!(bbox in result.door)){
+                        let t = directionofWindoor(room,bbox);
+                        result.door = result.door.concat([[bbox, t[0], t[1]]]);
+                    }
+                }
+            }
+            else if(obj.coarseSemantic ==  "window" || obj.coarseSemantic == "Window"){
+                if(!(bbox in result.window)){
+                    let t = directionofWindoor(room,bbox);
+                    result.window = result.window.concat([[bbox, t[0], t[1]]]);
+                }
+            }
+        }
+        for(var i = 0; i < room.blockList.length; ++i){
+            let block = room.blockList[i];
+            let bbox = block.bbox;
+            if(block.coarseSemantic == "door" || block.coarseSemantic == "Door"){
+                if (bbox.max[1] > 0.1){
+                    if(!(bbox in result.door)){
+                        let t = directionofWindoor(room,bbox);
+                        result.door = result.door.concat([[bbox, t[0], t[1]]]);
+                    }
+                }
+            }
+            else if(block.coarseSemantic == "window" || block.coarseSemantic == "Window"){
+                if(!(bbox in result.window)){
+                    let t = directionofWindoor(room,bbox);
+                    result.window = result.window.concat([[bbox, t[0], t[1]]]);
+                }
+            }
+        }
+        //console.log(result);
+        return result;
+    }
+
+    let dirOfMetaWindoor = function(windoor){
+        thisDirection = [0, 0];
+        if(windoor.direction == "z"){
+            if(windoor.objPosZ > 0) thisDirection = [0,-1];
+            else thisDirection = [0,1];
+        }
+        else{
+            if(windoor.objPosX > 0) thisDirection = [-1,0];
+            else thisDirection = [1,0];
+        }
+        return thisDirection;
+    }
+
+    let rotateFromWindoor = function(metaWindoor, realWindoor){
+        var dir1 = dirOfMetaWindoor(metaWindoor);
+        //console.log(dir1);
+        var OriginalOrient = -metaWindoor.objOriY;
+        if(metaWindoor.direction == 'x') OriginalOrient += 1.57;
+        var locX = - metaWindoor.objPosX;
+        var locZ = - metaWindoor.objPosZ;
+        var dir2 = realWindoor[1];
+        var realCenter = [(realWindoor[0].max[0] + realWindoor[0].min[0])/2.0, 0.0, (realWindoor[0].max[2] + realWindoor[0].min[2])/2.0];
+        //console.log(realCenter);console.log(dir1);console.log(dir2);console.log(locX);console.log(locZ);
+        var translate = [0, 0, 0];
+        var lst = [[0, 1], [1, 0], [0,-1], [-1,0]];
+        var i = 0; for(; i < 4; ++i) if(lst[i][0] == dir1[0] && lst[i][1] == dir1[1]) break;
+        var j = 0; for(; j < 4; ++j) if(lst[j][0] == dir2[0] && lst[j][1] == dir2[1]) break;
+        var k = (j-i+4)%4;
+        if(k == 1){
+            translate = [realCenter[0] + locZ, 0.0, realCenter[2] - locX];
+            OriginalOrient += Math.PI / 2.0;
+        }else if(k == 2){
+            translate = [realCenter[0] - locX, 0.0, realCenter[2] - locZ];
+            OriginalOrient += Math.PI;
+        }else if(k == 3){
+            translate = [realCenter[0] - locZ, 0.0, realCenter[2] + locX];
+            OriginalOrient -= Math.PI / 2.0;
+        }else{
+            translate = [realCenter[0] + locX, 0.0, realCenter[2] + locZ];
+        }
+        console.log(translate);
+        return [translate, OriginalOrient, realWindoor[2]];//, thetaToDir(OriginalOrient, 0.2)];
+    }
+
+    let thetaToDir = function(theta, bound = 0.001){
+        while(theta > Math.PI) theta -= 2*Math.PI;
+        while(theta <-Math.PI) theta += 2*Math.PI;
+        if(Math.abs(theta) < bound) return [0,1];
+        else if(Math.abs(Math.abs(theta) - Math.PI) < bound) return [0,-1];
+        else if(Math.abs(theta - Math.PI / 2.0) < bound) return [ 1,0];
+        else if(Math.abs(theta + Math.PI / 2.0) < bound) return [-1,0];
+        else console.log("error theta");
+    }
+
+    let wallInformDict = function(room, idx){
+        let endIdx = (idx+1)%(room.roomShape.length);
+        let dir = thetaToDir(room.roomOrient[idx]);
+        let maxX = Math.max(room.roomShape[idx][0], room.roomShape[endIdx][0]);
+        let minX = Math.min(room.roomShape[idx][0], room.roomShape[endIdx][0]);
+        let maxZ = Math.max(room.roomShape[idx][1], room.roomShape[endIdx][1]);
+        let minZ = Math.min(room.roomShape[idx][1], room.roomShape[endIdx][1]);
+        let centerX = (room.roomShape[idx][0] + room.roomShape[endIdx][0]) / 2.0;
+        let centerZ = (room.roomShape[idx][1] + room.roomShape[endIdx][1]) / 2.0;
+        return {"dir": dir, "maxX": maxX, "maxZ": maxZ, "minX": minX, "minZ":minZ, "centerX":centerX, "centerZ":centerZ};
+    }
+
+    let rotatePriorBbox = function(priorBbox, spin){
+        var t = spin;
+        var result = priorBbox;
+        while(t <-Math.PI) t += 2*Math.PI;
+        while(t > Math.PI) t -= 2*Math.PI;
+        if(Math.abs(t - Math.PI / 2.0) < 0.1){
+            result = {"min":{"x":priorBbox.min.z, "z": -priorBbox.max.x},"max":{"x":priorBbox.max.z, "z":-priorBbox.min.x}};
+        }
+        else if(Math.abs(Math.abs(t) - Math.PI) < 0.1){
+            result = {"min":{"x":-priorBbox.max.x, "z": -priorBbox.max.z},"max":{"x":-priorBbox.min.x, "z":-priorBbox.min.z}};
+        }
+        else if(Math.abs(t + Math.PI / 2.0) < 0.1){
+            result = {"min":{"x":-priorBbox.max.z, "z": priorBbox.min.x},"max":{"x":-priorBbox.min.z, "z":priorBbox.max.x}};
+        }
+        else if(Math.abs(t) > 0.1){
+            console.log(`error spin ${spin}`)
+        }
+        return result;
+    }
+
+    let compareCurrentLocation = function(currentLocation, currentLocationTmp, xscan, zscan, priorBbox){ 
+        var tmpX = currentLocationTmp[0][0]; var spanZ = [];
+        var tmpZ = currentLocationTmp[0][2]; var spanX = [];
+        for(var tX in xscan){
+            if(tX < tmpX) spanZ = xscan[tX];
+            else break;
+        }
+        for(var tZ in zscan){
+            if(tZ < tmpZ) spanX = zscan[tZ];
+            else break;
+        }
+
+        var realPriorBbox = rotatePriorBbox(priorBbox,currentLocationTmp[1]);
+        var ratioZ = (Math.max(0.0, spanZ[0] - (realPriorBbox.min.z + tmpZ)) + Math.max(0.0, (realPriorBbox.max.z + tmpZ) - spanZ[1])) / (realPriorBbox.max.z - realPriorBbox.min.z);
+        var ratioX = (Math.max(0.0, spanX[0] - (realPriorBbox.min.x + tmpX)) + Math.max(0.0, (realPriorBbox.max.x + tmpX) - spanX[1])) / (realPriorBbox.max.x - realPriorBbox.min.x);
+        var ratio = Math.max(ratioX, ratioZ);
+
+        if(currentLocation.length == 0){
+            if (ratio < 0.5) return ratio;
+            else return -1;
+        }
+        else {
+            if(ratio < currentLocation[3]) return ratio;
+            else return -1;
+        }
+    }
+
+    let scanRoom = function(room){  //console.log("here");
+        //从xmin往xmax扫一下房间
+        var xscan = {};
+        let xmin = room.roomShapeBBox.min[0];
+        let xmax = room.roomShapeBBox.max[0];
+        //找到xmin的那面墙，
+        var i = 0;
+        for(; i < room.roomShape.length; ++i){
+            if(Math.abs(room.roomShape[i][0] - xmin) < 0.1){
+                if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][0] - xmin) < 0.1) ) i = room.roomShape.length-1;
+                break;
+            }
+        }
+        var wallAIdx = (i+1)%(room.roomShape.length);
+        var wallAInfoDict = wallInformDict(room, wallAIdx);
+        var wallBIdx = (i-1+room.roomShape.length)%(room.roomShape.length)
+        var wallBInfoDict = wallInformDict(room, wallBIdx);
+        //当前x为xmin
+        var currX = xmin;
+        while(true){
+            //对于向前方向：
+            while(wallAInfoDict.dir[0] != 0 || wallAInfoDict.maxX < currX + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallAIdx = (wallAIdx+1)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallAInfoDict = wallInformDict(room, wallAIdx);
+            }
+            //对于向后方向：
+            while(wallBInfoDict.dir[0] != 0 || wallBInfoDict.maxX < currX + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallBInfoDict = wallInformDict(room, wallBIdx);
+            }
+
+            xscan[currX] = [Math.min(wallAInfoDict.maxZ,wallBInfoDict.maxZ),Math.max(wallAInfoDict.minZ,wallBInfoDict.minZ)];
+            currX = Math.min(wallAInfoDict.maxX, wallBInfoDict.maxX);
+            if(Math.abs(currX - xmax) < 0.0001) {xscan[xmax] = []; break;}
+        }
+
+
+        //从zmin往zmax扫一下房间
+        var zscan = {};
+        let zmin = room.roomShapeBBox.min[1];
+        let zmax = room.roomShapeBBox.max[1];
+        //找到zmin的那面墙，
+        var i = 0;
+        for(; i < room.roomShape.length; ++i){
+            if(Math.abs(room.roomShape[i][1] - zmin) < 0.1){
+                if((i == 0) && (Math.abs(room.roomShape[room.roomShape.length-1][1] - zmin) < 0.1) ) i = room.roomShape.length-1;
+                break;
+            }
+        }
+        var wallAIdx = (i+1)%(room.roomShape.length);
+        var wallAInfoDict = wallInformDict(room, wallAIdx);
+        var wallBIdx = (i-1+room.roomShape.length)%(room.roomShape.length)
+        var wallBInfoDict = wallInformDict(room, wallBIdx);
+        //当前x为xmin
+        var currZ = zmin;
+        while(true){
+            //对于向前方向：
+            while(wallAInfoDict.dir[1] != 0 || wallAInfoDict.maxZ < currZ + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallAIdx = (wallAIdx+1)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallAInfoDict = wallInformDict(room, wallAIdx);
+            }
+            //对于向后方向：
+            while(wallBInfoDict.dir[1] != 0 || wallBInfoDict.maxZ < currZ + 0.001){ //如果这面墙方向不对或者终点并不晚于currX, 就需要继续找下一面墙，
+                wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                wallBInfoDict = wallInformDict(room, wallBIdx);
+            }
+
+            zscan[currZ] = [Math.min(wallAInfoDict.maxX,wallBInfoDict.maxX),Math.max(wallAInfoDict.minX,wallBInfoDict.minX)];
+            currZ = Math.min(wallAInfoDict.maxZ, wallBInfoDict.maxZ);
+            if(Math.abs(currZ - zmax) < 0.0001) {zscan[zmax] = []; break;}
+        }
+
+        return [xscan, zscan];
+    }
+
+    let calcPriorBbox = function(meta){
+        var priorBbox = {"max":{"x":-100.0, "z":-100.0}, "min":{"x":100.0, "z":100.0}};
+        var objBbox = objectCache[meta.mainObjId].boundingBox;
+        if(meta.state && isNaN(parseInt(meta.mainObjId))) objBbox = queryAABB(meta.mainObjId, meta.state[0].currentState);
+        var scl = [1.0, 1.0, 1.0]
+        if("scale" in meta){
+            scl = [meta.scale[0].objScaleX, meta.scale[0].objScaleY, meta.scale[0].objScaleZ];
+        }
+
+        priorBbox.max.x = Math.max(priorBbox.max.x, objBbox.max.x * scl[0]);
+        priorBbox.max.z = Math.max(priorBbox.max.z, objBbox.max.z * scl[2]);
+        priorBbox.min.x = Math.min(priorBbox.min.x, objBbox.min.x * scl[0]);
+        priorBbox.min.z = Math.min(priorBbox.min.z, objBbox.min.z * scl[2]);
+        if('gtrans' in meta){
+            for(var i = 0; i < meta.gtrans.length; ++i){
+                var itm = meta.gtrans[i];
+                objBbox = singleObjectBounding(itm);
+                //console.log(objBbox);
+                priorBbox.max.x = Math.max(priorBbox.max.x, objBbox.max.x);
+                priorBbox.max.z = Math.max(priorBbox.max.z, objBbox.max.z);
+                priorBbox.min.x = Math.min(priorBbox.min.x, objBbox.min.x);
+                priorBbox.min.z = Math.min(priorBbox.min.z, objBbox.min.z);
+            }
+        }
+        return priorBbox;
+    }
+
+    let movePriorBbox = function(meta, currentLocation){
+        var priorBbox = calcPriorBbox(meta);
+        var rbox = rotatePriorBbox(priorBbox, currentLocation[1]);
+        var tbox = {"max":{"x":rbox.max.x + currentLocation[0][0], "z":rbox.max.z + currentLocation[0][2]}, "min":{"x":rbox.min.x + currentLocation[0][0], "z":rbox.min.z + currentLocation[0][2]}};
+        return tbox;//currentLocation[0][0];  //currentLocation[0][2]
+    }
+
+    let mainObjLocation = function(room, meta, xscan, zscan){
+        
+        var schemes = [];
+        var priorBbox = calcPriorBbox(meta);
+
+        var currentLocation = [];
+        var roomLengthX = room.roomShapeBBox.max[0] - room.roomShapeBBox.min[0];
+        var roomLengthZ = room.roomShapeBBox.max[1] - room.roomShapeBBox.min[1];
+
+        //1, get a prior orientation            2, roughly locate the main object
+        //consider window and door; which window? which door?
+        console.log(room);
+        var WindoorOfRoom = windoorofRoom(room);
+        console.log(WindoorOfRoom);
+        console.log(meta.priorId);
+        console.log(priorBbox);
+        console.log(meta.window);
+        console.log(meta.door);
+
+        if( ('window' in meta) || ('door' in meta) ){
+            if('window' in meta){
+                //thisDirection = dirOfMetaWindoor(meta.window[0]);
+                //console.log(meta.window[0].direction);
+                for(var t = 0; t < WindoorOfRoom.window.length; ++t){
+                    //console.log(WindoorOfRoom.window[t]);
+                    var currentLocationTmp = rotateFromWindoor(meta.window[0], WindoorOfRoom.window[t]);
+                    var res = compareCurrentLocation(currentLocation, currentLocationTmp, xscan, zscan, priorBbox); 
+                    if(res > -0.001) currentLocation = currentLocationTmp.concat([res]);
+                }
+                if(currentLocation.length) schemes = schemes.concat([JSON.parse(JSON.stringify(currentLocation))]);
+            } currentLocation = [];
+            if(('door' in meta)){//&& (currentLocation.length == 0)){
+                //thisDirection = dirOfMetaWindoor(meta.door[0]);
+                //console.log(meta.door[0].direction);
+                for(var t = 0; t < WindoorOfRoom.door.length; ++t){
+                    //console.log(WindoorOfRoom.door[0][1]);
+                    var currentLocationTmp = rotateFromWindoor(meta.door[0], WindoorOfRoom.door[t]);
+                    var res = compareCurrentLocation(currentLocation, currentLocationTmp, xscan, zscan, priorBbox);
+                    if(res > -0.001) currentLocation = currentLocationTmp.concat([res]);
+                }
+                if(currentLocation.length) schemes = schemes.concat([JSON.parse(JSON.stringify(currentLocation))]);
+            }
+        }
+        console.log(schemes);
+        
+        //关键就在于找两个侧（房间的某一侧墙，关联关系包围盒的某一侧边界），将他们match
+        
+        //首先找到包围盒最窄的一侧，我们利用它来决定靠哪一面墙？
+        var boundingSign = 0;
+        var boundingNearest = priorBbox.max.x;
+        var boundingLength  = priorBbox.max.z - priorBbox.min.z;
+        if( priorBbox.max.z< boundingNearest) { boundingNearest = priorBbox.max.z; boundingSign = 3; boundingLength = priorBbox.max.x - priorBbox.min.x;}
+        if(-priorBbox.min.x< boundingNearest) { boundingNearest =-priorBbox.min.x; boundingSign = 2; boundingLength = priorBbox.max.z - priorBbox.min.z;}
+        if(-priorBbox.min.z< boundingNearest) { boundingNearest =-priorBbox.min.z; boundingSign = 1; boundingLength = priorBbox.max.x - priorBbox.min.x;}
+        if('wall' in meta){
+            //console.log("here"); console.log(meta.priorId); console.log(meta.wall[0].nearestOrient0);
+            let t = thetaToDir(meta.wall[0].nearestOrient0, bound = 0.02); console.log(t);
+            if((t[0] == 0) && (t[1] == 1)){
+                boundingNearest =-priorBbox.min.z; boundingSign = 3; boundingLength = priorBbox.max.x - priorBbox.min.x;
+            }else if((t[0] ==-1) && (t[1] == 0)) {
+                boundingNearest =-priorBbox.min.x; boundingSign = 2; boundingLength = priorBbox.max.z - priorBbox.min.z;
+            }else if((t[0] == 0) && (t[1] ==-1)){
+                boundingNearest = priorBbox.max.z; boundingSign = 1; boundingLength = priorBbox.max.x - priorBbox.min.x;
+            }else if((t[0] == 1) && (t[1] == 0)){
+                boundingNearest = priorBbox.max.x; boundingSign = 0; boundingLength = priorBbox.max.z - priorBbox.min.z;
+            }
+        }
+        
+        //从较短一侧的墙开始试一试。首先计算包围盒靠该墙时主物体位置上另一个维度的跨度是多大；移开门范围，看看包围盒在该维度上能否保持在房间的维度跨度以内。如果可以就保留，
+            //对墙的长度依次排序
+        var wallSigns = [];
+        var dirSign = 0, wallLen = 0;
+        var currentActualLength = boundingLength;
+        //if(Math.abs(room.roomShape[0][1] - room.roomShape[1][1]) < 0.001){ dir = 1; wallLen = Math.abs(room.roomShape[0][0] - room.roomShape[1][0]);}
+        //else { dir = 0; wallLen = Math.abs(room.roomShape[0][1] - room.roomShape[1][1]);}
+        //wallSigns = [[0, dir, wallLen]];
+        for(var i = 0; i < room.roomShape.length; ++i){
+            var dir = thetaToDir(room.roomOrient[i]);
+            dirSign = dir[1]*dir[1];//????????????????????????????????????????????????????????
+            var j = (i+1)%(room.roomShape.length);
+            wallLen = Math.abs(room.roomShape[i][1 - dirSign] - room.roomShape[j][1 - dirSign]);  //on the 'dirSign' dimension, the wall's location do not change
+            var center = [(room.roomShape[i][0] + room.roomShape[j][0]) / 2.0, (room.roomShape[i][1] + room.roomShape[j][1]) / 2.0];
+            var k = 0;
+            for(; k < wallSigns.length; ++k){ if(wallSigns[k].wallLength > wallLen) break; }
+            var wallInfoDict = {"idx":i, "dirSign":dirSign, "dir":dir, "wallLength":wallLen, "center":center};
+            wallSigns.splice(k,0,wallInfoDict); 
+        }
+        console.log(wallSigns);
+
+            //依次遍历这些墙，
+        for(var i = wallSigns.length-1; i >= 0; --i){ console.log(i); console.log(boundingNearest);
+            let wallIdx = wallSigns[i].idx;
+            let spanDirSign = 1 - wallSigns[i].dirSign; let notSpanDirSign = 1 - spanDirSign;
+            let dirSign = wallSigns[i].dir; 
+            let center = wallSigns[i].center;
+            let wallLen = wallSigns[i].wallLength;
+            var span = [center[spanDirSign] - wallLen / 2.0, center[spanDirSign] + wallLen / 2.0];
+            if(dirSign[0] == 1 && dirSign[1] == 0){
+                let currentX = center[0] + boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 < center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.max(room.roomShape[j][0], room.roomShape[k][0]) > currentX) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 < center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.max(room.roomShape[j][0], room.roomShape[k][0]) > currentX) break;
+                }
+            }
+            else if(dirSign[0] == 0 && dirSign[1] == -1){
+                let currentZ = center[1] - boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 > center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.min(room.roomShape[j][1], room.roomShape[k][1]) < currentZ) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 > center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.min(room.roomShape[j][1], room.roomShape[k][1]) < currentZ) break;
+                }
+            }
+            else if(dirSign[0] ==-1 && dirSign[1] == 0){
+                let currentX = center[0] - boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 > center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.min(room.roomShape[j][0], room.roomShape[k][0]) < currentX) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][0] - room.roomShape[k][0]) < 0.001) continue;
+                    if((room.roomShape[j][0] + room.roomShape[k][0])/2.0 > center[0]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallZ = room.roomShape[j][1];
+                    if(newDir[1] > 0) span[0] = Math.max(span[0],wallZ);
+                    else span[1] = Math.min(span[1],wallZ);
+                    if(Math.min(room.roomShape[j][0], room.roomShape[k][0]) < currentX) break;
+                }
+
+            }
+            else if(dirSign[0] == 0 && dirSign[1] == 1){
+                let currentZ = center[1] + boundingNearest;
+                for(var j = wallIdx-1; true; --j){
+                    if (j<0) j += room.roomShape.length;
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 < center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.max(room.roomShape[j][1], room.roomShape[k][1]) > currentZ) break;
+                }
+                for(var j = wallIdx+1; true; ++j){
+                    if (j >= room.roomShape.length) j -= room.roomShape.length; 
+                    var k = (j+1)%room.roomShape.length;
+                    if(Math.abs(room.roomShape[j][1] - room.roomShape[k][1]) < 0.001) continue;
+                    if((room.roomShape[j][1] + room.roomShape[k][1])/2.0 < center[1]) break;
+                    let newDir = thetaToDir(room.roomOrient[j]);
+                    let wallX = room.roomShape[j][0];
+                    if(newDir[0] > 0) span[0] = Math.max(span[0],wallX);
+                    else span[1] = Math.min(span[1],wallX);
+                    if(Math.max(room.roomShape[j][1], room.roomShape[k][1]) > currentZ) break;
+                }
+            }
+        
+            let doorSpan = [];
+            for(var j = 0; j < WindoorOfRoom.door.length; ++j){
+                if(WindoorOfRoom.door[j][2] == wallIdx){
+                    if(spanDirSign == 0){
+                        let p = [WindoorOfRoom.door[j][0].min[0],WindoorOfRoom.door[j][0].max[0]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                    else{
+                        let p = [WindoorOfRoom.door[j][0].min[2],WindoorOfRoom.door[j][0].max[2]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                }
+            }
+            for(var j = 0; j < WindoorOfRoom.window.length; ++j){
+                if(WindoorOfRoom.window[j][2] == wallIdx){
+                    if(spanDirSign == 0){
+                        let p = [WindoorOfRoom.window[j][0].min[0],WindoorOfRoom.window[j][0].max[0]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                    else{
+                        let p = [WindoorOfRoom.window[j][0].min[2],WindoorOfRoom.window[j][0].max[2]];
+                        doorSpan = doorSpan.concat([p]);
+                    }
+                }
+            }
+            let actualLength = 0;
+            if(doorSpan.length > 0){
+                if(span[1] - doorSpan[0][1] >  doorSpan[0][0] - span[0]) span[0] = doorSpan[0][1];
+                else span[1] = doorSpan[0][0];
+            }
+            actualLength = span[1] - span[0]; console.log(i);
+
+            //首先，需要检查一下能不能往这面墙上靠，actualLength 和 boundingLength
+            if(actualLength > currentActualLength * 0.8){
+                //如果按照boundingNearest靠到这面墙上需要做些什么呢？
+
+                //首先，需要转成什么样子？需要nearest那一面和这面墙的方向对齐
+                //from boundingSign to dirSign
+                    // [1, 0] -> 2    min.x -> 2
+                    // [0,-1] -> 3    max.z -> 3
+                    //[-1, 0] -> 0    max.x -> 0
+                    //[ 0, 1] -> 1    min.z -> 1    前面减后面乘以Math.PI / 2.0
+                let wallSign = 0;
+                if((dirSign[0] == 0) && (dirSign[1] == 1)) wallSign = 1;
+                else if((dirSign[0] == 1) && (dirSign[1] == 0)) wallSign = 2;
+                else if((dirSign[0] == 0) && (dirSign[1] ==-1)) wallSign = 3;
+
+                var originalOrient = (boundingSign - wallSign) * Math.PI / 2.0;
+                var originalLocation = [0.0, 0.0, 0.0];
+                //其次，它的位置在哪里，
+                if((dirSign[0] == 0) && (dirSign[1] == 1)){
+                    originalLocation[0] = (span[1] + span[0])/2.0; originalLocation[2] = center[1] + boundingNearest;
+                }else if((dirSign[0] == 1) && (dirSign[1] == 0)) {
+                    originalLocation[2] = (span[1] + span[0])/2.0; originalLocation[0] = center[0] + boundingNearest;
+                }else if((dirSign[0] == 0) && (dirSign[1] ==-1)){
+                    originalLocation[0] = (span[1] + span[0])/2.0; originalLocation[2] = center[1] - boundingNearest;
+                }else if((dirSign[0] ==-1) && (dirSign[1] == 0)){
+                    originalLocation[2] = (span[1] + span[0])/2.0; originalLocation[0] = center[0] - boundingNearest;
+                }
+                //最后，这一面墙是谁是需要被记录下来的，
+                var res = compareCurrentLocation([], [originalLocation, originalOrient, wallIdx], xscan, zscan, priorBbox); console.log(res);//1.0;//
+                if(res > -0.001) schemes = schemes.concat([ [originalLocation, originalOrient, wallIdx] ] );
+                if(schemes.length > 3) break;
+            }
+        }
+        
+        //----------------------------------------------------------------------------waist--------------------------------------------------------------------------------------------//
+        console.log(schemes);
+
+        for(let j = 0; j < schemes.length ;++j){console.log(j);
+
+            //3， adjust the main object location with the information of wall
+            if('wall' in meta){ //}else{
+                //需要根据当前关联关系包围盒的朝向确定目标墙面的朝向
+                let wallOrient = schemes[j][1] - meta.wall[0].nearestOrient0; //???????????????????????????????????????????????????????????????????????
+                //nearestOrient0 = -1.57, schemes[j][1] = 0.0, wallDirSign = [1,0], wallOrient = 1.57
+                //objectY = nearestOrient0 + wallOrient
+
+                
+                //需要依据之间记录的那面墙（如果是门窗那就是门窗所在墙，如果是主动找墙那就是找的那面墙）周围的墙壁来寻找到底是哪一面墙
+                let wallDirSign = thetaToDir(wallOrient, 0.2);
+                let currentWallIdx = schemes[j][2];
+                let actualWallIdx = currentWallIdx;
+                let currentWallInfo = wallInformDict(room, currentWallIdx);
+                if(currentWallInfo.dir[0] == wallDirSign[0] && currentWallInfo.dir[1] == wallDirSign[1]) actualWallIdx = currentWallIdx;
+                else{
+                    let wallAIdx = currentWallIdx;//(currentWallIdx+1)%(room.roomShape.length);
+                    let wallBIdx = currentWallIdx;//(currentWallIdx-1+room.roomShape.length)%(room.roomShape.length)
+                    while(true){
+                        wallAIdx = (wallAIdx+1)%(room.roomShape.length);//要求这面墙的终点晚于currX
+                        wallAInfoDict = wallInformDict(room, wallAIdx);
+                        if(wallAInfoDict.dir[0] == wallDirSign[0] && wallAInfoDict.dir[1] == wallDirSign[1]) { actualWallIdx = wallAIdx; break; }
+
+                        wallBIdx = (wallBIdx-1+room.roomShape.length)%(room.roomShape.length); //要求这面墙的终点晚于currX
+                        wallBInfoDict = wallInformDict(room, wallBIdx);
+                        if(wallBInfoDict.dir[0] == wallDirSign[0] && wallBInfoDict.dir[1] == wallDirSign[1]) { actualWallIdx = wallBIdx; break; }
+                        
+                    }
+                }
+
+                //把主物体在那个维度挪一下，
+                let wallDistance = meta.wall[0].nearestDistance;
+                let actualWallInfo = wallInformDict(room, actualWallIdx);
+                if((wallDirSign[0] == 0) && (wallDirSign[1] == 1)){
+                    schemes[j][0][2] = actualWallInfo.centerZ + wallDistance; 
+                }else if((wallDirSign[0] == 1) && (wallDirSign[1] == 0)) {
+                    schemes[j][0][0] = actualWallInfo.centerX + wallDistance; 
+                }else if((wallDirSign[0] == 0) && (wallDirSign[1] ==-1)){
+                    schemes[j][0][2] = actualWallInfo.centerZ - wallDistance; 
+                }else if((wallDirSign[0] ==-1) && (wallDirSign[1] == 0)){
+                    schemes[j][0][0] = actualWallInfo.centerX - wallDistance; 
+                }
+                //这边其实也是有可能出问题的，有可能墙的方向蹩过去了......结果就不对了
+            }
+
+            /*/4, move the prior bounding box inside the room
+            var tmpX = schemes[j][0][0]; var spanZ = [];
+            var tmpZ = schemes[j][0][2]; var spanX = [];
+            for(var tX in xscan){
+                if(tX < tmpX) spanZ = xscan[tX];
+                else break;
+            }
+            for(var tZ in zscan){
+                if(tZ < tmpZ) spanX = zscan[tZ];
+                else break;
+            }
+            var realPriorBbox = rotatePriorBbox(priorBbox,schemes[j][1]);
+            var moveZ = Math.max(spanZ[0] - realPriorBbox.min.z - tmpZ, 0.0) - Math.max(realPriorBbox.max.z - spanZ[1] + tmpZ, 0.0);
+            var moveX = Math.max(spanX[0] - realPriorBbox.min.x - tmpX, 0.0) - Math.max(realPriorBbox.max.x - spanX[1] + tmpX, 0.0);
+            schemes[j][0][0] += moveX;
+            schemes[j][0][2] += moveZ;*/
+        }
+
+        return schemes;//[ [ translate, orient, wallIdx, ,], [, , , ,], ...    ]
+    }
+
+    let outOfRoom = function(xscan, zscan, bbox){
+        console.log(bbox);
+        let xmin = bbox.min.x;
+        let xmax = bbox.max.x;
+        let zmin = bbox.min.z;
+        let zmax = bbox.max.z;
+        let xminout = -1000.0;
+        let xmaxout = -1000.0;
+        let zminout = -1000.0;
+        let zmaxout = -1000.0;
+
+        let lastX = 0.0;
+        let inSign = false;
+        for(var tX in xscan){console.log(tX);
+            if(inSign){
+                if( (xmin < tX) && (lastX < xmax) ){
+                    zminout = Math.max(zminout, xscan[lastX][0] - zmin);
+                    zmaxout = Math.max(zmaxout, zmax - xscan[lastX][1]);
+                }
+            }else inSign = true;
+            lastX = tX;
+        }
+        let lastZ = 0.0; inSign = false;
+        for(var tZ in zscan){console.log(tZ);
+            if(inSign){
+                if( (zmin < tZ) && (lastZ < zmax) ){
+                    xminout = Math.max(xminout, zscan[lastZ][0] - xmin);
+                    xmaxout = Math.max(xmaxout, xmax - zscan[lastZ][1]);
+                }
+            }
+            else inSign = true;
+            lastZ = tZ;
+        }
+        let ret = {"sign":"none", "val":10000.0, "xmin":xminout, "xmax":xmaxout, "zmin":zminout, "zmax":zmaxout};
+        if(xminout > 0.0 && xminout < ret.val){ ret.sign = "xmin"; ret.val = xminout; }
+        if(xmaxout > 0.0 && xmaxout < ret.val){ ret.sign = "xmax"; ret.val = xmaxout; }
+        if(zminout > 0.0 && zminout < ret.val){ ret.sign = "zmin"; ret.val = zminout; }
+        if(zmaxout > 0.0 && zmaxout < ret.val){ ret.sign = "zmax"; ret.val = zmaxout; }
+        return ret;
+    }
+
+    const objectConflict = function(gtransObjectBboxes, f){
+        console.log(gtransObjectBboxes[0]);
+        console.log(f);
+        for(let i = 0; i < gtransObjectBboxes.length; ++i){
+            let e = gtransObjectBboxes[i];
+            let xcross = false;
+            if((e.max.x > f.min.x) && (f.max.x > e.min.x)){
+                xcross = true;
+                console.log("wtfx");
+            }
+            let zcross = false;
+            if((e.max.z > f.min.z) && (f.max.z > e.min.z)){
+                zcross = true;
+                console.log("wtfz");
+            }
+            if(xcross && zcross){
+                return {
+                    "id":i,
+                    "min":{"x":f.max.x - e.min.x,    "z":f.max.z - e.min.z},
+                    "max":{"x":e.max.x - f.min.x,    "z":e.max.z - f.min.z}
+                };
+            }
+        };
+        return false;
+    }
+
+    var deleteLastPlanObject = function(plan){
+        for(let i = 0; i < plan.length; ++i){
+            for(let k = 0; k < manager.renderManager.scene_json['rooms'].length; ++k){
+                let objList = manager.renderManager.scene_json['rooms'][k].objList;
+                for(let j = 0; j < objList.length; ++j){
+                    if(objList[j].key == plan[i].key){ removeObjectByUUID(objList[j].key); break; }
+                }
+            }
+        }
+    }
+
+    let priorClickScheme = function(e){//deleteLastPlanObject();
+        //clear GTrans
+        releaseGTRANSChildrens(); INTERSECT_OBJ = null;
+        let meta = $(e.target).data("meta"); //console.log(priorClickPlan);
+        for(let i = 0; i < priorClickPlan.length; ++i){ //console.log("here");
+            let t = priorClickPlan[i];
+            if(t.roomId == currentRoomId && t.priorId == meta.priorId) { //return t.plans[0];   别忘了删掉GTRANS里的东西
+                deleteLastPlanObject(t.plans[t.currentPlan]); console.log(t);
+                t.currentPlan = (t.currentPlan + 1) % t.plans.length ;
+                return t.plans[t.currentPlan];
+            }
+        }
+        clickPlan = {"roomId":currentRoomId, "priorId":meta.priorId, "currentPlan":0, "plans":[]}; console.log("here");
+
+        var scans = scanRoom(manager.renderManager.scene_json['rooms'][currentRoomId]);
+        var xscan = scans[0];
+        var zscan = scans[1];
+        var transes = [[]];
+        var scl = [1.0, 1.0, 1.0];
+        var f = 'obj';
+        var stt = 'origin'; console.log("here");
+
+        //check if main object exist or add it in
+        if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId){
+            if(currentRoomId === undefined) { alert('no room being selected'); return; }
+            var roomBbox = manager.renderManager.scene_json['rooms'][currentRoomId].roomShapeBBox; console.log(roomBbox);
+            //console.log(currentRoomId);console.log(manager.renderManager.scene_json['rooms'][currentRoomId]); console.log(meta.mainObjId);
+            if(meta.state && isNaN(parseInt(meta.mainObjId))){
+                f = 'glb';
+                stt = meta.state[0].currentState;
+            }
+            if('scale' in meta){
+                scl = [meta.scale[0].objScaleX, meta.scale[0].objScaleY, meta.scale[0].objScaleZ];
+            } //console.log("here");
+            transes = mainObjLocation(manager.renderManager.scene_json['rooms'][currentRoomId], meta, xscan, zscan);
+        }
+        else{
+            transes[0] = [INTERSECT_OBJ.userData.json.translate, INTERSECT_OBJ.userData.json.orient];
+            scl = [INTERSECT_OBJ.scale.x,INTERSECT_OBJ.scale.y,INTERSECT_OBJ.scale.z];
+            f = INTERSECT_OBJ.userData.json.format;
+            stt = INTERSECT_OBJ.userData.json.startState;
+        }
+        console.log(transes);
+        //var currentRoom = manager.renderManager.scene_json['rooms'][currentRoomId];
+        //if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId) alert("wtf");
+
+        for(let j = 0; j < transes.length; ++j){
+            let furniture = {"modelId":meta.mainObjId, "translate":transes[j][0], "orient":transes[j][1], "scale":scl, "format":f, "startState":stt};
+            clickPlan.plans = clickPlan.plans.concat([[furniture]]);
+
+            var priorBbox = rotatePriorBbox(calcPriorBbox(meta), transes[j][1]);//INTERSECT_OBJ.userData.json.orient);
+            //console.log(priorBbox);
+            var movedRoom = {
+                "max":{"x":roomBbox.max[0] - transes[j][0][0],    "z":roomBbox.max[1] - transes[j][0][2]},
+                "min":{"x":roomBbox.min[0] - transes[j][0][0],    "z":roomBbox.min[1] - transes[j][0][2]}
+            };
+            //console.log(movedRoom);
+            var lambdas = {
+                "max":{"x":Math.min(1.0, movedRoom.max.x / priorBbox.max.x),    "z":Math.min(1.0, movedRoom.max.z / priorBbox.max.z)},
+                "min":{"x":Math.min(1.0, movedRoom.min.x / priorBbox.min.x),    "z":Math.min(1.0, movedRoom.min.z / priorBbox.min.z)}
+            };
+            //console.log(lambdas); console.log(xscan); console.log(zscan);
+
+            let mainItm = {"attachedObjId": meta.mainObjId, "objPosX":0.0, "objPosY":0.0, "objPosZ":0.0, "objOriY":0.0, "objScaleX":scl[0],"objScaleY":scl[1],"objScaleZ":scl[2]};
+            if("state" in meta) mainItm["currentState"] = meta.state[0].currentState;
+            let mainBbox = moveSinglePriorBbox(mainItm,transes[j]);//[INTERSECT_OBJ.userData.json.translate,INTERSECT_OBJ.userData.json.orient]);
+            let gtransObjectBboxes = [mainBbox];
+            //console.log(gtransObjectBboxes); console.log(transes[j]);
+
+            //setNewIntersectObj();
+            //console.log([INTERSECT_OBJ.userData.json.translate,INTERSECT_OBJ.userData.json.orient]);
+            if('gtrans' in meta){
+                for(var i = 0; i < meta.gtrans.length; ++i){
+                    var ret = singleObjectRelativeLocation(meta.gtrans[i], transes[j]);
+
+                    //（1）prior总体进入房间
+                    var realx = (ret[0] > 0 ? ret[0] * lambdas.max.x : ret[0] * lambdas.min.x);// + INTERSECT_OBJ.position.x;
+                    var realz = (ret[1] > 0 ? ret[1] * lambdas.max.z : ret[1] * lambdas.min.z);// + INTERSECT_OBJ.position.z;
+
+                    let adjustedItm = JSON.parse(JSON.stringify(meta.gtrans[i]));
+                    //adjustedItm.objOriY = meta.gtrans[i].objOriY;
+                    adjustedItm.objPosX = realx;
+                    adjustedItm.objPosZ = realz;
+                    adjustedItm.objOriY += transes[j][1];//INTERSECT_OBJ.userData.json.orient;
+                    //（2）各个家具进入房间的具体结构之中、各个家具之间不重叠
+
+                    //console.log(meta.gtrans[i]);
+                    let movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                    let outRet = outOfRoom(xscan, zscan, movedBbox);
+                    //console.log(outRet);
+                    let cnt = 0;
+
+                    while(outRet.sign != "none" && cnt < 2){
+                        if(outRet.sign == "xmin") realx += outRet.val;
+                        if(outRet.sign == "xmax") realx -= outRet.val;
+                        if(outRet.sign == "zmin") realz += outRet.val;
+                        if(outRet.sign == "zmax") realz -= outRet.val;
+                        adjustedItm.objPosX = realx;
+                        adjustedItm.objPosZ = realz;
+                        movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                        outRet = outOfRoom(xscan, zscan, movedBbox);
+                        //console.log(outRet);
+                        cnt += 1;
+                    }
+
+                    //真的要留的话还是应该留各个方向的最大误差，也就是四个数。如果留各个区域的话很不方便做的。
+                    //关键问题还是在于如何构建误差：在这个物体的两个方向上分别扫一遍，各个方向上取最大值；完全冲出去的部分不计
+                    //各个方向有最大误差，误差最小的方向，应该就是我们要挪的方向。（所谓误差，指的是该方向上的包围盒溢出该方向上墙面的多少，）
+                    //往那个方向上走这个误差距离。
+                    //跑三轮，跑不对就不跑了。
+
+                    //如果上面这步跑对了，那就看看下面这步；
+                    //（3）各个家具之间不重叠
+                    //其次告诉它这个家具现在可以怎么挪是合法的：四个方向各一个最大距离：扫一下，扫出来能走的最大距离
+
+                    //再次，把家具挪出其他家具的范围中：形式应该是（x小于多少多少 或 x大于多少多少 或 z小于多少多少 或 z大于多少多少） 且 （x小于多少多少 或 x大于多少多少 或 z小于多少多少 或 z大于多少多少）
+                    //挪三次，挪不出去就算了
+                    let objConflict = objectConflict(gtransObjectBboxes, movedBbox);
+                    cnt = 0;
+                    while(objConflict != false && cnt < 2){
+                        //console.log("here"); console.log(outRet); console.log(objConflict);
+                        let trySign = {sign:"none", val:10000}; let minimumError = Math.min(objConflict.min.x, objConflict.max.x, objConflict.min.z, objConflict.max.z); console.log(minimumError);
+                        if(objConflict.min.x < -outRet.xmin){ if(objConflict.min.x < trySign.val) trySign = {sign:"xmin", val:objConflict.min.x}; }
+                        if(objConflict.max.x < -outRet.xmax){ if(objConflict.max.x < trySign.val) trySign = {sign:"xmax", val:objConflict.max.x}; }
+                        if(objConflict.min.z < -outRet.zmin){ if(objConflict.min.z < trySign.val) trySign = {sign:"zmin", val:objConflict.min.z}; }
+                        if(objConflict.max.z < -outRet.zmax){ if(objConflict.max.z < trySign.val) trySign = {sign:"zmax", val:objConflict.max.z}; }
+                        if(trySign.sign == "xmin" || minimumError < 0.1 || trySign.val > 0.8) break;
+
+                        if(trySign.sign == "xmin") realx -= trySign.val;
+                        if(trySign.sign == "xmax") realx += trySign.val;
+                        if(trySign.sign == "zmin") realz -= trySign.val;
+                        if(trySign.sign == "zmax") realz += trySign.val;
+                        adjustedItm.objPosX = realx;
+                        adjustedItm.objPosZ = realz;
+                        movedBbox = moveSinglePriorBbox(adjustedItm,[transes[j][0], 0.0]);//[INTERSECT_OBJ.userData.json.translate,0.0]);
+                        outRet = outOfRoom(xscan, zscan, movedBbox);
+                        objConflict = objectConflict(gtransObjectBboxes, movedBbox);
+
+                        //走哪条路，在允许的位置上（objConflict.min.x < -outRet.xmin），绝对值最小的objConflict.min.x，
+                        //走过之后，outRet需要重新更新outOfRoom，objectConflict也需要重算。
+                        cnt += 1;
+                    }
+
+                    gtransObjectBboxes = gtransObjectBboxes.concat([movedBbox]);
+                    //console.log(meta.gtrans[i].objOriY); console.log(adjustedItm.objOriY);
+                    adjustedItm.objOriY -= transes[j][1];//INTERSECT_OBJ.userData.json.orient;
+                    //console.log(meta.gtrans[i].objOriY); console.log(adjustedItm.objOriY);
+
+                    //singlePriorClickAdd(meta.gtrans[i], realx, realz, transes[0]);
+
+                    furniture = {"modelId": meta.gtrans[i].attachedObjId, 
+                                "translate":[transes[j][0][0] + realx, transes[j][0][1] + meta.gtrans[i].objPosY, transes[j][0][2] + realz],
+                                "orient":transes[j][1] + meta.gtrans[i].objOriY,
+                                "scale":[meta.gtrans[i].objScaleX,meta.gtrans[i].objScaleY,meta.gtrans[i].objScaleZ],
+                                "format": ( meta.gtrans[i].currentState && isNaN(parseInt(meta.gtrans[i].attachedObjId)) ) ? "glb" : "obj" ,
+                                "startState": ( meta.gtrans[i].currentState && isNaN(parseInt(meta.gtrans[i].attachedObjId)) ) ? meta.gtrans[i].currentState : "origin"};
+                    clickPlan.plans[j] = clickPlan.plans[j].concat([furniture]);
+                }
+            }
+        }
+        priorClickPlan = priorClickPlan.concat([clickPlan]);
+        //console.log(clickPlan);
+        return clickPlan.plans[0];
+    }
+
+    const priorClick = function(e){
+        let meta = $(e.target).data("meta");
+        $(`#grids-${meta.identifier}`).css('height', '0px');
+        $(`#grids-${meta.identifier}`).css('width', '0px');
+        $(`#grids-${meta.identifier}`).css('opacity', '0');
+
+        //load all the models into the cache before doing anything else
+        if(INTERSECT_OBJ == null || INTERSECT_OBJ.userData.modelId != meta.mainObjId){
+            var f = 'obj';
+            var stt = 'origin';
+            if(meta.state && isNaN(parseInt(meta.mainObjId))){
+                f = 'glb';
+                stt = meta.state[0].currentState;
+            }
+            if(!(meta.mainObjId in objectCache)) {
+                loadObjectToCache(meta.mainObjId, anchor = priorClick, anchorArgs = [e], format = f);
+                return;
+            }
+        }
+        if('gtrans' in meta){
+            for(var i = 0; i < meta.gtrans.length; ++i){
+                var itm = meta.gtrans[i];
+                var f = 'obj';
+                var stt = 'origin';
+                if('currentState' in itm  && isNaN(parseInt(itm.attachedObjId))){
+                    f = 'glb';
+                    stt = itm.currentState;
+                }
+                if(!(itm.attachedObjId in objectCache)) {
+                    loadObjectToCache(itm.attachedObjId, anchor = priorClick, anchorArgs = [e], format = f);
+                    return;
+                }
+            }
+        }
+
+        let clickPlan = priorClickScheme(e);
+        if(clickPlan){
+            for(let i = 0; i < clickPlan.length; ++i){
+                let clp = JSON.parse(JSON.stringify(clickPlan[i]));   console.log(clp);
+                while(clp["orient"] > Math.PI) clp["orient"] -= 2*Math.PI;
+                while(clp["orient"] <-Math.PI) clp["orient"] += 2*Math.PI;
+                let p = addObjectFromCache(
+                    modelId=clp["modelId"],
+                    transform={
+                        'translate': clp["translate"],//transes[0][0],//[(roomBbox.max[0] + roomBbox.min[0])/2.0, 0.0, (roomBbox.max[1] + roomBbox.min[1])/2.0], 
+                        'rotate': [0, clp["orient"], 0],//transes[0][1]
+                        'scale': clp["scale"],//scl,
+                        'format': clp["format"],//f,
+                        'startState': clp["startState"]//stt
+                    }
+                ); clickPlan[i].key = p.userData.key; //console.log(p);
+                if(i == 0){ INTERSECT_OBJ = p; timeCounter.maniStart = moment(); setNewIntersectObj(); }
+                else addToGTRANS(p);
+            } 
+        }
+        else{
+            alert("no available layout solution");
+        }
+    }
+
     $("#usercommitOSR").click(() => {
         userOSR = $("#userOSR").val();
-        nameOSR = $("#nameOSR").val();
+        nameOSR = $("#searchinput").val() + "_" + $("#nameOSR").val();
         if (userOSR == "") {
             alert("请填写您的用户名");
+            return;
         }
 
         var interInfo = new Array(10);
@@ -1676,6 +3233,16 @@ const setting_up = function () {
         }
     });
 
+    $('input[type=radio][name=shelfModeRadio]').change(function() {
+        startShelfPlannerExperiment();
+        if (this.value == '3') {
+            $('#nextShelfBtn').show();
+        }
+        else {
+            $('#nextShelfBtn').hide();
+        }
+    });
+
     scenecanvas.addEventListener('mousemove', onDocumentMouseMove, false);
     scenecanvas.addEventListener('mousedown', () => {
         document.getElementById("searchinput").blur();
@@ -1689,15 +3256,15 @@ const setting_up = function () {
     scenecanvas.addEventListener('contextmenu', onRightClickObj);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-    orthcanvas.addEventListener('mousedown', orth_mousedown);
-    orthcanvas.addEventListener('mouseup', orth_mouseup);
-    orthcanvas.addEventListener('mousemove', orth_mousemove);
-    orthcanvas.addEventListener('click', orth_mouseclick);
+    // orthcanvas.addEventListener('mousedown', orth_mousedown);
+    // orthcanvas.addEventListener('mouseup', orth_mouseup);
+    // orthcanvas.addEventListener('mousemove', orth_mousemove);
+    // orthcanvas.addEventListener('click', orth_mouseclick);
 
     var rapidSearches = document.getElementsByClassName("rapidSearch");
     const rapidSFunc = function() {
         document.getElementById('searchinput').value = this.textContent;
-        $('#floorPlanbtn').click();
+        $('#searchbtn').click();
     };
     for (let i = 0; i < rapidSearches.length; i++) {
         if(rapidSearches[i].textContent.includes('CGS-')){
@@ -1713,24 +3280,6 @@ const setting_up = function () {
     onWindowResize();
     deltaClock = new THREE.Clock();
     gameLoop();
-    const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
-    const params = {
-        color: '#ffffff',
-        scale: 4,
-        flowX: 1,
-        flowY: 1
-    };
-    water = new THREE.Water( waterGeometry, {
-        color: params.color,
-        scale: params.scale,
-        flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
-        textureWidth: 1024,
-        textureHeight: 1024
-    } );
-
-    water.position.y = 1;
-    water.rotation.x = Math.PI * - 0.5;
-    // scene.add( water );
 };
 
 var autocollapse = function (menu, maxHeight) {
@@ -1914,370 +3463,691 @@ const initAttributes = function() {
     });
 }
 
-let shelfPlaceholderHandler = () => {
-    let shelfKey = INTERSECT_OBJ.userData.shelfKey;
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    if (onlineGroup !== 'OFFLINE' && shelf.userData.controlledByID !== undefined && shelf.userData.controlledByID !== onlineUser.id) {
-        console.log(`This shelf is already claimed by ${shelf.userData.controlledByID}`);
-        INTERSECT_OBJ = undefined;
-        return;
-    }
-    if (shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
-        if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].has(INTERSECT_OBJ.name)) {
-            // cancel
-            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].delete(INTERSECT_OBJ.name);
-            let index = outlinePass2.selectedObjects.indexOf(INTERSECT_OBJ);
-            if(index > -1){
-                outlinePass2.selectedObjects.splice(index, 1);
-            }
-            if (INTERSECT_SHELF_PLACEHOLDERS[shelfKey].size === 0) {
-                claimControlObject3D(shelfKey, true);
-                delete INTERSECT_SHELF_PLACEHOLDERS[shelfKey];
-            }
-        } else {
-            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(INTERSECT_OBJ.name);
-            outlinePass2.selectedObjects.push(INTERSECT_OBJ);
-        }
-    } else {
-        INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set([INTERSECT_OBJ.name]);
-        claimControlObject3D(shelfKey, false);
-        outlinePass2.selectedObjects.push(INTERSECT_OBJ);
-    }
-
-    let roomId = shelf.userData.roomId;
-    $('#tab_modelid').text(INTERSECT_OBJ.name);
-    $('#tab_category').text('shelf-placeholder');
-    $('#tab_roomid').text(roomId);
-    $('#tab_roomtype').text(manager.renderManager.scene_json.rooms[roomId].roomTypes);
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-
-    if (INTERSECT_SHELF_PLACEHOLDERS.size == 0) return;
-    $.ajax({
-        type: "POST",
-        url: "/shelfPlaceholder",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[roomId]),
-            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
-        }
-    }).done(function (o) {
-        $('#searchinput').val('');
-        searchResults = JSON.parse(o);
-        searchResults.forEach(function (item) {
-            newCatalogItem(item);
-        });
-    });
-}
-
-let cancelClickingShelfPlaceholders = () => {
-    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
-    for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
-        claimControlObject3D(shelfKey, true);
-    }
-    INTERSECT_SHELF_PLACEHOLDERS = {};
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-}
-
-let enterShelfStockingMode = () => {
-    cancelClickingObject3D();
-    for (let key in manager.renderManager.instanceKeyCache) {
-        let inst = manager.renderManager.instanceKeyCache[key];
-        if (inst.userData.json.modelId === 'shelf01') {
-            if (inst.userData.json.commodities == undefined) {
-                inst.userData.json.commodities = [
-                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }],
-                    [{ modelId: '', uuid: '' }, { modelId: '', uuid: '' }, { modelId: '', uuid: '' }]
-                ];
-            }
-            addShelfPlaceholders(key);
+function get_room_and_line_id(start,end,add_point = true)
+{
+    //TODO: modify this by checking the point id rather than point coordinates
+    for(const i in arrayOfRooms)
+    {
+        if(arrayOfRooms[i] != undefined)
+        for(let j = arrayOfRooms[i].points.length -  1; j >= 0; j--)
+        {
+            const next = (j == arrayOfRooms[i].points.length - 1) ? 0 : j + 1;
+            if(Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[0] - start[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[1] - start[1]) < 1e-7
+            && Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[0] - end[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[1] - end[1]) < 1e-7)
+                return [i,j];
         }
     }
-}
-
-let getCube = (width, height, depth, opacity) => {
-    const geometry = new THREE.BoxGeometry(width, height, depth);
-    const material = new THREE.MeshBasicMaterial();
-    material.transparent = true;
-    material.opacity = opacity;
-    const cube = new THREE.Mesh(geometry, material);
-    return cube;
-}
-
-const shelfOffestY = [1.565, 1.116, 0.666, 0.200];
-
-let addShelfPlaceholders = (shelfKey) => {
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    for (let r = 0; r < 4; ++r) {
-        addShelfPlaceholdersByRow(shelfKey, r, shelf.userData.json.commodities[r].length);
-    }
-}
-
-let exitShelfStockingMode = () => {
-    cancelClickingShelfPlaceholders();
-    for (let key in manager.renderManager.instanceKeyCache) {
-        if (key.startsWith('shelf-placeholder-')) {
-            scene.remove(manager.renderManager.instanceKeyCache[key]);
-            delete manager.renderManager.instanceKeyCache[key];
-        }
-    }
-    clearShelfInfo();
-}
-
-let isShelfPlaceholder = function(obj) {
-    return obj.name !== undefined && obj.name.startsWith('shelf-placeholder-');
-}
-
-let addCommodityToShelf = function (shelfKey, modelId, r, c, l) {
-    if (!(modelId in objectCache)) {
-        loadObjectToCache(modelId, anchor = addCommodityToShelf, anchorArgs = [shelfKey, modelId, r, c, l]);
-        return;
-    }
-    let offsetX = (0.6 / l) * (2 * c + 1) - 0.6;
-    let offsetY = shelfOffestY[r];
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let commodity = addObjectFromCache(
-        modelId = modelId,
-        transform = {
-            'translate': [shelf.position.x + offsetX, shelf.position.y + offsetY, shelf.position.z],
-            'rotate': [shelf.rotation.x, shelf.rotation.y, shelf.rotation.z],
-            'scale': [shelf.scale.x, shelf.scale.y, shelf.scale.z]
-        },
-        uuid = undefined,
-        origin = true,
-        otherInfo = {
-            shelfKey: shelfKey,
-            shelfRow: r,
-            shelfCol: c
-        }
-    );
-    shelf.userData.json.commodities[r][c] = { modelId: modelId, uuid: commodity.name };
-    let objectProperties = {};
-    objectProperties[shelfKey] = { commodities: shelf.userData.json.commodities };
-    emitFunctionCall('updateObjectProperties', [objectProperties]);
-}
-
-let yulin = function (shelfKey, newCommodities) {
-    for (let r = 0; r < 4; ++r) {
-        changeShelfRow(shelfKey, r, newCommodities[r]);
-    }
-}
-
-let clearDanglingCommodities = () => {
-    for (let key in manager.renderManager.instanceKeyCache) {
-        let inst = manager.renderManager.instanceKeyCache[key];
-        if (inst.userData.modelId.startsWith('yulin-')) {
-            let r = inst.userData.json.shelfRow;
-            let c = inst.userData.json.shelfCol;
-            let shelfKey = inst.userData.json.shelfKey;
-            if (shelfKey in manager.renderManager.instanceKeyCache) {
-                let commodities = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities;
-                if (commodities[r][c].uuid !== key) {
-                    removeObjectByUUID(key);
+    if(!add_point)throw new Error("Point not found");
+    var cut_line_found = false;
+    for(const i in arrayOfRooms)
+    {
+        if(arrayOfRooms[i] != undefined)
+        {
+            for(let j = arrayOfRooms[i].points.length - 1; j >= 0; j--)
+            {
+                const next = (j == arrayOfRooms[i].points.length - 1) ? 0 : j + 1;
+                const pt1 = arrayOfRoomPoints[arrayOfRooms[i].points[j]].position, pt2 = arrayOfRoomPoints[arrayOfRooms[i].points[next]].position;
+                if(on_same_line(pt1,start,pt2) && on_same_line(pt1,end,pt2)
+                && point_between(pt1,start,pt2) && point_between(pt1,end,pt2))
+                {
+                    // console.log('make a new cut at');
+                    // console.log(pt1);
+                    // console.log(start);
+                    // console.log(end);
+                    // console.log(pt2);
+                    if(!same_point(pt2,end))
+                    {
+                        cut_inner_line(i,j,end);
+                        if(!debugHJK)cutting_inner_line(i,j,end);
+                    }
+                    if(!same_point(pt1,start) && !same_point(start,end))
+                    {
+                        cut_inner_line(i,j,start);
+                        if(!debugHJK)cutting_inner_line(i,j,start);
+                    }
+                    cut_line_found = true;
+                    break;
                 }
-            } else {
-                // the shelf is gone
-                removeObjectByUUID(key);
             }
-        } else if (inst.userData.modelId === 'shelf01') {
-            let commodities = inst.userData.json.commodities;
-            for (let r = 0; r < 4; ++r) {
-                let l = commodities[r].length;
-                for (let c = 0; c < l; ++c) {
-                    if (!(commodities[r][c].uuid in manager.renderManager.instanceKeyCache)) {
-                        commodities[r][c] = { modelId: '', uuid: '' };
+            if(cut_line_found)break;
+        }
+    }
+    // console.log(start);
+    // console.log(end);
+    for(const i in arrayOfRooms)
+    {
+        // console.log(i);
+        if(arrayOfRooms[i] != undefined)
+        for(let j = arrayOfRooms[i].points.length -  1; j >= 0; j--)
+        {
+            // console.log(j);
+            // console.log(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position);
+            const next = (j == arrayOfRooms[i].points.length - 1) ? 0 : j + 1;
+            if(Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[0] - start[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[j]].position[1] - start[1]) < 1e-7
+            && Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[0] - end[0]) < 1e-7 && 
+            Math.abs(arrayOfRoomPoints[arrayOfRooms[i].points[next]].position[1] - end[1]) < 1e-7)
+                return [i,j];
+        }
+    }
+    // console.log("This should not happen");
+    return undefined;
+}
+//manager.renderManager.scene_json.rooms[0].roomShape[i][0]
+const add_dot = function(event)//加入断点 同时也要加入线段
+{
+    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线(棱柱)
+    if(intersects.length > 0)//有点击到
+    {
+        var point = intersects[0].point;//点击到棱柱上的坐标
+        // console.log(intersects[0].object.length1);//intersects[0].object就是那条直线,或者说具体的交的物体，因此，scene.add/remove 的对象必须是object(point、distance与object平级)
+        // console.log(point);
+        // console.log("点击到的直线是");
+        // console.log(arrayOfLines.indexOf(intersects[0].object));
+        seperate_lines(intersects[0].object,intersects[0].object.start1,intersects[0].object.end1,intersects[0].point.x,intersects[0].point.y,intersects[0].point.z);//从所有线里找那条线
+        // console.log("已经加入了");
+        // console.log(cut_point_num);
+        // console.log("个断点");
+    }
+}
+function seperate_lines(object,start,end,x,y,z,update_room = true){//加断点后分割直线 要大改 加入断点的同时，断点那里也要有一个长度为0的直线
+    var now_order = arrayOfLines.indexOf(object);//找到下标
+    console.log("点到直线的顺序");
+    console.log(now_order);
+    var point2 = put_dot_to_cylinder(x,y,z,start[0],start[1],start[2],end[0],end[1],end[2]);//找到映射后的点坐标
+    //reimagined
+    console.log("映射后：");
+    console.log(point2);
+    scene.remove(arrayOfLines[now_order]);
+    if(update_room)
+    {
+        var room_and_line_id = get_room_and_line_id([object.start1[0],object.start1[2]],[object.end1[0],object.end1[2]]);
+        cut_inner_line(room_and_line_id[0],room_and_line_id[1],[point2.x,point2.z]);
+        if(!debugHJK)cutting_inner_line(room_and_line_id[0],room_and_line_id[1],[point2.x,point2.z]);
+        // arrayOfRoomPoints[roomPointIndexCounter++] = {"position":[point2.x,point2.z],"linkedInnerLines":[]};
+        // arrayOfRoomPoints[roomPointIndexCounter++] = {"position":[point2.x,point2.z],"linkedInnerLines":[]};
+        // arrayOfRooms[room_and_line_id[0]].points.splice(room_and_line_id[1] + 1, 0, roomPointIndexCounter - 2,roomPointIndexCounter - 1);
+    }
+    arrayOfLines.splice(now_order,1);//删除掉这根棱柱
+    mycyl1 = createCyliner1(start[0],start[1],start[2],point2.x,point2.y,point2.z,now_order);//前面的那条，order小
+    mycyl2 = createCyliner1(point2.x,point2.y,point2.z,point2.x,point2.y,point2.z,now_order+1);//后面的那条
+    mycyl3 = createCyliner1(point2.x,point2.y,point2.z,end[0],end[1],end[2],now_order+2);//后面的那条
+    console.log("已经截断直线");
+    // if(check_distance())//点击的点距离其他已经存在的点距离没有过近
+    // {
+    create_dot(point2.x,point2.y,point2.z);
+    cut_point_num += 1;//断点数量加1
+    // }
+    return ;
+}
+function put_dot_to_cylinder(x,y,z,x1,y1,z1,x2,y2,z2)//传入点的坐标，线端点的坐标，返回加入点的位置投影坐标
+{
+    var p1 = new THREE.Vector3(x1,y1,z1);
+    var p2 = new THREE.Vector3(x2,y2,z2); 
+    var pline = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
+    var oripline = pline.normalize();//单位化
+    var dis1 = calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2);//点到直线的距离
+    var dis2 = Math.sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1)+(z-z1)*(z-z1));
+    var dis3 = Math.sqrt(dis2*dis2-dis1*dis1);
+    var finline = oripline.multiplyScalar(dis3);//单位向量乘以长度
+    var p3 =p1.add(finline);//点的坐标
+    console.log(p3);
+    return p3;
+} 
+
+function createCylinderMesh(x1,y1,z1,x2,y2,z2,color=0x0000ff,radius = 0.1){		
+    var x0 = (x1 + x2) / 2;
+    var y0 = (y1 + y2) / 2;
+    var z0 = (z1 + z2) / 2;
+    var p1 = new THREE.Vector3(x1,y1,z1);
+    var length = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
+    var material = new THREE.MeshBasicMaterial( { color: color } );
+    var geometry = new THREE.CylinderGeometry(radius,radius,length);
+    var mesh = new THREE.Mesh(geometry,material);
+    mesh.position.set(x0,y0,z0);		
+    return mesh;
+}
+function createCyliner1(x1,y1,z1,x2,y2,z2,order){//order +//为将来服务roomshape,应该注意先传进去的是start,后进去的是end，start为每条线关联点的坐标
+    const cylinder =createCylinderMesh(x1,y1,z1,x2,y2,z2);
+    cylinder.start1 = [x1,y1,z1];
+    cylinder.end1 = [x2,y2,z2];
+    cylinder.has_add = 0;
+    cylinder.order = order ;//index为将来服务roomshape
+    cylinder.length = getlength(x1,y1,z1,x2,y2,z2);//加入我自己需要的属性start1 end1 长度
+    if(check_line(x1,y1,z1,x2,y2,z2)==1)
+            {
+                cylinder.rotation.x = 1.57;      
+            }
+    else if(check_line(x1,y1,z1,x2,y2,z2)==2)
+            {
+                cylinder.rotation.z = 1.57;
+            }
+    scene.add(cylinder);
+    arrayOfLines.splice(order,0,cylinder);//0表示不需要删除
+}
+function createCyliner1_pos(x1,y1,z1,x2,y2,z2,index,order){//指定位置加入线
+    const cylinder =createCylinderMesh(x1,y1,z1,x2,y2,z2);
+    cylinder.start1 = [x1,y1,z1];
+    cylinder.end1 = [x2,y2,z2];
+    cylinder.has_add = 0;
+    cylinder.order = order ;//index为将来服务roomshape
+    cylinder.length = getlength(x1,y1,z1,x2,y2,z2);//加入我自己需要的属性start1 end1 长度
+    if(check_line(x1,y1,z1,x2,y2,z2)==1)
+            {
+                cylinder.rotation.x = 1.57;      
+            }
+    else if(check_line(x1,y1,z1,x2,y2,z2)==2)
+            {
+                cylinder.rotation.z = 1.57;
+            }
+    scene.add(cylinder);
+    arrayOfLines.splice(index,0,cylinder);//在index位置插入一个线
+}
+
+function check_line(x1,y1,z1,x2,y2,z2){//检查直线旋转朝向函数
+    var p = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
+    var ori = new THREE.Vector3(1,0,0);//x轴
+    dot = p.dot(ori);
+    if((dot == 0)||Math.abs(dot-0)<0.1)//与x轴垂直 rotate x
+    {
+        return 1;//
+    }
+    else 
+        return 2;//与z轴垂直 rotate y
+}
+
+function getposition(x1,y1,z1,x2,y2,z2){
+    var p1 = new THREE.Vector3((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
+    return p1;
+}//直线与圆柱，如何根据两端点获取位置，便于搜索
+
+function getlength(x1,y1,z1,x2,y2,z2){
+    var length = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
+    return length;
+}//得到直线或圆柱的长度
+
+function check_distance(x1, y1, z1){
+    var min_dis = 999 ;//所有点中距离这个点最近的点的距离，用这个判断是否应该继续加入点
+    for( var i = 0 ; i < arrayOfDots.length ; i++)
+    {
+        var now_dis = getlength(x1,y1,z1,arrayOfDots[i].position.x,arrayOfDots[i].position.y,arrayOfDots[i].position.z);
+        if(now_dis < min_dis)
+        {
+            min_dis = now_dis;
+        }
+    }
+    if(min_dis<1)
+        {
+            return 0;//太近了 不能继续加
+        }
+    return 1;//能加
+}
+function isArrayEQUAL(arr1,arr2){
+    return JSON.stringify(arr1) == JSON.stringify(arr2);
+}
+
+function calc_dot_line_dis(x,y,z,x1,y1,z1,x2,y2,z2)
+{//计算点到直线的距离 xyz 为点 
+    var len1 = getlength(x1,y1,z1,x2,y2,z2);//那条直线长
+    var len2 = getlength(x,y,z,x1,y1,z1);//平行四边形两条边长 点与线一个端点的边
+    var p = new THREE.Vector3(x2-x1,y2-y1,z2-z1);
+    var p1 = new THREE.Vector3(x-x1,y-y1,z-z1);
+    var cos1 = Math.abs(p.dot(p1))/(len1*len2);//余弦绝对值
+    return Math.sqrt(1-cos1*cos1)*len2;
+}
+
+function deleteEdge(sig){
+    var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (sig+1)%(arrayOfLines.length);
+    
+    get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
+    get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
+    var rl = get_room_and_line_id([arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[2]],[arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[2]]);    
+    var rl1= get_room_and_line_id([arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[2]],[arrayOfLines[sig1].end1[0],arrayOfLines[sig1].end1[2]]);
+    var rl2= get_room_and_line_id([arrayOfLines[sig2].start1[0],arrayOfLines[sig2].start1[2]],[arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[2]]);
+
+    if(rl1[0] == rl2[0]){ console.log(arrayOfRoomPoints);
+        var i = 0;
+        for(;i<arrayOfDots.length;++i){
+            if(getlength(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],arrayOfDots[i].position.x,arrayOfDots[i].position.y,arrayOfDots[i].position.z)< 0.1){ scene.remove(arrayOfDots[i]);arrayOfDots.splice(i,1); cut_point_num-=1; }
+        }
+        let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
+        let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+        let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+        let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
+        remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+        remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
+        remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
+        
+        remove_room_point(pt1id,rl[0]);
+        remove_room_point(pt2id,rl[0]);
+        arrayOfInnerLines[rl[0]].splice(rl1[1],0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt3id],rl[0]));
+        
+        scene.remove(arrayOfLines[sig1]);
+        scene.remove(arrayOfLines[sig]);
+        scene.remove(arrayOfLines[sig2]);
+
+        console.log(arrayOfLines.length);
+        console.log(arrayOfLines);
+        
+        if(sig == 0){
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+1);
+            arrayOfLines.splice(sig1,1);
+            arrayOfLines.splice(0,2);
+        }else if(sig == arrayOfLines.length-1){//because the length has just become longer for creating cylinder1
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+2);
+            arrayOfLines.splice(sig1,2);
+            arrayOfLines.splice(0,1);
+        }else{
+            createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+                arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig1+3);
+            arrayOfLines.splice(sig1,3);
+        }
+    }
+    // else if(rl[0] == rl2[0]){
+    //     let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+    //     let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+    //     let pt3id=arrayOfInnerLines[rl2[0]][rl2[1]].endid;
+
+    //     remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+    //     remove_inner_line(rl[0],pt2id,pt3id);//rl2[1]);
+        
+    //     remove_room_point(pt2id,rl[0]);
+
+    //     arrayOfInnerLines[rl[0]].splice(pt1id,0,add_inner_line_between_points(arrayOfRoomPoints[pt1id],arrayOfRoomPoints[pt3id],rl[0]));
+
+    //     scene.remove(arrayOfLines[sig]);
+    //     scene.remove(arrayOfLines[sig2]);
+
+
+    //     if(sig == arrayOfLines.length-1){//because the length has just become longer for creating cylinder1
+    //         createCyliner1(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],
+    //             arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig+1);
+    //         arrayOfLines.splice(sig,1);
+    //         arrayOfLines.splice(0,1);
+    //     }else{
+    //         createCyliner1(arrayOfLines[sig].start1[0],arrayOfLines[sig].start1[1],arrayOfLines[sig].start1[2],
+    //             arrayOfLines[sig2].end1[0],arrayOfLines[sig2].end1[1],arrayOfLines[sig2].end1[2], sig+2);
+    //         arrayOfLines.splice(sig,2);
+    //     }
+
+    // }else if(rl[0]==rl1[0]){
+    //     let pt0id=arrayOfInnerLines[rl1[0]][rl1[1]].startid;
+    //     let pt1id=arrayOfInnerLines[rl[0]][rl[1]].startid;
+    //     let pt2id=arrayOfInnerLines[rl[0]][rl[1]].endid;
+
+    //     remove_inner_line(rl[0],pt1id,pt2id);//rl[1]);
+    //     remove_inner_line(rl[0],pt0id,pt1id);//rl1[1]);
+        
+    //     remove_room_point(pt1id,rl[0]);
+
+    //     arrayOfInnerLines[rl[0]].splice(pt0id,0,add_inner_line_between_points(arrayOfRoomPoints[pt0id],arrayOfRoomPoints[pt2id],rl[0]));
+
+    //     scene.remove(arrayOfLines[sig1]);
+    //     scene.remove(arrayOfLines[sig]);
+        
+    //     if(sig == 0){
+    //         createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+    //             arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[1],arrayOfLines[sig].end1[2], sig1+1);
+    //         arrayOfLines.splice(sig1,1);
+    //         arrayOfLines.splice(0,1);
+    //     }else{//because the length has just become longer for creating cylinder1
+    //         createCyliner1(arrayOfLines[sig1].start1[0],arrayOfLines[sig1].start1[1],arrayOfLines[sig1].start1[2],
+    //             arrayOfLines[sig].end1[0],arrayOfLines[sig].end1[1],arrayOfLines[sig].end1[2], sig1+2);
+    //         arrayOfLines.splice(sig1,2);
+    //     }
+
+    // }
+
+    //arrayOfRooms = {};      //每个房间只有“点索引表”，
+    //roomIndexCounter = 0;
+    //arrayOfRoomPoints = {}; //带墓碑存储吧?
+    //roomPointIndexCounter = 0;
+
+    //arrayOfInnerLines = {};//环绕每个房间的线 //没有自存id，不是索引
+
+}
+
+const enter_move_mode_pro = function(event){
+    var intersects = raycaster.intersectObjects(arrayOfLines, true);//确定点击位置，应当是一条线
+    if(intersects.length > 0)
+    {   
+        var pt = intersects[0].point;//鼠标触碰地面的点
+        On_LINEMOVE = !On_LINEMOVE;//状态量取非
+        if(On_LINEMOVE){
+            if(intersects[0].object != last_moved_line)
+            {
+                for(let i = roomIndexCounter - 1; i >= 0; i--)
+                {
+                    if(i in arrayOfRooms && !arrayOfRooms[i].mergeable)break;
+                    if(i in arrayOfRooms)arrayOfRooms[i].mergeable = false;
+                }
+            }
+            last_moved_line = intersects[0].object;
+            can_add_dot = 1;//1的状态不可加点ntersect是一个独特的类，加object是具体的物体
+            
+            backPoint[0]=pt.x;backPoint[1]=pt.z;lastPoint[0]=pt.x;lastPoint[1]=pt.z;            
+            now_order =  intersects[0].object.end1[2].order;
+            for(var i = 0 ; i < arrayOfLines.length ; i++){  
+                if((isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].start1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].end1))||(isArrayEQUAL(intersects[0].object.start1,arrayOfLines[i].end1)&&isArrayEQUAL(intersects[0].object.end1,arrayOfLines[i].start1))){
+                    now_move_line.push(arrayOfLines[i]);
+                    now_move_index = i;//选中直线的数组下标 //console.log("选中的index是")
+                    console.log(now_move_index);break;
+                }
+            }
+
+            var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
+            var check_res = check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2]);
+            var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+            var sig2 = (now_move_index+1)%(arrayOfLines.length);
+            
+            backPoint[check_res-1] = obj.start1[2-2*(2-check_res)]; lastPoint[check_res-1] = obj.start1[2-2*(2-check_res)];
+
+            if(arrayOfLines[sig1].length<0.3 || arrayOfLines[sig2].length<0.3){//if我的临边长度小于0.3
+                follow_mouse_mode = 3; //吸附
+                if(arrayOfLines[sig1].length<0.3){shutPoint[0] = arrayOfLines[sig1].start1[0]; shutPoint[1] = arrayOfLines[sig1].start1[2];}
+                else{shutPoint[0] = arrayOfLines[sig2].end1[0]; shutPoint[1] = arrayOfLines[sig2].end1[2];}
+            }else if(ctrlPressing){
+                follow_mouse_mode = 2; //回归
+            }else{
+                follow_mouse_mode = 1; //拉动
+            }
+            return;
+        }else{
+            can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
+            if(follow_mouse_mode == 3){
+                var sig = (now_move_index+1)%(arrayOfLines.length);
+                if(arrayOfLines[sig].length>0.1)sig=(now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+                deleteEdge(sig);
+            }
+            now_move_index = -1;//全部重置?
+        }
+    }
+    
+    if(On_LINEMOVE){
+        On_LINEMOVE = !On_LINEMOVE;//状态量取非
+        can_add_dot = 0;//0的状态可以加点 //console.log("已退出可拖动状态");
+        if(follow_mouse_mode == 3){
+            var sig = (now_move_index+1)%(arrayOfLines.length);
+            if(arrayOfLines[sig].length>0.1)sig=(now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+            deleteEdge(sig);
+        }
+        now_move_index = -1;//全部重置?
+    }
+}
+
+var follow_mouse_mode = 0;
+var shutPoint = [0,0];
+var backPoint = [0,0];
+var lastPoint = [0,0];
+
+function shortWallSwap(sig, check_res, target_value, last_value){
+    var sig1 = (sig+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (sig+1)%(arrayOfLines.length);
+
+    if(arrayOfLines[sig1].length<0.1){
+        var obj = arrayOfLines[sig1];//选中的直线，index为线的下标
+        try{
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
+            var room_id = room_and_line_id[0];
+            var line_id = room_and_line_id[1];
+            arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(last_value-target_value);
+        }catch(error){}
+    }
+    if(arrayOfLines[sig2].length<0.1){
+        var obj = arrayOfLines[sig2];//选中的直线，index为线的下标
+        try{
+            var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]],false);
+            var room_id = room_and_line_id[0];
+            var line_id = room_and_line_id[1];
+            arrayOfRooms[room_id].edgeList[line_id].dir[2-check_res] = Math.sign(target_value-last_value);
+        }catch(error){}
+    }
+
+    return;
+}
+
+function follow_mouse(){
+    var intersect = raycaster.intersectObjects([manager.renderManager.infFloor], true);//追踪鼠标在地面的投影，因此求交是与地面
+    var pt = intersect[0].point;//鼠标触碰地面的点
+    var ptPoint = [pt.x, pt.z];
+    var selected_room_id,selected_line_id,check_res;
+    if(now_move_index == -1){console.log("follow_mousewas called before edge selected");}
+    
+    var obj = arrayOfLines[now_move_index];//选中的直线，index为线的下标
+    var room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+    selected_room_id = room_and_line_id[0]; //console.log("selected_room_id");console.log(selected_room_id);
+    selected_line_id = room_and_line_id[1]; //console.log("selected_line_id");console.log(selected_line_id);
+    check_res = check_line(obj.start1[0],obj.start1[1],obj.start1[2],obj.end1[0],obj.end1[1],obj.end1[2]);
+    
+    var sig1 = (now_move_index+arrayOfLines.length-1)%(arrayOfLines.length);
+    var sig2 = (now_move_index+1)%(arrayOfLines.length);
+    var actInfo = {flag:true,pos1:[0,0],pos2:[0,0],moveLength:0,movedir:[0,0]};
+    var pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
+    var targetValue = -1, lastValue = -1;
+    
+    if(follow_mouse_mode==1){//拉动状态
+
+        if(arrayOfLines[sig1].length<0.3 || arrayOfLines[sig2].length<0.3){//if我的临边长度小于0.3
+            
+            follow_mouse_mode=3;//吸附，设置吸附中心
+            if(arrayOfLines[sig1].length<0.3){shutPoint[0] = arrayOfLines[sig1].start1[0]; shutPoint[1] = arrayOfLines[sig1].start1[2];}
+            else{shutPoint[0] = arrayOfLines[sig2].end1[0]; shutPoint[1] = arrayOfLines[sig2].end1[2];}
+            targetValue = shutPoint[check_res-1]; lastValue = lastPoint[check_res-1];
+            
+        }else if(ctrlPressing && Math.abs(ptPoint[check_res-1]-backPoint[check_res-1])<0.1){//else if我距离开启拉动状态之前的位置距离小于0.1且ctrl键按下，（吸附状态的优先级是高于回归状态的）
+            
+            follow_mouse_mode=2;//回归，回到回归中心
+            targetValue = backPoint[check_res-1]; lastValue = lastPoint[check_res-1];
+        
+        }else{//拉动状态
+            targetValue = ptPoint[check_res-1]; lastValue = lastPoint[check_res-1];
+        }
+        
+    }else if(follow_mouse_mode == 2){//回归状态
+    
+        if(arrayOfLines[sig1].length<0.3 || arrayOfLines[sig2].length<0.3){//if我的临边长度小于0.3//检测是否需要去到吸附状态（倾向于去到吸附状态）
+            
+            follow_mouse_mode=3;//吸附状态
+            if(arrayOfLines[sig1].length<0.3){shutPoint[0] = arrayOfLines[sig1].start1[0]; shutPoint[1] = arrayOfLines[sig1].start1[2];}
+            else{shutPoint[0] = arrayOfLines[sig2].end1[0]; shutPoint[1] = arrayOfLines[sig2].end1[2];}
+            targetValue = shutPoint[check_res-1]; lastValue = backPoint[check_res-1];
+        
+        }else if(!ctrlPressing || 0.1<Math.abs(ptPoint[check_res-1]-backPoint[check_res-1])){//else if距离开启拉动状态之前的位置距离大于0.1或ctrl键未按下，
+            
+            follow_mouse_mode=1;//拉动状态
+            targetValue = ptPoint[check_res-1]; lastValue = backPoint[check_res-1];
+        
+        }else{actInfo.flag=false;}//在状态内部是不移动边的，但last还要正常设置
+    
+    }else if(follow_mouse_mode == 3){//吸附状态，
+        if(0.3<Math.abs(ptPoint[check_res-1]-shutPoint[check_res-1]) && ctrlPressing && Math.abs(ptPoint[check_res-1]-backPoint[check_res-1])<0.1){//if我的临边长度都大于0.3，并且距离开启拉动状态之前的位置距离小于0.1且ctrl键按下，
+            
+            follow_mouse_mode=2;//回归状态
+            targetValue = backPoint[check_res-1]; lastValue = shutPoint[check_res-1];
+            
+        }else if(0.3<Math.abs(ptPoint[check_res-1]-shutPoint[check_res-1])){//else if我的临边长度都大于0.3
+            follow_mouse_mode=1;//拉动状态
+            targetValue = ptPoint[check_res-1]; lastValue = shutPoint[check_res-1];
+            shortWallSwap(now_move_index, check_res, targetValue, lastValue);
+            
+        }else{actInfo.flag=false;}//在状态内部是不移动边的，但last还要正常设置
+    }
+
+    if(actInfo.flag){
+        room_and_line_id = get_room_and_line_id([obj.start1[0],obj.start1[2]],[obj.end1[0],obj.end1[2]]);
+        selected_room_id = room_and_line_id[0]; //console.log("selected_room_id");console.log(selected_room_id);
+        selected_line_id = room_and_line_id[1]; //console.log("selected_line_id");console.log(selected_line_id);
+        var pointid1 = arrayOfRooms[selected_room_id].points[selected_line_id],pointid2 = arrayOfRooms[selected_room_id].points[(selected_line_id + 1) % arrayOfRooms[selected_room_id].points.length];
+        if(check_res==1){obj.position.x = targetValue;}
+        else{obj.position.z = targetValue;} //console.log(obj);
+
+        obj.start1[2-2*(2-check_res)]=targetValue; obj.end1[2-2*(2-check_res)]=targetValue;
+        actInfo.pos1[0] = (check_res==1)?targetValue:arrayOfRoomPoints[pointid1].position[0];
+        actInfo.pos1[1] = (check_res==2)?targetValue:arrayOfRoomPoints[pointid1].position[1];
+        actInfo.pos2[0] = (check_res==1)?targetValue:arrayOfRoomPoints[pointid2].position[0];
+        actInfo.pos2[1] = (check_res==2)?targetValue:arrayOfRoomPoints[pointid2].position[1];
+        actInfo.moveLength = Math.abs(targetValue-lastValue);
+        actInfo.movedir[check_res-1] = Math.sign(targetValue-lastValue);
+        var front =arrayOfLines[sig1].start1;
+        scene.remove(arrayOfLines[sig1]);
+        arrayOfLines.splice(sig1,1);
+        createCyliner1(front[0],front[1],front[2],obj.start1[0],obj.start1[1],obj.start1[2],sig1);
+        var end = arrayOfLines[sig2].end1;
+        scene.remove(arrayOfLines[sig2]);
+        arrayOfLines.splice(sig2,1);
+        createCyliner1(obj.end1[0],obj.end1[1],obj.end1[2],end[0],end[1],end[2],sig2);
+        
+        move_point(pointid1,[actInfo.pos1[0],actInfo.pos1[1]]);
+        move_point(pointid2,[actInfo.pos2[0],actInfo.pos2[1]]);
+        
+        if(!room_division_decide(arrayOfRooms[selected_room_id],selected_line_id)){
+            if(!debugHJK)func({roomid:selected_room_id, wallid:selected_line_id, moveLength:actInfo.moveLength, movedir:[actInfo.movedir[0],actInfo.movedir[1]]}, true, true);
+        }
+    }
+    //decide(arrayOfRooms[selected_room_id],selected_line_id);
+    lastPoint[0] = ptPoint[0]; lastPoint[1] = ptPoint[1];
+}
+
+//position移动1/2 distance
+function cover2lines(object1 , object2 , dot)//两条线有一个共同的端点且平行，则两条线合并，合并之前order应该相邻，splice一个即可，并注意删去中间的共用端点
+{
+    if(isArrayEQUAL(object1.start1,object2.end1)||isArrayEQUAL(object1.end1,object2.start1))//有共同端点
+    {
+        if(check_line(object1.start1[0],object1.start1[1],object1.start1[2],object1.end1[0],object1.end1[1],object1.end1[2])==check_line(object2.start1[0],object2.start1[1],object2.start1[2],object2.end1[0],object2.end1[1],object2.end1[2]))//方向相同
+        {
+            if(isArrayEQUAL(dot,object1.start1))//共同点是1的起点,2在1前面
+            {    
+                createCyliner1(object2.start1[0],object2.start1[1],object2.start1[2],object1.end1[0],object1.end1[1],object1.end1[2],object2.order);
+                scene.add(arrayOfLines[object2.order]);
+                scene.remove(arrayOfLines[object2.order+1]);
+                scene.remove(arrayOfLines[object2.order+2]);
+                arrayOfLines.splice(object2.order+1,2); //删掉两条线    
+            }
+            if(isArrayEQUAL(dot,object2.start1))//共同点是2的起点,1在2前面
+            {
+                createCyliner1(object1.start1[0],object1.start1[1],object1.start1[2],object2.end1[0],object2.end1[1],object2.end1[2],object1.order);
+                scene.add(arrayOfLines[object1.order]);
+                scene.remove(arrayOfLines[object1.order+1]);
+                scene.remove(arrayOfLines[object1.order+2]);
+                arrayOfLines.splice(object1.order+1,2); //删掉两条线
+            }
+            arrayOfDots.splice(dot.order,1);//删掉共同点
+            scene.remove(dot);
+        }
+    }
+}
+
+const SceneExpander_to_CGS_type_map = {
+    "livingroom":"LivingRoom",
+    "diningroom":"DiningRoom",
+    "kitchen":"Kitchen",
+    "bathroom":"Bathroom",
+    "storage":"Storage",
+    "bedroom":"Bedroom"
+};
+
+function recreate_room()//复原roomshape
+{
+    //遍历
+    //console.log("开始重构房间")
+    var new_json = structuredClone(manager.renderManager.scene_json);
+    new_json.rooms = [];
+    for(const i in arrayOfRooms)
+    {
+        if(arrayOfRooms[i] != undefined)
+        {
+            var roomShape = arrayOfRooms[i].points.map(id => structuredClone(arrayOfRoomPoints[id].position));
+            var shapeX = roomShape.map(pos => pos[0]),shapeZ = roomShape.map(pos => pos[1]);
+            var roomBbox = {
+                "Max":[Math.max.apply(Math,shapeX),Math.max.apply(Math,shapeZ)],
+                "Min":[Math.min.apply(Math,shapeX),Math.min.apply(Math,shapeZ)]
+            };
+            var new_room =
+                {
+                    "id": "6443_0",
+                    "modelId": "Bathroom-6473",
+                    "roomTypes": [
+                        SceneExpander_to_CGS_type_map[arrayOfRooms[i].type]
+                    ],
+                    "bbox": {
+                    "min": [
+                        roomBbox["Min"][0],
+                        0.85,
+                        roomBbox["Min"][1]
+                    ],
+                    "max": [
+                        roomBbox["Max"][0],
+                        1.75,
+                        roomBbox["Max"][1]
+                    ]
+                },
+                "origin": "ad0ae7b6-f80d-4ba3-be86-2c2c7f86776e",
+                "roomId": new_json.rooms.length,
+                "objList": [],
+                "blockList": [],
+                "roomShape": roomShape,
+                "roomNorm":[],
+                "roomOrient": [],
+                "roomShapeBBox": roomBbox
+            };
+            for(let j = 0; j < new_room.roomShape.length; j++)
+            {
+                const k = j == new_room.roomShape.length - 1 ? 0 : j + 1;
+                if(Math.abs(new_room.roomShape[j][0] - new_room.roomShape[k][0]) < 1e-7)
+                    new_room.roomNorm.push([new_room.roomShape[j][1] < new_room.roomShape[k][1] ? -1 : 1, 0]);
+                else
+                    new_room.roomNorm.push([0, new_room.roomShape[j][0] < new_room.roomShape[k][0] ? 1 : -1]);
+            }
+            new_room.roomOrient = new_room.roomNorm.map(vec => Math.atan2(vec[0],vec[1]));
+            if("eBoxList" in arrayOfRooms[i])
+            {
+                for(var eBoxID in arrayOfRooms[i]["eBoxList"])
+                {
+                    var eBox = arrayOfRooms[i]["eBoxList"][eBoxID];
+                    for(var objID in eBox.objList)
+                    {
+                        var obj = eBox.objList[objID];
+                        removeObjectByUUID(obj.key);
+                        var f = 'obj';
+                        var stt = 'origin';
+                        if('currentState' in obj && isNaN(parseInt(obj.id))){
+                            f = 'glb';
+                            stt = obj.currentState;
+                        }
+                        new_room.objList.push({
+                            "modelId":obj.id,
+                            "translate":obj.position,
+                            "roomId":new_json.rooms.length,
+                            'rotate': [0, obj.orient, 0],
+                            'scale': obj.scl,
+                            'key':obj.key,
+                            'format':f,
+                            'startState':stt,
+                            "isSceneObj": true,
+                            "inDatabase": true,
+                        });
                     }
                 }
             }
+            new_json.rooms.push(new_room);
         }
     }
+    new_json.wall_width = 0.01;
+    // console.log(new_json);
+    encodePerspectiveCamera(new_json)
+    refreshSceneByJson(new_json);
 }
 
-let addShelfPlaceholdersByRow = function(shelfKey, r, l) {
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    offsetY = shelfOffestY[r]+0.2;
-    for (let c = 0; c < l; ++c) {
-        let placeholder = getCube(1.2/l, 0.4, 0.45, 0.2);
-        let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
-        placeholder.name = phKey;
-        let offsetX = (0.6/l)*(2*c+1)-0.6;
-        placeholder.position.set(shelf.position.x+offsetX, shelf.position.y+offsetY, shelf.position.z-0.025);
-        placeholder.rotation.set(shelf.rotation.x, shelf.rotation.y, shelf.rotation.z);
-        placeholder.scale.set(shelf.scale.x, shelf.scale.y, shelf.scale.z);
-        placeholder.userData.shelfKey = shelfKey;
-        placeholder.userData.shelfRow = r;
-        placeholder.userData.shelfCol = c;
-        scene.add(placeholder);
-        manager.renderManager.instanceKeyCache[phKey] = placeholder;
-    }
-}
-
-// newRow = [{modelId: 'yulin-xxx'}, {modelId: ''}, ...]
-let changeShelfRow = function (shelfKey, r, newRow) {
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let oldRow = shelf.userData.json.commodities[r];
-    if (oldRow !== undefined) {
-        for (let c = 0; c < oldRow.length; ++c) {
-            if (newRow.length === oldRow.length && newRow[c].modelId === oldRow[c].modelId) {
-                // same commodity
-                newRow[c].uuid = oldRow[c].uuid;
-            } else {
-                if (oldRow[c].uuid !== "") {
-                    removeObjectByUUID(oldRow[c].uuid)
-                }
-            }
-        }
-    }
-    if (newRow.length !== oldRow.length) {
-        for (let c = 0; c < oldRow.length; ++c) {
-            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
-            scene.remove(manager.renderManager.instanceKeyCache[phKey]);
-            delete manager.renderManager.instanceKeyCache[phKey];
-        }
-        addShelfPlaceholdersByRow(shelfKey, r, newRow.length);
-    }
-    shelf.userData.json.commodities[r] = newRow;
-    let l = newRow.length;
-    for (let c = 0; c < l; ++c) {
-        let modelId = newRow[c].modelId;
-        if (newRow.length === oldRow.length && newRow[c].uuid !== undefined && newRow[c].uuid !== "") {
-            continue;
-        } else {
-            addCommodityToShelf(shelfKey, modelId, r, c, l);
-        }
-    }
-}
-
-let setIntersectShelf = () => {
-    if (shelfstocking_Mode) cancelClickingShelfPlaceholders();
-    let shelfKey = INTERSECT_OBJ.userData.key;
-    claimControlObject3D(shelfKey, false);
-    $("#shelfKey").text(shelfKey);
-    $.ajax({
-        type: "POST",
-        url: "/shelfType",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[INTERSECT_OBJ.userData.roomId]),
-            shelfKey: JSON.stringify(shelfKey)
-        }
-    }).done(function (o) {
-        let intersectShelfType = INTERSECT_OBJ.userData.json.shelfType;
-        shelfTypes = JSON.parse(o);
-        shelfTypes.forEach(function (t, i) {
-            $("#shelfTypeRadios").append(`
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="shelfTypeRadio" id="shelfTypeRadio${i}" value="${t}" onclick="setShelfType('${t}')">
-                    <label class="form-check-label" for="shelfTypeRadio${i}" id="shelfTypelabel${i}">${t}</label>
-                </div>
-            `);
-            if (intersectShelfType !== undefined && intersectShelfType === t) {
-                $(`#shelfTypeRadio${i}`).prop("checked", true);
-            }
-        });
-    });
-    let commodities = INTERSECT_OBJ.userData.json.commodities;
-    for (let r = 0; r < 4; ++r) {
-        let l = commodities[r].length;
-        $(`#shelfRow${r}`).val(l);
-        if (l === 1) {
-            $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
-        } else {
-            $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
-        }
-        if (l >= 8) {
-            $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
-        } else {
-            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
-        }
-        $(`#shelfSelectRow${r}Btn`).removeAttr('disabled');
-    }
-    $(`#shelfSelectAllBtn`).removeAttr('disabled');
-    if ($("#sidebarSelect").val() !== "shelfInfoDiv") {
-        $("#sidebarSelect").val("shelfInfoDiv").change();
-    }
-}
-
-let setShelfType = (t) => {
-    let shelfKey = $("#shelfKey").text();
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    shelf.userData.json.shelfType = t;
-    let objectProperties = {};
-    objectProperties[shelfKey] = { shelfType: shelf.userData.json.shelfType };
-    emitFunctionCall('updateObjectProperties', [objectProperties]);
-}
-
-let clearShelfInfo = () => {
-    $("#shelfKey").text("");
-    for (let r = 0; r < 4; ++r) {
-        $(`#shelfRow${r}`).val(0);
-        $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
-        $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
-        $(`#shelfSelectRow${r}Btn`).attr("disabled", "true");
-    }
-    $(`#shelfSelectAllBtn`).attr("disabled", "true");
-    $("#shelfTypeRadios").empty();
-}
-
-let shelfRowMinus = (r) => {
-    let shelfKey = $("#shelfKey").text();
-    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
-    for (let i = oldRow.length - 1; i >= 0; --i) {
-        if (oldRow[i].modelId === "") {
-            let newRow = [...oldRow];
-            newRow.splice(i, 1);
-            changeShelfRow(shelfKey, r, newRow);
-            $(`#shelfRow${r}`).val(newRow.length);
-            if (newRow.length <= 1) $(`#shelfRow${r}MinusBtn`).attr("disabled", "true");
-            $(`#shelfRow${r}PlusBtn`).removeAttr('disabled');
-            return;
-        }
-    }
-    alert("不能再减了！");
-}
-
-let shelfRowPlus = (r) => {
-    let shelfKey = $("#shelfKey").text();
-    let oldRow = manager.renderManager.instanceKeyCache[shelfKey].userData.json.commodities[r];
-    let newRow = [...oldRow];
-    newRow.push({modelId:""});
-    changeShelfRow(shelfKey, r, newRow);
-    $(`#shelfRow${r}`).val(newRow.length);
-    if (newRow.length >= 8) $(`#shelfRow${r}PlusBtn`).attr("disabled", "true");
-    $(`#shelfRow${r}MinusBtn`).removeAttr('disabled');
-}
-
-let shelfRowSelect = (rows) => {
-    outlinePass2.selectedObjects = outlinePass2.selectedObjects.filter(obj => !obj.name.startsWith('shelf-placeholder-'));
-    while (catalogItems.firstChild) { catalogItems.firstChild.remove(); }
-
-    let shelfKey = $("#shelfKey").text();
-    let shelf = manager.renderManager.instanceKeyCache[shelfKey];
-    let commodities = shelf.userData.json.commodities;
-    INTERSECT_SHELF_PLACEHOLDERS = {};
-    INTERSECT_SHELF_PLACEHOLDERS[shelfKey] = new Set();
-
-    for (let r of rows) {
-
-        let l = commodities[r].length;
-        for (let c = 0; c < l; ++c) {
-            let phKey = `shelf-placeholder-${shelfKey}-${r}-${c}`;
-            INTERSECT_SHELF_PLACEHOLDERS[shelfKey].add(phKey);
-            outlinePass2.selectedObjects.push(manager.renderManager.instanceKeyCache[phKey]);
-        }
-    }
-
-    $.ajax({
-        type: "POST",
-        url: "/shelfPlaceholder",
-        data: {
-            room: JSON.stringify(manager.renderManager.scene_json.rooms[shelf.userData.roomId]),
-            placeholders: JSON.stringify(INTERSECT_SHELF_PLACEHOLDERS)
-        }
-    }).done(function (o) {
-        $('#searchinput').val('');
-        searchResults = JSON.parse(o);
-        searchResults.forEach(function (item) {
-            newCatalogItem(item);
-        });
-    });
+function create_dot(x,y,z)//记号点，直线拐弯处补充
+{
+    var dot = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshBasicMaterial({color: 0xffffff}));
+    dot.position.set(x, y, z);//将这个点（sphere）布置在这个位置
+    scene.add(dot);
+    arrayOfDots.push(dot);
 }

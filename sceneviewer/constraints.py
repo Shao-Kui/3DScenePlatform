@@ -61,8 +61,8 @@ def numSeenObjs(room, h, probe, direction, floorMeta, theta, isDebug=False):
     h['objBeSeenDis'] = []
     h['objBeSeenDisRelative'] = []
     for obj in room['objList']:
-        if not sk.objectInDataset(obj['modelId']):
-            continue
+        # if not sk.objectInDataset(obj['modelId']):
+        #     continue
         # if room['roomId'] == 2 and h['type'] == 'threeWall_thin' and obj['modelId'] == '2327' and h['wallIndex'] == 3 and h['wallJndex'] == 1:
         #     print(isObjectInSight(obj, probe, direction, floorMeta, theta, room['objList'], True))
         if isObjectInSight(obj, probe, direction, floorMeta, theta, room['objList'], isDebug):

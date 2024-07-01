@@ -37,16 +37,19 @@
     <script src="/static/3rdparty/recorder.js"></script>
     <script src="/static/3rdparty/socket.io.min.js"></script>
     <script src="/static/3rdparty/splitting.min.js"></script>
+    <script src="/static/3rdparty/color-hash.js"></script>
     <link rel="stylesheet" href="/static/3rdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/static/3rdparty/bootstrap/bootstrap-glyphicons.css"/>
     <link rel="stylesheet" href="/static/css/color-bootstrap.min.css" />
     <!-- <link rel="stylesheet" href="/static/css/css2.css" /> -->
     <!-- our code -->
+    <link rel="stylesheet" href="/static/css/animationslider.css" />
     <link rel="stylesheet" href="/static/css/index.css" />
     <link rel="stylesheet" href="/static/css/tiler.css" />
     <link rel="stylesheet" href="/static/css/splitting.css"/>
     <link rel="stylesheet" href="/static/css/splitting-cells.css"/>
+    <script src="/static/js/animation_record.js"></script>
     <script src="/static/js/SceneManager.js"></script>
     <script src="/static/js/drawcanvas.js"></script>
     <script src="/static/js/render.js"></script>
@@ -57,11 +60,18 @@
     <script src="/static/js/search.js"></script>
     <script src="/static/js/load.js"></script>
     <script src="/static/js/sk.js"></script>
+    <script src="/static/js/stockshelf.js"></script>
     <script src="/static/js/online.js"></script>
     <script src="/static/js/audio_recording.js"></script>
     <script src="/static/js/MageAdd.js"></script>
+    <script src="/static/js/movelinemodel.js"></script>
+    <script src="/static/js/yl.js"></script>
     <script>
       //Global state & variables! Careful!
+      ////两个模式
+      var On_LINEMOVE = false;//是否进入右键拖动模式
+      var MoveLineModel = false;
+      //
       var ALL_SCENE_READY = false;
       var On_MOVE = false;
       var On_ROTATE = false;
@@ -99,6 +109,8 @@
       var INTERSECT_OBJ;
       var INTERSECT_WALL;
       var INTERSECT_SHELF_PLACEHOLDERS = {};
+      var LAST_EDITED_SHELF;
+      var LOOK_AT_SHELF = true;
       var INSERT_OBJ;
       var MAIN_OBJ;
       var USED_OBJ_LIST = JSON.parse(window.sessionStorage.getItem('UsedObject')) || {};
@@ -124,14 +136,18 @@
       var orthcanvas;
       var drawingCanvas;
       var catalogItems;
+      var osrCatalogItems;
+      var priorClickPlan = [];
       var secondaryCatalogItems;
       var paint = false;
       var drawStartPos = new THREE.Vector2();
       var searchResults;
       var currentRoomId;
       var currentSeqs;
+      var animaSliders;
       var orthline;
       const pressedKeys = [];
+      var colorHash = new ColorHash();
 
       var skyBox;
       var lx_level;
@@ -142,7 +158,7 @@
       var stats;
       var datgui;
       var datgui_intersectfolder;
-      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, total: 0}
+      const timeCounter = {navigate: 0, move: 0, rotate: 0, scale: 0, add: 0, remove: 0, cgs: 0, cltp: 0, clicks: 0, total: 0}
 
       var deltaClock;
       const animaMixers = [];
@@ -164,6 +180,7 @@
         scenecanvas = document.getElementById("scenecanvas");
         orthcanvas = document.getElementById("orthcanvas");
         catalogItems = document.getElementById("catalogItems");
+        osrCatalogItems = document.getElementById("osrCatalogItems");
         secondaryCatalogItems = document.getElementById("secondaryCatalogItems");
         drawingCanvas = document.getElementById("drawing-canvas");
         setting_up();
@@ -246,10 +263,16 @@
               <tr>
                 <th scope="row">CGS</th>
                 <td id="tab_CGS"></td>
+                <th>Clicks</th>
+                <td id="tab_Clicks"></td>
                 <th scope="row">CLTP</th>
                 <td id="tab_CLTP"></td>
                 <th>Total</th>
                 <td id="tab_Total"></td>
+              </tr>
+              <tr>
+                <th scope="row">Clicks</th>
+                <td id="tab_Clicks"></td>
               </tr>
             </tbody>
           </table>
@@ -341,19 +364,28 @@
               id="operationFuture"
               type="button"
               class="btn btn-outline-dark m-1 btn-responsive"
+              data-toggle="modal"
+              data-target="#operationFutureModal"
+              onclick="sendSignalToCalculate()"
             >
               Future
             </button>
-            <button
+            <script>
+              function sendSignalToCalculate(){
+                stats.dom.style.display = 'none';
+                fetch('future/layout/{{onlineGroup}}');
+              }
+            </script>
+            <!-- <button
               id="selectRoomShapebtn"
               type="button"
               class="btn btn-outline-dark m-1 btn-responsive"
             >
               选择房型
-            </button>
+            </button> -->
           </div>
           <div class="py-1 px-0">
-            <button
+            <!-- <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
@@ -427,12 +459,12 @@
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >圆桌</button>
+            >圆桌</button>-->
             <button
               id=""
               type="button"
               class="btn btn-lg btn-outline-dark rapidSearch m-1"
-            >CGS</button>
+            >CGS</button> 
             <!-- <button
               id=""
               type="button"
@@ -457,24 +489,46 @@
                 <option value="shelfInfoDiv">Shelf Info</option>
                 <option value="attributeSliderDiv">Attribute Slider</option>
                 <option value="drawingCanvasDiv">Drawing Canvas</option>
-                <option value="drawingCanvasDivv">Furniture Palette</option>
+                <option value="drawingCanvasDis">Furniture Palette</option>
                 <option value="cgsAnnoDiv">CGS标注</option>
+                <option value="OSRAnnoDiv">物体空间关联规则标记</option>
+                <option value="AnimationRecordDiv">Animation Record</option>
               </select>
             </div>
   
             <div id="collaborative_container" class="m-4">
               <div class="collapse container sidebarSelect_collapse" id="shelfInfoDiv">
                 <div class="h4 py-1 px-2">
-                  <div class="mb-1 text-left">Shelf Key: </div>
-                  <div id="shelfKey"></div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode1" value="1">
+                    <label class="form-check-label" for="shelfMode1" id="shelfModeLabel1">Hierachical</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode2" value="2">
+                    <label class="form-check-label" for="shelfMode2" id="shelfModeLabel2">Clutterpalette</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="shelfModeRadio" id="shelfMode3" value="3" checked="checked">
+                    <label class="form-check-label" for="shelfMode3" id="shelfModeLabel3">StoreSketcher</label>
+                  </div>
+                </div>
+
+                <div class="h4 py-1 px-2">
+                  <button id="startShelfPlannerExperimentBtn" class="btn btn-lg btn-danger text-nowrap" onclick="startShelfPlannerExperiment(true)">Start Experiment</button>
+                  <button id="endShelfPlannerExperimentBtn" class="btn btn-lg btn-primary text-nowrap ml-2" onclick="endShelfPlannerExperiment()">End Experiment</button>
                 </div>
                 
                 <div class="h4 py-1 px-2">
-                  <div class="mb-1 text-left">货架类别: </div>
+                  <div class="mb-1 text-left">Shelf: </div>
+                  <div id="shelfKey"></div>
+                </div>
+
+                <div class="h4 py-1 px-2">
+                  <div class="mb-1 text-left">Shelf Category: </div>
                   <div id="shelfTypeRadios"></div>
                 </div>
               
-                <div class="h4 py-1 px-2 text-left">占位符: </div>
+                <div class="h4 py-1 px-2 text-left">Placeholders: </div>
                 <div class="d-flex flex-row mb-3 justify-content-around">
                   <div class="input-group input-group-lg">
                     <div class="input-group-prepend">
@@ -488,8 +542,10 @@
                           class="glyphicon glyphicon-plus"></i></button>
                     </div>
                   </div>
-                  <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0])"
-                    disabled>全选</button>
+                  <button id="shelfSelectRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0])"
+                    disabled>Select All</button>
+                  <button id="shelfClearRow0Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0])"
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -505,8 +561,10 @@
                           class="glyphicon glyphicon-plus"></i></button>
                     </div>
                   </div>
-                  <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([1])"
-                    disabled>全选</button>
+                  <button id="shelfSelectRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([1])"
+                    disabled>Select All</button>
+                  <button id="shelfClearRow1Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([1])"
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -522,8 +580,10 @@
                           class="glyphicon glyphicon-plus"></i></button>
                     </div>
                   </div>
-                  <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([2])"
-                    disabled>全选</button>
+                  <button id="shelfSelectRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([2])"
+                    disabled>Select All</button>
+                  <button id="shelfClearRow2Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([2])"
+                    disabled>Clear</button>
                 </div>
               
                 <div class="d-flex flex-row mb-3 justify-content-around">
@@ -539,12 +599,21 @@
                           class="glyphicon glyphicon-plus"></i></button>
                     </div>
                   </div>
-                  <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([3])"
-                    disabled>全选</button>
+                  <button id="shelfSelectRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([3])"
+                    disabled>Select All</button>
+                  <button id="shelfClearRow3Btn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([3])"
+                    disabled>Clear</button>
                 </div>
               
-                <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelect([0,1,2,3])"
-                  disabled>全选</button>
+                <div class="mb-3">
+                  <button id="shelfSelectAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowSelectBtn([0,1,2,3])"
+                    disabled>Select All</button>
+                  <button id="shelfClearAllBtn" class="btn btn-primary text-nowrap ml-2" onclick="shelfRowClearBtn([0,1,2,3])"
+                    disabled>Clear</button>
+                  <button id="selectShelfGroupBtn" class="btn btn-primary text-nowrap ml-4" onclick="selectShelfGroup()"
+                    disabled>整排货架全选</button>
+                  <button id="nextShelfBtn" class="btn btn-primary text-nowrap ml-2" onclick="nextShelf()" disabled>Next Shelf</button>
+                </div>
               </div>
   
               <div class="collapse container sidebarSelect_collapse" id="attributeSliderDiv">
@@ -633,8 +702,23 @@
                 </div>
               </div>
   
-              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDivv">
-                <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
+              <div class="collapse container sidebarSelect_collapse" id="drawingCanvasDis">
+                <div id="sketchsearchdivv" class="btn-group mx-1 my-3">
+                  <button class="btn btn-outline-primary" type="submit" id="refreshperspectbtn">
+                      refresh perspective
+                  </button>
+                  <button class="btn btn-outline-primary" type="submit" id="priorsearchbtn">
+                    search prior
+                  </button>
+                  <button class="btn btn-outline-primary" type="submit" id="priorsearchfullbtn">
+                    search prior full
+                  </button>
+                </div>
+                <div
+                  id="osrCatalogItems"
+                  class="catalogSectionContent mb-auto"
+                  align="center"
+                ></div>
               </div>
   
               <div class="collapse container sidebarSelect_collapse" id="cgsAnnoDiv">
@@ -653,6 +737,26 @@
                 </form>
                 <div id="mainObjDiv" class="h4 py-1 px-2 text-left">Main Object: None</div>
                 <div id="usedObjDiv" class="h4 py-1 px-2 text-left">Used Object: </div>
+              </div>
+
+              <div class="collapse container sidebarSelect_collapse" id="OSRAnnoDiv">
+                <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
+                <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
+                <form onsubmit="return false">
+                  <div class="input-group input-group-lg py-1">
+                    <input type="text" class="form-control" id="userOSR" placeholder="请输入您的用户名" aria-label="series" required>
+                    <input type="text" class="form-control" id="nameOSR" placeholder="给关联关系起个名字" aria-label="series">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-primary" type="submit" id="usercommitOSR">提交</button>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="considerWall">考虑墙体 <input type="checkbox" id="considerWindow">考虑窗户 <input type="checkbox"
+                    id="considerDoor">考虑门 <br>
+                </form>
+              </div>
+
+              <div class="collapse container sidebarSelect_collapse" id="AnimationRecordDiv">
+
               </div>
             </div>
           </div>
@@ -837,14 +941,12 @@
               </div>
             </div>
 
-            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDivv" role="button" aria-expanded="false" aria-controls="drawingCanvasDiv">
+            <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#drawingCanvasDis" role="button" aria-expanded="false" aria-controls="drawingCanvasDis">
               Furniture Palette
             </a>
-            <div class="collapse" id="drawingCanvasDivv">
-              <canvas id="drawing-canvass" height="800" width="224" style="color: aliceblue;"></canvas>
-            </div>
 
-            <div>
+
+            < div>
               <a class="dropdown-toggle h4 my-2 d-block" data-toggle="collapse" href="#cgsAnnoDiv" role="button"
                 aria-expanded="false" aria-controls="cgsAnnoDiv">
                 CGS标注
@@ -884,6 +986,71 @@
                 </div>
               </div>
             </div>
+
+            <style>
+
+              .link {
+                fill: none;
+                stroke-width: 2px;
+              }
+
+              .customModalXXLSize {
+                width:1200px;
+              }
+
+              </style>
+
+            <div class="modal fade" id="operationFutureModal" tabindex="-1" 
+            role="dialog" aria-labelledby="operationFutureModal" aria-hidden="true"
+            
+            >
+              <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: none; width:90vw" role="document"  >
+                <div class="modal-content" style="background: rgba(255, 255, 255, 0.75);">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="operationFutureTitle" style="font-size: 2em;font-weight: bolder;">Functional Hierarchy (Layout Structure Diagram)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+
+
+
+                  <div id="operationFutureModalBody" class="modal-body">
+                    <!-- 123456 -->
+
+                    <input id="chart1Info" type="text" style="display: none;" value="test.json">
+                    <!-- <input id="chart2Info" type="text" style="display: none;" value="main.json"> -->
+                  
+                    <style type="text/css">
+                      .outer-border{
+                        border: 2px solid black
+                      }
+                    </style>
+                    <div class="">
+                      <div class="row" id="infinitePanel">
+                        <div class="col-8" id="generatedTree">
+                          <script src="/static/3rdparty/d3.v3.min.js"></script>
+                          <!-- <script type="text/javascript" src="/static/dataset/infiniteLayout/{{onlineGroup}}_animimg/layoutTree.js"></script> -->
+                          <!-- <script type="text/javascript" src="41.js"></script> -->
+                          <script type="text/javascript" src="/static/infiniteLayout/treeWindow.js"></script>
+                          <script src="/static/infiniteLayout/d3.js"></script>
+                        </div>
+                        <div class="col-4 border" id="charts">
+                          <svg width="100%" height="35%" id="fig1a"></svg>
+                          <svg width="100%" height="25%" id="fig1b"></svg>
+                          <svg width="100%" height="35%" id="fig2"></svg>
+                        </div>
+                      </div>
+                      <script src="/static/infiniteLayout/chart1.js"></script>
+                      <script src="/static/infiniteLayout/chart2.js"></script>
+                      <script src="/static/infiniteLayout/d3Zoom.js"></script>
+                  
+                    </div>
+                    <script src="/static/3rdparty/d3.min.js"></script>
+                  </div>
+                </div>
+              </div>
+            </div>
             
           <div>
             <div class="input-group input-group-lg py-2 px-3">
@@ -903,11 +1070,18 @@
                   Object
                 </button>
                 <button
+                 class="btn btn-outline-primary"
+                 type="submit"
+                 id="modulebtn"
+                >
+                 Module
+                </button>
+                <button
                   class="btn btn-outline-primary"
                   type="submit"
                   id="floorPlanbtn"
                 >
-                  Module
+                  floorPlan
                 </button>
               </div>
             </div>
@@ -922,7 +1096,7 @@
                     </div>
                 </form> -->
          </div>
-         <div class="py-2 px-3">
+         <!-- <div class="py-2 px-3">
           <div id="mark_Obj-Spa-Rel_blank" class="h4 py-3 px-2 text-left"></div>
           <div id="mark_Obj-Spa-Rel" class="h4 py-1 px-2 text-middle">物体空间关联规则标记</div>
           <form onsubmit="return false">
@@ -935,7 +1109,7 @@
             </div>
             <input type="checkbox" id="considerWall">考虑墙体    <input type="checkbox" id="considerWindow">考虑窗户    <input type="checkbox" id="considerDoor">考虑门    <br>
           </form>
-          </div>
+          </div> -->
 
         <div id="rec_container" style="display: none"></div>
           <svg height="800" id="scenePaletteSVG" class="catalogSectionContent" style='display: none; margin: 0 auto;'>
@@ -946,12 +1120,12 @@
             <div id="secondaryCatalogItems" class="catalogSectionContent border-left" style="display: none;"></div>
           </div>
           <div>
-            <a class="text-muted" style="overflow-wrap: break-word"
-              >Dev. Shao-Kui. zhangsk18@mails.tsinghua.edu.cn</a
-            >
             <!-- <a class="text-muted" style="overflow-wrap: break-word"
-              >Anonymous Authors</a
+              >Dev. Shao-Kui. shaokui@tsinghua.edu.cn</a
             > -->
+            <a class="text-muted" style="overflow-wrap: break-word"
+              >Anonymous Authors</a
+            >
           </div>
         </div>
       </div>
@@ -1011,7 +1185,13 @@
             >
               PlanIT
             </button>
-
+            <button
+            id="btnMoveLineModel"
+            type="button"
+            class="btn btn-lg btn-outline-light mx-2"
+          >
+            MoveLineModel
+          </button>
             <button
               id="stockshelf_button"
               type="button"
@@ -1126,7 +1306,7 @@
         <div id="uibody">
           <div id="scene">
             <canvas id="scenecanvas"></canvas>
-            <canvas id="orthcanvas" style="display: none;"></canvas>
+            <!-- <canvas id="orthcanvas"></canvas> -->
           </div>
         </div>
       </div>

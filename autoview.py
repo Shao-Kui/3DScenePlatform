@@ -19,6 +19,7 @@ from sceneviewer.utils import twoInfLineIntersection,toOriginAndTarget,hamiltonS
 from sceneviewer.inset import showPcamInset,showPcamPoints,insetBatch
 import shutil
 import random
+from yltmp.OSRhandler import mainSearch, searchMainModelId, searchId
 
 # with open('./dataset/occurrenceCount/autoview_ratio.json') as f:
 #     res_ratio_dom = json.load(f)
@@ -85,7 +86,7 @@ def balancing(h, room, theta):
     'h' is a generated probe view. 
     """
     h['direction'] /= np.linalg.norm(h['direction'])
-    floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    floorMeta = room['floorMeta'] # p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
     onePlanePointList = []
     for obj in room['objList']:
         if not isObjectInSight(obj, h['probe'], h['direction'], floorMeta, theta, room['objList'], False):
@@ -135,9 +136,9 @@ def autoViewTwoWallPerspective(room, scene):
     theta = (np.pi * fov / 180) / 2
     focal = 1 / np.tan(theta)
     tanPhi = ASPECT / focal
-    floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    floorMeta = room['floorMeta'] # p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
     floorPoly = Polygon(floorMeta[:, 0:2])
-    H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+    H = 1.2 # room['wallHeight'] # sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
     pcams = []
     for wallDiagIndex in range(floorMeta.shape[0]):
         pcam = {}
@@ -215,7 +216,7 @@ def autoViewTwoWallPerspective(room, scene):
         probe = np.array(probe)
         direction = direction.tolist()
         direction.insert(1, 0)
-        direction = groundShifting(probe, floorMeta, floorPoly, np.array(direction), theta, H)
+        # direction = groundShifting(probe, floorMeta, floorPoly, np.array(direction), theta, H)
         pcam['probe'] = probe
         pcam['direction'] = direction
         pcam['theta'] = theta
@@ -223,6 +224,11 @@ def autoViewTwoWallPerspective(room, scene):
         pcam['wallDiagIndex'] = wallDiagIndex
         pcam['type'] = 'twoWallPerspective'
         pcam['floorMeta'] = floorMeta
+        pcam['semiRectLength'] = np.linalg.norm(floorMeta[wallDiagIndex][0:2] - iNxtP)
+        pcam['semiRectWidth'] = np.linalg.norm(floorMeta[wallDiagIndex][0:2] - iPreP)
+        pcam['semiRectArea'] = pcam['semiRectLength'] * pcam['semiRectWidth']
+        pcam['semiRectRatio'] = pcam['semiRectArea'] / np.square((pcam['semiRectLength'] + pcam['semiRectWidth']) / 2)
+        calculateRectRatio(pcam)
         pcams.append(pcam)
     return pcams
 
@@ -230,10 +236,10 @@ def autoViewsRodrigues(room, scene):
     # change the fov/2 to Radian. 
     theta = (np.pi * scene['PerspectiveCamera']['fov'] / 180) / 2
     # the the floor meta. 
-    floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    floorMeta = room['floorMeta'] # p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
     floorPoly = Polygon(floorMeta[:, 0:2])
     # the height of the wall. 
-    H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+    H = room['wallHeight'] # sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
     pcams = []
     for wallIndex in range(floorMeta.shape[0]):
         pcam = {}
@@ -252,7 +258,7 @@ def autoViewsRodrigues(room, scene):
         # pcam['viewLength'] = np.linalg.norm(middlePoint - p, ord=2)
         pcam['probe'] = origin
         pcam['wallIndex'] = wallIndex
-        pcam['direction'] = groundShifting(origin, floorMeta, floorPoly, direction, theta, H)
+        pcam['direction'] = np.array([room['roomNorm'][wallIndex][0], 0, room['roomNorm'][wallIndex][1]]) # groundShifting(origin, floorMeta, floorPoly, direction, theta, H)
         pcam['type'] = 'againstMidWall'
         pcams.append(pcam)
 
@@ -290,6 +296,12 @@ def probabilityOPP2(h):
     res += (int(h['thirdHasObj_rb']) + int(h['thirdHasObj_lb']) + int(h['thirdHasObj_mid'])) * 2
     return res
 
+def probabilityOnlyObj(h):
+    h['finalScore'] = h['numObjBeSeen'] * 10 + h['semiRectRatio2'] * 5 + np.sqrt(h['semiRectArea'])
+    if h['type'] in ['againstMidWall', 'was_thin', 'wellAlignedShifted']:
+        h['finalScore'] += 1
+    return h['finalScore']
+
 def groundShifting(probe, floorMeta, floorPoly, direction, theta, H, isDebug=False):
     """
     H: the height of wall. NOT the half of the height. 
@@ -308,19 +320,34 @@ def groundShifting(probe, floorMeta, floorPoly, direction, theta, H, isDebug=Fal
     # apply Rogrigues Formula. 
     return sk.rogrigues(projectedVec, np.cross(np.array([0, 1, 0]), -direction), -theta)
 
+def calculateRectRatio(h):
+    if h['semiRectWidth'] > h['semiRectLength']:
+        h['semiRectRatio2'] = h['semiRectLength'] / h['semiRectWidth']
+    else:
+        h['semiRectRatio2'] = h['semiRectWidth'] / h['semiRectLength']
+    return h['semiRectRatio2']
+
 def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
     """
     This function tries generate all potential views w.r.t the One-Point Perspective Rule (OPP Rule). 
     Note that several variants exist w.r.t different rules. 
     """
     theta = (np.pi * scene['PerspectiveCamera']['fov'] / 180) / 2
-    floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
+    if 'roomShape' in room:
+        floorMeta = np.hstack((np.array(room['roomShape']), np.array(room['roomNorm'])))
+    else:
+        floorMeta = p2d('.', '/dataset/room/{}/{}f.obj'.format(room['origin'], room['modelId']))
     floorPoly = Polygon(floorMeta[:, 0:2])
-    H = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+    try:
+        room['wallHeight'] = sk.getWallHeight(f"./dataset/room/{room['origin']}/{room['modelId']}w.obj")
+    except:
+        room['wallHeight'] = 2.8
+    H = 1.2 # room['wallHeight']
+    room['floorMeta'] = floorMeta
     # MAXDIAMETER = sk.roomDiameter(floorMeta)
     # find the anchor point and the anchor wall. 
     hypotheses = []
-    hypotheses += autoViewsRodrigues(room, scene)
+    # hypotheses += autoViewsRodrigues(room, scene)
     hypotheses += autoViewTwoWallPerspective(room, scene)
     for wallIndex in range(floorMeta.shape[0]):
         # first get the meta from the target wall. 
@@ -373,7 +400,18 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
             h['targetWallWindoorArea'] = targetWallWindoorArea
             # tarWindoorArea2021(h, scene, floorMeta, theta)
             h['theta'] = theta
-            # hypotheses.append(h)
+            h['semiRectLength'] = np.linalg.norm(floorMeta[wallIndex][0:2] - floorMeta[wallIndexNext][0:2])
+            h['semiRectWidth'] = np.linalg.norm(p - p1)
+            h['semiRectArea'] = h['semiRectLength'] * h['semiRectWidth']
+            h['semiRectRatio'] = h['semiRectArea'] / np.square((h['semiRectLength'] + h['semiRectWidth']) / 2)
+            calculateRectRatio(h)
+
+            midh = h.copy()
+            midh['probe'] = np.array([p1[0], H/2, p1[1]])
+            midh['wallIndex'] = wallIndex
+            midh['direction'] = normal3D # groundShifting(origin, floorMeta, floorPoly, direction, theta, H)
+            midh['type'] = 'againstMidWall'
+            hypotheses.append(midh)
 
             # then we try following the 'Three-Wall' rule. (Left Side) 
             expandPre, expandNxt = expandWallSeg(wallIndex, floorMeta)
@@ -395,7 +433,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = expandNxt + (expandPre - expandNxt)/3
                 thw['direction'] = np.array([acr[0], H/2, acr[1]]) - thw['probe']
                 thw['direction'] /= np.linalg.norm(thw['direction'])
-                thw['direction'] = groundShifting(thw['probe'], floorMeta, floorPoly, thw['direction'], theta, H)
+                # thw['direction'] = groundShifting(thw['probe'], floorMeta, floorPoly, thw['direction'], theta, H)
                 thw['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thw['probe'], ord=2)
                 hypotheses.append(thw)
 
@@ -409,7 +447,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = expandPre + (expandNxt - expandPre)/3
                 thwR['direction'] = np.array([acr[0], H/2, acr[1]]) - thwR['probe']
                 thwR['direction'] /= np.linalg.norm(thwR['direction'])
-                thwR['direction'] = groundShifting(thwR['probe'], floorMeta, floorPoly, thwR['direction'], theta, H)
+                # thwR['direction'] = groundShifting(thwR['probe'], floorMeta, floorPoly, thwR['direction'], theta, H)
                 thwR['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thwR['probe'], ord=2)
                 hypotheses.append(thwR)
 
@@ -423,7 +461,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = (expandNxt + expandPre) / 2
                 mtm['direction'] = np.array([acr[0], H/2, acr[1]]) - mtm['probe']
                 mtm['direction'] /= np.linalg.norm(mtm['direction'])
-                mtm['direction'] = groundShifting(mtm['probe'], floorMeta, floorPoly, mtm['direction'], theta, H)
+                # mtm['direction'] = groundShifting(mtm['probe'], floorMeta, floorPoly, mtm['direction'], theta, H)
                 mtm['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - mtm['probe'], ord=2)
                 hypotheses.append(mtm)
             # the prefix wall and the suffix wall
@@ -440,7 +478,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = floorMeta[wallIndexNext][0:2] + (floorMeta[wallIndex][0:2] - floorMeta[wallIndexNext][0:2])/3
                 thinL['direction'] = np.array([acr[0], H/2, acr[1]]) - thinL['probe']
                 thinL['direction'] /= np.linalg.norm(thinL['direction'])
-                thinL['direction'] = groundShifting(thinL['probe'], floorMeta, floorPoly, thinL['direction'], theta, H)
+                # thinL['direction'] = groundShifting(thinL['probe'], floorMeta, floorPoly, thinL['direction'], theta, H)
                 thinL['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thinL['probe'], ord=2)
                 hypotheses.append(thinL)
 
@@ -451,7 +489,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = floorMeta[wallIndex][0:2] + (floorMeta[wallIndexNext][0:2] - floorMeta[wallIndex][0:2])/3
                 thinR['direction'] = np.array([acr[0], H/2, acr[1]]) - thinR['probe']
                 thinR['direction'] /= np.linalg.norm(thinR['direction'])
-                thinR['direction'] = groundShifting(thinR['probe'], floorMeta, floorPoly, thinR['direction'], theta, H)
+                # thinR['direction'] = groundShifting(thinR['probe'], floorMeta, floorPoly, thinR['direction'], theta, H)
                 thinR['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - thinR['probe'], ord=2)
 
                 wasThin = thw.copy()
@@ -461,7 +499,7 @@ def autoViewOnePointPerspective(room, scene, scoreFunc=probabilityOPP):
                 acr = (floorMeta[wallIndexNext][0:2] + floorMeta[wallIndex][0:2]) / 2
                 wasThin['direction'] = np.array([acr[0], H/2, acr[1]]) - wasThin['probe']
                 wasThin['direction'] /= np.linalg.norm(wasThin['direction'])
-                wasThin['direction'] = groundShifting(wasThin['probe'], floorMeta, floorPoly, wasThin['direction'], theta, H)
+                # wasThin['direction'] = groundShifting(wasThin['probe'], floorMeta, floorPoly, wasThin['direction'], theta, H)
                 wasThin['viewLength'] = np.linalg.norm(np.array([floorMeta[wallIndexNext][0], H/2, floorMeta[wallIndexNext][1]]) - wasThin['probe'], ord=2)
                 hypotheses.append(wasThin)
     hypotheses = redundancyRemove(hypotheses)
@@ -522,7 +560,7 @@ def renderGivenPcam(pcam, scenejson, dst=None, isPathTrancing=True):
     scenejson['canvas']['width']  = int(RENDERWIDTH)
     scenejson['canvas']['height'] = int(RENDERWIDTH / ASPECT)
     # identifier = uuid.uuid1()
-    identifier = f'room{pcam["roomId"]}-{pcam["type"]}-{pcam["rank"]}'
+    identifier = f'{pcam["rank"]}-room{pcam["roomId"]}-{pcam["type"]}'
     # identifier = f'room{pcam["roomId"]}-{pcam["type"]}-{pcam["cons"]}'
     if not os.path.exists(f"./latentspace/autoview/{scenejson['origin']}"):
         os.makedirs(f"./latentspace/autoview/{scenejson['origin']}")
@@ -739,14 +777,14 @@ def autoViewRooms(scenejson, isPathTrancing=True):
         obj3DModelCount = 0
         for obj in room['objList']:
             try:
-                if sk.objectInDataset(obj['modelId']):
+                if sk.objectInDataset(obj['modelId']) or obj['format'] == 'sfy' or obj['format'] == 'glb':
                     obj3DModelCount += 1
             except:
                 continue
         if obj3DModelCount == 0:
             continue
 
-        pcams = autoViewOnePointPerspective(room, scenejson)
+        pcams = autoViewOnePointPerspective(room, scenejson, probabilityOnlyObj)
         # pcams = eachNoConstraint(pcams)
         # global SAMPLE_COUNT
         # SAMPLE_COUNT = 64
@@ -759,10 +797,10 @@ def autoViewRooms(scenejson, isPathTrancing=True):
                 if thread is not None:
                     renderThreads.append(thread)
         elif isinstance(pcams, (list,)):
-            for index, pcam in zip(range(len(pcams)), pcams[0:11]):
+            for index, pcam in zip(range(len(pcams)), pcams[0:20]): # pcams[0:200]
                 # if index > 0 and pcam['score'] < 0.01:
                 #     continue
-                pcams[index]['direction'] = balancing(pcams[index], room, pcams[index]['theta'])
+                # pcams[index]['direction'] = balancing(pcams[index], room, pcams[index]['theta'])
                 thread = renderGivenPcam(pcam, scenejson.copy(), isPathTrancing=isPathTrancing)
                 if thread is not None:
                     renderThreads.append(thread)
@@ -994,11 +1032,14 @@ def highResRendering(dst=None):
     for jfn in jsonfilenames:
         if '.json' not in jfn:
             continue
-        with open(f'./latentspace/autoview/{dst}/{jfn}') as f:
+        with open(f'./latentspace/autoview/{dst}/{jfn}', encoding='utf-8') as f:
             view = json.load(f)
         origin = view['scenejsonfile']
-        with open(f'dataset/Levels2021/{view["scenejsonfile"]}.json') as f:
+        with open(f'dataset/Levels2021/{view["scenejsonfile"]}.json', encoding='utf-8') as f:
             scenejson = json.load(f)
+        sk.assignRoomIds(scenejson)
+        for room in scenejson['rooms']:
+            room['roomNorm'] = sk.generateRoomNormals(room['roomShape'])
         scenejson["PerspectiveCamera"] = {}
         scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
         scenejson["canvas"] = {}
@@ -1039,6 +1080,26 @@ def sceneViewerBatch():
         renderThreads = autoViewRooms(scenejson)
         for t in renderThreads:
             t.join()
+
+def sceneViewerByFile(scenejson):
+    pt.SAVECONFIG = False
+    pt.REMOVELAMP = False
+    pt.USENEWWALL = True
+    pt.emitter = 'constant'
+    global RENDERWIDTH, SAMPLE_COUNT
+    SAMPLE_COUNT = 4
+    RENDERWIDTH = 600
+    sk.assignRoomIds(scenejson)
+    for room in scenejson['rooms']:
+        room['roomNorm'] = sk.generateRoomNormals(room['roomShape'])
+    scenejson["PerspectiveCamera"] = {}
+    scenejson["PerspectiveCamera"]['fov'] = DEFAULT_FOV
+    scenejson["canvas"] = {}
+    sk.preloadAABBs(scenejson)
+    print(f'Starting: {scenejson["origin"]}...')
+    renderThreads = autoViewRooms(scenejson)
+    for t in renderThreads:
+        t.join()
 
 def autoViewRoom(room, scenejson):
     pt.SAVECONFIG = False
@@ -1081,11 +1142,14 @@ def renderLabelledImages(FD):
 
 if __name__ == "__main__":
     start_time = time.time()
-    # with open('./examples/4cc6dba0-a26e-42cb-a964-06cb78d60bae.json') as f:
-    # with open('./examples/a630400d-2cd7-459f-8a89-85ba949c8bfd.json') as f:
-    # with open('./examples/ceea988a-1df7-418e-8fef-8e0889f07135-l7767-dl.json') as f:
-    # with open('./examples/cb2146ba-8f9e-4a68-bee7-50378200bade-l7607-dl (1).json') as f:
-    # with open('./examples/ba9d5495-f57f-45a8-9100-33dccec73f55.json') as f:
+    with open('./dataset/Levels2021/sfy1.json', encoding='utf-8') as f:
+        sceneViewerByFile(json.load(f))
+    with open('./dataset/Levels2021/sfy2.json', encoding='utf-8') as f:
+        sceneViewerByFile(json.load(f))
+    with open('./dataset/Levels2021/sfy3.json', encoding='utf-8') as f:
+        sceneViewerByFile(json.load(f))
+    with open('./dataset/Levels2021/sfy4.json', encoding='utf-8') as f:
+        sceneViewerByFile(json.load(f))
 
     batchList = [
         # '187b9a69-55fa-43d4-a309-b9654b061fa5'
@@ -1119,7 +1183,7 @@ if __name__ == "__main__":
         # '1bba94d6-9dfe-4597-bf5a-3c2a3eae85bb',
         # '1b8a6ce5-1abe-4db5-b26e-93c0fbdde77e',
         # '1b86c99f-c4ae-41bc-96db-4597619d7add'
-        '21e64bf0-2285-4847-934b-f29c8caf7648'
+        # 'sfy1','sfy2','sfy3','sfy4'
     ]
     for origin in batchList:
         try:
@@ -1242,9 +1306,11 @@ def obj_WinDoor_Relation(windoorResult, iobj, windoor):
     
     if lenx > lenz:
         width = lenx
+        windoorResult[7] = 'z'
     else :
         width = lenz
         ori += 1.5708
+        windoorResult[7] = 'x'
 
     windoorResult[0] = dis
     windoorResult[1] = posx
@@ -1259,7 +1325,7 @@ def calDoor(doorResult, iobj, room):
     #print('calculating door from block')
     for obj in room['blockList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
-            windoorResult = [0,0,0,0,0,0,0]
+            windoorResult = [0,0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
             loc = 0  #print(obj['bbox']) print(windoorResult) print('\n')
@@ -1273,7 +1339,7 @@ def calDoor(doorResult, iobj, room):
     #print('calculating door from obj')
     for obj in room['objList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'door' or obj['coarseSemantic'] == 'Door'):
-            windoorResult = [0,0,0,0,0,0,0]
+            windoorResult = [0,0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] + 'max0 skip\n')
                 continue
             loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
@@ -1289,7 +1355,7 @@ def calWindow(windowResult, iobj, room):
     #print('calculating window')
     for obj in room['objList']:
         if 'coarseSemantic' in obj and (obj['coarseSemantic'] == 'window' or obj['coarseSemantic'] == 'Window'):
-            windoorResult = [0,0,0,0,0,0,0]
+            windoorResult = [0,0,0,0,0,0,0,0]
             if obj_WinDoor_Relation(windoorResult, iobj, obj) < 0: #print(obj['bbox'] +  'max0 skip\n')
                 continue
             loc = 0 #print(obj['bbox']) print(windoorResult) print('\n')
@@ -1350,7 +1416,7 @@ def usercommitOSR():
     fd = open("./layoutmethods/object-spatial-relation-dataset.txt", 'a+')
     writeString = intersect[0]
 
-    if abs(1.00 - intersect[7]) > 0.001 or abs(1.00 - intersect[8]) > 0.001 and abs(1.0 - intersect[9]) > 0.001:
+    if abs(1.00 - intersect[7]) > 0.001 or abs(1.00 - intersect[8]) > 0.001 or abs(1.0 - intersect[9]) > 0.001:
         writeString += '; scale[{%.5f, %.5f, %.5f,}:]'%(intersect[7], intersect[8], intersect[9])
 
     if changable:
@@ -1371,13 +1437,13 @@ def usercommitOSR():
     if withWindow and len(windowResult) > 0:
         writeString += '; window['
         for win in windowResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(win[0],win[1],win[2],win[3],win[4],win[5],win[6],win[7])
         writeString += ']'
 
     if withDoor and len(doorResult) > 0:
         writeString += '; door['
         for dor in doorResult:
-            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6])
+            writeString += '{%.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %c,}:'%(dor[0],dor[1],dor[2],dor[3],dor[4],dor[5],dor[6],dor[7])
         writeString += ']'
     
     if len(rela_name):
@@ -1388,7 +1454,207 @@ def usercommitOSR():
     fd.write(writeString + "\n")
     fd.close()
 
-    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}'     
+    return f'Successfully submitted relation {rela_name}_{intersect[0]}_{user}_{timestr}' 
+
+@app_autoView.route("/online/queryAABB/<model>/<state>")
+def queryAABB(model, state):
+    if os.path.exists(f'./static/dataset/object/{model}/{state}-AABB.json'):
+        try:
+            AABBcache = {}
+            with open(f'./static/dataset/object/{model}/{state}-AABB.json') as f:
+                AABBcache = json.load(f)
+            return json.dumps({"max":AABBcache["max"], "min":AABBcache["min"]})
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+
+@app_autoView.route("/usersearchOSR",methods=['POST'])
+def usersearchOSR():
+    if flask.request.method == 'POST':
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        data = flask.request.json
+        scene_json = data['json']
+        interjson = data['interjson']
+        
+    else:
+        return 'sorry you\'re not using POST method'
+
+    #collect and organize
+    wallResult = [-1,-1,-1]
+    windowResult = []
+    doorResult = []
+    room = scene_json['rooms'][interjson['roomId']]
+    for obj in room['objList']:
+        if 'modelId' in obj and obj['modelId'] == interjson['modelId']:
+            if abs(obj['translate'][0] - interjson['translate'][0]) < 0.001 and abs(obj['translate'][1] - interjson['translate'][1]) < 0.001 and abs(obj['translate'][2] - interjson['translate'][2]) < 0.001:
+                flag = True #print(obj)
+                flag = (calWall(wallResult, obj, room) > 0)
+                flag = (calWindow(windowResult, obj, room) > 0)
+                flag = (calDoor(doorResult, obj, room) > 0)
+                if not flag:
+                    print('geometry error in the room')
+                    return ""
+
+    #retrieve
+    selected = mainSearch(interjson, wallHint = wallResult, windowHint = windowResult, doorHint = doorResult)[0:8];#searchMainModelId(interjson['modelId'])[0:8];#
+
+    for origin in selected:
+        print(origin['priorId'], origin['score'])
+        t = {}
+        t['img'] = origin['priorId'] + '.png'
+        t['identifier'] = origin['priorId']
+        origin['priorMeta'] = t
+
+    return json.dumps(selected)
+
+@app_autoView.route("/ylimgs/<identifier>")
+def ylimgs(identifier):
+    if os.path.exists(f'./yltmp/OSRfigures/{identifier}.png'):
+        return flask.send_file(f'./yltmp/OSRfigures/{identifier}.png')
+    
+@app_autoView.route("/catimgs/<identifier>")
+def catimgs(identifier):
+    if os.path.exists(f'./yltmp/OSRfigures/{identifier}.png'):
+        return flask.send_file(f'./yltmp/OSRfigures/{identifier}.png')
+    
+@app_autoView.route("/eboxes/<function>",methods=['POST'])
+def eboxes(function):
+    mapping = {
+        "livingroom":[[556,577,595,604,711,738,796],[503,533,542,578],[673,833,834,836,837,838,841]],#745
+        "kitchen":[[860,861,862,863,864]],
+        "bathroom":[[848,849,850,851,852,853,854,855,856,857,858,859]],
+        "balcony":[],
+        "bedroom":[[466,470,471,472,476,479,507,566],[673,833,834,836,837,838,841]],#,846  536,,685
+        "diningroom":[[503,533,542,578]],
+        "storage":[[558,683,684,687]],
+        "study":[[673,833,834,836,837,838,841]]
+    }
+    
+    jsList = []
+    for j in mapping[function]:
+        p = []
+        for i in j:
+            if(random.random()>-0.5):
+                js = json.load(open('./yltmp/elasticBox/' + str(i) + '.json'))
+                p.append(js)
+        jsList.append(p)
+
+    return {"ls":jsList}
+
+def loadClist(name):
+    c_List = {}
+    loadF = open(name,"r")
+    lines = loadF.readlines()
+    for line in lines:
+        a = line.split("\t")
+        k = int(a[0][:-1])
+        lst = a[1].split(',')
+        c_List[k] = []
+        for num in lst[:-1]:
+            c_List[k].append(int(num))
+    return c_List
+
+coarseTypes = "0808_0_0.8_300"
+fineTypes = "0827_0_0.5_50"
+
+@app_autoView.route("/prior_catagory",methods=['POST'])
+def prior_catagory():
+    c_list = loadClist("./yltmp/class_" + coarseTypes + ".txt")
+    ret = []
+    cnt = 0
+
+    mainObjFile = open("./yltmp/statistic.txt","r")
+    mainObj_list = {}
+    for line in mainObjFile.readlines():
+        a = line.split("\t")
+        mainObj_list[a[0][:-1]] = a[2][:-3]
+
+    for i in c_list:
+        t = {}
+        t['img'] = str(i) + '.png'
+        t['identifier'] = i
+        t['mainObjects'] = mainObj_list[str(i)].split(",") #"Multi-seat Sofa:72%"
+        t['leng'] = len(c_list[i])
+        c = loadClist("./yltmp/classes/" + str(i) + "/class_" + fineTypes + ".txt")
+        t['le'] = len(c)
+        ret.append(t)
+        #print(c_list[i])
+    ret.sort(key=lambda t:len(c_list[t['identifier']]))
+    return json.dumps(ret[-1:0:-1])#print(ret[-1:0:-1])
+
+manList = [
+    [206,140,35,201,208,171,198], #living room
+    [10,11,46,130,184,151,167], #shelves
+    [127,0,48,189,90,306,332], #beds
+    [7,9,43,91,215,221,235], #studies
+    [230,82,66,124,107,335,71], #dining
+    [53, 58, 88, 192, 148, 139, 72] #utils
+]
+
+@app_autoView.route("/catagory_prior_middle/<identifier>",methods=['POST'])
+def catagory_prior_middle(identifier):
+    c_list = loadClist("./yltmp/classes/" + identifier + "/class_" + fineTypes + ".txt")
+    ret = []
+    for i in c_list:
+        t = {}
+        t['img'] = str(i) + '.png'
+        t['identifier'] = i
+        t['mother'] = identifier
+        t['leng'] = len(c_list[i])
+        ret.append(t)
+    ret.sort(key=lambda t:len(c_list[t['identifier']]))
+    return json.dumps(ret[-1:-14:-1])#print(ret[-1:-10:-1])
+
+@app_autoView.route("/catagory_prior/<identifier>/<identi>",methods=['POST'])
+def catagory_prior(identifier, identi):
+    c_list = loadClist("./yltmp/classes/" + identifier + "/class_" + fineTypes + ".txt")
+    selected = searchId(c_list[int(identi)])
+    orderCnt = 1
+    for origin in selected:
+        #print(origin['priorId'], origin['score'])
+        t = {}
+        t['img'] = origin['priorId'] + '.png'
+        t['identifier'] = origin['priorId']
+        subsets = []
+        strid = str(origin['priorId'])
+        for filename in os.listdir('./yltmp/OSRfigures'):
+            if filename[:(len(strid)+4)] == strid + '____' and filename[-4:].lower() == '.png':
+                subsets.append(filename[(len(strid)+4):-4])
+        t['subsets'] = subsets
+        t['order'] = orderCnt
+        origin['priorMeta'] = t
+        origin['identifier'] = origin['priorId']
+        orderCnt += 1
+    return json.dumps(selected[:13])#print(selected[:13])
+
+methods = ["CLPT", "MgAdd", "SD", "Inds", "SE"]
+@app_autoView.route("/clickTimer",methods=['POST'])
+def clickTimer():
+    data = flask.request.json
+    if data['methodName'] is None or data['methodName'] == '':
+        return ""
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    f = open("./yltmp/experiment/%s-%s-%s-%s-timer.json"%(data['homeType'],data['methodName'],data['usern'],timestr),"w")
+    f.write(json.dumps(data['timeC']))
+    f.close()
+    f = open("./yltmp/experiment/%s-%s-%s-%s-result.json"%(data['homeType'],data['methodName'],data['usern'],timestr),"w")
+    f.write(json.dumps(data['json']))
+    f.close()
+    return "%s-%s-%s-%s OK"%(data['homeType'], data['methodName'],data['usern'],timestr)
+
+@app_autoView.route("/autoviewfp2023", methods=['POST'])
+def autoviewfp2023():
+    if flask.request.method == 'POST':
+        try:
+            roomId = int(roomId)
+        except:
+            return None
+        pt.SAVECONFIG = False
+        sk.preloadAABBs(flask.request.json)
+        res = []
+        for room in flask.request.json['rooms']:
+            pcams = autoViewOnePointPerspective(room, flask.request.json, scoreFunc=probabilityOPP2)
+            res.append(pcams)
+        return json.dumps(res, default=sk.jsonDumpsDefault)
 
 @app_autoView.route("/autoviewroom/<roomId>", methods=['POST'])
 def autoviewroom(roomId):

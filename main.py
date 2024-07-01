@@ -13,7 +13,7 @@ import datetime
 # from rec_release import fa_reshuffle
 from layoutmethods.autolayoutv2 import sceneSynthesis
 # from layoutmethods.layout1 import fa_layout_pro
-from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
+# from layoutmethods.planit.method import roomSynthesis as roomSynthesisPlanIT
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
@@ -26,7 +26,7 @@ from subprocess import check_output
 import difflib
 import sk
 from layoutmethods.clutterpalette.clutterpalette import clutterpaletteQuery
-
+from layoutmethods.shelfarrangement.FinalComputing import kindRecommand,ModelRecommand,noRecommandItem,noRecommandKind,clutterRecommandItem,clutterRecommandKind
 app = Flask(__name__, template_folder='static')
 app.register_blueprint(app_audio)
 app.register_blueprint(app_magic)
@@ -34,7 +34,45 @@ app.register_blueprint(app_autoView)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'Ghost of Tsushima. '
 CORS(app)
-socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
+socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*", max_http_buffer_size=100000000)
+
+class UserExp(object):
+    current_user = "null"
+    start_time = 0
+    end_time = 0
+    type_record = []
+    commodity_record = []
+    mode = 0
+    def __init__(self,current_user,start_time,mode):
+        now = datetime.datetime.now()
+        self.start_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
+        self.current_user = current_user
+        self.start_time = start_time
+        self.type_record =  []
+        self.commodity_record = []
+        self.mode = mode
+    
+    def writeFile(self):
+        now = datetime.datetime.now()
+        self.end_dt = now.strftime("%Y-%m-%d_%H-%M-%S")
+        user_info = {
+            'name': self.current_user,
+            'time': (self.end_time - self.start_time),
+            'mode':self.mode,
+            'type':self.type_record,
+            'commodity':self.commodity_record,
+            'start_datetime': self.start_dt,
+            'end_datetime': self.end_dt
+        }
+        if not os.path.exists("./layoutmethods/shelfplanner"):
+            os.makedirs("./layoutmethods/shelfplanner")
+        file_name = f'./layoutmethods/shelfplanner/{self.current_user}_{self.end_dt}_{self.mode}.json'
+        file = open(file_name, "w")
+        json.dump(user_info, file)
+        file.close()
+
+
+user_list = []
 
 with open('./latentspace/obj-semantic.json') as f:
     obj_semantic = json.load(f)
@@ -322,14 +360,58 @@ def clutterpalette():
         return json.dumps(ret)
     return "clutterpalette"
 
+@socketio.on('startShelfPlannerExperiment')
+def startShelfPlannerExperiment(userID, mode, groupName):
+    #开始计时，准备记录用戶点击推荐内容的第几项
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user_list.remove(user)
+    new_user = UserExp(groupName,time.time(),mode)
+    user_list.append(new_user)
+@socketio.on('selectShelfType')
+def selectShelfType(userID, order, groupName):
+    #记录用戶点击了推荐的第几项货架类型, starting from 0
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.type_record.append(order)
+
+@socketio.on('selectCommodity')
+def selectCommodity(userID, order, groupName):
+    # TODO: 记录用戶点击了推荐的第几项商品, starting from 0
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.commodity_record.append(order)
+
+@socketio.on('endShelfPlannerExperiment')
+def endShelfPlannerExperiment(userID, mode, groupName):
+    # TODO: 结束计时，保存groupName、mode、用时、用戶点击了推荐内容(货架类型、商品)的第几项
+    global user_list
+    for user in user_list:
+        if user.current_user == groupName:
+            user.end_time = time.time()
+            user.writeFile()
+    print(mode, groupName, userID)
+
 @app.route("/shelfType", methods=['POST', 'GET'])
 def shelfType():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
-        shelfKey = json.loads(request.form.get('shelfKey'))
-        # TODO: replace with yulin's method
-        ret = ["水果", "蔬菜", "肉类", "混合"]
-        random.shuffle(ret)
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
+        shelfKey = json.loads(request.form.get('shelfKeys'))
+        print(mode)
+        if mode == 1:
+            recommond_kind = noRecommandKind(room,shelfKey)
+        elif mode == 2:
+            recommond_kind = clutterRecommandKind(room,shelfKey)
+        else:
+            recommond_kind = kindRecommand(room,shelfKey)
+        ret = [{"used":kind.flag, "name": kind.name} for kind in recommond_kind]
         return json.dumps(ret)
     return "shelfType"
 
@@ -338,9 +420,18 @@ def shelfPlaceholder():
     if request.method == 'POST':
         room = json.loads(request.form.get('room'))
         placeholders = json.loads(request.form.get('placeholders'))
-        # TODO: replace with yulin's method
-        yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
-        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in yulinModels]
+        # mode == '1': no recommendation
+        # mode == '2': clutterpalette
+        # mode == '3': shelfplanner
+        mode = json.loads(request.form.get('mode'))
+        if mode == 1:
+            recommand_model = noRecommandItem(room,placeholders)
+        elif mode == 2:
+            recommand_model = clutterRecommandItem(room,placeholders)
+        else:
+            recommand_model = ModelRecommand(room,placeholders)
+        # yulinModels = ['yulin-empty', 'yulin-beer-green-tall', 'yulin-beerpack1', 'yulin-beerpack2', 'yulin-champagne-brown-tall', 'yulin-coffee-brown-short', 'yulin-cola-red-short', 'yulin-juice-blue-large', 'yulin-juice-brown-large', 'yulin-juice-white-large', 'yulin-lemonwater-yellow-short', 'yulin-milk-blue-short', 'yulin-milkpack', 'yulin-soda-orange-short', 'yulin-tea-brown-short', 'yulin-water-blue-tall', 'yulin-wine-green-tall', 'yulin-yogurt', 'yulin-yogurt-pink']
+        ret = [{"name":modelId, "semantic": modelId, "thumbnail":f"/thumbnail/{modelId}"} for modelId in recommand_model]
         return json.dumps(ret)
     return "shelfPlaceholder"
 
@@ -414,7 +505,7 @@ def sklayout():
 
 @app.route("/planit", methods=['POST'])
 def planit():
-    res = roomSynthesisPlanIT(request.json)
+    res = None #roomSynthesisPlanIT(request.json)
     roomId = request.json['roomId']
     if res is None:
         res = request.json
@@ -461,7 +552,14 @@ def applyuuid():
 def getSceneJsonByID(origin):
     if os.path.exists(f'./dataset/Levels2021/{origin}.json'):
         return flask.send_file(f'./dataset/Levels2021/{origin}.json')
+    elif os.path.exists(f'./dataset/levelsuncg/{origin}.json'):
+        return flask.send_file(f'./dataset/levelsuncg/{origin}.json')
+    elif os.path.exists(f'./layoutmethods/anno/{origin}.json'):
+        return flask.send_file(f'./layoutmethods/anno/{origin}.json')
     else:
+        for i in range(1,13):
+            if os.path.exists(f'./layoutmethods/anno/room{i}/{origin}.json'):
+                return flask.send_file(f'./layoutmethods/anno/room{i}/{origin}.json')
         return ""
 
 def generateObjectsUUIDs(sceneJson):
@@ -475,11 +573,14 @@ def generateObjectsUUIDs(sceneJson):
     # standardize roomids & generate uuid for each object: 
     for room,roomId in zip(sceneJson['rooms'], range(len(sceneJson['rooms']))):
         room['roomId'] = roomId
+        if 'objList' not in room:
+            room['objList'] = []
         for obj in room['objList']:
             if obj is None:
                 continue
             obj['roomId'] = roomId
-            obj['key'] = str(uuid.uuid4())
+            if obj['modelId'] != 'shelf01' and not obj['modelId'].startswith('yulin-'):
+                obj['key'] = str(uuid.uuid4())
     return sceneJson
 
 def loadOnlineGroup(groupName):
@@ -667,6 +768,31 @@ def autoViewAsync(scenejson, to):
             callback_args=(scenejson, to)
         )
         thread.start()
+
+from flask import make_response
+import shutil
+@app.route('/online/future/layout/<groupName>')
+def futureLayoutCalculation(groupName):
+    # /static/dataset/futurelayout/<groupName>
+    # generate_future_layout.main(groupName,onlineScenes[groupName])
+    
+    root_id = json.load(open(f'./static/dataset/infiniteLayout/{groupName}_anim.json'))['center']
+    # if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_origin_values.png'):
+    #     return make_response('')
+    if not os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg'):
+        os.mkdir(f'./static/dataset/infiniteLayout/{groupName}_animimg')
+    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg/center.png'):
+        shutil.copy(f'./static/dataset/infiniteLayout/{groupName}_animimg/center.png',f'./static/dataset/infiniteLayout/{groupName}_origin_values.png')
+    elif os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_animimg/{int(root_id[::-1],2)}0.png'):
+        shutil.copy(f'./static/dataset/infiniteLayout/{groupName}_animimg/{int(root_id[::-1],2)}0.png',f'./static/dataset/infiniteLayout/{groupName}_origin_values.png')
+    if os.path.exists(f'./static/dataset/infiniteLayout/{groupName}_origin_values.json'):
+        sk.calculate_tree_data(f'./static/dataset/infiniteLayout/{groupName}_animimg',groupName)
+        return make_response('')
+    sk.calculate_room_type_values(f'./static/dataset/infiniteLayout/{groupName}_origin.json',f'./static/dataset/infiniteLayout/{groupName}_origin_values.json')
+    for file in os.listdir(f'./static/dataset/infiniteLayout/{groupName}_scenes'):
+        sk.calculate_room_type_values(f'./static/dataset/infiniteLayout/{groupName}_scenes/{file}',f'./static/dataset/infiniteLayout/{groupName}_animimg/{file}')
+    sk.calculate_tree_data(f'./static/dataset/infiniteLayout/{groupName}_animimg',groupName)
+    return make_response('')
 
 if __name__ == '__main__':
     # from waitress import serve

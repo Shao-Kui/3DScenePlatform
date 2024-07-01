@@ -36,11 +36,13 @@ const auxiliary_control = function(){
         auxiliaryMode();
         autoinsert_button.style.backgroundColor = '#9400D3';
         fpsCount();
+        timeCounter.cgsStart = moment();
     }else{
         // remove 'auxiliaryObject' in the scene; 
         auxiliary_remove();
         autoinsert_button.style.backgroundColor = 'transparent';
         fpsCount();
+        timeCounter.cgs += moment.duration(moment().diff(timeCounter.cgsStart)).asSeconds();
     }
 }
 

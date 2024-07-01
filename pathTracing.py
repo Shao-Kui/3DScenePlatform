@@ -15,6 +15,7 @@ import sk
 import uuid
 from itertools import combinations
 from shapely.geometry.polygon import Polygon, Point
+from layoutmethods.projection2d import processGeo as p2d
 # the following code is for backend-rendering. 
 # from celery import Celery
 # app = Celery('tasks', backend='rpc://', broker='pyamqp://')
@@ -35,11 +36,28 @@ NOWALL = False
 USENEWWALL = False
 CAMGEN = False
 TRAV = False
+AREACAM = False
 WALLHEIGHT = 2.6
 
 def autoPerspectiveCamera(scenejson):
     PerspectiveCamera = {}
-    roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+    roomShape = []
+    if AREACAM:
+        for room in scenejson['rooms']:
+            if 'areaShape' in room:
+                roomShape += room['areaShape']
+        roomShape = np.array(roomShape)
+        wh = 0
+    else:
+        if 'roomShape' not in scenejson['rooms'][0]:
+            room_meta = p2d('.', f'/dataset/room/{scenejson["origin"]}/{scenejson["rooms"][0]["modelId"]}f.obj')
+            roomShape = room_meta[:, 0:2]
+        else:
+            roomShape = np.array(scenejson['rooms'][0]['roomShape'])
+            for i in range(1, len(scenejson['rooms'])):
+                room = scenejson['rooms'][i]
+                roomShape = np.vstack((roomShape, room['roomShape']))
+        wh = WALLHEIGHT
     lx = (np.max(roomShape[:, 0]) + np.min(roomShape[:, 0])) / 2
     lz = (np.max(roomShape[:, 1]) + np.min(roomShape[:, 1])) / 2
     camfovratio = np.tan((sk.DEFAULT_FOV/2) * np.pi / 180) 
@@ -47,17 +65,22 @@ def autoPerspectiveCamera(scenejson):
     lz_length = (np.max(roomShape[:, 1]) - np.min(roomShape[:, 1]))
     if lz_length > lx_length:
         PerspectiveCamera['up'] = [1,0,0]
-        camHeight = WALLHEIGHT + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+        camHeight = wh + (np.max(roomShape[:, 0])/2 - np.min(roomShape[:, 0])/2) / camfovratio
+        imgwidthratio = lz_length / lx_length
     else:
         PerspectiveCamera['up'] = [0,0,1]
-        camHeight = WALLHEIGHT + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
+        camHeight = wh + (np.max(roomShape[:, 1])/2 - np.min(roomShape[:, 1])/2) / camfovratio
+        imgwidthratio = lx_length / lz_length
     PerspectiveCamera['origin'] = [lx, camHeight, lz]
     PerspectiveCamera['target'] = [lx, 0, lz]
-    PerspectiveCamera['up'] = [0,0,1]
     PerspectiveCamera['rotate'] = [0,0,0]
     PerspectiveCamera['fov'] = sk.DEFAULT_FOV
     PerspectiveCamera['focalLength'] = 35
     scenejson['PerspectiveCamera'] = PerspectiveCamera
+    scenejson['canvas'] = {
+        'height': 1080,
+        'width': int(1080 * imgwidthratio)
+    }
     return PerspectiveCamera
 
 # @app.task
@@ -198,8 +221,21 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
     scenejson['renderobjlist'] = []
     scenejson['renderroomobjlist'] = []
     scenejson['newroomobjlist'] = []
+    scenejson['rendercubeobjlist'] = []
     blocks = []
     for room in scenejson['rooms']:
+        if 'objList' not in room:
+            room['objList'] = []
+        if 'areaType' not in room:
+            room['areaType'] = 'unknown'
+        if 'id' in scenejson and os.path.exists(f'./dataset/area/{scenejson["id"]}/{room["modelId"]}.obj'):
+            scenejson['renderroomobjlist'].append({
+                'modelPath': f'../../area/{scenejson["id"]}/{room["modelId"]}.obj',
+                'translate': [0,0,0],
+                'rotate': [0,0,0],
+                'scale': [1,1,1],
+                'areaType': room['areaType']
+            })
         for obj in room['objList']:
             if 'coarseSemantic' in obj:
                 if obj['coarseSemantic'] in ['Door', 'Window', 'door', 'window']:
@@ -218,6 +254,8 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
             #         'scale': [xScale,yScale,1]
             #     })
             initialWallPlanes = []
+            if 'roomOrient' not in room:
+                room['roomOrient'] = np.arctan2(np.array(room['roomNorm'])[:, 0], np.array(room['roomNorm'])[:, 1]).tolist()
             for pre,index in zip(room['roomShape'], range(len(room['roomShape']))):
                 next = room['roomShape'][(index+1)%len(room['roomShape'])]
                 initialWallPlanes.append({
@@ -386,9 +424,11 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                         'scale': [1,1,1]
                     })
         for obj in room['objList']:
-            if 'inDatabase' in obj:
-                if not obj['inDatabase']:
-                    continue
+            if obj['modelId'] == 'noUse':
+                continue
+            # if 'inDatabase' in obj:
+            #     if not obj['inDatabase']:
+            #         continue
             if sk.getobjCat(obj['modelId']) in ["Pendant Lamp", "Ceiling Lamp"] and REMOVELAMP:
                 print('A lamp is removed. ')
                 continue
@@ -397,8 +437,25 @@ def pathTracing(scenejson, sampleCount=64, dst=None):
                 obj['format'] = 'obj'
             if obj['format'] == 'glb':
                 obj['modelPath'] = '../../../static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])
-            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])) or os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+            if obj['format'] == 'sfy':
+                obj['cubescale'] = [
+                    (obj['bbox']['max'][0] - obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] - obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] - obj['bbox']['min'][2])/2
+                ]
+                obj['cubetranslate'] = [
+                    (obj['bbox']['max'][0] + obj['bbox']['min'][0])/2,
+                    (obj['bbox']['max'][1] + obj['bbox']['min'][1])/2,
+                    (obj['bbox']['max'][2] + obj['bbox']['min'][2])/2
+                ]
+                scenejson['rendercubeobjlist'].append(obj)
+                continue
+            if os.path.exists('./dataset/object/{}/{}.obj'.format(obj['modelId'], obj['modelId'])):
                 scenejson['renderobjlist'].append(obj)
+                continue
+            if 'startState' in obj and os.path.exists('./static/dataset/object/{}/{}.obj'.format(obj['modelId'], obj['startState'])):
+                scenejson['renderobjlist'].append(obj)
+                continue
     output = template.render(
         scenejson=scenejson, 
         PI=np.pi, 
@@ -523,7 +580,7 @@ if __name__ == "__main__":
     # s: number of samples, the default is 64; 
     # d: the directory of scene-jsons; 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav="])
+        opts, args = getopt.getopt(sys.argv[1:], "s:d:hc:", ["task=","wm=", "newwall=", "nowall=", "emitter=", "camgen=", "trav=", "areacam="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -538,7 +595,6 @@ if __name__ == "__main__":
             cameraType = arg
         elif opt in ("--wm"):
             wallMaterial = bool(int(arg))
-            print(wallMaterial)
         elif opt in ("--newwall"):
             USENEWWALL = bool(int(arg))
         elif opt in ("--camgen"):
@@ -549,6 +605,8 @@ if __name__ == "__main__":
             NOWALL = bool(int(arg))
         elif opt in ("--emitter"):
             emitter = arg
+        elif opt in ("--areacam"):
+            AREACAM = bool(int(arg))
         elif opt in ("--task"):
             # defaultTast = getattr(__name__, arg)
             defaultTast = globals()[arg]

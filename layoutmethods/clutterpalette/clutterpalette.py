@@ -28,6 +28,14 @@ with open('./layoutmethods/clutterpalette/prob/co_occurence_log10.json') as f:
     co_occur_prob = json.load(f)
 with open('./dataset/objListCataAliv4.json') as f:
     objListCat = json.load(f)
+with open('./dataset/objCatListAliv2.json') as f:
+    objCatListAliv2 = json.load(f)
+
+def getObjCat(modelId):
+    if len(objCatListAliv2[modelId]) == 0:
+        return None
+    else:
+        return objCatListAliv2[modelId][0]
 
 def clutter_prior(Yi):
     return category_ratio[Yi]
@@ -56,11 +64,15 @@ def co_occur(bbox, pos):
 
 def clutterpaletteQuery(room, pos):
     roomtype = room['roomTypes'][0]
+    if roomtype == 'Storage':
+        roomtype = 'StorageRoom'
     w = rt2idx[roomtype]
     neighborhood = {}
     for obj in room['objList']:
         # please make sure all obj['coarseSemantic'] && obj['bbox'] are provided
         # print(obj)
+        if 'coarseSemantic' not in obj:
+            obj['coarseSemantic'] = getObjCat(obj['modelId'])
         cat = obj['coarseSemantic']
         if cat not in categories:
             # skip Door, Window, Lamp

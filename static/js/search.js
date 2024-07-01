@@ -36,7 +36,9 @@ const clickCatalogItem = function (e, d=undefined) {
     scenecanvas.style.cursor = "crosshair";
     loadObjectToCache(INSERT_OBJ.modelId, ()=>{
         if (shelfstocking_Mode && INSERT_OBJ.modelId.startsWith('yulin') && Object.keys(INTERSECT_SHELF_PLACEHOLDERS).length !== 0) {
-            stockShelves();
+            let order = $(e.target).data("order");
+            if (catalogItems.firstChild.getAttribute('objectname') == 'yulin-empty') order -= 1;
+            stockShelves(order);
             return;
         }
         INSERT_OBJ.object3d = objectCache[INSERT_OBJ.modelId].clone();
@@ -53,10 +55,14 @@ const clickCatalogItem = function (e, d=undefined) {
     }, [], INSERT_OBJ.format); 
 }
 
-const stockShelves = () => {
+const stockShelves = (order) => {
     On_ADD = false;
     scenecanvas.style.cursor = "auto";
-    let objectProperties = {};
+    if (order != -1) {
+        console.log('selectCommodity', order);
+        socket.emit('selectCommodity', onlineUserID, order, onlineGroup);
+    }
+    let modelId = INSERT_OBJ.modelId;
     for (const shelfKey in INTERSECT_SHELF_PLACEHOLDERS) {
         let shelf = manager.renderManager.instanceKeyCache[shelfKey];
         let commodities = shelf.userData.json.commodities;
@@ -64,32 +70,17 @@ const stockShelves = () => {
             let ph = manager.renderManager.instanceKeyCache[phKey];
             let r = ph.userData.shelfRow;
             let c = ph.userData.shelfCol;
-            if (commodities[r][c].uuid !== '') {
+            let l = commodities[r].length;
+            if (commodities[r][c].uuid) {
                 removeObjectByUUID(commodities[r][c].uuid)
                 commodities[r][c] = { modelId: '', uuid: '' };
             }
-            if (INSERT_OBJ.modelId !== 'yulin-empty') {
-                let commodity = addObjectFromCache(
-                    modelId = INSERT_OBJ.modelId,
-                    transform = {
-                        'translate': [ph.position.x, ph.position.y-0.2, ph.position.z+0.025],
-                        'rotate': [ph.rotation.x, ph.rotation.y, ph.rotation.z],
-                        'scale': [ph.scale.x, ph.scale.y, ph.scale.z]
-                    },
-                    uuid = undefined,
-                    origin = true,
-                    otherInfo = {
-                        shelfKey: shelfKey,
-                        shelfRow: r,
-                        shelfCol: c
-                    }
-                );
-                commodities[r][c] = { modelId: INSERT_OBJ.modelId, uuid: commodity.name }; // update this to other users
+            if (modelId !== 'yulin-empty') {
+                addCommodityToShelf(shelfKey, modelId, r, c, l, order);
             }
         }
-        objectProperties[shelfKey] = { commodities: shelf.userData.json.commodities };
     }
-    emitFunctionCall('updateObjectProperties', [objectProperties]);
+    cancelClickingShelfPlaceholders();
 }
 
 const clickTextureItem = function(e){
@@ -124,8 +115,16 @@ const applyLayoutViewAdjust = function(){
 
 const newCatalogItem = function(item){
     let iDiv = document.createElement('div');
-    iDiv.className = "catalogItem";
+    let image = new Image();
+    image.onload = function(){
+        iDiv.style.width = `${$(window).width() * 0.10}px`;
+        iDiv.style.height = `${$(window).width() * 0.10 / (image.width / image.height)}px`;
+    };
+    image.src = item.thumbnail;
+    iDiv.className = "mapping catalogItem";
     iDiv.style.backgroundImage = "url(" + item.thumbnail + ")";
+    iDiv.style.backgroundSize = '100% 100%';
+    iDiv.style.visibility = 'visible'; item.identifier = item.name;
     iDiv.setAttribute('objectID', item.id);
     iDiv.setAttribute('objectName', item.name);
     iDiv.setAttribute('modelId', item.name);
@@ -143,7 +142,14 @@ const newCatalogItem = function(item){
     iDiv.setAttribute('format', item.format);
     iDiv.addEventListener('click', clickCatalogItem);
     iDiv.addEventListener('contextmenu', clickCatalogItem);
+    iDiv.addEventListener('mouseover', mappingHover);
+    iDiv.addEventListener('mouseout', mappingLeave);
+    iDiv.classList.add('tiler');
+    iDiv.dataset.order = catalogItems.childElementCount;
+    if (shelfstocking_Mode) iDiv.innerHTML = `<span class="catalogItemChineseName">${yulinModelChineseName[item.name]}</span><span class="catalogItemEnglishName">${item.name.split('-')[1]}</span>`;
     catalogItems.appendChild(iDiv);
+    $(iDiv).data('meta', item);
+    floorPlanMapping.set(item.identifier, image);
 };
 
 const newSecondaryCatalogItem = function(item){
@@ -191,6 +197,7 @@ const clickSketchSearchButton = function () {
 };
 
 const clickTextSearchButton = function () {
+    floorPlanMapping.clear();
     while (catalogItems.firstChild) {
         catalogItems.firstChild.remove();
     }
@@ -201,6 +208,18 @@ const clickTextSearchButton = function () {
         searchResults.forEach(function (item) {
             newCatalogItem(item);
         });
+        Splitting({
+            target: '.tiler',
+            by: 'cells',
+            rows: nrs,
+            columns: ncs,
+            image: true
+        });
+        $('.tiler .cell-grid .cell').each(function(index){
+            let meta = $(this).parent().parent().data("meta");
+            $(this).parent().attr('id', `grids-${meta.identifier}`);
+            $(this).attr('id', `grid-${meta.identifier}`);
+        })
     });
 };
 
@@ -240,8 +259,8 @@ const autoViewGetMid = function(lastPos, pcam, direction, tarDirection){
     return [mid, midLookat]
 }
 
-const viewTransform = function(pcam){
-    cancelClickingObject3D();
+const viewTransform = function(pcam, cancelClickingObject = true){
+    if (cancelClickingObject) cancelClickingObject3D();
     clickAutoViewItemDuration = 1;
     let direction = new THREE.Vector3(
         orbitControls.target.x - camera.position.x,
@@ -413,6 +432,7 @@ const clickAutoViewPath = function(){
 }
 
 const mappingHover = function(e){
+    e.preventDefault();
     let meta = $(e.target).data("meta");
     let image = floorPlanMapping.get(meta.identifier);
     let wh = getMappingWidthHeight(image);
@@ -474,7 +494,7 @@ const addImageProcess = function(src){
 }
 
 const getMappingWidthHeight = function(image){
-    const F = 0.75;
+    const F = 0.6;
     let w, h;
     // make the image being displayed inside the window.
     if($(window).height() >= $(window).width()){
@@ -748,13 +768,13 @@ const searchPanelInitialization = function(){
     $("#autoViewPath").click(clickAutoViewPath);
     $("#autoViewMapping").click(clickAutoViewMapping);
     $("#selectRoomShapebtn").click(clickSelectRoomShape);
-    // $("#floorPlanbtn").click(() => {
-    //     let origin = document.getElementById("searchinput").value;
-    //     $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
-    //         socket.emit('sceneRefresh', result, onlineGroup);
-    //     });
-    // })
-    $("#floorPlanbtn").click(clickModuleSearchButton);
+    $("#floorPlanbtn").click(() => {
+        let origin = document.getElementById("searchinput").value;
+        $.getJSON(`/getSceneJsonByID/${origin}`, function(result){
+            socket.emit('sceneRefresh', result, onlineGroup);
+        });
+    })
+    $("#modulebtn").click(clickModuleSearchButton);
     $("#sketchsearchbtn").click(clickSketchSearchButton);
     $("#sketchclearbtn").click(clearCanvas);
     $("#manyTextures").click(() => {

@@ -78,7 +78,7 @@ def priors_of_wall():
         res_prev = res.copy()
         res['emptyChoice'] = '781'
         res['object'].append(res['emptyChoice'])
-        res['categoryCodec'] = categoryCodec
+        # res['categoryCodec'] = categoryCodec
     for obj in rj['objList']:
         if 'key' not in obj:
             continue
@@ -127,8 +127,9 @@ def priors_of_roomShape():
     # print(existingCatList)
     # print(existingPendingCatList)
     # load and process room shapes; 
-    room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
-    room_meta = room_meta[:, 0:2]
+    # room_meta = p2d('.', f'/dataset/room/{rj["origin"]}/{rj["modelId"]}f.obj')
+    # room_meta = room_meta[:, 0:2]
+    room_meta = np.array(rj["roomShape"])
     wallSecIndices = np.arange(1, len(room_meta)).tolist() + [0]
     res['room_meta'] = room_meta.tolist()
     rv = room_meta[:] - room_meta[wallSecIndices]
@@ -172,7 +173,7 @@ def priors_of_roomShape():
             wallpri = json.load(f)
             res['prior'] += wallpri
             res['index'] += np.full(len(wallpri), obj).tolist()
-            res['catMask'] += np.full(len(wallpri), categoryCodec[getobjCat(obj)]).tolist()
+            # res['catMask'] += np.full(len(wallpri), categoryCodec[getobjCat(obj)]).tolist()
     for newobjname in res['object']:
         res['coarseSemantic'][newobjname] = getobjCat(newobjname)
     return json.dumps(res)
@@ -380,7 +381,7 @@ def recommendation_ls_euclidean():
         if modelId in name_to_ls:
             e_room.append(modelId)
             continue
-        e_room.append(sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0])
+        e_room.append(sketch_search_suncg(f'./dataset/object/{modelId}/render20/render-{modelId}-10.png', k=1)[0])
     dist = np.zeros((len(ls_to_name)))
     for item in e_room:
         test_point = ls[name_to_ls[item]].reshape(1, 2)
@@ -425,7 +426,7 @@ def recommendation_ls_euclidean():
         if modelId in name_to_ls:
             suncgid = modelId
         else:
-            suncgid = sketch_search_suncg(f'H:/ObjectLibrary/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
+            suncgid = sketch_search_suncg(f'./dataset/object/{modelId}/render20/render-{modelId}-10.png', k=1)[0]
         i = name_to_ls[str(suncgid)]
         elements.append({
             'index': counter,
