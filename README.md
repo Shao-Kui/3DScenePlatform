@@ -261,17 +261,6 @@ root/
 --layoutmethods/
 ----trafficflow/
 ```
-# Landscapes
-![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/landscapesteaser.png "MM 2024")
-
-[\[Paper\]][landscape] [\[Video\]][landscapevideo] [\[Video\]][landscapesupp]
-
-This project ...:
-```
-root/
---layoutmethods/
-----trafficflow/
-```
 # StoreSketcher
 ![StoreSketcher](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/storeteaser.jpg "MM 2024")
 
