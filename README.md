@@ -1,3 +1,9 @@
+# \[!!!IMPORTANT!!!\]
+We understand that our platform needs a lot dependencies and data since the platform integrate many research of us. Therefore, we have prepared a COPY of our platform for anyone who has research-only needs. The COPY contains ALL necessary code and data. You simply download the COPY, install the python requirements (typically the flask server) and "python main.py". 
+
+To download the COPY, please email us by \[shaokui@tsinghua.edu.cn\]. In the email, please briefly tell us your purpose (We hope we haven't offended you), e.g., requiring baselines, etc. Please also confirm that your purpose is non-commercial, i.e., research-only. Then, we will send you an FTP link, inlcuding the username and password. We kindly ask that you should not distribute the link. The link can be only used for the ones received from us and their lab collegues. 
+
+We are preparing a quick tutorial (to appear). If you have any question, please also email us. Our group is very small. We will answer you as soon as possible. 
 # Introduction
 Platform Overview             |  Viewing & Roaming
 :-------------------------:|:-------------------------:
@@ -233,6 +239,39 @@ root/
 ----trafficflow/
 ```
 Note that the code generates scene jsons which should be loaded in this platform for visualization. 
+# ScenePhotographer
+![ScenePhotographer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/ScenePhotographerteaser.png "MM 2024")
+
+[\[Paper\]][photographer] [\[Video\]][photographervideo]
+
+This project ...:
+```
+root/
+--layoutmethods/
+----trafficflow/
+```
+# SceneExpander
+![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneExpanderteaser.png "MM 2024")
+
+[\[Paper\]][expander] [\[Video\]][expandervideo]
+
+This project ...:
+```
+root/
+--layoutmethods/
+----trafficflow/
+```
+# Landscapes
+![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/landscapesteaser.png "MM 2024")
+
+[\[Paper\]][landscape] [\[Video\]][landscapevideo] [\[Video\]][landscapesupp]
+
+This project ...:
+```
+root/
+--layoutmethods/
+----trafficflow/
+```
 # StoreSketcher
 <!-- ![StoreSketcher]() -->
 
