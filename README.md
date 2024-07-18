@@ -255,12 +255,16 @@ root/
 
 [\[Paper\]][expander] [\[Video\]][expandervideo]
 
-This project ...:
+This project is also the container of SceneExpander, an interactive scene synthesis framework which allows user to generate layouts by expanding its outer edge. The related source code is in the following files:
 ```
 root/
---layoutmethods/
-----trafficflow/
+--static/
+----js/
+------movelinemodel.js
+------yl.js
 ```
+The code in movelinemodel.js corresponds to the floor plan generation and evaluation step in the framework's pipeline, and the code in yl.js performs the operations related to the elastic boxes. These code are used by the frontend logic written in root/static/js/sk.js.
+
 # StoreSketcher
 ![StoreSketcher](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/storeteaser.jpg "MM 2024")
 
