@@ -244,12 +244,15 @@ Note that the code generates scene jsons which should be loaded in this platform
 
 [\[Paper\]][photographer] [\[Video\]][photographervideo]
 
-This project ...:
+This project is also the container of ScenePhotographer, an object-oriented framework for automatic view selection in residential scenes. The related source code is in the following files:
 ```
 root/
---layoutmethods/
-----trafficflow/
+--new_autoview.py
+--scenePhotographer/
+----constraints.py
 ```
+
+The code in new_autoview.py is related to object clustering and proposal of candidate views, and the code in constraints.py contains four citeria of view evaluation.
 # SceneExpander
 ![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneExpanderteaser.png "MM 2024")
 
