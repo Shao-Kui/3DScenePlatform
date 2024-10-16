@@ -239,6 +239,7 @@ root/
 ----trafficflow/
 ```
 Note that the code generates scene jsons which should be loaded in this platform for visualization. 
+
 # ScenePhotographer
 ![ScenePhotographer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/ScenePhotographerteaser.png "MM 2024")
 
@@ -252,7 +253,8 @@ root/
 ----constraints.py
 ```
 
-The code in new_autoview.py is related to object clustering and proposal of candidate views, and the code in constraints.py contains four citeria of view evaluation.
+The code in new_autoview.py is related to object clustering and proposal of candidate views, and the code in constraints.py contains four citeria of view evaluation. 
+
 # SceneExpander
 ![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneExpanderteaser.png "MM 2024")
 
@@ -285,12 +287,29 @@ root/
 
 [\[Paper\]][SceneExplorerPaper] [\[Supp\]][SceneExplorerSupp] [\[Video\]][SceneExplorerVideo] [\[Dataset\]][SceneExplorerDataset]
 
-This project includes our algorithm for interactively synthesizing commercial scenes. The related source code is all in the following directory:
+Note that the dataset/results should be put in **static\dataset\object** and **static\dataset\infiniteLayout** folders. The configuration is a bit complex. If you only need to run SceneExplorer, i.e., demos. Please see the **Important Notification** above. We can send you a full copy of our system, including the configured dataset/results in the correct paths. 
+
+The code for generating transformable layouts and utilizing them is in different folders. Generating transformable layouts can be found at: 
 ```
 root/
 --layoutmethods/
-----shelfarrangement/
+----sceneexplorer/
 ```
+
+The code for utilizing the transformable layout is part of this platform. To support transformable modules, we made a lot of changes on the platform, including but not limited to supporting transformable module loading and caching (**static\js\load.js**), manipulating transformable modules (**static\js\sk.js**), recoding transformable layouts timelines (**static\js\animation_record.js**). We tried our best to make them as modular as possible, but we still need to modify different platform parts. Our group is small. If you really need to modify or change how this platform manipulates transformable layouts and modules, please email us at shaokui@tsinghua.edu.cn. 
+
+The code for visualizing transformable layouts, i.e., the hierarchy proposed in the paper, can be found at: 
+```
+root/
+--static/
+----infiniteLayout/
+------chart1.js
+------chart2.js
+------d3.js
+------d3Zoom.js
+------treeWindow.js
+```
+In general, this visualisation panel is implemented by D3.js. 
 
 # Manuals  
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
@@ -321,15 +340,17 @@ This repo will continuously update with more functions, features and open-source
 * The navigation of the mini-map (Bottom-Left) is currently defunct. 
 
 # Acknowledgement
-This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](shaokui@tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Wei-Yu Xie is involved in voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yi-Ke Li and Yu-Fei Yang are involved with the Unity-based client for VR. Tian-Xing Xu is involved in the format conversion of 3D-Front. Xiang-Li Li is involved in sketch searching, refining datasets and dataset converting. 
+This platform is designed, structured and implemented by [Shao-Kui Zhang][shaokui](shaokui@tsinghua.edu.cn), [Song-Hai Zhang][songhai] and Yuan Liang. Wei-Yu Xie is involved in voice-based model retrieval, room mesh processing and object recommendation using latent space (TBD). Yike Li and Yu-Fei Yang are involved with the Unity-based client for VR. Tian-Xing Xu is involved in the format conversion of 3D-Front. Xiang-Li Li is involved in sketch searching, refining datasets and dataset converting. 
 
-Our layout framework is designed and implemented by Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang. We also appreciate Kai Wang for the experiment. 
+Shao-Kui Zhang, Wei-Yu Xie and Song-Hai Zhang designed and implemented our layout framework. We also appreciate Kai Wang for the experiment. 
 
 The MageAdd is designed and implemented by Shao-Kui Zhang, Yi-Xiao Li, Yu He, [Yong-Liang Yang][yongliang], and Song-Hai Zhang. 
 
 The SceneViewer is designed and implemented by Shao-Kui Zhang, Hou Tam, Yi-Xiao Li, [Tai-Jiang Mu][taijiangpage], and Song-Hai Zhang. 
 
 The SceneDirector is designed and implemented by Shao-Kui Zhang, Hou Tam, Yike Li, Ke-Xin Ren, [Hongbo Fu][hongbopage], and Song-Hai Zhang. 
+
+The SceneExplorer is designed and implemented by Shao-Kui Zhang, Jia-Hong Liu, Junkai Huang, Zi-Wei Chi, Hou Tam, Yong-Liang Yang and Song-Hai Zhang. We also thank the reviewers for helping us improve this paper. As you can see from the source code, implementing the platform and algorithm of SceneExplorer has consumed more than two years. We started from nothing. The dataset, engineering parts, algorithm and visualization are ALL built by our small team. We would like to share all we built to alleviate future work. 
 
 # Copyright
 This platform is developed for research, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT guaranteed security if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
@@ -368,3 +389,5 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [SceneExplorerSupp]:https://cg.cs.tsinghua.edu.cn
 [SceneExplorerVideo]:https://cg.cs.tsinghua.edu.cn
 [SceneExplorerDataset]:https://cg.cs.tsinghua.edu.cn
+[expandervideo]:https://www.bilibili.com/video/BV1Zi421h7H5
+[photographervideo]:https://www.bilibili.com/video/BV1kr421M7dy
