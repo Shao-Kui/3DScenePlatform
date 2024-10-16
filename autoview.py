@@ -1731,7 +1731,8 @@ def autoviewByID():
         ret.append(pcam)
     return json.dumps(ret)
 
-allExistingResultsDir = os.listdir('./sceneviewer/results')
+# allExistingResultsDir = os.listdir('./sceneviewer/results')
+allExistingResultsDir = []
 @app_autoView.route('/autoviewMapping')
 def autoviewMapping():
     ret = []

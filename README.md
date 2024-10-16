@@ -22,7 +22,19 @@ This platform is **NOT** aiming at photo-realistic illumination, though we are c
 # Requirements
 Requirements are mainly for running the back end, including the algorithm. Dependencies at the front-end are already included, but Chrome is still recommended. 
 
-The server can be run by ```python main.py``` after installing the requirements `pip install -r requirements`.
+It is suggested to use conda to manage the environment. The following command will create a new environment with the required packages (you can also install the required packages manually using pip):
+
+```cmd
+conda env create -n [Name] -f environment.yml
+```
+
+Note that the CUDA version of `torch` is needed. So be sure to install the compatible version of `torch`.
+
+After installing the requirements, run the server using:
+
+```
+python main.py
+```
 
 This platform cooperates with other organizations, so other packages may be required, e.g., ```baidu_aip```, ```librosa```, etc. Such features are not mandatory. Thus, you can simply `comment` on unnecessary packages. Note that some packages are mandatory for running the server, especially the algorithm, such as ```torch```, ```flask```, etc. We recommend installing the entire 'requirements.txt' on the safe side. To install packages, you need not strictly match the versions above. We attached those versions simply because they work for our deployment. Please issue us if you have trouble deploying. 
 

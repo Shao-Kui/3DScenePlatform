@@ -17,7 +17,7 @@ from layoutmethods.autolayoutv2 import sceneSynthesis
 from flask import Flask, request, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
-from sketch_retrieval.generate_descriptor import sketch_search,sketch_search_non_suncg
+# from sketch_retrieval.generate_descriptor import sketch_search,sketch_search_non_suncg
 from main_audio import app_audio
 from main_magic import app_magic
 from autoview import app_autoView, autoViewsRes, autoViewRooms
@@ -453,10 +453,11 @@ def sketch():
         filename = './qs.png'
         with open(filename, 'wb') as f:
             f.write(imgdata)
-        if keyword is None:
-            results = sketch_search('./qs.png', k=k)
-        else:
-            results = sketch_search_non_suncg('./qs.png', k=k, classname=keyword)
+        # if keyword is None:
+        #     results = sketch_search('./qs.png', k=k)
+        # else:
+        #     results = sketch_search_non_suncg('./qs.png', k=k, classname=keyword)
+        results=[]
         ret = [{"name":modelId, "semantic": sk.getobjCat(modelId), "thumbnail":f"/thumbnail/{modelId}"} for modelId in results]
         return json.dumps(ret)
     return "Post image! "

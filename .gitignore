@@ -14,9 +14,7 @@ yltmp/*
 /deprecated
 /examples
 /rooms
-/assets
 /suncg
-/dataset
 /test
 /directvideo
 /__pycache__
