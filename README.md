@@ -20,23 +20,10 @@ We assume developers and researchers would first deploy this platform. The [manu
 This platform is **NOT** aiming at photo-realistic illumination, though we are continuously improving the rendering. Instead, we provide an interactive environment for visualizing and debugging algorithms or frameworks related to 3D scenes. 
 
 # Requirements
-Requirements are mainly for running the back end, including the algorithm. Dependencies at the front-end are already included, but Chrome is still recommended. The server is easily run by ```python main.py```, if the following requirements are satisfied:  
-```
-numpy==1.17.2
-SQLAlchemy==1.2.13
-Flask_Cors==3.0.7
-trimesh==3.7.14
-Shapely==1.7.0
-torch==1.2.0+cu92
-Flask==1.0.2
-scipy==1.0.1
-joblib==0.12.5
-nltk==3.4.1
-pyclipper==1.1.0.post1
-matplotlib==2.2.2
-Pillow==7.2.0
-scikit_learn==0.23.2
-```  
+Requirements are mainly for running the back end, including the algorithm. Dependencies at the front-end are already included, but Chrome is still recommended. 
+
+The server can be run by ```python main.py``` after installing the requirements `pip install -r requirements`.
+
 This platform cooperates with other organizations, so other packages may be required, e.g., ```baidu_aip```, ```librosa```, etc. Such features are not mandatory. Thus, you can simply `comment` on unnecessary packages. Note that some packages are mandatory for running the server, especially the algorithm, such as ```torch```, ```flask```, etc. We recommend installing the entire 'requirements.txt' on the safe side. To install packages, you need not strictly match the versions above. We attached those versions simply because they work for our deployment. Please issue us if you have trouble deploying. 
 
 # Datasets
@@ -311,7 +298,26 @@ root/
 ```
 In general, this visualisation panel is implemented by D3.js. 
 
+# Urban Green Space Planning
+
+![StoreSketcher](layoutmethods/greenspace/docs/teaser_new.png)
+
+[\[Paper\]][GreenSpace] [\[Video\]][GreenSpaceVideo]
+
+This project includes our algorithm for automatically planning urban green spaces. The source code for generation is in:
+
+```
+root/
+--layoutmethods/
+----greenspace/
+```
+
+First, move into this directory `cd layoutmethods/greenspace`. 
+
+Then run `python main.py` to start the generation. The results are stored in `outputs/`. Json files in this directory can be directly loaded into the online platform for visualization. 
+
 # Manuals  
+
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
 **Axis**: The `Axis` button display/hide the world axis (Red: X, Blue: Z, Green, Y);   
 **MouseClick-Left**: Left-click has multiple behaviours on this platform. If clicking an object in the scene, a 'revolver' is shown waiting for further operations, such as transition(XoZ), transition(Y), rotation, deletion, etc. After clicking a button such as 'transition(XoZ)', the selected object moves following the mouse cursor. With another left-click, the object is fixed at the user-wanted position, and this routine is finished. If clicking a room, the platform with take the room as the current operational room, e.g., layout.  

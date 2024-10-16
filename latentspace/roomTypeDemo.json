@@ -47,15 +47,6 @@
       "Desk",
       "Bookcase / jewelry Armoire",
       "Drawer Chest / Corner cabinet"
-    ],
-    [
-      "King-size Bed",
-      "Wardrobe",
-      "Dressing Table",
-      "Desk",
-      "Corner/Side Table",
-      "Drawer Chest / Corner cabinet",
-      "Round End Table"
     ]
   ],
   "KidsRoom": [
@@ -85,15 +76,6 @@
       "Round End Table"
     ]
   ],
-  "Storage": [
-    [
-      "Bookcase / jewelry Armoire",
-      "Desk",
-      "Corner/Side Table",
-      "Sideboard / Side Cabinet / Console table",
-      "Round End Table"
-    ]
-  ],
   "LivingRoom": [
     [
       "Shelf",
@@ -112,27 +94,6 @@
       "Drawer Chest / Corner cabinet",
       "Wine Cabinet",
       "Bookcase / jewelry Armoire"
-    ]
-  ],
-  "Bathroom": [
-    [
-      "Bathtub",
-      "Toilet",
-      "Washing Machine",
-      "Washing Sink",
-      "Shower Room",
-      "Bathroom Shelf",
-      "Screen"
-    ]
-  ],
-  "Kitchen": [
-    [
-      "Kitchen Cabinet",
-      "Kitchen Sink",
-      "Kitchen Teapoy",
-      "Trash Bin",
-      "Oven",
-      "Refrigerator"
     ]
   ],
   "NannyRoom": [

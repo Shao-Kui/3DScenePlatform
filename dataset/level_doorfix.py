@@ -184,18 +184,18 @@ def areDoorsInRoom2021(level):
 
 def batch():
     si = 0
-    levelnames = os.listdir('./levelsuncg')[si:]
+    levelnames = os.listdir('./alilevel_oriFix')[si:]
     for levelname in levelnames:
         if si % 1000 == 0:
             print(f'start level {levelname}. ({si})')
         si += 1
         try:
-            with open(f'./levelsuncg/{levelname}') as f:
+            with open(f'./alilevel_oriFix/{levelname}') as f:
                 level = json.load(f)
         except PermissionError:
             continue
         level_fix = areDoorsInRoom2021(level)
-        with open(f'./LevelsSuncg2023/{levelname}', 'w') as f:
+        with open(f'./Levels2021/{levelname}', 'w') as f:
             json.dump(level_fix, f)
 
 def case1():
@@ -206,5 +206,5 @@ def case1():
         json.dump(case1_fix, f)
 
 if __name__ == '__main__':
-    batch()
-    # batchOccrrenceCount()
+    # batch()
+    batchOccrrenceCount()
