@@ -388,6 +388,6 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [SceneExplorerPaper]:https://cg.cs.tsinghua.edu.cn
 [SceneExplorerSupp]:https://cg.cs.tsinghua.edu.cn
 [SceneExplorerVideo]:https://cg.cs.tsinghua.edu.cn
-[SceneExplorerDataset]:https://cg.cs.tsinghua.edu.cn
+[SceneExplorerDataset]:https://cloud.tsinghua.edu.cn/f/f8698488edd240e4885a/?dl=1
 [expandervideo]:https://www.bilibili.com/video/BV1Zi421h7H5
 [photographervideo]:https://www.bilibili.com/video/BV1kr421M7dy
