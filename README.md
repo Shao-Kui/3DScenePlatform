@@ -242,7 +242,7 @@ Note that the code generates scene jsons which should be loaded in this platform
 # ScenePhotographer
 ![ScenePhotographer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/ScenePhotographerteaser.png "MM 2024")
 
-[\[Paper\]][photographer] [\[Video\]][photographervideo]
+[\[Paper\]](https://cg.cs.tsinghua.edu.cn/Shao-Kui/Papers/ScenePhotographer.pdf) [\[Video\]][photographervideo]
 
 This project is also the container of ScenePhotographer, an object-oriented framework for automatic view selection in residential scenes. The related source code is in the following files:
 ```
@@ -257,7 +257,7 @@ The code in new_autoview.py is related to object clustering and proposal of cand
 # SceneExpander
 ![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneExpanderteaser.png "MM 2024")
 
-[\[Paper\]][expander] [\[Video\]][expandervideo]
+[\[Paper\]](https://cg.cs.tsinghua.edu.cn/Shao-Kui/Papers/SceneExpander.pdf) [\[Video\]][expandervideo]
 
 This project is also the container of SceneExpander, an interactive scene synthesis framework which allows user to generate layouts by expanding its outer edge. The related source code is in the following files:
 ```
