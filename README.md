@@ -403,9 +403,9 @@ This platform is developed for research, though our license follows [GNU GPL 3.0
 [traffic]:https://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/cmmercialscene.pdf
 [trafficsupp]:https://dl.acm.org/doi/abs/10.1145/3581783.3613456
 [storevideo]:https://www.bilibili.com/video/BV1ii421Y7Gs
-[SceneExplorerPaper]:https://cg.cs.tsinghua.edu.cn
-[SceneExplorerSupp]:https://cg.cs.tsinghua.edu.cn
-[SceneExplorerVideo]:https://cg.cs.tsinghua.edu.cn
+[SceneExplorerPaper]:https://ieeexplore.ieee.org/document/10739397
+[SceneExplorerSupp]:https://ieeexplore.ieee.org/document/10739397
+[SceneExplorerVideo]:https://www.bilibili.com/video/BV16BSkYDEWj
 [SceneExplorerDataset]:https://cloud.tsinghua.edu.cn/f/f8698488edd240e4885a/?dl=1
 [expandervideo]:https://www.bilibili.com/video/BV1Zi421h7H5
 [photographervideo]:https://www.bilibili.com/video/BV1kr421M7dy
