@@ -389,8 +389,16 @@ class SceneManager {
                 if(!('format' in inst)){
                     inst.format = 'obj';
                 }
-                setTimeout(loadObjectToCache, loadingCounter*100, inst.modelId, function(){
+                inst.ready=false;
+                refreshInstances.push(inst);
+                setTimeout(loadObjectToCache, loadingCounter*200, inst.modelId, function(){
                     refreshObjectFromCache(inst);
+                    for(var i=0; i<refreshInstances.length; i++){
+                        if(refreshInstances[i].key === inst.key){
+                            refreshInstances[i].ready=true;
+                            break;
+                        }
+                    }
                 }, [], inst.format);
                 loadingCounter++;
                 // loadObjectToCache(inst.modelId, function(){
@@ -775,6 +783,8 @@ class SceneController {
         this.uiDOM = uiDOM;
         this.renderManager = new SceneManager(this, ($(this.uiDOM).find("#scenecanvas"))[0]);
         this.init_menu();
+        this.pending_files=[];
+        this.LOAD_TIMEOUT=3000;
     }
 
     init_menu() {
@@ -789,6 +799,14 @@ class SceneController {
         $(this.load_dialog).dialog({autoOpen: false});
         $(this.load_button).click(this.load_button_click());
         $(this.load_dialog_button).click(this.load_dialog_button_click());
+
+        this.batch_render_button=($(this.uiDOM).find("#batch_render_button"))[0];
+        this.batch_render_dialog=($(this.uiDOM).find("#batch_render_dialog"))[0];
+        this.batch_render_dialog_input=($(this.uiDOM).find("#batch_render_dialog_input"))[0];
+        this.batch_render_dialog_button=($(this.uiDOM).find("#batch_render_dialog_button"))[0];
+        $(this.batch_render_dialog).dialog({autoOpen: false});
+        $(this.batch_render_button).click(this.batch_render_button_click());
+        $(this.batch_render_dialog_button).click(this.batch_render_dialog_button_click());
     }
 
     load_button_click() { //use closure to pass self
@@ -796,6 +814,30 @@ class SceneController {
         return function () {
             $(self.load_dialog).dialog("open");
         };
+    }
+
+    batch_render_button_click() {
+        var self = this;
+        return function () {
+            $(self.batch_render_dialog).dialog("open");
+        };
+    }
+
+    render_oncomplete(){
+        while(true){
+            var ready=true;
+            for (var i=0;i<refreshInstances.length;i++){
+                if(!refreshInstances[i].ready){
+                    ready=false;
+                    break;
+                }
+            }
+            if(ready){
+                break;
+            }
+        }
+        render_function();
+        this.handle_pending_files();
     }
 
     load_dialog_button_click() {
@@ -814,6 +856,45 @@ class SceneController {
             fr.readAsText(files.item(0));
             $(self.load_dialog).dialog("close");
         };
+    }
+
+    handle_pending_files_single(){
+        var self=this;
+        var fr = new FileReader();
+        fr.onload = function (e) {
+            var result = JSON.parse(e.target.result);
+            refreshInstances=[];
+            socket.emit('sceneRefresh', result, onlineGroup);
+            setTimeout(self.render_oncomplete, this.LOAD_TIMEOUT-100);
+        };
+        fr.readAsText(this.pending_files.pop());
+    }
+
+    handle_pending_files(){
+        var self=this;
+        var i = setInterval(function(){
+            if(self.pending_files.length>0){
+                self.handle_pending_files_single();
+            }else{
+                clearInterval(i);
+            }
+        }, this.LOAD_TIMEOUT);
+    }
+
+    batch_render_dialog_button_click(){
+        var self = this;
+        return function () {
+            var files = $(self.batch_render_dialog_input)[0].files;
+            if (files.length <= 0) {
+                return;
+            }
+            for(var i=files.length-1;i>=0;i--){
+                self.pending_files.push(files.item(i));
+            }
+            self.handle_pending_files();
+            $(self.batch_render_dialog).dialog("close");
+        };
+    
     }
 
     load_scene(json) {

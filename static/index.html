@@ -1225,6 +1225,13 @@
               Render
             </button>
             <button
+              id="batch_render_button"
+              type="button"
+              class="btn btn-lg btn-outline-light mx-2"
+            >
+              Batch_Render
+            </button>
+            <button
               id="axis_button"
               type="button"
               class="btn btn-lg btn-outline-light mx-2"
@@ -1317,6 +1324,16 @@
         </div>
         <button type="button" class="btn btn-primary" id="load_dialog_button">
           载入
+        </button>
+      </div>
+
+      <div id="batch_render_dialog" class="dialog" title="Render Scene Directory">
+        <div class="form-group">
+          <label for="batch_render_dialog_input">LoadDir</label>
+          <input type="file" class="form-control-file" id="batch_render_dialog_input" webkitdirectory/>
+        </div>
+        <button type="button" class="btn btn-primary" id="batch_render_dialog_button">
+          渲染
         </button>
       </div>
 

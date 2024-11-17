@@ -1,6 +1,7 @@
 const objectCache = {}; 
 const objectLoadingQueue = {};
 const gatheringObjCat = {}; 
+var refreshInstances=[];
 const loadObjectToCacheContent = function(instance){
     const modelId = instance.modelId;
     instance.userData = {
