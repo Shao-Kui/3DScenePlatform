@@ -147,7 +147,7 @@ pyodbc==4.0.23
 pyOpenSSL==18.0.0
 pyparsing==2.2.0
 pyPdf==1.13
-PyPDF2==1.26.0
+PyPDF2==1.27.5
 PySocks==1.6.8
 pytest==3.5.1
 pytest-arraydiff==0.2
