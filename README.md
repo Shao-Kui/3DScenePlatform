@@ -4,6 +4,14 @@ We understand that our platform needs a lot of dependencies and data since the p
 To download the COPY, please email us at \[shaokui@tsinghua.edu.cn\]. In the email, please briefly tell us your purpose (We hope we haven't offended you), e.g., requiring baselines, etc. Please also confirm that your purpose is non-commercial, i.e., research-only. Then, we will send you an FTP link, including the username and password. We kindly ask that you not distribute the link. The link can only be used for the ones received from us and their lab colleagues. 
 
 We are preparing a quick tutorial (to appear). If you have any questions, please also email us. Our group is very small. We will answer you as soon as possible. 
+# Tutorials
+We have recorded tutorial videos in English and [中文](https://www.bilibili.com/video/BV1sCqSY7EwR). Please visit: 
+
+English: 
+
+中文：https://www.bilibili.com/video/BV1sCqSY7EwR
+
+The tutorial videos show how to use our platform for basic manipulations on 3D scenes, 3D objects, and 3D views. They also contain instructions on how to use the following (interactive) scene synthesis frameworks, e.g., MageAdd, SceneDirector, SceneExplorer, etc. If you have other requirements, please do not hesitate to contact us at \[shaokui@tsinghua.edu.cn\]. 
 # Introduction
 Platform Overview             |  Viewing & Roaming
 :-------------------------:|:-------------------------:
