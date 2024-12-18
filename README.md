@@ -5,13 +5,11 @@ To download the COPY, please email us at \[shaokui@tsinghua.edu.cn\]. In the ema
 
 We are preparing a quick tutorial (to appear). If you have any questions, please also email us. Our group is very small. We will answer you as soon as possible. 
 # Tutorials
-We have recorded tutorial videos in English and [中文](https://www.bilibili.com/video/BV1sCqSY7EwR). Please visit: 
+We have recorded tutorial videos in [English and 中文](https://www.bilibili.com/video/BV1sCqSY7EwR). 
 
-English: 
+Please visit: https://www.bilibili.com/video/BV1sCqSY7EwR
 
-中文：https://www.bilibili.com/video/BV1sCqSY7EwR
-
-The tutorial videos show how to use our platform for basic manipulations on 3D scenes, 3D objects, and 3D views. They also contain instructions on how to use the following (interactive) scene synthesis frameworks, e.g., MageAdd, SceneDirector, SceneExplorer, etc. If you have other requirements, please do not hesitate to contact us at \[shaokui@tsinghua.edu.cn\]. 
+The tutorial videos show how to use our platform for basic manipulations on 3D scenes, 3D objects, and 3D views. They also contain instructions on using the following (interactive) scene synthesis frameworks, e.g., MageAdd, SceneDirector, SceneExplorer, etc. If you have other requirements, please do not hesitate to contact us at \[shaokui@tsinghua.edu.cn\]. 
 # Introduction
 Platform Overview             |  Viewing & Roaming
 :-------------------------:|:-------------------------:
