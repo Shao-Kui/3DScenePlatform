@@ -192,14 +192,23 @@ root/
 ```
 The .py file corresponds to the **Piror Update**, and the .js file contains the main logic of MageAdd inference. The front-end dependencies are already included in the index.html. Please first install the back-end dependencies in the back-end (main_magic.py). 
 
-Our paper has been accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Please cite our paper if this repository helps! 
+Our paper has been accepted as an oral presentation in [ACM MM 2021][acmmm2021]. Please cite this paper if this repository helps! 
 ```
-@inproceedings{shaokui2021mageadd,
-  title={MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
-  author={Zhang, Shao-Kui and Li, Yi-Xiao and He, Yu and Yang Yong-Liang and Zhang Song-Hai},
-  booktitle={Proceedings of the 29th ACM International Conference on Multimedia, October 20--24, 2021, Virtual Event, China},
-  year={2021},
-  doi={10.1145/3474085.3475194}
+@inproceedings{10.1145/3474085.3475194,
+author = {Zhang, Shao-Kui and Li, Yi-Xiao and He, Yu and Yang, Yong-Liang and Zhang, Song-Hai},
+title = {MageAdd: Real-Time Interaction Simulation for Scene Synthesis},
+year = {2021},
+isbn = {9781450386517},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3474085.3475194},
+doi = {10.1145/3474085.3475194},
+booktitle = {Proceedings of the 29th ACM International Conference on Multimedia},
+pages = {965–973},
+numpages = {9},
+keywords = {user interaction, spatial inference, 3D indoor scene synthesis},
+location = {Virtual Event, China},
+series = {MM '21}
 }
 ```
 # SceneViewer
@@ -218,12 +227,27 @@ root/
 ----views.py
 ```
 The "autoview.py" contains the fundamental logic of our method, which will call functions for deriving probe views and use constraints for evaluating views. It also organizes and renders the generated views. One could consider it as a controller. The "views.py" contains how we generate probe views based on one-point and two-point perspectives. The "constraints.py" contains the measurements, i.e., the content and aesthetic constraints. The "utiles.py" contains several functions for geometrical computing. Finally, "inset.py" contains the "mapping" algorithm proposed in the paper. 
+
+SceneViewer has been accepted as a TVCG paper. Please cite this paper if our view generation method helps! 
+```
+@ARTICLE{9920233,
+  author={Zhang, Shao-Kui and Tam, Hou and Li, Yi-Xiao and Mu, Tai-Jiang and Zhang, Song-Hai},
+  journal={IEEE Transactions on Visualization and Computer Graphics}, 
+  title={SceneViewer: Automating Residential Photography in Virtual Environments}, 
+  year={2023},
+  volume={29},
+  number={12},
+  pages={5523-5537},
+  keywords={Three-dimensional displays;Cameras;Photography;Shape;Probes;Solid modeling;Rendering (computer graphics);Interior photography;view selection;3D interior scene},
+  doi={10.1109/TVCG.2022.3214836}
+}
+```
 # SceneDirector
 ![SceneDirector](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teaserdef.png "TVCG 2023")
 
 [\[Paper\]][scenedirectorpaper] [\[Video\]][scenedirector] [\[Supp\]][scenedirectorsupp] [\[Dataset\]][scenedirectordataset]
 
-This project is also the container for our interactive scene synthesis framework, which simulteanously edits multiple objects in each interactive session. The related source code includes:
+This project is also the container for our interactive scene synthesis framework, which simultaneously edits multiple objects in each interactive session. The related source code includes:
 ```
 root/
 --sk.py
@@ -232,6 +256,21 @@ root/
 ------MageAdd.js
 ```
 The "cgs" function in sk.py is the entrance for preprocessing each coherent group set. The functions named using "CGS" in "MageAdd.js" are the functions for synthesizing scenes online (e.g., when a user controls the mouse). 
+
+SceneDirector has been accepted as a TVCG paper. Please cite this paper if our multiple-object-editing method helps! 
+```
+@ARTICLE{10106472,
+  author={Zhang, Shao-Kui and Tam, Hou and Li, Yike and Ren, Ke-Xin and Fu, Hongbo and Zhang, Song-Hai},
+  journal={IEEE Transactions on Visualization and Computer Graphics}, 
+  title={SceneDirector: Interactive Scene Synthesis by Simultaneously Editing Multiple Objects in Real-Time}, 
+  year={2024},
+  volume={30},
+  number={8},
+  pages={4558-4569},
+  keywords={Layout;Three-dimensional displays;Solid modeling;Real-time systems;Process control;Tuning;Shape;3D scene synthesis;3D scene editing;interactive 3D modeling},
+  doi={10.1109/TVCG.2023.3268115}
+}
+```
 # CommercialScene
 ![CommercialScene](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/teasermm23.png "MM 2023")
 
@@ -243,8 +282,27 @@ root/
 --layoutmethods/
 ----trafficflow/
 ```
-Note that the code generates scene jsons which should be loaded in this platform for visualization. 
+Note that the code generates scene JSONs, which should be loaded in this platform for visualization. 
 
+Our commercial scene generation method has been accepted as an oral presentation in ACM MM 2023. Please cite this paper if our method helps! 
+```
+@inproceedings{10.1145/3581783.3613456,
+author = {Zhang, Shao-Kui and Liu, Jia-Hong and Li, Yike and Xiong, Tianyi and Ren, Ke-Xin and Fu, Hongbo and Zhang, Song-Hai},
+title = {Automatic Generation of Commercial Scenes},
+year = {2023},
+isbn = {9798400701085},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3581783.3613456},
+doi = {10.1145/3581783.3613456},
+booktitle = {Proceedings of the 31st ACM International Conference on Multimedia},
+pages = {1137–1147},
+numpages = {11},
+keywords = {commercial place, markets/shops planning, scene synthesis},
+location = {Ottawa ON, Canada},
+series = {MM '23}
+}
+```
 # ScenePhotographer
 ![ScenePhotographer](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/ScenePhotographerteaser.png "MM 2024")
 
@@ -260,6 +318,25 @@ root/
 
 The code in new_autoview.py is related to object clustering and proposal of candidate views, and the code in constraints.py contains four citeria of view evaluation. 
 
+This method improves SceneViewer and is accepted as an oral presentation at ACM MM 2024. Please cite this paper if our method helps! 
+```
+@inproceedings{10.1145/3664647.3680942,
+author = {Zhang, Shao-Kui and Zhu, Hanxi and Chen, Xuebin and Chen, Jinghuan and Peng, Zhike and Chen, Ziyang and Yang, Yong-Liang and Zhang, Song-Hai},
+title = {ScenePhotographer: Object-Oriented Photography for Residential Scenes},
+year = {2024},
+isbn = {9798400706868},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3664647.3680942},
+doi = {10.1145/3664647.3680942},
+booktitle = {Proceedings of the 32nd ACM International Conference on Multimedia},
+pages = {7843–7851},
+numpages = {9},
+keywords = {3d interior scenes, residential photography, view selection},
+location = {Melbourne VIC, Australia},
+series = {MM '24}
+}
+```
 # SceneExpander
 ![SceneExpander](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/SceneExpanderteaser.png "MM 2024")
 
@@ -273,8 +350,27 @@ root/
 ------movelinemodel.js
 ------yl.js
 ```
-The code in movelinemodel.js corresponds to the floor plan generation and evaluation step in the framework's pipeline, and the code in yl.js performs the operations related to the elastic boxes. These code are used by the frontend logic written in root/static/js/sk.js.
+The code in movelinemodel.js corresponds to the floor plan generation and evaluation step in the framework's pipeline, and the code in yl.js performs the operations related to the elastic boxes. These codes are used by the front-end logic written in root/static/js/sk.js.
 
+This paper is accepted in the proceedings of ACM MM 2024. Please cite this paper if our method helps! 
+```
+@inproceedings{10.1145/3664647.3680798,
+author = {Zhang, Shao-Kui and Huang, Junkai and Yue, Liang and Zhang, Jia-Tong and Liu, Jia-Hong and Lai, Yu-Kun and Zhang, Song-Hai},
+title = {SceneExpander: Real-Time Scene Synthesis for Interactive Floor Plan Editing},
+year = {2024},
+isbn = {9798400706868},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3664647.3680798},
+doi = {10.1145/3664647.3680798},
+booktitle = {Proceedings of the 32nd ACM International Conference on Multimedia},
+pages = {6232–6240},
+numpages = {9},
+keywords = {scene synthesis, spatial inference, user interaction},
+location = {Melbourne VIC, Australia},
+series = {MM '24}
+}
+```
 # StoreSketcher
 ![StoreSketcher](http://cg.cs.tsinghua.edu.cn/course/vis/Shao-Kui/storeteaser.jpg "MM 2024")
 
@@ -315,6 +411,20 @@ root/
 ------treeWindow.js
 ```
 In general, this visualisation panel is implemented by D3.js. 
+
+SceneExplorer is accepted as a TVCG paper. Please cite our paper if this method helps! 
+```
+@ARTICLE{10739397,
+  author={Zhang, Shao-Kui and Liu, Jia-Hong and Huang, Junkai and Chi, Zi-Wei and Tam, Hou and Yang, Yong-Liang and Zhang, Song-Hai},
+  journal={IEEE Transactions on Visualization and Computer Graphics}, 
+  title={SceneExplorer: An Interactive System for Expanding, Scheduling, and Organizing Transformable Layouts}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-15},
+  keywords={Layout;Schedules;Bars;Scheduling;Transformers;Three-dimensional displays;Processor scheduling;Neural networks;Codes;Art;Multi-Function Design;Interactive 3D Modeling;Scene Reconfiguration},
+  doi={10.1109/TVCG.2024.3488744}}
+```
 
 # Urban Green Space Planning
 
