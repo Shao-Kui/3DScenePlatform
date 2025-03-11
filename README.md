@@ -1,5 +1,5 @@
 # \[!!!IMPORTANT!!!\]
-We understand that our platform needs a lot of dependencies and data since the platform integrates much research work of us. Therefore, we have prepared a COPY of our platform for anyone with research-only needs. The COPY contains ALL necessary code and data. You simply download the COPY, install the python requirements (typically the flask server) and "python main.py". 
+We understand that our platform needs a lot of dependencies and data since the platform integrates much research work of us. Therefore, we have prepared a COPY of our platform for anyone with research-only needs. **The COPY contains ALL the source code and data of the following research methods and our platform**. You simply download the COPY, install the python requirements (typically the flask server) and "python main.py". 
 
 To download the COPY, please email us at \[shaokui@tsinghua.edu.cn\]. In the email, please briefly tell us your purpose (We hope we haven't offended you), e.g., requiring baselines, etc. Please also confirm that your purpose is non-commercial, i.e., research-only. Then, we will send you an FTP link, including the username and password. We kindly ask that you not distribute the link. The link can only be used for the ones received from us and their lab colleagues. 
 
