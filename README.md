@@ -444,6 +444,21 @@ First, move into this directory `cd layoutmethods/greenspace`.
 
 Then run `python main.py` to start the generation. The results are stored in `outputs/`. Json files in this directory can be directly loaded into the online platform for visualization. 
 
+# SceneCluster
+
+![StoreSketcher](https://cg.cs.tsinghua.edu.cn/Shao-Kui/images/scenecluster.png)
+
+[\[Paper\]] [Supp] [\[Video\]] 
+
+The code for clustering object groups is in 
+
+```
+root/
+--yltmp/
+```
+
+Please refer to the **IMPORTANT** first, where we can directly send you a compatible and stable version of the platform, and the platform can be run withou any configuration. 
+
 # Manuals  
 
 Our platform is split into two panels: operation & 3D scene. The operation panel allows rendering, layouting, saving, and loading scenes. We also allow searching objects by semantics and names(id). One could add more objects by left-clicking a searched result and left-clicking a position in a scene. The 3D scene panel uses an orbital controller, where interactions follow:  
@@ -485,6 +500,8 @@ The SceneViewer is designed and implemented by Shao-Kui Zhang, Hou Tam, Yi-Xiao 
 The SceneDirector is designed and implemented by Shao-Kui Zhang, Hou Tam, Yike Li, Ke-Xin Ren, [Hongbo Fu][hongbopage], and Song-Hai Zhang. 
 
 The SceneExplorer is designed and implemented by Shao-Kui Zhang, Jia-Hong Liu, Junkai Huang, Zi-Wei Chi, Hou Tam, Yong-Liang Yang and Song-Hai Zhang. We also thank the reviewers for helping us improve this paper. As you can see from the source code, implementing the platform and algorithm of SceneExplorer has consumed more than two years. We started from nothing. The dataset, engineering parts, algorithm and visualization are ALL built by our small team. We would like to share all we built to alleviate future work. 
+
+The SceneCluster is designed and implemented by Shao-Kui Zhang, Liang Yue, Haoran Zhang, Hanxi Zhu, Yong-Liang Yang and Song-Hai Zhang. 
 
 # Copyright
 This platform is developed for research, though our license follows [GNU GPL 3.0][GNUGPL3]. The back-end is NOT guaranteed security if you have sensitive or private data, which is significant if you wish to deploy this platform publicly. 
