@@ -1172,9 +1172,9 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
     }
     def wfunc(num):
         return num*num
-    # Loading room occurence data
+    # Loading room occurrence data
     objects = json.load(open('static/dataset/dynamic_objects_data.json'))
-    objects_category_occurence = json.load(open('dataset/occurrenceCount/res_ratio.json'))
+    objects_category_occurrence = json.load(open('dataset/occurrenceCount/res_ratio.json'))
     with open('dataset/objCatListAliv2.json') as f:
         objCatListAliv2 = json.load(f)
     room_objects = {"livingroom","bedroom","diningroom","office"}
@@ -1300,17 +1300,17 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
             obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
             if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
                 objcat = getObjCat(obj['modelId'])
-                if objcat in objects_category_occurence:
+                if objcat in objects_category_occurrence:
                     for room_type in room_objects:
                         if room_type in object_requirement:
                             for required_object in object_requirement[room_type]:
                                 if objcat.lower.replace(' ','').endswith(required_object):
                                     roomtype_meet_requirement.add(room_type)
-                    for room_type in objects_category_occurence[objcat]:
+                    for room_type in objects_category_occurrence[objcat]:
                         if room_type in room_map:
                             for mapped_room_type in room_map[room_type]:
-                                room_values[mapped_room_type]+=w*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
-                                # print((mapped_room_type,objects_category_occurence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])))    
+                                room_values[mapped_room_type]+=w*objects_category_occurrence[objcat][room_type]/len(room_map[room_type])
+                                # print((mapped_room_type,objects_category_occurrence[getObjCat(obj['modelId'])][room_type]/len(room_map[room_type])))    
             elif obj_name in objects:
                 # calculating room type
                 if not 'startState' in obj:
@@ -1340,11 +1340,11 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
                 obj_name = obj['modelId']+'_'+(obj['startState'] if 'startState' in obj else 'origin')
                 if obj['modelId'] in objCatListAliv2 and getObjCat(obj['modelId']) != None:
                     objcat = getObjCat(obj['modelId'])
-                    if objcat in objects_category_occurence:
-                        for room_type in objects_category_occurence[objcat]:
+                    if objcat in objects_category_occurrence:
+                        for room_type in objects_category_occurrence[objcat]:
                             if room_type in room_map:
                                 for mapped_room_type in room_map[room_type]:
-                                    temp_room_values[mapped_room_type]+=obj['area']*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
+                                    temp_room_values[mapped_room_type]+=obj['area']*objects_category_occurrence[objcat][room_type]/len(room_map[room_type])
                 elif obj_name in objects:
                 # calculating room type
                     for room_type in room_objects:
@@ -1354,12 +1354,12 @@ def calculate_room_type_values(srcpath:str,dstpath:str):
                 for subobj in obj['attachedObj']:
                     obj_name = subobj.replace('#','_')
                     if obj_name in objCatListAliv2 and getObjCat(obj_name) != None:
-                        if getObjCat(obj_name) in objects_category_occurence:
+                        if getObjCat(obj_name) in objects_category_occurrence:
                             objcat = getObjCat(obj_name)
-                            for room_type in objects_category_occurence[objcat]:
+                            for room_type in objects_category_occurrence[objcat]:
                                 if room_type in room_map:
                                     for mapped_room_type in room_map[room_type]:
-                                        temp_room_values[mapped_room_type]+=wmap[obj_name+'_origin']*objects_category_occurence[objcat][room_type]/len(room_map[room_type])
+                                        temp_room_values[mapped_room_type]+=wmap[obj_name+'_origin']*objects_category_occurrence[objcat][room_type]/len(room_map[room_type])
                     elif obj_name in objects:
                     # calculating room type
                         for room_type in room_objects:
